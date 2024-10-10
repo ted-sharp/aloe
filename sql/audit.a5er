@@ -1,0 +1,140 @@
+﻿# A5:ER FORMAT:18
+# A5:ER ENCODING:UTF8
+# A5:ER Mk-1 Copyright © 2007 m.matsubara
+# A5:SQL Mk-2 Version 2.19.2 Copyright © 1997 - 2024 m.matsubara
+#  https://a5m2.mmatsubara.com
+
+[Manager]
+ProjectName=hive_authdb
+Author=
+MaxEntityRowShow=1000
+ReadOnlyRecommend=0
+Page=audit
+PageInfo="audit",4,"A3Landscape",$FFFFFF
+LogicalView=1
+DecodeDomain=0
+ViewModePageIndividually=1
+ViewMode=4
+ViewFormat=0
+UseNondependenceDashLine=0
+FontName=Meiryo UI
+FontSize=12
+PaperSize=A4Landscape
+HeaderLeft=
+HeaderCenter=
+HeaderRight=
+FooterLeft=
+FooterCenter=
+FooterRight=
+ShowPageoutRelation=1
+RDBMSType=7
+RDBMSTypeName=PostgreSQL
+GenerateDropTableStatement=1
+DropTableIfExists=1
+CreatePkIndex=1
+DefaultPkName=%0:s_PKC
+DefaultPkIndexName=%0:s_PKI
+DefaultIndexName=%0:s_IX%1:d
+DefaultFkName=%0:s_FK%1:d
+SqlSeparator=0
+UpperCaseKeyword=1
+ShowTag=1
+ShowCommonAttributes=0
+BugFixEntityWidth=0
+
+[Entity]
+PName=change_logs
+LName=change_logs
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUDIT
+Left=100
+Top=900
+Field="log_id","log_id","BIGINT","NOT NULL",0,"","",$000000FF,""
+Field="table_name","table_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="record_id","record_id","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="changed_user_id","changed_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="changed_user_name","changed_user_name","TEXT","NOT NULL",,"\q\q","JOIN回避",$FFFFFFFF,""
+Field="changed_at","changed_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+Field="sql_statement","sql_statement","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="old_values","old_values","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+Field="new_values","new_values","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241009222440
+Position="AUDIT",100,900
+ZOrder=13
+
+[Shape]
+Page=AUDIT
+Left=1095
+Top=151
+ZOrder=14
+Width=2270
+Height=934
+ShapeType=Rectangle
+Text=CREATE OR REPLACE FUNCTION logging.log_changes() RETURNS TRIGGER AS $$\nBEGIN\n    IF (TG_OP = \qDELETE\q) THEN\n        INSERT INTO logging.change_logs(table_name, record_id, changed_by, change_type, old_values)\n        VALUES (TG_TABLE_NAME, OLD.id, current_user, TG_OP, row_to_json(OLD));\n        RETURN OLD;\n    ELSIF (TG_OP = \qINSERT\q) THEN\n        INSERT INTO logging.change_logs(table_name, record_id, changed_by, change_type, new_values)\n        VALUES (TG_TABLE_NAME, NEW.id, current_user, TG_OP, row_to_json(NEW));\n        RETURN NEW;\n    ELSIF (TG_OP = \qUPDATE\q) THEN\n        INSERT INTO logging.change_logs(table_name, record_id, changed_by, change_type, old_values, new_values)\n        VALUES (TG_TABLE_NAME, NEW.id, current_user, TG_OP, row_to_json(OLD), row_to_json(NEW));\n        RETURN NEW;\n    END IF;\nEND;\n$$ LANGUAGE plpgsql;\n
+FontName=Tahoma
+FontSize=12
+FontColor=$000000
+TextAlign=$0
+
+[Shape]
+Page=AUDIT
+Left=1103
+Top=1188
+ZOrder=15
+Width=2286
+Height=590
+ShapeType=Rectangle
+Text=CREATE TRIGGER trigger_log_changes\nALTER INSERT OR UPDATE OR DELETE ON your_table_name\nFOR EACH ROW EXECUTE FUNCTION logging.log_changes();\n\nトリガを設定することで変更履歴を追えるが、パフォーマンスに影響が出るため、特定のテーブルのみとするのがよい。\n
+FontName=Tahoma
+FontSize=12
+FontColor=$000000
+TextAlign=$0
+
+[Entity]
+PName=action_logs
+LName=action_logs
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUDIT
+Left=100
+Top=500
+Field="log_id","log_id","BIGINT","NOT NULL",0,"","",$000000FF,""
+Field="action","action","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="action_user_id","action_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="action_user_name","action_user_name","TEXT","NOT NULL",,"\q\q","JOIN回避",$FFFFFFFF,""
+Field="action_at","action_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+Field="action_info","action_info","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241009222422
+Position="AUDIT",100,500
+ZOrder=16
+
+[Entity]
+PName=access_logs
+LName=access_logs
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUDIT
+Left=100
+Top=100
+Field="log_id","log_id","BIGINT","NOT NULL",0,"","",$000000FF,""
+Field="access","access","TEXT","NOT NULL",,"\q\q","LOGIN, LOGOUT",$FFFFFFFF,""
+Field="access_user_id","access_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="access_user_name","access_user_name","TEXT","NOT NULL",,"\q\q","JOIN回避",$FFFFFFFF,""
+Field="access_at","access_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+Field="access_info","access_info","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241009222408
+Position="AUDIT",100,100
+ZOrder=17

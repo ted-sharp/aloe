@@ -1,0 +1,402 @@
+﻿# A5:ER FORMAT:18
+# A5:ER ENCODING:UTF8
+# A5:ER Mk-1 Copyright © 2007 m.matsubara
+# A5:SQL Mk-2 Version 2.19.2 Copyright © 1997 - 2024 m.matsubara
+#  https://a5m2.mmatsubara.com
+
+[Manager]
+ProjectName=hive_authdb
+Author=
+MaxEntityRowShow=1000
+ReadOnlyRecommend=0
+Page=auth
+PageInfo="auth",4,"A3Landscape",$FFFFFF
+Page=resv
+PageInfo="resv",4,"A3Landscape",$FFFFFF
+Page=org_pt
+PageInfo="org_pt",4,"A3Landscape",$FFFFFF
+LogicalView=1
+DecodeDomain=0
+ViewModePageIndividually=1
+ViewMode=4
+ViewFormat=0
+UseNondependenceDashLine=0
+FontName=Meiryo UI
+FontSize=12
+PaperSize=A4Landscape
+HeaderLeft=
+HeaderCenter=
+HeaderRight=
+FooterLeft=
+FooterCenter=
+FooterRight=
+ShowPageoutRelation=1
+RDBMSType=7
+RDBMSTypeName=PostgreSQL
+GenerateDropTableStatement=1
+DropTableIfExists=1
+CreatePkIndex=1
+DefaultPkName=%0:s_PKC
+DefaultPkIndexName=%0:s_PKI
+DefaultIndexName=%0:s_IX%1:d
+DefaultFkName=%0:s_FK%1:d
+SqlSeparator=0
+UpperCaseKeyword=1
+ShowTag=1
+ShowCommonAttributes=0
+BugFixEntityWidth=0
+
+[Entity]
+PName=organizations
+LName=organizations
+Comment=
+TableInnerOption=
+TableOption=
+Page=ORG_PT
+Left=100
+Top=100
+Field="org_id","org_id","＠INT","NOT NULL",0,"0","",$000028FF,""
+Field="insurance_type_code","insurance_type_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="insurance_provider_id","insurance_provider_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="parent_org_id","parent_org_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="org_name","org_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="org_name_katakana","org_name_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="org_name_display","org_name_display","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="org_name_print","org_name_print","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20241009223009
+Position="ORG_PT",100,100
+ZOrder=27
+
+[Entity]
+PName=patients
+LName=patients
+Comment=
+TableInnerOption=
+TableOption=
+Page=ORG_PT
+Left=1000
+Top=100
+Field="pt_id","pt_id","BIGINT","NOT NULL",0,"0","",$000028FF,""
+Field="karte_number","karte_number","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="pt_full_name","pt_full_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="pt_full_name_katakana","pt_full_name_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="pt_given_name","pt_given_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="pt_old_full_name","pt_old_full_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="birth_date","birth_date","@DATE","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="sex_code","sex_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20241009223228
+Position="ORG_PT",1000,100
+ZOrder=28
+
+[Entity]
+PName=reservation_equipment_bookings
+LName=reservation_equipment_bookings
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=100
+Top=1100
+Field="resv_equip_bkg_id","resv_equip_bkg_id","＠INT","NOT NULL",0,"0","",$000028FF,""
+Field="bkg_date","bkg_date","@DATE","NOT NULL",,"","",$FFFFFFFF,""
+Field="equip_id","equip_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot","slot","TExT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="hold_user_id","hold_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="hold_at","hold_at","@DATETIME","NOT NULL",,"","",$FFFFFFFF,""
+Field="hold_remark_text","hold_remark_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="org_id","org_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="pt_id","pt_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="order_id","order_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="sub_order_id","sub_order_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="bkg_user_id","bkg_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="bkg_at","bkg_at","@DATETIME","NOT NULL",,"","",$FFFFFFFF,""
+Field="bkg_symbol_text","bkg_symbol_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="bkg_remark_text","bkg_remark_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20241008215324
+Position="RESV",100,1100
+ZOrder=23
+
+[Entity]
+PName=reservation_rooms
+LName=reservation_rooms
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=1100
+Top=600
+Field="room_id","room_id","@INT","NOT NULL",0,"","",$000000FF,""
+Field="room_name","room_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="room_desc","room_desc","TEXt","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="floor_id","floor_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="exam_cat_id","exam_cat_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="seq","seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241008215635
+Position="RESV",1100,600
+ZOrder=24
+
+[Entity]
+PName=reservation_daily_slots
+LName=reservation_daily_slots
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=1100
+Top=1100
+Field="resv_daily_slot_id","resv_daily_slot_id","＠INT","NOT NULL",0,"0","",$000028FF,""
+Field="start_date","start_date","@DATE","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="end_date","end_date","@DATE","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="dow_code","dow_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="floor_id","floor_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="room_id","room_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="daily_cap","daily_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="am_cap","am_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="pm_cap","pm_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slots","slots","TExT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="slot_caps","slot_caps","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241008215954
+Position="RESV",1100,1100
+ZOrder=25
+
+[Entity]
+PName=reservation_daily_bookings
+LName=reservation_daily_bookings
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=1100
+Top=1850
+Field="resv_equip_bkg_id","resv_equip_bkg_id","＠INT","NOT NULL",0,"0","",$000028FF,""
+Field="bkg_date","bkg_date","@DATE","NOT NULL",,"","",$FFFFFFFF,""
+Field="equip_id","equip_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot","slot","TExT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="hold_user_id","hold_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="hold_at","hold_at","@DATETIME","NOT NULL",,"","",$FFFFFFFF,""
+Field="hold_remark_text","hold_remark_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="org_id","org_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="pt_id","pt_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="order_id","order_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="sub_order_id","sub_order_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="bkg_user_id","bkg_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="bkg_at","bkg_at","@DATETIME","NOT NULL",,"","",$FFFFFFFF,""
+Field="bkg_symbol_text","bkg_symbol_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="bkg_remark_text","bkg_remark_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="is_cancelled","is_cancelled","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+Field="noshow_count","noshow_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20241009222304
+Position="RESV",1100,1850
+ZOrder=26
+
+[Entity]
+PName=users
+LName=users
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=100
+Top=100
+Field="user_uuid","user_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="tenant_uuid(FK)","tenant_uudi","UUID","NOT NULL",,"","",$000000FF,""
+Field="username","username","@VARCHAR(64)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240615203810
+Position="AUTH",100,100
+ZOrder=1
+
+[Entity]
+PName=permissions
+LName=permissions
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=1100
+Top=600
+Field="permission_uuid","permission_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="permission_name","permission_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="permission_description","permission_description","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240608072321
+Position="AUTH",1100,600
+ZOrder=7
+
+[Entity]
+PName=roll_permissions
+LName=roll_permissions
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=1100
+Top=900
+Field="roll_uuid","roll_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="permission_uuid","permission_uuid","UUID","NOT NULL",1,"","",$000000FF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240606154748
+Position="AUTH",1100,900
+ZOrder=8
+
+[Entity]
+PName=rolls
+LName=rolls
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=1100
+Top=100
+Field="roll_uuid","roll_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="roll_name","roll_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="roll_description","roll_description","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240608072404
+Position="AUTH",1100,100
+ZOrder=9
+
+[Entity]
+PName=user_rolls
+LName=user_rolls
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=1100
+Top=400
+Field="user_uuid","user_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="roll_uuid","roll_uuid","UUID","NOT NULL",1,"","",$000000FF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240606151751
+Position="AUTH",1100,400
+ZOrder=10
+
+[Entity]
+PName=user_accesses
+LName=user_accesses
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=100
+Top=700
+Field="user_uuid","user_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="last_login_at","last_login_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+Field="last_logout_at","last_logout_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240607101003
+Position="AUTH",100,700
+ZOrder=18
+
+[Entity]
+PName=user_details
+LName=user_details
+Comment=
+TableInnerOption=
+TableOption=
+Page=AUTH
+Left=100
+Top=400
+Field="user_uuid","user_uuid","UUID","NOT NULL",0,"","",$000000FF,""
+Field="password","password","@VARCHAR(64)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="display_name","display_name","@VARCHAR(64)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="user_info","user_info","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20240607101812
+Position="AUTH",100,400
+ZOrder=19
+
+[Entity]
+PName=reservation_equipment_slots
+LName=reservation_equipment_slots
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=100
+Top=600
+Field="resv_equip_slot_id","resv_equip_slot_id","＠INT","NOT NULL",0,"0","",$000028FF,""
+Field="start_date","start_date","@DATE","NOT NULL",,"","",$FFFFFFFF,""
+Field="end_date","end_date","@DATE","NOT NULL",,"","",$FFFFFFFF,""
+Field="dow_code","dow_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="equip_id","equip_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slots","slots","TExT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241008220017
+Position="RESV",100,600
+ZOrder=20
+
+[Entity]
+PName=reservation_floors
+LName=reservation_floors
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=1100
+Top=100
+Field="floor_id","floor_id","@INT","NOT NULL",0,"","",$000000FF,""
+Field="floor_name","floor_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="floor_desc","floor_desc","TEXt","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="seq","seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241008215454
+Position="RESV",1100,100
+ZOrder=21
+
+[Entity]
+PName=reservation_equipments
+LName=reservation_equipments
+Comment=
+TableInnerOption=
+TableOption=
+Page=RESV
+Left=100
+Top=100
+Field="equip_id","equip_id","@INT","NOT NULL",0,"0","",$000000FF,""
+Field="equip_name","floor_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="equip_desc","equip_desc","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="seq","seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20241008212242
+Position="RESV",100,100
+ZOrder=22
