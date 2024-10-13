@@ -8,16 +8,16 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="e8ddcd09-0511-4fc1-ab69-5885cfc6d5e5"
+    Name="55235a35-38d1-46c8-b2e5-2bb7dddbdf02"
     Publisher="CN=ted"
     Version="1.0.0.0" />
 
-  <mp:PhoneIdentity PhoneProductId="e8ddcd09-0511-4fc1-ab69-5885cfc6d5e5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="55235a35-38d1-46c8-b2e5-2bb7dddbdf02" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>ReservationApp (Package)</DisplayName>
+    <DisplayName>ReservationApp</DisplayName>
     <PublisherDisplayName>ted</PublisherDisplayName>
-    <Logo>Images\StoreLogo.png</Logo>
+    <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -34,13 +34,13 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="$targetentrypoint$">
       <uap:VisualElements
-        DisplayName="ReservationApp (Package)"
-        Description="ReservationApp (Package)"
+        DisplayName="ReservationApp"
+        Description="ReservationApp"
         BackgroundColor="transparent"
-        Square150x150Logo="Images\Square150x150Logo.png"
-        Square44x44Logo="Images\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" />
-        <uap:SplashScreen Image="Images\SplashScreen.png" />
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
       </uap:VisualElements>
     </Application>
   </Applications>

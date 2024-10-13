@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "ReservationApp (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "ReservationApp (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
