@@ -1,48 +1,100 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+﻿using System.Configuration;
+using System.Data;
+using System.Windows;
+using System.Windows.Threading;
+using AloeReservationGrid.App.ReservationApp.ViewModels;
+using AloeReservationGrid.Lib.CoreLib.Logging;
+using H.NotifyIcon;
+using Microsoft.Extensions.Logging;
 
 namespace AloeReservationGrid.App.ReservationApp;
+
 /// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
+/// Interaction logic for App.xaml
 /// </summary>
 public partial class App : Application
 {
-    /// <summary>
-    /// Initializes the singleton application object.  This is the first line of authored code
-    /// executed, and as such is the logical equivalent of main() or WinMain().
-    /// </summary>
-    public App()
+    private readonly ILogger _logger;
+
+    private TaskbarIcon? _notifyIcon;
+
+    public App(
+        ILogger<App> logger,
+        MainWindow mainWindow)
     {
-        this.InitializeComponent();
+        this._logger = logger;
+        this.MainWindow = mainWindow;
+
+        // グローバル例外処理のイベントハンドラを設定
+        AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
+        this.DispatcherUnhandledException += this.App_DispatcherUnhandledException;
+
     }
 
-    /// <summary>
-    /// Invoked when the application is launched.
-    /// </summary>
-    /// <param name="args">Details about the launch request and process.</param>
-    protected override void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+    protected override void OnStartup(StartupEventArgs e)
     {
-        this.m_window = new MainWindow();
-        this.m_window.Activate();
+        base.OnStartup(e);
+
+        var resourceDictionary = new ResourceDictionary
+        {
+            Source = new Uri("/Views/NotifyIconResources.xaml", UriKind.Relative),
+        };
+
+        // 必要なリソースを参照して使用する
+        this._notifyIcon = (TaskbarIcon)resourceDictionary["NotifyIcon"];
+        this._notifyIcon.DataContext = new NotifyIconViewModel();
+        this._notifyIcon.ForceCreate();
     }
 
-    private Window m_window;
+    protected override void OnExit(ExitEventArgs e)
+    {
+        // アイコンのクリーンアップ
+        this._notifyIcon?.Dispose();
+
+        // グローバル例外処理のイベントハンドラを解除
+        AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomain_UnhandledException;
+        TaskScheduler.UnobservedTaskException -= this.TaskScheduler_UnobservedTaskException;
+        this.DispatcherUnhandledException -= this.App_DispatcherUnhandledException;
+
+        base.OnExit(e);
+    }
+
+    // 非UIスレッドでの未処理例外を補足する
+    private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+    {
+        if (e.ExceptionObject is Exception ex)
+        {
+            this._logger.Error(ex, ex.ToString());
+        }
+    }
+
+    // タスクのGC時の未処理例外を補足する
+    private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
+    {
+        var aggregateException = e.Exception;
+
+        // 内部の例外をすべて展開してログに記録
+        foreach (var ex in aggregateException.InnerExceptions)
+        {
+            this._logger.Error(ex, ex.ToString());
+        }
+
+        // 例外を「観察済み」に設定する
+        e.SetObserved();
+    }
+
+    // WPFのUIスレッドでキャッチされていない例外を補足する
+    private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+    {
+        // 例外をログに記録する
+        var ex = e.Exception;
+        this._logger.Error(ex, ex.ToString());
+
+        MessageBox.Show("予期しないエラーが発生しました: " + ex.Message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+
+        // 例外が処理されたことを通知し、アプリケーションが強制終了しないようにする
+        e.Handled = true;
+    }
 }
+
