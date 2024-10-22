@@ -5,7 +5,7 @@
 #  https://a5m2.mmatsubara.com
 
 [Manager]
-ProjectName=hive_authdb
+ProjectName=aloe_reservation_grid
 Author=
 MaxEntityRowShow=1000
 ReadOnlyRecommend=0
