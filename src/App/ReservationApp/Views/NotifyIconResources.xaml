@@ -14,6 +14,17 @@
             Command="{Binding HideWindowCommand}"
         />
         <Separator />
+        <!--
+        予約状況画面(メイン)を開く
+        団体患者検索画面を開く
+        設定画面を開く
+        ヘルプを開く(Verとか乗ってる小さいやつ)
+        ログイン/ログアウト
+
+        隠すメニューはなくてよい
+        常駐しちゃうので、アプリ再起動は欲しい
+        サービスのステータスと再起動もあったほうがいいかも
+        -->
         <MenuItem
             Header="Exit"
             Command="{Binding ExitApplicationCommand}"

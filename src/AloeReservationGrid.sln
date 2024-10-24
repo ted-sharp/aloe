@@ -15,7 +15,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AloeReservationGrid.Lib.Cor
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ReservationApp", "App\ReservationApp\ReservationApp.csproj", "{45396ED7-606A-46E6-B1A2-A5862B59737F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AloeReservationGrid.Lib.ReservationLib", "Lib\ReservationLib\AloeReservationGrid.Lib.ReservationLib.csproj", "{B6DE5A1F-4C57-4FD2-A020-EEA5192E098B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AloeReservationGrid.Lib.ReservationLib", "Lib\ReservationLib\AloeReservationGrid.Lib.ReservationLib.csproj", "{B6DE5A1F-4C57-4FD2-A020-EEA5192E098B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

@@ -25,6 +25,8 @@ public partial class App : Application
         this._logger = logger;
         this.MainWindow = mainWindow;
 
+        this.MainWindow.Show();
+
         // グローバル例外処理のイベントハンドラを設定
         AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
