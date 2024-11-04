@@ -6,6 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.App.ReservationApp.Views.Login;
+using AloeReservationGrid.App.ReservationApp.Views.Maint;
+using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.CoreLib.Mvvm;
 using Reactive.Bindings.Extensions;
 
@@ -13,59 +16,79 @@ namespace AloeReservationGrid.App.ReservationApp.ViewModels;
 
 public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
-    public ReactivePropertySlim<bool> IsWindowVisible { get; }
-
-    public ReactiveCommandSlim ShowWindowCommand { get; }
-    public ReactiveCommandSlim HideWindowCommand { get; }
-    public ReactiveCommandSlim ExitApplicationCommand { get; }
+    public ReactiveCommandSlim ShowReservationMainWindowCommand { get; } = new();
+    public ReactiveCommandSlim ShowXxxWindowCommand { get; } = new();
+    public ReactiveCommandSlim ShowMaintenanceWindowCommand { get; } = new();
+    public ReactiveCommandSlim ShowLoginWindowCommand { get; } = new();
+    public ReactiveCommandSlim RestartAppCommand { get; } = new();
+    public ReactiveCommandSlim ExitAppCommand { get; } = new();
 
     public NotifyIconViewModel()
     {
-        // 初期状態：メインウィンドウが表示されていない状態を設定
-        this.IsWindowVisible = new ReactivePropertySlim<bool>(false);
+        this.ShowReservationMainWindowCommand
+            .Subscribe(this.ShowReservationMainWindow)
+            .AddTo(this.Disposables);
 
-        // ShowWindowCommand: ウィンドウが非表示のときのみ有効
-        this.ShowWindowCommand = this.IsWindowVisible
-            .Inverse() // 反転（IsWindowVisible が false のときに true になる）
-            .ToReactiveCommandSlim();
-        this.ShowWindowCommand.Subscribe(this.ShowWindow).AddTo(this.Disposables);
+        this.ShowMaintenanceWindowCommand
+            .Subscribe(this.ShowMaintenanceWindow)
+            .AddTo(this.Disposables);
 
-        // HideWindowCommand: ウィンドウが表示されているときのみ有効
-        this.HideWindowCommand = this.IsWindowVisible
-            .ToReactiveCommandSlim();
-        this.HideWindowCommand.Subscribe(this.HideWindow).AddTo(this.Disposables);
+        this.ShowLoginWindowCommand
+            .Subscribe(this.ShowLoginWindow)
+            .AddTo(this.Disposables);
 
-        // ExitApplicationCommand: 常に実行可能
-        this.ExitApplicationCommand = new ReactiveCommandSlim();
-        this.ExitApplicationCommand.Subscribe(this.ExitApplication).AddTo(this.Disposables);
+        this.RestartAppCommand
+            .Subscribe(this.RestartApplication)
+            .AddTo(this.Disposables);
 
-        if (Application.Current.MainWindow != null)
+        this.ExitAppCommand
+            .Subscribe(this.ExitApplication)
+            .AddTo(this.Disposables);
+    }
+
+    //private void ShowWindow(Type type)
+    //{
+    //    // ログインしてなければ、ログイン画面を表示？
+    //    // 自動ログアウトして、ログイン時に再開したいなら、閉じないで非表示にしておけばよいか？
+    //}
+
+    private void ShowWindow(Type type)
+    {
+        var window = Application.Current.Windows
+            .Cast<Window>()
+            .FirstOrDefault(x => x.GetType() == type);
+
+        if (window == null)
         {
-            // ウィンドウを閉じてもアプリが終了しないようにする
-            Application.Current.MainWindow.Closing += (sender, e) =>
-            {
-                if (sender is Window w)
-                {
-                    e.Cancel = true;
-                    w.Hide();
-                }
-
-                this.IsWindowVisible.Value = false;
-            };
+            window = App.Resolve(type) as Window;
+            window?.Show();
+        }
+        else
+        {
+            window.ActivateOrShow();
         }
     }
 
-    private void ShowWindow()
+    private void ShowReservationMainWindow()
     {
-        // TODO: ついでに最前面表示にしたい
-        Application.Current.MainWindow?.Show();
-        this.IsWindowVisible.Value = true;
+        Application.Current.MainWindow?.ActivateOrShow();
     }
 
-    private void HideWindow()
+    private void ShowMaintenanceWindow()
     {
-        Application.Current.MainWindow?.Hide();
-        this.IsWindowVisible.Value = false;
+        this.ShowWindow(typeof(MaintenanceWindow));
+    }
+
+    private void ShowLoginWindow()
+    {
+        this.ShowWindow(typeof(LoginWindow));
+    }
+
+    private void RestartApplication()
+    {
+        // TODO: リスタート
+        // 引数も同じにしておく必要がありそう
+        throw new NotImplementedException();
     }
 
     private void ExitApplication()

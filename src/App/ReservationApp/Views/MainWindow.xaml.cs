@@ -36,32 +36,32 @@ public partial class MainWindow : Window
 
     private async void ButtonBase_OnClick(object sender, RoutedEventArgs e)
     {
-        // Connect to the server using gRPC channel.
-        var channel = GrpcChannel.ForAddress($"http://{this._grpcConfig.IPAddress}:{this._grpcConfig.Port}");
+        //// Connect to the server using gRPC channel.
+        //var channel = GrpcChannel.ForAddress($"http://{this._grpcConfig.IPAddress}:{this._grpcConfig.Port}");
 
-        // NOTE: If your project targets non-.NET Standard 2.1, use `Grpc.Core.Channel` class instead.
-        // var channel = new Channel("localhost", 5001, new SslCredentials());
+        //// NOTE: If your project targets non-.NET Standard 2.1, use `Grpc.Core.Channel` class instead.
+        //// var channel = new Channel("localhost", 5001, new SslCredentials());
 
-        // Create a proxy to call the server transparently.
-        var client = MagicOnionClient.Create<IMyFirstService>(channel);
+        //// Create a proxy to call the server transparently.
+        //var client = MagicOnionClient.Create<IMyFirstService>(channel);
 
-        // Call the server-side method using the proxy.
-        var result = await client.SumAsync(123, 456);
-        Console.WriteLine($"Result: {result}");
+        //// Call the server-side method using the proxy.
+        //var result = await client.SumAsync(123, 456);
+        //Console.WriteLine($"Result: {result}");
     }
 
     private async void ButtonBase2_OnClick(object sender, RoutedEventArgs e)
     {
-        var channel = GrpcChannel.ForAddress($"http://{this._grpcConfig.IPAddress}:{this._grpcConfig.Port}");
-        var client = await StreamingHubClient.ConnectAsync<IGamingHub, IGamingHubReceiver>(channel, this._receiver);
+        //var channel = GrpcChannel.ForAddress($"http://{this._grpcConfig.IPAddress}:{this._grpcConfig.Port}");
+        //var client = await StreamingHubClient.ConnectAsync<IGamingHub, IGamingHubReceiver>(channel, this._receiver);
 
-        // 通常のメソッド呼び出しのように AddAsync を使用
-        var result = await client.JoinAsync("room 1", "user 1");
-        Console.WriteLine($"Result of AddAsync: {result[0].Name}"); // 出力: Result of AddAsync: 30
+        //// 通常のメソッド呼び出しのように AddAsync を使用
+        //var result = await client.JoinAsync("room 1", "user 1");
+        //Console.WriteLine($"Result of AddAsync: {result[0].Name}"); // 出力: Result of AddAsync: 30
 
-        // 必要に応じてStreamingHubの接続を切断
-        await client.LeaveAsync();
-        await client.DisposeAsync();
+        //// 必要に応じてStreamingHubの接続を切断
+        //await client.LeaveAsync();
+        //await client.DisposeAsync();
     }
 
     private readonly GamingHubReceiver _receiver = new();

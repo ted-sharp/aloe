@@ -1,10 +1,14 @@
-﻿using System.Configuration;
+﻿using System;
+using System.Configuration;
 using System.Data;
 using System.Windows;
 using System.Windows.Threading;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
+using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.CoreLib.Logging;
+using CommunityToolkit.Diagnostics;
 using H.NotifyIcon;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace AloeReservationGrid.App.ReservationApp;
@@ -14,52 +18,54 @@ namespace AloeReservationGrid.App.ReservationApp;
 /// </summary>
 public partial class App : Application
 {
+    #region static for ResolveExtension
+
+    private static IServiceProvider? s_services;
+
+    public static IServiceProvider Services
+    {
+        get => App.s_services ?? throw new InvalidOperationException("Service provider is not initialized.");
+        private set => App.s_services = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public static object Resolve(Type type)
+    {
+        return App.Services.GetService(type)!;
+    }
+
+    #endregion static for ResolveExtension
+
     private readonly ILogger _logger;
 
     private TaskbarIcon? _notifyIcon;
 
     public App(
+        IServiceProvider services,
         ILogger<App> logger,
-        MainWindow mainWindow)
+        ReservationMainWindow mainWindow)
     {
+        App.Services = services;
         this._logger = logger;
-        this.MainWindow = mainWindow;
 
-        this.MainWindow.Show();
+        this.RegisterUnhandledExceptionHandlers();
 
-        // グローバル例外処理のイベントハンドラを設定
+        this.InitializeMainWindow(mainWindow);
+    }
+
+    #region UnhandledException
+
+    private void RegisterUnhandledExceptionHandlers()
+    {
         AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
         this.DispatcherUnhandledException += this.App_DispatcherUnhandledException;
-
     }
 
-    protected override void OnStartup(StartupEventArgs e)
+    private void UnregisterUnhandledExceptionHandlers()
     {
-        base.OnStartup(e);
-
-        var resourceDictionary = new ResourceDictionary
-        {
-            Source = new Uri("/Views/NotifyIconResources.xaml", UriKind.Relative),
-        };
-
-        // 必要なリソースを参照して使用する
-        this._notifyIcon = (TaskbarIcon)resourceDictionary["NotifyIcon"];
-        this._notifyIcon.DataContext = new NotifyIconViewModel();
-        this._notifyIcon.ForceCreate();
-    }
-
-    protected override void OnExit(ExitEventArgs e)
-    {
-        // アイコンのクリーンアップ
-        this._notifyIcon?.Dispose();
-
-        // グローバル例外処理のイベントハンドラを解除
         AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException -= this.TaskScheduler_UnobservedTaskException;
         this.DispatcherUnhandledException -= this.App_DispatcherUnhandledException;
-
-        base.OnExit(e);
     }
 
     // 非UIスレッドでの未処理例外を補足する
@@ -98,5 +104,60 @@ public partial class App : Application
         // 例外が処理されたことを通知し、アプリケーションが強制終了しないようにする
         e.Handled = true;
     }
+
+    #endregion UnhandledException
+
+    private void InitializeMainWindow(ReservationMainWindow mainWindow)
+    {
+        this.MainWindow = mainWindow;
+
+        // ウィンドウを閉じてもアプリが終了しないようにする
+        this.MainWindow.Closing += (sender, e) =>
+        {
+            if (sender is Window w)
+            {
+                e.Cancel = true;
+                w.Hide();
+            }
+        };
+
+        // TODO: ログイン画面を表示して、ログインできたらメイン画面を表示する
+        // あと各ページを表示するコマンドにログインしているかどうかの確認を含める？
+        this.MainWindow.Show();
+
+    }
+
+    protected override void OnStartup(StartupEventArgs e)
+    {
+        base.OnStartup(e);
+        this.InitializeNotifyIcon();
+    }
+
+    private void InitializeNotifyIcon()
+    {
+        var resources = new ResourceDictionary
+        {
+            Source = new Uri("/Views/Tray/NotifyIconResources.xaml", UriKind.Relative),
+        };
+
+        // 必要なリソースを参照して使用する
+        if (resources["NotifyIcon"] is TaskbarIcon notifyIcon)
+        {
+            this._notifyIcon = notifyIcon;
+            this._notifyIcon.ForceCreate();
+        }
+    }
+
+    protected override void OnExit(ExitEventArgs e)
+    {
+        // アイコンのクリーンアップ
+        this._notifyIcon?.Dispose();
+        this._notifyIcon = null;
+
+        this.UnregisterUnhandledExceptionHandlers();
+
+        base.OnExit(e);
+    }
+
 }
 

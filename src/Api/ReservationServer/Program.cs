@@ -1,9 +1,16 @@
-
+ï»¿
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Net;
 using System.Reflection.PortableExecutable;
+using AloeReservationGrid.Api.ReservationServer.Data.EFCore;
+using AloeReservationGrid.Api.ReservationServer.Data.Repos;
+using Microsoft.EntityFrameworkCore;
+using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
+using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
+using AloeReservationGrid.Lib.CoreLib.Interfaces;
+using AloeReservationGrid.Api.ReservationServer.Uuid;
 
 namespace AloeReservationGrid.Api.ReservationServer;
 
@@ -11,8 +18,9 @@ internal static class Program
 {
     internal static void Main(string[] args)
     {
-        var host = WebApplication.CreateBuilder(args)
+        var host = WebApplication.CreateSlimBuilder(args)
             .ConfigureBuilder()
+            .ConfigureKestrel()
             .Build();
 
         host.ConfigureApp()
@@ -22,22 +30,21 @@ internal static class Program
     #region ConfigureBuilder
 
     /// <summary>
-    /// \¬‚Ì’Ç‰Á‚ğs‚¢‚Ü‚·B
+    /// æ§‹æˆã®è¿½åŠ ã‚’è¡Œã„ã¾ã™ã€‚
     /// </summary>
     private static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder)
     {
         builder
             .AddSerilog()
             .AddSwagger()
-            .AddMagicOnion();
-
-        builder.WithoutTls();
+            .AddMagicOnion()
+            .AddPostgreSql();
 
         return builder;
     }
 
     /// <summary>
-    /// Serilog ‚ğ—LŒø‚É‚µ‚Ü‚·B
+    /// Serilog ã‚’æœ‰åŠ¹ã«ã—ã¾ã™ã€‚
     /// </summary>
     private static IHostApplicationBuilder AddSerilog(this IHostApplicationBuilder builder)
     {
@@ -57,7 +64,7 @@ internal static class Program
     }
 
     /// <summary>
-    /// Swagger ‚ğ’Ç‰Á‚µ‚Ü‚·B
+    /// Swagger ã‚’è¿½åŠ ã—ã¾ã™ã€‚
     /// </summary>
     private static IHostApplicationBuilder AddSwagger(this IHostApplicationBuilder builder)
     {
@@ -69,49 +76,56 @@ internal static class Program
     }
 
     /// <summary>
-    /// gRPC ‚Æ MagicOnion ‚ğ’Ç‰Á‚µ‚Ü‚·B
+    /// gRPC ã¨ MagicOnion ã¨é–¢é€£ã‚¯ãƒ©ã‚¹ã‚’è¿½åŠ ã—ã¾ã™ã€‚
     /// </summary>
+    /// <remarks>
+    /// å¤šé‡ã®ãƒã‚¤ãƒŠãƒªã‚’æ‰±ã†å ´åˆã¯ StreamingHub ã§ MemoryPack ã‚’ä½¿ç”¨ã™ã‚‹ã“ã¨ã‚’æ¤œè¨ã—ã¾ã™ã€‚
+    /// </remarks>
     private static IHostApplicationBuilder AddMagicOnion(this IHostApplicationBuilder builder)
     {
-        // TODO: ƒoƒCƒiƒŠ‚ğ‚â‚èæ‚è‚·‚éê‡‚Í•ÊExe‚ÅMemoryPack‚Ì‘Ò‚¿ó‚¯‚ğŠJn‚·‚é‚Ì‚ª‚æ‚³‚»‚¤
         builder.Services.AddGrpc();
         builder.Services.AddMagicOnion();
+
+        builder.Services.AddScoped<IAuthService, AuthService>();
+
         return builder;
     }
 
-    private static WebApplicationBuilder WithoutTls(this WebApplicationBuilder builder)
+    /// <summary>
+    /// PostgreSQL(EFCore) ã¨é–¢é€£ã‚¯ãƒ©ã‚¹ã‚’è¿½åŠ ã—ã¾ã™ã€‚
+    /// </summary>
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder)
+    {
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+
+        builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connStr));
+
+        builder.Services.AddSingleton<IUuidGenerator, PostgreSqlUuidGenerator>();
+
+        builder.Services.AddScoped<IAuthService, AuthService>();
+
+        return builder;
+    }
+
+    #endregion ConfigureBuilder
+
+    #region ConfigureKestrel
+
+    private static WebApplicationBuilder ConfigureKestrel(this WebApplicationBuilder builder)
     {
         builder.WebHost.ConfigureKestrel((context, options) =>
         {
-            var kestrelConfig = context.Configuration.GetSection("gRpcConfig");
-            var ip = kestrelConfig.GetValue<string>("IPAddress");
-            var addr = IPAddress.Parse(ip);
-            var port = kestrelConfig.GetValue<int>("Port");
-
-            // Setup a HTTP/2 endpoint without TLS.
-            options.Listen(addr, port,
-                o => o.Protocols = HttpProtocols.Http2);
+            options.Configure(context.Configuration.GetSection("Kestrel"));
         });
         return builder;
     }
 
-    ///// <summary>
-    ///// DI‚É•K—v‚ÈƒNƒ‰ƒX‚ğ“o˜^‚µ‚Ü‚·B
-    ///// </summary>
-    //private static IHostApplicationBuilder AddServices(this IHostApplicationBuilder builder)
-    //{
-    //    //builder.Services.AddHostedService<WpfHostService>();
-    //    //builder.Services.AddSingleton<Application, App>();
-    //    //builder.Services.AddTransient<MainWindow>();
-    //    return builder;
-    //}
-
-    #endregion ConfigureBuilder
+    #endregion ConfigureKestrel
 
     #region ConfigureApp
 
     /// <summary>
-    /// ƒzƒXƒg‚ğİ’è‚µ‚Ü‚·B
+    /// ãƒ›ã‚¹ãƒˆã‚’è¨­å®šã—ã¾ã™ã€‚
     /// </summary>
     private static WebApplication ConfigureApp(this WebApplication host)
     {

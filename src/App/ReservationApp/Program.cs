@@ -4,6 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.App.ReservationApp.ViewModels;
+using AloeReservationGrid.App.ReservationApp.Views.Login;
+using AloeReservationGrid.App.ReservationApp.Views.Maint;
+using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.CoreLib.Logging;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
 using MagicOnion;
@@ -67,10 +71,22 @@ internal static class Program
     {
         builder.Services.AddHostedService<WpfHostService>();
 
-        builder.Services.Configure<GrpcConfig>(builder.Configuration.GetSection("GrpcConfig"));
+        builder.Services.Configure<GrpcConfig>(builder.Configuration.GetSection("Client:Targets:gRPC"));
 
         builder.Services.AddSingleton<Application, App>();
-        builder.Services.AddTransient<MainWindow>();
+        builder.Services.AddSingleton<NotifyIconViewModel>();
+
+        builder.Services.AddTransient<LoginWindow>();
+        builder.Services.AddTransient<ReservationMainWindow>();
+        builder.Services.AddTransient<ReservationEquipWindow>();
+        builder.Services.AddTransient<ReservationEquipBookingWindow>();
+        builder.Services.AddTransient<ReservationDailyWindow>();
+        builder.Services.AddTransient<ReservationDailyBookingWindow>();
+        //builder.Services.AddTransient<OrganizationWindow>();
+        //builder.Services.AddTransient<PatientWindow>();
+        //builder.Services.AddTransient<OrganizationPatientSearchWindow>();
+        builder.Services.AddTransient<MaintenanceWindow>();
+
         return builder;
     }
 
