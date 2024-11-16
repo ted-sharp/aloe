@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("reservation_equipments")]
-public class ReservationEquipment
+public class ReservationEquipment : AuditableEntityBase<int>
 {
+    public override int Id => this.EquipId;
+
     [Key]
     [Column("equip_id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int EquipId { get; set; }
 
-    [Column("floor_name")]
+    [Column("equip_name")]
     [Required]
     [MaxLength(Int32.MaxValue)]
-    public string FloorName { get; set; } = String.Empty;
+    public string EquipName { get; set; } = String.Empty;
 
     [Column("equip_desc")]
     [Required]
@@ -29,20 +31,4 @@ public class ReservationEquipment
     [Column("seq")]
     [Required]
     public int Seq { get; set; } = 0;
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    [Column("updated_at")]
-    [Required]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_user_id")]
-    [Required]
-    public int UpdatedUserId { get; set; } = 0;
-
-    [Column("updated_session_id")]
-    [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
 }

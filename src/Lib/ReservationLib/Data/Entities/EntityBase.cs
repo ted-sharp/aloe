@@ -7,6 +7,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
+using Microsoft.EntityFrameworkCore;
 
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
@@ -28,8 +29,8 @@ public interface IAuditableEntity
 }
 
 public abstract class AuditableEntityBase<TKey> : IAuditableEntity
-    where TKey : struct
 {
+    [NotMapped]
     public abstract TKey Id { get; }
 
     [Column("created_at")]
@@ -59,23 +60,20 @@ public abstract class AuditableEntityBase<TKey> : IAuditableEntity
     [Column("is_deleted")]
     [Required]
     public bool IsDeleted { get; set; } = false;
-}
 
-public static class AuditableEntityExtensions
-{
-    public static IAuditableEntity SetCreatedSession(this IAuditableEntity auditableEntity, SessionDto session, DateTime now)
+    public AuditableEntityBase<TKey> SetCreatedSession(SessionDto session, DateTime now)
     {
-        auditableEntity.CreatedAt = now;
-        auditableEntity.CreatedSessionId = session.SessionId;
-        auditableEntity.CreatedUserId = session.UserId;
-        return auditableEntity;
+        this.CreatedAt = now;
+        this.CreatedSessionId = session.SessionId;
+        this.CreatedUserId = session.UserId;
+        return this;
     }
 
-    public static IAuditableEntity SetUpdatedSession(this IAuditableEntity auditableEntity, SessionDto session, DateTime now)
+    public AuditableEntityBase<TKey> SetUpdatedSession(SessionDto session, DateTime now)
     {
-        auditableEntity.UpdatedAt = now;
-        auditableEntity.UpdatedSessionId = session.SessionId;
-        auditableEntity.UpdatedUserId = session.UserId;
-        return auditableEntity;
+        this.UpdatedAt = now;
+        this.UpdatedSessionId = session.SessionId;
+        this.UpdatedUserId = session.UserId;
+        return this;
     }
 }

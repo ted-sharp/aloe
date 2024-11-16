@@ -10,6 +10,7 @@ namespace AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 /// <summary>
 /// 最低限の項目を扱うための DTO(Data Transfer Object) クラスです。
 /// gRPC通信でシリアライズ/デシリアライズを行うため、MessagePackの属性を付与しています。
+/// gRPC以外でDtoを必要とする場合は ValueTuple を検討します。
 /// </summary>
 [MessagePackObject]
 public class SampleDto

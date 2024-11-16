@@ -42,7 +42,7 @@ public class ResolveExtension : MarkupExtension
     /// <remarks>
     /// <c>IHost</c> の DI コンテナで解決したいため、<c>App.Resolve()</c> を呼んでいます。
     /// </remarks>
-    public override object ProvideValue(IServiceProvider wpfServiceProvider)
+    public override object? ProvideValue(IServiceProvider wpfServiceProvider)
     {
         return App.Resolve(this._type);
     }

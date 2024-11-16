@@ -6,6 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AloeReservationGrid.Lib.CoreLib.Security;
 
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
@@ -42,7 +43,7 @@ public class User : AuditableEntityBase<int>
 
     public DateTime ExpireDate { get; set; } = DateTime.UtcNow;
 
-    public int FailedCount { get; set; } = 0;
+    public int FailedAttemptCount { get; set; } = 0;
 
     public DateTime LockedUntilAt { get; set; } = DateTime.UtcNow;
 
@@ -51,7 +52,44 @@ public class User : AuditableEntityBase<int>
     public DateTime LastLogoutAt { get; set; } = DateTime.UtcNow;
 
     [Required]
-    public JObject UserInfo { get; set; } = new JObject();
+    public string UserInfo { get; set; } = String.Empty;
+
+    #region Method
+
+    /// <summary>
+    /// パスワードが正しいかどうか検証します。
+    /// </summary>
+    public bool VerifyPassword(string password)
+    {
+        return PasswordHasher.Default.VerifyPassword(password, this.PasswordHash, this.PasswordSalt);
+    }
+
+    /// <summary>
+    /// ログイン失敗時の処理を行います。
+    /// 失敗回数をインクリメントし、試行回数が超えていたら指定秒数間ログインできないようにロックします。
+    /// </summary>
+    public void FailLogin(int maxFailedAttempts, int lockingSeconds, DateTime now)
+    {
+        this.FailedAttemptCount++;
+
+        if (this.FailedAttemptCount >= maxFailedAttempts)
+        {
+            this.FailedAttemptCount = 0;
+            this.LockedUntilAt = now.AddSeconds(lockingSeconds);
+        }
+    }
+
+    public bool IsLocked(DateTime currentTime)
+    {
+        return this.LockedUntilAt > currentTime;
+    }
+
+    public bool IsExpired(DateTime currentDate)
+    {
+        return this.ExpireDate < currentDate;
+    }
+
+    #endregion Method
 }
 
 

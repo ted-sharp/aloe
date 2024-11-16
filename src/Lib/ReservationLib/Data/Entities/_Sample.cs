@@ -10,8 +10,9 @@ namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 /// <summary>
 /// EFCore で使用するテーブルマッピング用のクラスです。
-/// EntityBase は共通列を定義したクラスです。
+/// <see cref="AuditableEntityBase{TKey}"/> は共通列を定義したクラスです。
 /// </summary>
+[Table("samples")]
 public class Sample : AuditableEntityBase<int>
 {
     public override int Id => this.SampleId;
@@ -24,12 +25,4 @@ public class Sample : AuditableEntityBase<int>
     [Column("name")]
     [Required]
     public required string Name { get; set; }
-
-    [Column("display_name")]
-    [Required]
-    public required string DisplayName { get; set; }
-
-    [Column("birth_date")]
-    [Required]
-    public required DateTime? BirthDate { get; set; }
 }

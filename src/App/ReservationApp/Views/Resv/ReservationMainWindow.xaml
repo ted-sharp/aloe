@@ -4,13 +4,40 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AloeReservationGrid.App.ReservationApp.Views.Resv"
+        xmlns:vm="clr-namespace:AloeReservationGrid.App.ReservationApp.ViewModels"
         mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance Type=vm:ReservationMainViewModel}"
         Title="MainWindow" Height="450" Width="800">
-    <Grid>
-        <StackPanel>
-            <Button Content="test" Click="ButtonBase_OnClick"/>
-            <Button Content="test Hub" Click="ButtonBase2_OnClick"/>
-        </StackPanel>
 
-    </Grid>
+    <StackPanel>
+        <Grid x:Name="HeaderGrid">
+            <!--<Grid.ColumnDefinitions>
+                <ColumnDefinition Width="{Binding ElementName=A1, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=B1, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=C1, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=A2, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=B2, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=C2, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=A3, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=B3, Path=ActualWidth, Mode=OneWay}"/>
+                <ColumnDefinition Width="{Binding ElementName=C3, Path=ActualWidth, Mode=OneWay}"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.ColumnSpan="3" Grid.Column="0" Content="First dude"/>
+            <Label Grid.ColumnSpan="3" Grid.Column="3" Content="Second dude"/>
+            <Label Grid.ColumnSpan="3" Grid.Column="6" Content="Third dude"/>-->
+        </Grid>
+        <DataGrid x:Name="BodyDataGrid" AutoGenerateColumns="False">
+            <!--<DataGrid.Columns>
+                <DataGridTextColumn x:Name="A1" Header="First"/>
+                <DataGridTextColumn x:Name="B1" Header="B"/>
+                <DataGridTextColumn x:Name="C1" Header="C"/>
+                <DataGridTextColumn x:Name="A2" Header="First"/>
+                <DataGridTextColumn x:Name="B2" Header="B"/>
+                <DataGridTextColumn x:Name="C2" Header="C"/>
+                <DataGridTextColumn x:Name="A3" Header="First"/>
+                <DataGridTextColumn x:Name="B3" Header="B"/>
+                <DataGridTextColumn x:Name="C3" Header="C"/>
+            </DataGrid.Columns>-->
+        </DataGrid>
+    </StackPanel>
 </Window>

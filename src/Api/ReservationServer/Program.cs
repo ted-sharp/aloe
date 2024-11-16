@@ -4,13 +4,17 @@ using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Net;
 using System.Reflection.PortableExecutable;
-using AloeReservationGrid.Api.ReservationServer.Data.EFCore;
-using AloeReservationGrid.Api.ReservationServer.Data.Repos;
 using Microsoft.EntityFrameworkCore;
 using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
-using AloeReservationGrid.Lib.CoreLib.Interfaces;
 using AloeReservationGrid.Api.ReservationServer.Uuid;
+using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
+using AloeReservationGrid.Lib.ReservationLib.Domain.Services;
+using MagicOnion.Server;
+using MagicOnion;
+using AloeReservationGrid.Lib.CoreLib.Security;
+using MagicOnion.Serialization.MessagePack;
+using MagicOnion.Serialization;
 
 namespace AloeReservationGrid.Api.ReservationServer;
 
@@ -37,8 +41,9 @@ internal static class Program
         builder
             .AddSerilog()
             .AddSwagger()
-            .AddMagicOnion()
-            .AddPostgreSql();
+            .AddPostgreSql()
+            .AddDomainServices()
+            .AddMagicOnionServer();
 
         return builder;
     }
@@ -76,22 +81,6 @@ internal static class Program
     }
 
     /// <summary>
-    /// gRPC と MagicOnion と関連クラスを追加します。
-    /// </summary>
-    /// <remarks>
-    /// 多量のバイナリを扱う場合は StreamingHub で MemoryPack を使用することを検討します。
-    /// </remarks>
-    private static IHostApplicationBuilder AddMagicOnion(this IHostApplicationBuilder builder)
-    {
-        builder.Services.AddGrpc();
-        builder.Services.AddMagicOnion();
-
-        builder.Services.AddScoped<IAuthService, AuthService>();
-
-        return builder;
-    }
-
-    /// <summary>
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
     private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder)
@@ -100,9 +89,38 @@ internal static class Program
 
         builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connStr));
 
-        builder.Services.AddSingleton<IUuidGenerator, PostgreSqlUuidGenerator>();
+        return builder;
+    }
 
-        builder.Services.AddScoped<IAuthService, AuthService>();
+    /// <summary>
+    /// ドメインサービスクラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
+
+        builder.Services.AddScoped<IPolicyService, PolicyService>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// gRPC と MagicOnion と関連クラスを追加します。
+    /// </summary>
+    /// <remarks>
+    /// 多量のバイナリを扱う場合は StreamingHub で MemoryPack を使用することを検討します。
+    /// </remarks>
+    private static IHostApplicationBuilder AddMagicOnionServer(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddGrpc();
+        //builder.Services.AddMagicOnion();
+        builder.Services.AddMagicOnion(options =>
+        {
+            options.IsReturnExceptionStackTraceInErrorDetail = true;
+        });
+
+        // 各種サービス登録は不要で、Build() したあとに host.MapMagicOnionService(); を呼べばよい
+        //builder.Services.AddScoped<IAuthGrpcService, AuthGrpcService>();
 
         return builder;
     }

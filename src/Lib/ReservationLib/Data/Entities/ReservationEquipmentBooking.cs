@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("reservation_equipment_bookings")]
-public class ReservationEquipmentBooking
+public class ReservationEquipmentBooking : AuditableEntityBase<int>
 {
+    public override int Id => this.ResvEquipBkgId;
+
     [Key]
     [Column("resv_equip_bkg_id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -65,20 +67,4 @@ public class ReservationEquipmentBooking
     [Column("sub_order_id")]
     [Required]
     public int SubOrderId { get; set; } = 0;
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    [Column("updated_at")]
-    [Required]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_user_id")]
-    [Required]
-    public int UpdatedUserId { get; set; } = 0;
-
-    [Column("updated_session_id")]
-    [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
 }

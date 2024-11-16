@@ -11,13 +11,18 @@ internal static class WindowExtensions
     public static void ActivateOrShow(this Window window)
     {
         ArgumentNullException.ThrowIfNull(window);
-        if (window.Visibility == Visibility.Visible)
+
+        // UIスレッド以外からの呼び出しを考慮
+        Application.Current.Dispatcher.Invoke(() =>
         {
-            window.Activate();
-        }
-        else
-        {
-            window.Show();
-        }
+            if (window.Visibility == Visibility.Visible)
+            {
+                window.Activate();
+            }
+            else
+            {
+                window.Show();
+            }
+        });
     }
 }

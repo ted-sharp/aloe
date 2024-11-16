@@ -7,9 +7,12 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
+
 [Table("reservation_floors")]
-public class ReservationFloor
+public class ReservationFloor : AuditableEntityBase<int>
 {
+    public override int Id => this.FloorId;
+
     [Key]
     [Column("floor_id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -28,21 +31,5 @@ public class ReservationFloor
     [Column("seq")]
     [Required]
     public int Seq { get; set; } = 0;
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    [Column("updated_at")]
-    [Required]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_user_id")]
-    [Required]
-    public int UpdatedUserId { get; set; } = 0;
-
-    [Column("updated_session_id")]
-    [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
 }
 

@@ -1,11 +1,7 @@
-﻿using MessagePack;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
+using MessagePack;
 
-namespace AloeReservationGrid.Lib.ReservationLib.Data.Dto;
+namespace AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 
 [MessagePackObject]
 public class UserDto
@@ -14,5 +10,17 @@ public class UserDto
     public required int UserId { get; set; }
 
     [Key(1)]
-    public required string Name { get; set; }
+    public required string DisplayName { get; set; }
+}
+
+public static class UserExtensions
+{
+    public static UserDto ToUserDto(this User user)
+    {
+        return new UserDto
+        {
+            UserId = user.UserId,
+            DisplayName = user.DisplayName,
+        };
+    }
 }

@@ -1,19 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.CoreLib.Logging;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
+using Grpc.Net.Client;
 using MagicOnion;
+using MagicOnion.Client;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
 
@@ -21,6 +27,10 @@ namespace AloeReservationGrid.App.ReservationApp;
 
 internal static class Program
 {
+    /// <summary>
+    /// プログラムのエントリポイントです。
+    /// Program.Main → WpfHostService.StartAsync → App と呼び出されます。
+    /// </summary>
     [STAThread]
     internal static void Main(string[] args)
     {
@@ -39,7 +49,8 @@ internal static class Program
     {
         builder
             .AddSerilog()
-            .AddServices();
+            .AddServices()
+            .AddMagicOnionClient();
 
         return builder;
     }
@@ -76,6 +87,9 @@ internal static class Program
         builder.Services.AddSingleton<Application, App>();
         builder.Services.AddSingleton<NotifyIconViewModel>();
 
+        builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<ReservationMainViewModel>();
+
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddTransient<ReservationMainWindow>();
         builder.Services.AddTransient<ReservationEquipWindow>();
@@ -86,6 +100,40 @@ internal static class Program
         //builder.Services.AddTransient<PatientWindow>();
         //builder.Services.AddTransient<OrganizationPatientSearchWindow>();
         builder.Services.AddTransient<MaintenanceWindow>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// gRPC と MagicOnion と関連クラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddMagicOnionClient(this IHostApplicationBuilder builder)
+    {
+        // クライアントの gRPC ターゲット設定を読み取る
+        var grpcConfigSection = builder.Configuration.GetSection("Client:Targets:gRPC");
+
+        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
+        if (String.IsNullOrEmpty(grpcUrl))
+        {
+            throw new InvalidOperationException("gRPC URL is not configured.");
+        }
+
+        // GrpcChannel を登録
+        builder.Services.AddSingleton(serviceProvider =>
+        {
+            return GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
+            {
+                HttpHandler = new HttpClientHandler()
+            });
+        });
+
+        // MagicOnion クライアントを登録
+        builder.Services.AddSingleton<IAuthGrpcService>(serviceProvider =>
+        {
+            // GrpcChannel を取得し MagicOnion クライアントを作成
+            var channel = serviceProvider.GetRequiredService<GrpcChannel>();
+            return MagicOnionClient.Create<IAuthGrpcService>(channel);
+        });
 
         return builder;
     }

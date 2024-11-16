@@ -1,5 +1,13 @@
-﻿using System.Diagnostics;
+﻿using System.ComponentModel;
+using System.Data;
+using System.Data.Common;
+using System.Diagnostics;
+using System.Globalization;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using AloeReservationGrid.App.ReservationApp.ViewModels;
+using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 using Grpc.Net.Client;
@@ -13,71 +21,82 @@ namespace AloeReservationGrid.App.ReservationApp.Views.Resv;
 /// </summary>
 public partial class ReservationMainWindow : Window
 {
-    private readonly GrpcConfig _grpcConfig;
+    private ReservationMainViewModel _vm;
 
-    public ReservationMainWindow(IOptions<GrpcConfig> grpcConfig)
+    public ReservationMainWindow(ReservationMainViewModel vm)
     {
         this.InitializeComponent();
 
-        this._grpcConfig = grpcConfig.Value;
+        this._vm = vm;
+        this.DataContext = vm;
+
+        this.GenerateBodyDataGrid();
+        this.GenerateHeaderGrid();
     }
 
-    private async void ButtonBase_OnClick(object sender, RoutedEventArgs e)
+    private void GenerateBodyDataGrid()
     {
-        // Connect to the server using gRPC channel.
-        var channel = GrpcChannel.ForAddress(this._grpcConfig.Url);
+        this.BodyDataGrid.Columns.Clear();
+        this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn("Room", "Room"));
 
-        // Create a proxy to call the server transparently.
-        var client = MagicOnionClient.Create<IMyFirstService>(channel);
-
-        // Call the server-side method using the proxy.
-        var result = await client.SumAsync(123, 456);
-        Debug.WriteLine($"Result: {result}");
+        var max = this._vm.OffsetDayCount.Value;
+        for (var i = 0; i < max; i++)
+        {
+            this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn($"C{i}AM", "AM"));
+            this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn($"C{i}PM", "PM"));
+        }
     }
 
-    private async void ButtonBase2_OnClick(object sender, RoutedEventArgs e)
+    private DataGridTextColumn CreateDataGridColumn(string name, string header)
     {
-        //var channel = GrpcChannel.ForAddress(this._grpcConfig.Url);
-        //var client = await StreamingHubClient.ConnectAsync<IGamingHub, IGamingHubReceiver>(channel, this._receiver);
-
-        //// 通常のメソッド呼び出しのように AddAsync を使用
-        //var result = await client.JoinAsync("room 1", "user 1");
-        //Debug.WriteLine($"Result of AddAsync: {result[0].Name}"); // 出力: Result of AddAsync: 30
-
-        //// 必要に応じてStreamingHubの接続を切断
-        //await client.LeaveAsync();
-        //await client.DisposeAsync();
+        var col = new DataGridTextColumn { Header = header };
+        this.RegisterName(name, col);
+        return col;
     }
 
-    //private readonly GamingHubReceiver _receiver = new();
+    private void GenerateHeaderGrid()
+    {
+        this.HeaderGrid.ColumnDefinitions.Clear();
 
-    //// 双方向なので、クライアント側へも実装が必要
-    //public class GamingHubReceiver : IGamingHubReceiver
-    //{
-    //    // サーバーからプレイヤーが参加したことを通知された際の処理
-    //    public void OnJoin(Player player)
-    //    {
-    //        if (player != null)
-    //        {
-    //            Debug.WriteLine($"{player.Name} has joined the game.");
-    //        }
-    //        else
-    //        {
-    //            Debug.WriteLine("Received a null player on join.");
-    //        }
-    //    }
+        var currentDate = this._vm.StartDate.Value;
+        var max = this._vm.OffsetDayCount.Value;
+        for (var i = 0; i < max; i++)
+        {
+            this.HeaderGrid.ColumnDefinitions.Add(this.CreateGridColumnDefinition($"C{i}AM"));
+            this.HeaderGrid.ColumnDefinitions.Add(this.CreateGridColumnDefinition($"C{i}PM"));
+            this.HeaderGrid.Children.Add(this.CreateGridLabel(i, currentDate));
+        }
+    }
 
-    //    // サーバーからプレイヤーが退出したことを通知された際の処理
-    //    public void OnLeave(Player player)
-    //    {
-    //        if (player != null)
-    //        {
-    //            Debug.WriteLine($"{player.Name} has left the game.");
-    //        }
-    //        else
-    //        {
-    //            Debug.WriteLine("Received a null player on leave.");
-    //        }
-    //    }
-    //}
+    private ColumnDefinition CreateGridColumnDefinition(string name)
+    {
+        //< ColumnDefinition Width = "{Binding ElementName=A1, Path=ActualWidth, Mode=OneWay}" />
+
+        var col = new ColumnDefinition();
+        var binding = new Binding
+        {
+            ElementName = name,
+            Path = new PropertyPath("ActualWidth"),
+            Mode = BindingMode.OneWay,
+        };
+        //col.SetBinding(col.Width, binding);
+        return col;
+    }
+
+    private Label CreateGridLabel(int i, DateTime currentDate)
+    {
+        //<Label Grid.ColumnSpan="3" Grid.Column= "0" Content= "First dude" />
+
+        var lbl = new Label
+        {
+            Content = currentDate.AddDays(i).ToString("MM/dd"),
+        };
+        Grid.SetColumn(lbl, i * 2);
+        Grid.SetColumnSpan(lbl, 2);
+        return lbl;
+    }
+
+
+
+
 }

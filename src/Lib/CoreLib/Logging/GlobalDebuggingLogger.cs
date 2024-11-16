@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AloeReservationGrid.Lib.CoreLib.Logging;
 
+// TODO: global using はあんまりはやらなさそうなので削除予定です。
 /// <summary>
 /// global using を設定することを目的としたデバッグ用ロガーです。
 /// <example>

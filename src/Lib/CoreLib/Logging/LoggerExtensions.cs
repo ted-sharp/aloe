@@ -3,6 +3,8 @@ using Microsoft.Extensions.Logging;
 
 namespace AloeReservationGrid.Lib.CoreLib.Logging;
 
+// TODO: ちょっとくらい短くできてもしょうがないので、削除予定です
+
 // CA2254 ログ メッセージ テンプレートは、呼び出しによって異なるべきではありません。
 // Serilog などのテンプレートを使用するので、ここではメッセージを抑制します。
 #pragma warning disable CA2254

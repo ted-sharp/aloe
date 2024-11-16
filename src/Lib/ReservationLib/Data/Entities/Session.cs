@@ -5,14 +5,19 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
+/// <summary>
+/// 一度のログインでの作業をセッションとして記録します。
+/// </summary>
+/// <remarks>
+/// Session テーブルは共通列を持たないため、<see cref="IAuditableEntity"/> は継承しません。
+/// </remarks>
 [Table("sessions")]
-public class Session : AuditableEntityBase<Guid>
+public class Session
 {
-    public override Guid Id => this.SessionId;
-
     [Key]
     [Column("session_id")]
     [Required]
@@ -25,7 +30,7 @@ public class Session : AuditableEntityBase<Guid>
     [Column("user_name")]
     [Required]
     [StringLength(Int32.MaxValue)]
-    public string UserName { get; set; } = String.Empty;
+    public string UserDisplayName { get; set; } = String.Empty;
 
     [Column("client_app_name")]
     [Required]

@@ -8,7 +8,7 @@
     <ContextMenu
         x:Shared="false"
         x:Key="SysTrayMenu"
-        d:DataContext="{d:DesignInstance Type=vm:NotifyIconViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance Type=vm:NotifyIconViewModel}"
     >
         <MenuItem
             Header="予約状況(メイン)"
@@ -28,8 +28,8 @@
         />
         <Separator />
         <MenuItem
-            Header="ログイン"
-            Command="{Binding ShowLoginWindowCommand}"
+            Header="ログアウト"
+            Command="{Binding LogoutCommand}"
         />
         <Separator />
         <MenuItem
@@ -45,7 +45,7 @@
     <!--  the application's NotifyIcon - started from App.xaml.cs. Declares its own view model.  -->
     <tb:TaskbarIcon
         x:Key="NotifyIcon"
-        d:DataContext="{d:DesignInstance Type=vm:NotifyIconViewModel, IsDesignTimeCreatable=True}"
+        d:DataContext="{d:DesignInstance Type=vm:NotifyIconViewModel}"
         DataContext="{vm:Resolve {x:Type vm:NotifyIconViewModel}}"
         IconSource="/Assets/bookmark_schedule_date_appointment_icon_124679.ico"
         ToolTipText="ReservationApp"

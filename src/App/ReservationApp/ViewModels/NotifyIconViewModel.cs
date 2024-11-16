@@ -1,4 +1,5 @@
 ﻿using Reactive.Bindings;
+using Reactive.Bindings.Extensions;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -10,7 +11,6 @@ using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.CoreLib.Mvvm;
-using Reactive.Bindings.Extensions;
 
 namespace AloeReservationGrid.App.ReservationApp.ViewModels;
 
@@ -19,7 +19,7 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
     public ReactiveCommandSlim ShowReservationMainWindowCommand { get; } = new();
     public ReactiveCommandSlim ShowXxxWindowCommand { get; } = new();
     public ReactiveCommandSlim ShowMaintenanceWindowCommand { get; } = new();
-    public ReactiveCommandSlim ShowLoginWindowCommand { get; } = new();
+    public ReactiveCommandSlim LogoutCommand { get; } = new();
     public ReactiveCommandSlim RestartAppCommand { get; } = new();
     public ReactiveCommandSlim ExitAppCommand { get; } = new();
 
@@ -33,8 +33,8 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
             .Subscribe(this.ShowMaintenanceWindow)
             .AddTo(this.Disposables);
 
-        this.ShowLoginWindowCommand
-            .Subscribe(this.ShowLoginWindow)
+        this.LogoutCommand
+            .Subscribe(this.Logout)
             .AddTo(this.Disposables);
 
         this.RestartAppCommand
@@ -46,42 +46,70 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
             .AddTo(this.Disposables);
     }
 
-    //private void ShowWindow(Type type)
-    //{
-    //    // ログインしてなければ、ログイン画面を表示？
-    //    // 自動ログアウトして、ログイン時に再開したいなら、閉じないで非表示にしておけばよいか？
-    //}
-
-    private void ShowWindow(Type type)
+    private T? ShowWindow<T>()
+        where T: Window
     {
-        var window = Application.Current.Windows
-            .Cast<Window>()
-            .FirstOrDefault(x => x.GetType() == type);
-
-        if (window == null)
-        {
-            window = App.Resolve(type) as Window;
-            window?.Show();
-        }
-        else
-        {
-            window.ActivateOrShow();
-        }
+        var window = App.GetOrCreateWindow<T>();
+        window.Owner = Application.Current.MainWindow;
+        window.ActivateOrShow();
+        return window;
     }
 
     private void ShowReservationMainWindow()
     {
-        Application.Current.MainWindow?.ActivateOrShow();
+        if (App.HasSession)
+        {
+            this.ShowWindow<ReservationMainWindow>();
+        }
+        else
+        {
+            this.Logout();
+        }
     }
 
     private void ShowMaintenanceWindow()
     {
-        this.ShowWindow(typeof(MaintenanceWindow));
+        if (App.HasSession)
+        {
+            this.ShowWindow<MaintenanceWindow>();
+        }
+        else
+        {
+            this.Logout();
+        }
     }
 
-    private void ShowLoginWindow()
+    private void Logout()
     {
-        this.ShowWindow(typeof(LoginWindow));
+        // TODO: ログアウトするか確認する
+
+        // セッションを破棄する
+        App.Session = null;
+
+        // 既存の LoginWindow を取得する
+        var oldLoginWindow = App.GetWindow<LoginWindow>();
+
+        // 新しい LoginWindow を作る
+        var newLoginWindow = App.CreateWindow<LoginWindow>();
+        Application.Current.MainWindow = newLoginWindow;
+
+        // キャンセルさせない
+        oldLoginWindow?.ForceClose();
+
+        // 念の為、他の Window も探す
+        var oldWindows = Application.Current.Windows
+            .OfType<Window>()
+            .Where(x => x != newLoginWindow)
+            .ToArray();
+
+        // すべて閉じる
+        foreach (var oldWindow in oldWindows)
+        {
+            oldWindow.Close();
+        }
+
+        // 新しい LoginWindow を表示する
+        newLoginWindow.ActivateOrShow();
     }
 
     private void RestartApplication()

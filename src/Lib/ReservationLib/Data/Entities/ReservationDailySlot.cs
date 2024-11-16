@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("reservation_daily_slots")]
-public class ReservationDailySlot
+public class ReservationDailySlot : AuditableEntityBase<int>
 {
+    public override int Id => this.ResvDailySlotId;
+
     [Key]
     [Column("resv_daily_slot_id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -57,21 +59,5 @@ public class ReservationDailySlot
     [Required]
     [MaxLength(Int32.MaxValue)]  // TEXT型に対応
     public string SlotCaps { get; set; } = String.Empty;
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    [Column("updated_at")]
-    [Required]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_user_id")]
-    [Required]
-    public int UpdatedUserId { get; set; } = 0;
-
-    [Column("updated_session_id")]
-    [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
 }
 

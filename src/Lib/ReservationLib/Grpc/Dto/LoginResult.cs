@@ -17,9 +17,9 @@ public class LoginResult
     [Key(0)]
     public required bool IsSuccess { get; set; }
 
-    [Key(2)]
+    [Key(1)]
     public required string? ErrorMessage { get; set; }
 
-    [Key(3)]
-    public required SessionDto? Session { get; set; }
+    [Key(2)]
+    public required SessionDto? SessionDto { get; set; }
 }

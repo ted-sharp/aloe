@@ -9,8 +9,10 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("reservation_daily_bookings")]
-public class ReservationDailyBooking
+public class ReservationDailyBooking : AuditableEntityBase<int>
 {
+    public override int Id => this.ResvDailyBkgId;
+
     [Key]
     [Column("resv_daily_bkg_id")]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -85,20 +87,4 @@ public class ReservationDailyBooking
     [Column("noshow_count")]
     [Required]
     public int NoShowCount { get; set; } = 0;
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; } = false;
-
-    [Column("updated_at")]
-    [Required]
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    [Column("updated_user_id")]
-    [Required]
-    public int UpdatedUserId { get; set; } = 0;
-
-    [Column("updated_session_id")]
-    [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
 }
