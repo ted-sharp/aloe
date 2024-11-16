@@ -1,5 +1,5 @@
--- Project Name : hive_authdb
--- Date/Time    : 2024/10/17 10:03:59
+-- Project Name : authdb
+-- Date/Time    : 2024/11/07 14:01:45
 -- Author       : user
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -38,13 +38,9 @@ DROP TABLE if exists sessions CASCADE;
 CREATE TABLE sessions (
   session_id UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
   , user_id integer DEFAULT 0 NOT NULL
-  , user_name TEXT DEFAULT '' NOT NULL
+  , user_display_name TEXT DEFAULT '' NOT NULL
   , client_app_name TEXT DEFAULT '' NOT NULL
-  , client_ip_addr TEXT DEFAULT '' NOT NULL
-  , client_mac_addr TEXT DEFAULT '' NOT NULL
-  , client_machine_name TEXT DEFAULT '' NOT NULL
-  , client_machine_guid TEXT DEFAULT '' NOT NULL
-  , client_device_id TEXT DEFAULT '' NOT NULL
+  , client_endpoint TEXT DEFAULT '' NOT NULL
   , login_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , logout_at timestamp
 ) ;
@@ -66,7 +62,7 @@ CREATE TABLE change_logs (
   , record_id TEXT DEFAULT '' NOT NULL
   , changed_action TEXT DEFAULT '' NOT NULL
   , changed_user_id integer DEFAULT 0 NOT NULL
-  , changed_user_name TEXT DEFAULT '' NOT NULL
+  , changed_user_display_name TEXT DEFAULT '' NOT NULL
   , changed_at timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , changed_session_id UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
   , sql_statement TEXT DEFAULT '' NOT NULL
@@ -89,13 +85,9 @@ COMMENT ON COLUMN cache_updates.latest_updated_session_id IS 'latest_updated_ses
 COMMENT ON TABLE sessions IS 'sessions';
 COMMENT ON COLUMN sessions.session_id IS 'session_id';
 COMMENT ON COLUMN sessions.user_id IS 'user_id';
-COMMENT ON COLUMN sessions.user_name IS 'user_name';
+COMMENT ON COLUMN sessions.user_display_name IS 'user_display_name';
 COMMENT ON COLUMN sessions.client_app_name IS 'client_app_name:ÉoÅ[ÉWÉáÉìä‹Çﬁ';
-COMMENT ON COLUMN sessions.client_ip_addr IS 'client_ip_addr';
-COMMENT ON COLUMN sessions.client_mac_addr IS 'client_mac_addr';
-COMMENT ON COLUMN sessions.client_machine_name IS 'client_machine_name';
-COMMENT ON COLUMN sessions.client_machine_guid IS 'client_machine_guid';
-COMMENT ON COLUMN sessions.client_device_id IS 'client_device_id';
+COMMENT ON COLUMN sessions.client_endpoint IS 'client_endpoint:IPAddr, Portä‹Çﬁ';
 COMMENT ON COLUMN sessions.login_at IS 'login_at';
 COMMENT ON COLUMN sessions.logout_at IS 'logout_at';
 
@@ -105,7 +97,7 @@ COMMENT ON COLUMN change_logs.table_name IS 'table_name';
 COMMENT ON COLUMN change_logs.record_id IS 'record_id';
 COMMENT ON COLUMN change_logs.changed_action IS 'changed_action';
 COMMENT ON COLUMN change_logs.changed_user_id IS 'changed_user_id';
-COMMENT ON COLUMN change_logs.changed_user_name IS 'changed_user_name';
+COMMENT ON COLUMN change_logs.changed_user_display_name IS 'changed_user_display_name';
 COMMENT ON COLUMN change_logs.changed_at IS 'changed_at';
 COMMENT ON COLUMN change_logs.changed_session_id IS 'changed_session_id';
 COMMENT ON COLUMN change_logs.sql_statement IS 'sql_statement';

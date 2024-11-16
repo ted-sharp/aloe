@@ -1,7 +1,7 @@
 ﻿# A5:ER FORMAT:18
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.19.2 Copyright © 1997 - 2024 m.matsubara
+# A5:SQL Mk-2 Version 2.19.1 Copyright © 1997 - 2024 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -58,7 +58,7 @@ Field="table_name","table_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="record_id","record_id","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="changed_action","changed_action","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="changed_user_id","changed_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="changed_user_name","changed_user_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="changed_user_display_name","changed_user_display_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="changed_at","changed_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
 Field="changed_session_id","changed_session_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF,""
 Field="sql_statement","sql_statement","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -67,7 +67,7 @@ Field="new_values","new_values","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20241017104647
+ModifiedDateTime=20241106145223
 Position="AUDIT",100,100
 ZOrder=13
 
@@ -96,19 +96,15 @@ Left=100
 Top=1100
 Field="session_id","session_id","UUID","NOT NULL",0,"\q00000000-0000-0000-0000-000000000000\q","",$000000FF,""
 Field="user_id","user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="user_name","user_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="user_display_name","user_display_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="client_app_name","client_app_name","TEXT","NOT NULL",,"\q\q","バージョン含む",$FFFFFFFF,""
-Field="client_ip_addr","client_ip_addr","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="client_mac_addr","client_mac_addr","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="client_machine_name","client_machine_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="client_machine_guid","client_machine_guid","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="client_device_id","client_device_id","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="client_endpoint","client_endpoint","TEXT","NOT NULL",,"\q\q","IPAddr, Port含む",$FFFFFFFF,""
 Field="login_at","login_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
 Field="logout_at","logout_at","@DATETIME",,,"","",$FFFFFFFF,""
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20241017085044
+ModifiedDateTime=20241106145203
 Position="AUDIT",100,1100
 ZOrder=17
 
