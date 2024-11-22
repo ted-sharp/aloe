@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 using Microsoft.EntityFrameworkCore;

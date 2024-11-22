@@ -6,7 +6,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;

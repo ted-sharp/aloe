@@ -1,5 +1,4 @@
-﻿using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
-using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
+﻿using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Services;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 using MagicOnion;

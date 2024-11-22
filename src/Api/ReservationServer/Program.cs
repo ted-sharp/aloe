@@ -5,7 +5,6 @@ using Serilog.Sinks.SystemConsole.Themes;
 using System.Net;
 using System.Reflection.PortableExecutable;
 using Microsoft.EntityFrameworkCore;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 using AloeReservationGrid.Api.ReservationServer.Uuid;
 using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;

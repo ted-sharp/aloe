@@ -30,5 +30,5 @@ public class ReservationEquipmentSlotDto
     public required int EquipId { get; set; }
 
     [Key(5)]
-    public required string Slots { get; set; }
+    public required string[] Slots { get; set; }
 }

@@ -1,23 +1,15 @@
-﻿using System.Diagnostics;
-using MagicOnion;
-using MagicOnion.Server;
-using MagicOnion.Server.Hubs;
-using System.Numerics;
-using System.Text.RegularExpressions;
-using AloeReservationGrid.Lib.CoreLib.Logging;
-using AloeReservationGrid.Lib.CoreLib.Security;
-using AloeReservationGrid.Lib.CoreLib.Util;
-using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
-using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
-using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
-using Grpc.Core;
+﻿using AloeReservationGrid.Lib.CoreLib.Util;
 using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
+using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Services;
+using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
+using MagicOnion;
+using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace AloeReservationGrid.Api.ReservationServer.Grpc.Services;
+namespace AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 
 /// <summary>
 /// ログイン, ログアウト用のサービスです。
@@ -51,7 +43,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
     {
         //await Task.CompletedTask;
         await this._policyService.LoadPoliciesAsync();
-        this._logger.Debug("Test");
+        this._logger.LogDebug("Test");
     }
 
     public async UnaryResult<LoginResult> LoginAsync(LoginRequest request)
@@ -89,8 +81,8 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
                 result.ErrorMessage = "パスワードが正しくありません。";
 
                 await this._policyService.LoadPoliciesAsync();
-                var lockingFailAttempts = this._policyService.GetValue<int>(PolicyCodes.LoginLockingFailAtempts);
-                var lockingSeconds = this._policyService.GetValue<int>(PolicyCodes.LoginLockingSeconds);
+                var lockingFailAttempts = this._policyService.GetValue<int>(PolicyCode.LoginLockingFailAtempts);
+                var lockingSeconds = this._policyService.GetValue<int>(PolicyCode.LoginLockingSeconds);
 
                 user.FailLogin(
                     lockingFailAttempts,
@@ -123,7 +115,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         catch (Exception ex)
         {
             var msg = "ログインで例外が発生しました。";
-            this._logger.Error(ex, msg);
+            this._logger.LogError(ex, msg);
 
             result.IsSuccess = false;
             result.ErrorMessage = msg;
@@ -184,7 +176,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         catch (Exception ex)
         {
             var msg = "ログアウトで例外が発生しました。";
-            this._logger.Error(ex, msg);
+            this._logger.LogError(ex, msg);
         }
     }
 }

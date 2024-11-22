@@ -8,7 +8,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
@@ -53,7 +52,7 @@ public class PolicyService : IPolicyService
     {
         try
         {
-            if (PolicyService.s_policies.Count != 0)
+            if (!PolicyService.s_policies.IsEmpty)
             {
                 // TODO: キャッシュの有効期間とかないとDB直接書き換えたときに漏れそう
                 // そうなってくると defaultPolicies は別で用意しとくのがよいか
@@ -76,7 +75,7 @@ public class PolicyService : IPolicyService
 
             // キャッシュを更新する
             PolicyService.s_policies = policies;
-            this._logger.LogDebug($"Policy loaded count: {policies.Count}");
+            this._logger.LogDebug("Policy loaded count: {Count}", policies.Count);
         }
         catch (Exception ex)
         {
@@ -88,22 +87,40 @@ public class PolicyService : IPolicyService
     {
         var policies = new ConcurrentDictionary<string, Policy>
         {
-            [PolicyCodes.LoginLockingFailAtempts] = new()
+            [PolicyCode.LoginLockingFailAtempts] = new()
             {
-                PolicyCode = PolicyCodes.LoginLockingFailAtempts,
-                PolicyName = nameof(PolicyCodes.LoginLockingFailAtempts),
-                DataType = PolicyDataTypes.Int32,
+                PolicyCode = PolicyCode.LoginLockingFailAtempts,
+                PolicyName = nameof(PolicyCode.LoginLockingFailAtempts),
+                DataType = Constants.DataType.Int32,
                 PolicyValue = "3",
                 PolicyDesc = "ログイン失敗時にロックするための失敗回数です。",
             },
 
-            [PolicyCodes.LoginLockingSeconds] = new()
+            [PolicyCode.LoginLockingSeconds] = new()
             {
-                PolicyCode = PolicyCodes.LoginLockingSeconds,
-                PolicyName = nameof(PolicyCodes.LoginLockingSeconds),
-                DataType = PolicyDataTypes.Int32,
+                PolicyCode = PolicyCode.LoginLockingSeconds,
+                PolicyName = nameof(PolicyCode.LoginLockingSeconds),
+                DataType = Constants.DataType.Int32,
                 PolicyValue = "30",
                 PolicyDesc = "ログイン失敗時にロックする秒数です。",
+            },
+
+            [PolicyCode.ResvDefaultFloor1] = new()
+            {
+                PolicyCode = PolicyCode.ResvDefaultFloor1,
+                PolicyName = nameof(PolicyCode.ResvDefaultFloor1),
+                DataType = Constants.DataType.Int32,
+                PolicyValue = "1",
+                PolicyDesc = "デフォルト呼び出すフロア1のID(FloorId)です。",
+            },
+
+            [PolicyCode.ResvDefaultFloor2] = new()
+            {
+                PolicyCode = PolicyCode.ResvDefaultFloor2,
+                PolicyName = nameof(PolicyCode.ResvDefaultFloor2),
+                DataType = Constants.DataType.Int32,
+                PolicyValue = "2",
+                PolicyDesc = "デフォルト呼び出すフロア2のID(FloorId)です。",
             },
         };
 
@@ -118,7 +135,7 @@ public class PolicyService : IPolicyService
 
         if (policy == null)
         {
-            this._logger.LogWarning($"Policy not found: {policyCode}");
+            this._logger.LogWarning("Policy not found: {PolicyCode}", policyCode);
         }
 
         return policy;
@@ -132,17 +149,17 @@ public class PolicyService : IPolicyService
             return default;
         }
 
-        if (typeof(T) == typeof(bool) && policy.DataType == PolicyDataTypes.Boolean)
+        if (typeof(T) == typeof(bool) && policy.DataType == Constants.DataType.Boolean)
         {
             return Boolean.TryParse(policy.PolicyValue, out var result) ? (T)(object)result : default;
         }
 
-        if (typeof(T) == typeof(int) && policy.DataType == PolicyDataTypes.Int32)
+        if (typeof(T) == typeof(int) && policy.DataType == Constants.DataType.Int32)
         {
             return Int32.TryParse(policy.PolicyValue, out var result) ? (T)(object)result : default;
         }
 
-        if (typeof(T) == typeof(string) && policy.DataType == PolicyDataTypes.String)
+        if (typeof(T) == typeof(string) && policy.DataType == Constants.DataType.String)
         {
             return (T)(object)policy.PolicyValue;
         }

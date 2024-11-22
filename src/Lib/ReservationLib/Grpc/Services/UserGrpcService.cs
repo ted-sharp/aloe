@@ -4,7 +4,6 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
-using AloeReservationGrid.Lib.CoreLib.Logging;
 using AloeReservationGrid.Lib.CoreLib.Security;
 using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
 using AloeReservationGrid.Lib.ReservationLib.Data.Entities;
@@ -81,7 +80,7 @@ public class UserGrpcService : ServiceBase<IUserGrpcService>, IUserGrpcService
         catch (Exception ex)
         {
             var msg = "ユーザー登録で例外が発生しました。";
-            this._logger.Error(ex, msg);
+            this._logger.LogError(ex, msg);
 
             result.IsSuccess = false;
             result.ErrorMessage = msg;

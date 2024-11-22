@@ -5,13 +5,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
-using AloeReservationGrid.Lib.CoreLib.Logging;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
+using AloeReservationGrid.Lib.ReservationLib.Domain.Services;
+using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 using Grpc.Net.Client;
 using MagicOnion;
 using MagicOnion.Client;
@@ -38,8 +38,7 @@ internal static class Program
             .ConfigureBuilder()
             .Build();
 
-        host.ConfigureHost()
-            .Run();
+        host.Run();
     }
 
     /// <summary>
@@ -47,9 +46,13 @@ internal static class Program
     /// </summary>
     private static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder)
     {
+        // TODO: 起動時の引数で MagicOnion か DirectAccess かを切り替えたい
+        // standalone mode
+        // efcore あたりも追加しないとダメ
         builder
             .AddSerilog()
             .AddServices()
+            //.AddStandaloneService();
             .AddMagicOnionClient();
 
         return builder;
@@ -87,8 +90,13 @@ internal static class Program
         builder.Services.AddSingleton<Application, App>();
         builder.Services.AddSingleton<NotifyIconViewModel>();
 
+        // Singleton で IMemoryCache が登録されます
+        builder.Services.AddMemoryCache();
+
         builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<FunctionBarViewModel>();
         builder.Services.AddTransient<ReservationMainViewModel>();
+        builder.Services.AddTransient<ReservationEquipViewModel>();
 
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddTransient<ReservationMainWindow>();
@@ -119,7 +127,7 @@ internal static class Program
         }
 
         // GrpcChannel を登録
-        builder.Services.AddSingleton(serviceProvider =>
+        builder.Services.AddSingleton(services =>
         {
             return GrpcChannel.ForAddress(grpcUrl, new GrpcChannelOptions
             {
@@ -128,22 +136,53 @@ internal static class Program
         });
 
         // MagicOnion クライアントを登録
-        builder.Services.AddSingleton<IAuthGrpcService>(serviceProvider =>
-        {
-            // GrpcChannel を取得し MagicOnion クライアントを作成
-            var channel = serviceProvider.GetRequiredService<GrpcChannel>();
-            return MagicOnionClient.Create<IAuthGrpcService>(channel);
-        });
+        AddSingletonGrpcService<IAuthGrpcService>();
+        AddSingletonGrpcService<IReservationEquipmentGrpcService>();
 
         return builder;
+
+        // local function
+        void AddSingletonGrpcService<T>()
+            where T : class, IService<T>
+        {
+            builder.Services.AddSingleton<T>(services =>
+            {
+                // GrpcChannel を取得し MagicOnion クライアントを作成
+                var channel = services.GetRequiredService<GrpcChannel>();
+                return MagicOnionClient.Create<T>(channel);
+            });
+        }
     }
 
     /// <summary>
-    /// ホストを設定します。
+    /// gRPC を介さずに直接アクセスするための関連クラスを追加します。
+    /// 起動時の引数などにより <see cref="AddMagicOnionClient"/> と呼び分けてください。
     /// </summary>
-    private static IHost ConfigureHost(this IHost host)
+    private static IHostApplicationBuilder AddStandaloneService(this IHostApplicationBuilder builder)
     {
-        host.ConfigureGlobalDebuggingLogger();
-        return host;
+        #region EFCore
+
+        //var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        //builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connStr));
+
+        #endregion EFCore
+
+        #region DomainService
+
+        //builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
+
+        builder.Services.AddScoped<IPolicyService, PolicyService>();
+
+        #endregion DomainService
+
+        #region MagicOnion(Direct)
+
+        // GrpcChannel ではなく、直接サーバー側のサービスを使えるようにします。
+
+        builder.Services.AddTransient<IAuthGrpcService, AuthGrpcService>();
+
+        #endregion MagicOnion(Direct)
+
+        return builder;
     }
 }

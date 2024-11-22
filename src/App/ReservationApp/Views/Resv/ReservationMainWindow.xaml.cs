@@ -1,13 +1,16 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
+using AloeReservationGrid.Lib.CoreLib.Util;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 using Grpc.Net.Client;
@@ -17,86 +20,261 @@ using Microsoft.Extensions.Options;
 namespace AloeReservationGrid.App.ReservationApp.Views.Resv;
 
 /// <summary>
-/// Interaction logic for MainWindow.xaml
+/// 予約のメイン画面です。
+/// 指定日から1ヶ月間の予約件数を表示できます。
 /// </summary>
 public partial class ReservationMainWindow : Window
 {
-    private ReservationMainViewModel _vm;
+    private readonly ReservationMainViewModel _vm;
 
     public ReservationMainWindow(ReservationMainViewModel vm)
     {
         this.InitializeComponent();
+        this.InitializeScrollViewers();
 
         this._vm = vm;
+
+        // StartDate を変更したときに画面のヘッダーを作り直す処理を登録
+        this._vm.RefreshAction = this.RefreshScheduleHeaders;
+
         this.DataContext = vm;
 
-        this.GenerateBodyDataGrid();
-        this.GenerateHeaderGrid();
+        this.InitializeSchedules();
     }
 
-    private void GenerateBodyDataGrid()
-    {
-        this.BodyDataGrid.Columns.Clear();
-        this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn("Room", "Room"));
+    #region ScrollViewer
 
-        var max = this._vm.OffsetDayCount.Value;
-        for (var i = 0; i < max; i++)
+    private readonly List<ScrollViewer> _scrollViewers = [];
+
+    private bool _isScrollSyncing = false;
+
+    /// <summary>
+    /// スクロールバーの同期イベントを登録します。
+    /// </summary>
+    private void InitializeScrollViewers()
+    {
+        this._scrollViewers.Add(this.ScrollViewer0);
+        this._scrollViewers.Add(this.ScrollViewer1);
+        this._scrollViewers.Add(this.ScrollViewer2);
+
+        foreach (var scrollViewer in this._scrollViewers)
         {
-            this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn($"C{i}AM", "AM"));
-            this.BodyDataGrid.Columns.Add(this.CreateDataGridColumn($"C{i}PM", "PM"));
+            scrollViewer.ScrollChanged += this.ScrollViewer_OnScrollChanged;
         }
     }
 
-    private DataGridTextColumn CreateDataGridColumn(string name, string header)
+    /// <summary>
+    /// スクロールバーの同期イベントです。
+    /// </summary>
+    /// <remarks>
+    /// ViewModel側でやりたい場合は、共通Offset値をプロパティにしてバインドする必要があります。
+    /// </remarks>
+    private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
-        var col = new DataGridTextColumn { Header = header };
-        this.RegisterName(name, col);
-        return col;
-    }
-
-    private void GenerateHeaderGrid()
-    {
-        this.HeaderGrid.ColumnDefinitions.Clear();
-
-        var currentDate = this._vm.StartDate.Value;
-        var max = this._vm.OffsetDayCount.Value;
-        for (var i = 0; i < max; i++)
+        if (this._isScrollSyncing)
         {
-            this.HeaderGrid.ColumnDefinitions.Add(this.CreateGridColumnDefinition($"C{i}AM"));
-            this.HeaderGrid.ColumnDefinitions.Add(this.CreateGridColumnDefinition($"C{i}PM"));
-            this.HeaderGrid.Children.Add(this.CreateGridLabel(i, currentDate));
+            return;
+        }
+
+        try
+        {
+            this._isScrollSyncing = true;
+
+            if (sender is not ScrollViewer source)
+            {
+                return;
+            }
+
+            var horizontalOffset = source.HorizontalOffset;
+            foreach (var scrollViewer in this._scrollViewers)
+            {
+                if (scrollViewer != source)
+                {
+                    scrollViewer.ScrollToHorizontalOffset(horizontalOffset);
+                }
+            }
+        }
+        finally
+        {
+            this._isScrollSyncing = false;
         }
     }
 
-    private ColumnDefinition CreateGridColumnDefinition(string name)
-    {
-        //< ColumnDefinition Width = "{Binding ElementName=A1, Path=ActualWidth, Mode=OneWay}" />
+    #endregion ScrollViewer
 
-        var col = new ColumnDefinition();
-        var binding = new Binding
-        {
-            ElementName = name,
-            Path = new PropertyPath("ActualWidth"),
-            Mode = BindingMode.OneWay,
-        };
-        //col.SetBinding(col.Width, binding);
-        return col;
+    /// <summary>
+    /// 画面のコンポーネントを動的に生成します。
+    /// DataGrid側で複雑なヘッダーは構築できないのでGridでヘッダー部分を作成しています。
+    /// Gridでヘッダーの日付曜日部分を、DataGridでAM/PMのカラムを作成します。
+    /// </summary>
+    /// <remarks>
+    /// View側の処理なのでViewModelにはしません。
+    /// </remarks>
+    private void InitializeSchedules()
+    {
+        // DataGrid の ItemsSource はバインドしますので、初回の作成が必要です
+        this.GenerateDataGridColumns("G0", this.BodyDataGrid0);
+        this.GenerateDataGridColumns("G1", this.BodyDataGrid1);
+        this.GenerateDataGridColumns("G2", this.BodyDataGrid2);
+
+        // StartDate の変更がトリガですが、初回は明示的に呼び出します
+        var startDate = this._vm.StartDate.Value.ToDateOrToday();
+        this.RefreshScheduleHeaders(startDate);
     }
 
-    private Label CreateGridLabel(int i, DateTime currentDate)
+    /// <summary>
+    /// 日付および曜日のヘッダー部分を作成します。
+    /// ViewModel側からも呼ぶため、DispatcherでUIスレッドで実行しています。
+    /// </summary>
+    private void RefreshScheduleHeaders(DateTime startDate)
     {
-        //<Label Grid.ColumnSpan="3" Grid.Column= "0" Content= "First dude" />
-
-        var lbl = new Label
+        if (Application.Current.Dispatcher.CheckAccess())
         {
-            Content = currentDate.AddDays(i).ToString("MM/dd"),
-        };
-        Grid.SetColumn(lbl, i * 2);
-        Grid.SetColumnSpan(lbl, 2);
-        return lbl;
+            // UIスレッド上で直接処理
+            RefreshScheduleHeadersInternal();
+        }
+        else
+        {
+            // UIスレッド外ならInvokeで処理を移譲
+            Application.Current.Dispatcher.Invoke(RefreshScheduleHeadersInternal);
+        }
+
+        return;
+
+        // local function
+        void RefreshScheduleHeadersInternal()
+        {
+            this.GenerateHeaderGrid("G0", this.HeaderGrid0, startDate);
+            this.GenerateHeaderGrid("G1", this.HeaderGrid1, startDate);
+            this.GenerateHeaderGrid("G2", this.HeaderGrid2, startDate);
+        }
     }
 
+    #region DataGrid
 
+    private void GenerateDataGridColumns(string gridName, DataGrid dataGrid)
+    {
+        try
+        {
+            dataGrid.BeginInit();
 
+            dataGrid.Columns.Clear();
+            dataGrid.Columns.Add(CreateDataGridColumn($"{gridName}_Room", "Room"));
+
+            var max = this._vm.OffsetDayCount.Value;
+            for (var i = 0; i < max; i++)
+            {
+                dataGrid.Columns.Add(CreateDataGridColumn($"{gridName}_C{i}AM", "AM"));
+                dataGrid.Columns.Add(CreateDataGridColumn($"{gridName}_C{i}PM", "PM"));
+            }
+        }
+        finally
+        {
+            dataGrid.EndInit();
+        }
+
+        return;
+
+        // local function
+        DataGridTextColumn CreateDataGridColumn(string columnName, string header)
+        {
+            var col = new DataGridTextColumn { Header = header };
+            this.RegisterName(columnName, col);
+            return col;
+        }
+    }
+
+    #endregion DataGrid
+
+    #region Grid
+
+    private void GenerateHeaderGrid(string gridName, Grid grid, DateTime startDate)
+    {
+        try
+        {
+            grid.BeginInit();
+
+            var max = this._vm.OffsetDayCount.Value;
+
+            grid.Children.Clear();
+            grid.Children.Capacity = max * 2;
+
+            grid.RowDefinitions.Clear();
+            grid.ColumnDefinitions.Clear();
+
+            // 日付用
+            grid.RowDefinitions.Add(new RowDefinition());
+            // 曜日用
+            grid.RowDefinitions.Add(new RowDefinition());
+
+            grid.ColumnDefinitions.Add(CreateGridColumnDefinition($"{gridName}_Room"));
+
+            for (var i = 0; i < max; i++)
+            {
+                grid.ColumnDefinitions.Add(CreateGridColumnDefinition($"{gridName}_C{i}AM"));
+                grid.ColumnDefinitions.Add(CreateGridColumnDefinition($"{gridName}_C{i}PM"));
+
+                var date = startDate.AddDays(i);
+                grid.Children.Add(CreateGridDateLabel(date, i));
+                grid.Children.Add(CreateGridDowLabel(date, i));
+            }
+
+            // 末尾の余白用
+            grid.ColumnDefinitions.Add(new ColumnDefinition());
+        }
+        finally
+        {
+            grid.EndInit();
+        }
+
+        return;
+
+        // local function
+        static ColumnDefinition CreateGridColumnDefinition(string columnName)
+        {
+            var col = new ColumnDefinition();
+            var binding = new Binding
+            {
+                ElementName = columnName,
+                Path = new PropertyPath("ActualWidth"),
+                Mode = BindingMode.OneWay,
+            };
+            col.SetBinding(ColumnDefinition.WidthProperty, binding);
+            return col;
+        }
+
+        // local function
+        static Label CreateGridDateLabel(DateTime date, int offset)
+        {
+            var lbl = new Label
+            {
+                Content = date.ToString("MM/dd"),
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+
+            Grid.SetColumn(lbl, 1 + offset * 2);
+            Grid.SetColumnSpan(lbl, 2);
+
+            return lbl;
+        }
+
+        // local function
+        static Label CreateGridDowLabel(DateTime date, int offset)
+        {
+            var lbl = new Label
+            {
+                Content = date.ToString("ddd"),
+                HorizontalContentAlignment = HorizontalAlignment.Center,
+            };
+
+            Grid.SetRow(lbl, 1);
+            Grid.SetColumn(lbl, 1 + offset * 2);
+            Grid.SetColumnSpan(lbl, 2);
+
+            return lbl;
+        }
+    }
+
+    #endregion Grid
 
 }

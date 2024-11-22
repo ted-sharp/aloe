@@ -46,7 +46,6 @@
     <tb:TaskbarIcon
         x:Key="NotifyIcon"
         d:DataContext="{d:DesignInstance Type=vm:NotifyIconViewModel}"
-        DataContext="{vm:Resolve {x:Type vm:NotifyIconViewModel}}"
         IconSource="/Assets/bookmark_schedule_date_appointment_icon_124679.ico"
         ToolTipText="ReservationApp"
         LeftClickCommand="{Binding ShowReservationMainWindowCommand}"

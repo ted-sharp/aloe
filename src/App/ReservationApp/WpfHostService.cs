@@ -5,7 +5,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using AloeReservationGrid.Lib.CoreLib.Logging;
 using Microsoft.Extensions.Logging;
 
 namespace AloeReservationGrid.App.ReservationApp;
@@ -29,7 +28,7 @@ internal class WpfHostService : IHostedService
         Application app)
     {
         this._logger = logger;
-        this._logger.Info("初期化");
+        this._logger.LogInformation("初期化");
 
         this._lifetime = lifetime;
         this._app = app;
@@ -37,7 +36,7 @@ internal class WpfHostService : IHostedService
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
-        this._logger.Info("開始");
+        this._logger.LogInformation("開始");
         this._app.Run();
 
         this._lifetime.StopApplication();
@@ -46,7 +45,7 @@ internal class WpfHostService : IHostedService
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
-        this._logger.Info("終了");
+        this._logger.LogInformation("終了");
         return Task.CompletedTask;
     }
 }

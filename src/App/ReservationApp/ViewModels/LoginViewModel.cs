@@ -7,12 +7,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using AloeReservationGrid.Api.ReservationServer.Grpc.Services;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
+using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 
 namespace AloeReservationGrid.App.ReservationApp.ViewModels;
 

@@ -12,8 +12,21 @@ internal static class WindowExtensions
     {
         ArgumentNullException.ThrowIfNull(window);
 
-        // UIスレッド以外からの呼び出しを考慮
-        Application.Current.Dispatcher.Invoke(() =>
+        if (Application.Current.Dispatcher.CheckAccess())
+        {
+            // UIスレッドでなければそのまま実行
+            ActivateOrShowInternal();
+        }
+        else
+        {
+            // UIスレッドでないのでディスパッチして実行
+            Application.Current.Dispatcher.Invoke(ActivateOrShowInternal);
+        }
+
+        return;
+
+        // local function
+        void ActivateOrShowInternal()
         {
             if (window.Visibility == Visibility.Visible)
             {
@@ -23,6 +36,6 @@ internal static class WindowExtensions
             {
                 window.Show();
             }
-        });
+        }
     }
 }
