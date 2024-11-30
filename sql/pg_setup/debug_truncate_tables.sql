@@ -1,0 +1,12 @@
+TRUNCATE TABLE organizations;
+TRUNCATE TABLE patients;
+TRUNCATE TABLE permissions;
+TRUNCATE TABLE policies;
+TRUNCATE TABLE reservation_daily_bookings;
+TRUNCATE TABLE reservation_daily_slots;
+TRUNCATE TABLE reservation_equipment_bookings;
+TRUNCATE TABLE reservation_equipment_slots;
+TRUNCATE TABLE reservation_equipments;
+TRUNCATE TABLE reservation_floors;
+TRUNCATE TABLE reservation_rooms;
+TRUNCATE TABLE users;

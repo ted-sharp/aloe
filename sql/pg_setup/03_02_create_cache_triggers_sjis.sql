@@ -6,9 +6,9 @@ BEGIN
   VALUES (TG_TABLE_NAME, NOW(), NEW.updated_user_id, NEW.updated_session_id)
   ON CONFLICT (table_name)
   DO UPDATE SET
-    latest_updated_at = EXCLUDED.updated_at,
-    latest_updated_user_id = EXCLUDED.updated_user_id,
-    latest_updated_session_id = EXCLUDED.updated_session_id;
+    latest_updated_at = NEW.updated_at,
+    latest_updated_user_id = NEW.updated_user_id,
+    latest_updated_session_id = NEW.updated_session_id;
 
   RETURN NEW;
 END;

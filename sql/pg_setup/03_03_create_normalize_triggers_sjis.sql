@@ -1,4 +1,7 @@
 
+-- 拡張機能を有効化
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
 -- トリガー関数の作成
 CREATE OR REPLACE FUNCTION fn_update_normalized_katakana()
 RETURNS TRIGGER AS $$
