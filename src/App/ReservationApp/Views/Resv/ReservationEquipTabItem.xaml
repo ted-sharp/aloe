@@ -1,0 +1,69 @@
+﻿<UserControl x:Class="AloeReservationGrid.App.ReservationApp.Views.Resv.ReservationEquipTabItem"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:AloeReservationGrid.App.ReservationApp.Views.Resv"
+             xmlns:viewModels="clr-namespace:AloeReservationGrid.App.ReservationApp.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=viewModels:ReservationEquipTabItemViewModel}"
+             d:Background="Azure"
+             d:DesignHeight="200" d:DesignWidth="400"
+             DataContextChanged="ReservationEquipTabItem_OnDataContextChanged"
+             Loaded="ReservationEquipTabItem_OnLoaded"
+             Unloaded="ReservationEquipTabItem_OnUnloaded">
+
+    <Grid x:Name="LayoutGrid">
+        <Grid.RowDefinitions>
+            <!-- 上部のヘッダーを確保 -->
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- ヘッダー部分だけ横スクロールする -->
+        <ScrollViewer Grid.Row="0" x:Name="ScrollViewer"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollBarVisibility="Disabled">
+
+            <!-- TODO: Margin はバインドした方がよさそう、もしくは動的に設定するか -->
+            <Grid x:Name="ColumnGrid" ShowGridLines="True"
+                  Margin="8, 0, 18, 0">
+                <Grid.ColumnDefinitions>
+                    <!-- RowHeader部分 -->
+                    <ColumnDefinition Width="Auto" />
+
+                    <!-- スロット(記号、氏名、備考) -->
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+
+                    <!-- スロット(記号、氏名、備考) -->
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+
+                    <!-- スロット(記号、氏名、備考) -->
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+                    <ColumnDefinition Width="20" />
+
+                    <!-- 余白 -->
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Label Grid.Column="0" Content="Sample (Design Only)" />
+                <Label Grid.Column="1" Grid.ColumnSpan="3" Content="09:00" HorizontalContentAlignment="Center" />
+                <Label Grid.Column="4" Grid.ColumnSpan="3" Content="09:30" HorizontalContentAlignment="Center" />
+                <Label Grid.Column="7" Grid.ColumnSpan="3" Content="10:00" HorizontalContentAlignment="Center" />
+            </Grid>
+        </ScrollViewer>
+
+        <DataGrid Grid.Row="1"
+                  x:Name="TabItemDataGrid"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False"
+                  CanUserResizeRows="False"
+                  HeadersVisibility="All"
+        />
+    </Grid>
+</UserControl>

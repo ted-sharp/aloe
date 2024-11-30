@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.App.ReservationApp.Services;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
@@ -25,13 +26,16 @@ public class LoginViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
     public ReactiveCommandSlim LoginCommand { get; } = new();
 
     private readonly ILogger _logger;
+    private readonly WindowService _windowService;
     private readonly IAuthGrpcService _authGrpcService;
 
     public LoginViewModel(
         ILogger<LoginViewModel> logger,
+        WindowService windowService,
         IAuthGrpcService authGrpcService)
     {
         this._logger = logger;
+        this._windowService = windowService;
         this._authGrpcService = authGrpcService;
 
         this.LoginCommand
@@ -55,13 +59,13 @@ public class LoginViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
                 UserDisplayName = "Test",
             };
 
-            var loginWindow = App.GetWindow<LoginWindow>();
+            var loginWindow = this._windowService.GetWindow<LoginWindow>();
 
             // 閉じると終了してしまうので非表示とする
             loginWindow?.Hide();
 
             // ログインウィンドウの子として表示する
-            var window = App.GetOrCreateWindow<ReservationMainWindow>();
+            var window = this._windowService.GetOrCreateWindow<ReservationMainWindow>();
             window.Owner = loginWindow;
             window.ActivateOrShow();
         }

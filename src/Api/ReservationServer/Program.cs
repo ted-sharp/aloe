@@ -84,9 +84,21 @@ internal static class Program
     /// </summary>
     private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder)
     {
-        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        //builder.Configuration.AddUserSecrets<SecretDummy>();
 
-        builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connStr));
+        // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseNpgsql(connStr);
+
+            if (builder.Environment.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+            }
+        });
 
         return builder;
     }
@@ -96,7 +108,7 @@ internal static class Program
     /// </summary>
     private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
+        //builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
 
         builder.Services.AddScoped<IPolicyService, PolicyService>();
 

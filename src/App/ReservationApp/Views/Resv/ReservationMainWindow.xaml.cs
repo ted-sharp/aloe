@@ -8,6 +8,7 @@ using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using AloeReservationGrid.App.ReservationApp.Utils;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.Lib.CoreLib.Util;
@@ -27,10 +28,11 @@ public partial class ReservationMainWindow : Window
 {
     private readonly ReservationMainViewModel _vm;
 
+    private readonly ScrollViewerSynchronizer _synchronizer = new();
+
     public ReservationMainWindow(ReservationMainViewModel vm)
     {
         this.InitializeComponent();
-        this.InitializeScrollViewers();
 
         this._vm = vm;
 
@@ -42,65 +44,25 @@ public partial class ReservationMainWindow : Window
         this.InitializeSchedules();
     }
 
-    #region ScrollViewer
+    private void ReservationMainWindow_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        this.InitializeScrollViewers();
+    }
 
-    private readonly List<ScrollViewer> _scrollViewers = [];
-
-    private bool _isScrollSyncing = false;
+    private void ReservationMainWindow_OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        this._synchronizer.Clear();
+    }
 
     /// <summary>
     /// スクロールバーの同期イベントを登録します。
     /// </summary>
     private void InitializeScrollViewers()
     {
-        this._scrollViewers.Add(this.ScrollViewer0);
-        this._scrollViewers.Add(this.ScrollViewer1);
-        this._scrollViewers.Add(this.ScrollViewer2);
-
-        foreach (var scrollViewer in this._scrollViewers)
-        {
-            scrollViewer.ScrollChanged += this.ScrollViewer_OnScrollChanged;
-        }
+        this._synchronizer.AddScrollViewer(this.ScrollViewer0);
+        this._synchronizer.AddScrollViewer(this.ScrollViewer1);
+        this._synchronizer.AddScrollViewer(this.ScrollViewer2);
     }
-
-    /// <summary>
-    /// スクロールバーの同期イベントです。
-    /// </summary>
-    /// <remarks>
-    /// ViewModel側でやりたい場合は、共通Offset値をプロパティにしてバインドする必要があります。
-    /// </remarks>
-    private void ScrollViewer_OnScrollChanged(object sender, ScrollChangedEventArgs e)
-    {
-        if (this._isScrollSyncing)
-        {
-            return;
-        }
-
-        try
-        {
-            this._isScrollSyncing = true;
-
-            if (sender is not ScrollViewer source)
-            {
-                return;
-            }
-
-            var horizontalOffset = source.HorizontalOffset;
-            foreach (var scrollViewer in this._scrollViewers)
-            {
-                if (scrollViewer != source)
-                {
-                    scrollViewer.ScrollToHorizontalOffset(horizontalOffset);
-                }
-            }
-        }
-        finally
-        {
-            this._isScrollSyncing = false;
-        }
-    }
-
-    #endregion ScrollViewer
 
     /// <summary>
     /// 画面のコンポーネントを動的に生成します。
@@ -230,12 +192,12 @@ public partial class ReservationMainWindow : Window
         return;
 
         // local function
-        static ColumnDefinition CreateGridColumnDefinition(string columnName)
+        static ColumnDefinition CreateGridColumnDefinition(string bindingColumnName)
         {
             var col = new ColumnDefinition();
             var binding = new Binding
             {
-                ElementName = columnName,
+                ElementName = bindingColumnName,
                 Path = new PropertyPath("ActualWidth"),
                 Mode = BindingMode.OneWay,
             };

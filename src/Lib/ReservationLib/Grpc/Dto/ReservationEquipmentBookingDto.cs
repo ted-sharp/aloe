@@ -30,7 +30,7 @@ public class ReservationEquipmentBookingDto
     public required int BkgUserId { get; set; } = 0;
 
     [Key(5)]
-    public required DateTime BkgAt { get; set; } = DateTime.UtcNow;
+    public required DateTime BkgAt { get; set; } = DateTime.Now;
 
     [Key(6)]
     public required string BkgSymbolText { get; set; } = String.Empty;

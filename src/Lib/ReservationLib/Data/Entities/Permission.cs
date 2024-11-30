@@ -10,23 +10,21 @@ namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 
 [Table("permissions")]
-public class Permission
+public class Permission : AuditableEntityBase<int>
 {
+    [NotMapped]
+    public override int Id => this.PermId;
+
     [Key]
+    [Column("perm_id")]
     [Required]
-    public int PermissionId { get; set; }
+    public int PermId { get; set; }
 
+    [Column("perm_name")]
     [Required]
-    public string PermissionName { get; set; } = String.Empty;
+    public string PermName { get; set; } = String.Empty;
 
-    public string PermissionDesc { get; set; } = String.Empty;
-
-    public bool IsDeleted { get; set; } = false;
-
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    public int UpdatedUserId { get; set; } = 0;
-
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
+    [Column("perm_desc")]
+    [Required]
+    public string PermDesc { get; set; } = String.Empty;
 }
-

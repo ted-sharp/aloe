@@ -21,6 +21,7 @@ using System.Reactive.Linq;
 using AloeReservationGrid.Lib.CoreLib.Util;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 using System.DirectoryServices.ActiveDirectory;
+using AloeReservationGrid.App.ReservationApp.Services;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 
 namespace AloeReservationGrid.App.ReservationApp.ViewModels;
@@ -86,11 +87,14 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     public ReactiveCommandSlim F12Command { get; }
 
     private readonly ILogger _logger;
+    private readonly WindowService _windowService;
 
     public FunctionBarViewModel(
-        ILogger<FunctionBarViewModel> logger)
+        ILogger<FunctionBarViewModel> logger,
+        WindowService windowService)
     {
         this._logger = logger;
+        this._windowService = windowService;
 
         this.KeyDownCommand
             .Subscribe(this.OnKeyDown)
@@ -290,9 +294,9 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
-                var window = App.GetOrCreateWindow<TWindow>();
+                var window = this._windowService.GetOrCreateWindow<TWindow>();
 
-                var parent = App.GetWindow<TParent>();
+                var parent = this._windowService.GetWindow<TParent>();
                 if (parent != null)
                 {
                     window.Owner = parent;
@@ -316,7 +320,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
-                var window = App.GetOrCreateWindow<TWindow>();
+                var window = this._windowService.GetOrCreateWindow<TWindow>();
 
                 window?.ActivateOrShow();
             }
@@ -341,7 +345,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
-                var window = App.GetWindow<TWindow>();
+                var window = this._windowService.GetWindow<TWindow>();
                 window?.Close();
             }
         }

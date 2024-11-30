@@ -21,7 +21,7 @@ public class UserRole
 
     public bool IsDeleted { get; set; } = false;
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.Now;
 
     public int UpdatedUserId { get; set; } = 0;
 

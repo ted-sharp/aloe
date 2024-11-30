@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.App.ReservationApp.Services;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
@@ -23,8 +24,12 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
     public ReactiveCommandSlim RestartAppCommand { get; } = new();
     public ReactiveCommandSlim ExitAppCommand { get; } = new();
 
-    public NotifyIconViewModel()
+    private readonly WindowService _windowService;
+
+    public NotifyIconViewModel(WindowService windowService)
     {
+        this._windowService = windowService;
+
         this.ShowReservationMainWindowCommand
             .Subscribe(this.ShowReservationMainWindow)
             .AddTo(this.Disposables);
@@ -49,7 +54,7 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
     private T? ShowWindow<T>()
         where T: Window
     {
-        var window = App.GetOrCreateWindow<T>();
+        var window = this._windowService.GetOrCreateWindow<T>();
         window.Owner = Application.Current.MainWindow;
         window.ActivateOrShow();
         return window;
@@ -87,10 +92,10 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         App.Session = null;
 
         // 既存の LoginWindow を取得する
-        var oldLoginWindow = App.GetWindow<LoginWindow>();
+        var oldLoginWindow = this._windowService.GetWindow<LoginWindow>();
 
         // 新しい LoginWindow を作る
-        var newLoginWindow = App.CreateWindow<LoginWindow>();
+        var newLoginWindow = this._windowService.CreateWindow<LoginWindow>();
         Application.Current.MainWindow = newLoginWindow;
 
         // キャンセルさせない

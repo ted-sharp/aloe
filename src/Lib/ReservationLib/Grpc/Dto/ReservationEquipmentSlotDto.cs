@@ -14,6 +14,8 @@ namespace AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 [MessagePackObject]
 public class ReservationEquipmentSlotDto
 {
+    public static readonly string SlotDelimiter = " ";
+
     [Key(0)]
     public required int ResvEquipSlotId { get; set; }
 

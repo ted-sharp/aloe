@@ -13,6 +13,7 @@ namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 [Table("users")]
 public class User : AuditableEntityBase<int>
 {
+    [NotMapped]
     public override int Id => this.UserId;
 
     [Key]
@@ -20,7 +21,9 @@ public class User : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int UserId { get; set; }
 
+    [Column("display_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string DisplayName { get; set; } = String.Empty;
 
     [Column("login_name")]
@@ -28,6 +31,7 @@ public class User : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string LoginName { get; set; } = String.Empty;
 
+    [Column("email")]
     [Required]
     [EmailAddress]
     public string Email { get; set; } = String.Empty;
@@ -37,22 +41,46 @@ public class User : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string PasswordHash { get; set; } = String.Empty;
 
+    [Column("password_salt")]
     [Required]
     [MaxLength(Int32.MaxValue)]
     public string PasswordSalt { get; set; } = String.Empty;
 
-    public DateTime ExpireDate { get; set; } = DateTime.UtcNow;
-
-    public int FailedAttemptCount { get; set; } = 0;
-
-    public DateTime LockedUntilAt { get; set; } = DateTime.UtcNow;
-
-    public DateTime LastLoginAt { get; set; } = DateTime.UtcNow;
-
-    public DateTime LastLogoutAt { get; set; } = DateTime.UtcNow;
-
+    [Column("expire_date")]
     [Required]
-    public string UserInfo { get; set; } = String.Empty;
+    public DateTime ExpireDate { get; set; } = DateTime.MaxValue.Date;
+
+    [Column("failed_attempt_count")]
+    [Required]
+    public int FailedAttemptCount { get; set; }
+
+    [Column("locked_until_at")]
+    [Required]
+    public DateTime LockedUntilAt { get; set; } = DateTime.Today;
+
+    [Column("last_login_at")]
+    [Required]
+    public DateTime LastLoginAt { get; set; } = DateTime.Today;
+
+    [Column("last_logout_at")]
+    [Required]
+    public DateTime LastLogoutAt { get; set; } = DateTime.Today;
+
+    //[Column("user_info")]
+    //[Required]
+    //public string UserInfo { get; set; } = String.Empty;
+
+    public User() { }
+
+    public User(string displayName, string loginName, string email, string password)
+    {
+        this.DisplayName = displayName;
+        this.LoginName = loginName;
+        this.Email = email;
+        var (hash, salt) = PasswordHasher.Default.HashPassword(password);
+        this.PasswordHash = hash;
+        this.PasswordSalt = salt;
+    }
 
     #region Method
 

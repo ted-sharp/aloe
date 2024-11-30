@@ -11,6 +11,7 @@ namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 [Table("reservation_equipments")]
 public class ReservationEquipment : AuditableEntityBase<int>
 {
+    [NotMapped]
     public override int Id => this.EquipId;
 
     [Key]
@@ -31,4 +32,13 @@ public class ReservationEquipment : AuditableEntityBase<int>
     [Column("seq")]
     [Required]
     public int Seq { get; set; } = 0;
+
+    public ReservationEquipment() { }
+
+    public ReservationEquipment(string equipName, string equipDesc, int seq)
+    {
+        this.EquipName = equipName;
+        this.EquipDesc = equipDesc;
+        this.Seq = seq;
+    }
 }

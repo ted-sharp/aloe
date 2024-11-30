@@ -5,12 +5,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("reservation_daily_slots")]
 public class ReservationDailySlot : AuditableEntityBase<int>
 {
+    [NotMapped]
     public override int Id => this.ResvDailySlotId;
 
     [Key]
@@ -20,11 +22,11 @@ public class ReservationDailySlot : AuditableEntityBase<int>
 
     [Column("start_date")]
     [Required]
-    public DateTime StartDate { get; set; } = DateTime.UtcNow.Date;
+    public DateTime StartDate { get; set; } = DateTime.Today;
 
     [Column("end_date")]
     [Required]
-    public DateTime EndDate { get; set; } = DateTime.UtcNow.Date;
+    public DateTime EndDate { get; set; } = DateTime.Today;
 
     [Column("dow_code")]
     [Required]
@@ -52,12 +54,37 @@ public class ReservationDailySlot : AuditableEntityBase<int>
 
     [Column("slots")]
     [Required]
-    [MaxLength(Int32.MaxValue)]  // TEXT型に対応
+    [MaxLength(Int32.MaxValue)]
     public string Slots { get; set; } = String.Empty;
 
     [Column("slot_caps")]
     [Required]
-    [MaxLength(Int32.MaxValue)]  // TEXT型に対応
+    [MaxLength(Int32.MaxValue)]
     public string SlotCaps { get; set; } = String.Empty;
-}
 
+    public ReservationDailySlot() { }
+
+    public ReservationDailySlot(DateTime start, DateTime end, DowCode dowCode, int ampCap, int pmCap, string slots, string slotCaps)
+    {
+        this.StartDate = start.Date;
+        this.EndDate = end.Date;
+        this.DowCode = (int)dowCode;
+        this.DailyCap = ampCap + pmCap;
+        this.AmCap = ampCap;
+        this.PmCap = pmCap;
+        this.Slots = slots;
+        this.SlotCaps = slotCaps;
+    }
+
+    public string[] SplitSlots()
+    {
+        var options = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
+        return this.Slots.Split(Delimiter.SlotDelimiter, options);
+    }
+
+    public int[] SplitSlotCaps()
+    {
+        var options = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
+        return this.Slots.Split(Delimiter.SlotDelimiter, options).Select(x => Int32.Parse(x)).ToArray();
+    }
+}

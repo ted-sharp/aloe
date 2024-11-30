@@ -19,7 +19,7 @@ public class CacheUpdate
 
     [Column("latest_updated_at")]
     [Required]
-    public DateTime LatestUpdatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime LatestUpdatedAt { get; set; } = DateTime.Now;
 
     [Column("latest_updated_user_id")]
     [Required]

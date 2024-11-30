@@ -39,11 +39,11 @@ public abstract class AuditableEntityBase<TKey> : IAuditableEntity
 
     [Column("created_user_id")]
     [Required]
-    public int CreatedUserId { get; set; } = 0;
+    public int CreatedUserId { get; set; }
 
     [Column("created_session_id")]
     [Required]
-    public Guid CreatedSessionId { get; set; } = Guid.Empty;
+    public Guid CreatedSessionId { get; set; }
 
     [Column("updated_at")]
     [Required]
@@ -51,15 +51,15 @@ public abstract class AuditableEntityBase<TKey> : IAuditableEntity
 
     [Column("updated_user_id")]
     [Required]
-    public int UpdatedUserId { get; set; } = 0;
+    public int UpdatedUserId { get; set; }
 
     [Column("updated_session_id")]
     [Required]
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
+    public Guid UpdatedSessionId { get; set; }
 
     [Column("is_deleted")]
     [Required]
-    public bool IsDeleted { get; set; } = false;
+    public bool IsDeleted { get; set; }
 
     public AuditableEntityBase<TKey> SetCreatedSession(SessionDto session, DateTime now)
     {

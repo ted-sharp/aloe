@@ -9,33 +9,57 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("patients")]
-public class Patient
+public class Patient : AuditableEntityBase<int>
 {
-    [Key]
-    [Required]
-    public int PatientId { get; set; }
+    [NotMapped]
+    public override int Id => this.PtId;
 
+    [Key]
+    [Column("pt_id")]
+    [Required]
+    public int PtId { get; set; }
+
+    [Column("karte_number")]
+    [Required]
     public string KarteNumber { get; set; } = String.Empty;
 
+    [Column("pt_full_name")]
+    [Required]
     public string FullName { get; set; } = String.Empty;
 
+    [Column("pt_full_name_katakana")]
+    [Required]
     public string FullNameKatakana { get; set; } = String.Empty;
 
+    [Column("pt_full_name_katakana_normalized")]
+    [Required]
     public string FullNameKatakanaNormalized { get; set; } = String.Empty;
 
+    [Column("pt_given_name")]
+    [Required]
     public string GivenName { get; set; } = String.Empty;
 
+    [Column("pt_old_full_name")]
+    [Required]
     public string OldFullName { get; set; } = String.Empty;
 
-    public DateTime BirthDate { get; set; } = DateTime.UtcNow;
+    [Column("birth_date")]
+    [Required]
+    public DateTime BirthDate { get; set; } = DateTime.MinValue.Date;
 
+    [Column("sex_code")]
+    [Required]
     public int SexCode { get; set; } = 0;
 
-    public bool IsDeleted { get; set; } = false;
+    public Patient() { }
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    public int UpdatedUserId { get; set; } = 0;
-
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
+    public Patient(string karteNumber, string fullName, string katakana, DateTime birthDate, int sexCode)
+    {
+        this.KarteNumber = karteNumber;
+        this.FullName = fullName;
+        this.FullNameKatakana = katakana;
+        this.GivenName = fullName; // TODO: 名前部分を切り取って入れる
+        this.BirthDate = birthDate;
+        this.SexCode = sexCode;
+    }
 }

@@ -10,7 +10,9 @@
         d:DataContext="{d:DesignInstance Type=vm:ReservationMainViewModel}"
         behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBar.KeyDownCommand}"
         Title="予約メイン" Height="450" Width="800"
-        ResizeMode="CanResizeWithGrip">
+        ResizeMode="CanResizeWithGrip"
+        Loaded="ReservationMainWindow_OnLoaded"
+        Unloaded="ReservationMainWindow_OnUnloaded">
     <DockPanel LastChildFill="True">
         <local:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBar}" />
 

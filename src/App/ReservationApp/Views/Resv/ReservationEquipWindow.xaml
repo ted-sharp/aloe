@@ -20,56 +20,26 @@
             <TextBox Text="{Binding StartMonth.Value}" MinWidth="80" />
         </StackPanel>
 
-        <TabControl x:Name="EquipTabControl">
-            <TabItem Header="TemplateTabItem">
-                <ScrollViewer x:Name="ScrollViewer"
-                              HorizontalScrollBarVisibility="Visible"
-                              VerticalScrollBarVisibility="Hidden">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+        <TabControl x:Name="EquipTabControl"
+                    SelectedIndex="{Binding SelectedTabIndex.Value}"
+                    ItemsSource="{Binding ReservationEquipTabItems}">
 
-                        <Grid Grid.Row="0" x:Name="HeaderGrid" ShowGridLines="true">
-                            <!-- 下記定義はコードビハインドで動的に生成します。これは表示確認用のサンプルです。 -->
-                            <Grid.ColumnDefinitions>
-                                <!-- 日付、曜日、合計用(スペースのみ) -->
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="24" />
-                                <!-- 記号、氏名、備考用(n個繰り返し) -->
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="48" />
-                                <ColumnDefinition Width="24" />
-                                <!-- 記号、氏名、備考用 -->
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="48" />
-                                <ColumnDefinition Width="24" />
-                                <!-- 記号、氏名、備考用 -->
-                                <ColumnDefinition Width="24" />
-                                <ColumnDefinition Width="48" />
-                                <ColumnDefinition Width="24" />
+            <!-- TabItem ヘッダー部分 -->
+            <TabControl.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding EquipName}" />
+                </DataTemplate>
+            </TabControl.ItemTemplate>
 
-                                <!-- 余白用 -->
-                                <ColumnDefinition Width="*" />
-                            </Grid.ColumnDefinitions>
-                            <!-- Width は DataGrid の AM/PM ヘッダーの ActualWidth にバインドします。 -->
-                            <Label Grid.Column="3" Grid.ColumnSpan="3" Content="09:00" HorizontalContentAlignment="Center" />
-                            <Label Grid.Column="6" Grid.ColumnSpan="3" Content="09:00" HorizontalContentAlignment="Center" />
-                            <Label Grid.Column="9" Grid.ColumnSpan="3" Content="09:15" HorizontalContentAlignment="Center"/>
-                            <Label Grid.Column="12" Content="dummy" HorizontalContentAlignment="Center"/>
-                        </Grid>
-                        <DataGrid Grid.Row="1" x:Name="BodyDataGrid"
-                                  ItemsSource="{Binding Schedules.DefaultView}"
-                                  AutoGenerateColumns="False"
-                                  CanUserAddRows="False"
-                                  CanUserResizeRows="False"
-                                  HeadersVisibility="All"
-                        />
-                    </Grid>
-                </ScrollViewer>
-            </TabItem>
+            <!-- TabItem 中身 -->
+            <TabControl.ContentTemplate>
+                <DataTemplate>
+                    <local:ReservationEquipTabItem DataContext="{Binding .}"/>
+                </DataTemplate>
+            </TabControl.ContentTemplate>
+
+            <!-- サンプル -->
+            <TabItem Header="Sample" />
         </TabControl>
     </DockPanel>
 </Window>

@@ -44,7 +44,7 @@ public class Session
 
     [Column("login_at")]
     [Required]
-    public DateTime LoginAt { get; set; } = DateTime.UtcNow;
+    public DateTime LoginAt { get; set; } = DateTime.Now;
 
     [Column("logout_at")]
     public DateTime? LogoutAt { get; set; }

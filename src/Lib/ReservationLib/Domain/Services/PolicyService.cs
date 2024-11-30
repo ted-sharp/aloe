@@ -83,7 +83,7 @@ public class PolicyService : IPolicyService
         }
     }
 
-    private static ConcurrentDictionary<string, Policy> CreateDefaultPolicies()
+    public static ConcurrentDictionary<string, Policy> CreateDefaultPolicies()
     {
         var policies = new ConcurrentDictionary<string, Policy>
         {

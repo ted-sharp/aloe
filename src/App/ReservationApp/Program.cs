@@ -3,18 +3,24 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows;
+using AloeReservationGrid.App.ReservationApp.Services;
+using AloeReservationGrid.App.ReservationApp.Services.CacheServices;
 using AloeReservationGrid.App.ReservationApp.ViewModels;
 using AloeReservationGrid.App.ReservationApp.Views.Login;
 using AloeReservationGrid.App.ReservationApp.Views.Maint;
 using AloeReservationGrid.App.ReservationApp.Views.Resv;
 using AloeReservationGrid.Lib.ReservationLib.Configuation;
+using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
 using AloeReservationGrid.Lib.ReservationLib.Domain.Services;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Services;
 using Grpc.Net.Client;
 using MagicOnion;
 using MagicOnion.Client;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -22,6 +28,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Serilog;
 using Serilog.Sinks.SystemConsole.Themes;
+using Microsoft.Extensions.Configuration;
 
 namespace AloeReservationGrid.App.ReservationApp;
 
@@ -52,8 +59,8 @@ internal static class Program
         builder
             .AddSerilog()
             .AddServices()
-            //.AddStandaloneService();
-            .AddMagicOnionClient();
+            .AddStandaloneService();
+        //.AddMagicOnionClient();
 
         return builder;
     }
@@ -88,16 +95,20 @@ internal static class Program
         builder.Services.Configure<GrpcConfig>(builder.Configuration.GetSection("Client:Targets:gRPC"));
 
         builder.Services.AddSingleton<Application, App>();
-        builder.Services.AddSingleton<NotifyIconViewModel>();
+        builder.Services.AddSingleton<WindowService>();
 
         // Singleton で IMemoryCache が登録されます
         builder.Services.AddMemoryCache();
+        builder.Services.AddTransient<ReservationEquipmentCacheService>();
 
+        // ViewModel
+        builder.Services.AddTransient<NotifyIconViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<FunctionBarViewModel>();
         builder.Services.AddTransient<ReservationMainViewModel>();
         builder.Services.AddTransient<ReservationEquipViewModel>();
 
+        // Window
         builder.Services.AddTransient<LoginWindow>();
         builder.Services.AddTransient<ReservationMainWindow>();
         builder.Services.AddTransient<ReservationEquipWindow>();
@@ -136,6 +147,7 @@ internal static class Program
         });
 
         // MagicOnion クライアントを登録
+        AddSingletonGrpcService<ISeedGrpcService>();
         AddSingletonGrpcService<IAuthGrpcService>();
         AddSingletonGrpcService<IReservationEquipmentGrpcService>();
 
@@ -162,14 +174,25 @@ internal static class Program
     {
         #region EFCore
 
-        //var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-        //builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connStr));
+        builder.Configuration.AddUserSecrets<App>();
+
+        // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        builder.Services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseNpgsql(connStr);
+
+            if (builder.Environment.IsDevelopment())
+            {
+                options.EnableSensitiveDataLogging();
+            }
+        });
 
         #endregion EFCore
 
         #region DomainService
-
-        //builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
 
         builder.Services.AddScoped<IPolicyService, PolicyService>();
 
@@ -179,7 +202,9 @@ internal static class Program
 
         // GrpcChannel ではなく、直接サーバー側のサービスを使えるようにします。
 
+        builder.Services.AddTransient<ISeedGrpcService, SeedGrpcService>();
         builder.Services.AddTransient<IAuthGrpcService, AuthGrpcService>();
+        builder.Services.AddTransient<IReservationEquipmentGrpcService, ReservationEquipmentGrpcService>();
 
         #endregion MagicOnion(Direct)
 

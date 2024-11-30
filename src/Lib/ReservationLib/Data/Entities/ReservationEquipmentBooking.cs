@@ -11,6 +11,7 @@ namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 [Table("reservation_equipment_bookings")]
 public class ReservationEquipmentBooking : AuditableEntityBase<int>
 {
+    [NotMapped]
     public override int Id => this.ResvEquipBkgId;
 
     [Key]
@@ -36,7 +37,7 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
 
     [Column("bkg_at")]
     [Required]
-    public DateTime BkgAt { get; set; } = DateTime.UtcNow;
+    public DateTime BkgAt { get; set; } = DateTime.Now;
 
     [Column("bkg_symbol_text")]
     [Required]

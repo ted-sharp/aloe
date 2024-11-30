@@ -27,194 +27,32 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Windows.Documents;
 using Microsoft.VisualBasic.CompilerServices;
 using System.DirectoryServices.ActiveDirectory;
+using AloeReservationGrid.App.ReservationApp.Services.CacheServices;
 
 namespace AloeReservationGrid.App.ReservationApp.ViewModels;
 
-
-// TODO: キャッシュキー用のreadonly record structを作るのが良さそう
 
 public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
     public static readonly string StartMonthFormat = "yyyy.MM";
 
-    public Action<DateTime>? RefreshAction { get; set; }
-
     public ReactivePropertySlim<string> StartMonth { get; set; } = new(DateTime.Today.ToString(StartMonthFormat));
 
+    public ObservableCollection<ReservationEquipTabItemViewModel> ReservationEquipTabItems { get; set; } = new(new());
 
-    //public ReactivePropertySlim<int> OffsetDayCount { get; set; } = new(31);
-
-    //public ReactivePropertySlim<string> FloorId1 { get; set; } = new("1");
-    //public ReactivePropertySlim<string> FloorName1 { get; set; } = new("Floor1");
-    //public ReadOnlyReactivePropertySlim<string> VerticalFloorName1 { get; }
-    //public ReactivePropertySlim<string> FloorId2 { get; set; } = new("2");
-    //public ReactivePropertySlim<string> FloorName2 { get; set; } = new("Floor2");
-    //public ReadOnlyReactivePropertySlim<string> VerticalFloorName2 { get; }
-
-    //public ReactivePropertySlim<bool?> IsAutoRefresh { get; set; } = new(true);
-
-    //public ReactivePropertySlim<string> SecondsToRefresh { get; set; } = new("60");
-
-    //public DataTable Schedules { get; set; } = new();
-    //public DataTable Schedules2 { get; set; } = new();
-    //public DataTable Schedules3 { get; set; } = new();
+    public ReactivePropertySlim<int> SelectedTabIndex { get; set; } = new();
 
     private readonly ILogger _logger;
 
-    #region Cache
-
-    private readonly IMemoryCache _cache;
-    private readonly IReservationEquipmentGrpcService _equipGrpcService;
-
-    public async Task<List<ReservationEquipmentDto>> GetOrFetchEquipments(bool useCache = true)
-    {
-        var key = "equipments";
-        if (useCache && this._cache.TryGetValue<List<ReservationEquipmentDto>>(
-                key, out var equipments))
-        {
-            return equipments ?? [];
-        }
-
-        equipments = await this._equipGrpcService.FetchEquipmentDtosAsync();
-
-        // マスター情報はまず変更がないのでしばらく保持しておく
-        var expiration = TimeSpan.FromHours(1);
-        this._cache.Set(key, equipments, expiration);
-
-        return equipments;
-    }
-
-    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchSlots(string monthString, bool useCache = true)
-    {
-        var date = monthString.ToDateOrToday();
-        var year = date.Year;
-        var month = date.Month;
-        return await this.GetOrFetchSlots(year, month, useCache);
-    }
-
-    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchSlots(int year, int month, bool useCache = true)
-    {
-
-        var key = $"equipmentSlots_{year:0000}{month:00}";
-        if (useCache && this._cache.TryGetValue<List<ReservationEquipmentSlotDto>>(
-                key, out var slots))
-        {
-            return slots ?? [];
-        }
-
-        slots = await this._equipGrpcService.FetchEquipmentSlotDtosAsync(year, month);
-
-        // スロット情報は毎日変更があるが、リアルタイムの変更もあるので程々とする
-        var expiration = TimeSpan.FromMinutes(10);
-        this._cache.Set(key, slots, expiration);
-
-        return slots;
-    }
-
-    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchBookings(string monthString, int equipId, bool useCache = true)
-    {
-        var date = monthString.ToDateOrToday();
-        var year = date.Year;
-        var month = date.Month;
-        return await this.GetOrFetchBookings(year, month, equipId, useCache);
-    }
-
-    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchBookings(int year, int month, int equipId, bool useCache = true)
-    {
-        var key = $"equipmentBookings_{year:0000}{month:00}_{equipId}";
-        if (useCache && this._cache.TryGetValue<List<ReservationEquipmentBookingDto>>(
-                key, out var bookings))
-        {
-            return bookings ?? [];
-        }
-
-        bookings = await this._equipGrpcService.FetchEquipmentBookingDtosAsync(year, month, equipId);
-
-        // リアルタイムの変更もあるので数分とする
-        var expiration = TimeSpan.FromMinutes(3);
-        this._cache.Set(key, bookings, expiration);
-
-        return bookings;
-    }
-
-    public async Task<DataTable> GetOrFetchBookingsTable(int year, int month, int equipId, bool useCache = true)
-    {
-        var key = $"equipmentBookingsTable_{year:0000}{month:00}_{equipId}";
-        if (useCache && this._cache.TryGetValue<DataTable>(
-                key, out var bookingsTable))
-        {
-            return bookingsTable ?? new();
-        }
-
-        // 列: スロット(記号、氏名、備考の繰り返し)
-        // 行: 日付
-        bookingsTable = new DataTable();
-
-        var slots = await this.GetOrFetchSlots(year, month, useCache);
-        var cols = await this.CreateColumns(slots);
-        foreach (var col in cols)
-        {
-            bookingsTable.Columns.Add(new DataColumn($"{col}_symbol"));
-            bookingsTable.Columns.Add(new DataColumn($"{col}_pt"));
-            bookingsTable.Columns.Add(new DataColumn($"{col}_remark"));
-        }
-
-        var bookings = await this._equipGrpcService.FetchEquipmentBookingDtosAsync(year, month, equipId);
-        var days = new DateTime(year, month + 1, 1).AddDays(-1).Day;
-        for (var i = 1; i <= days; i++)
-        {
-            // 日付毎に作っていく
-            //bookings.FindAll(x => x.BkgDate )
-
-        }
-
-        // リアルタイムの変更もあるので数分とする
-        var expiration = TimeSpan.FromMinutes(3);
-        this._cache.Set(key, bookingsTable, expiration);
-
-        return bookingsTable;
-    }
-
-    private async Task<List<string>> CreateColumns(List<ReservationEquipmentSlotDto> definitions)
-    {
-        // 定義されている最大の slot の一覧を作成する
-        var cols = new HashSet<string>();
-
-        foreach (var def in definitions)
-        {
-            // def 毎の slot 重複数を数える
-            var slotCounts = new Dictionary<string, int>();
-
-            for (var i = 0; i < def.Slots.Length; i++)
-            {
-                var slot = def.Slots[i];
-
-                if (!slotCounts.TryAdd(slot, 1))
-                {
-                    slotCounts[slot]++;
-                    // 重複したら (n) をつける
-                    slot = $"{slot}({slotCounts[slot]})";
-                    def.Slots[i] = slot;
-                }
-
-                cols.Add(slot);
-            }
-        }
-
-        return cols.OrderBy(x => x).ToList(); ;
-    }
-
-    #endregion Cache
+    private readonly ReservationEquipmentCacheService _cache;
 
     public ReservationEquipViewModel(
         ILogger<ReservationEquipViewModel> logger,
-        IMemoryCache cache,
-        IReservationEquipmentGrpcService equipGrpcService,
+        ReservationEquipmentCacheService cache,
         FunctionBarViewModel functionBar)
     {
         this._logger = logger;
         this._cache = cache;
-        this._equipGrpcService = equipGrpcService;
 
         #region SearchCondition
 
@@ -222,18 +60,9 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             .Subscribe(this.StartMonth_OnChanged)
             .AddTo(this.Disposables);
 
-        // TODO: FloorName1を更新、データも更新
-        //this.FloorId1.Subscribe(x => )
-
-        //this.VerticalFloorName1 = this.FloorName1
-        //    .Select(x => String.Join(Environment.NewLine, x.ToCharArray()))
-        //    .ToReadOnlyReactivePropertySlim<string>()
-        //    .AddTo(this.Disposables);
-
-        //this.VerticalFloorName2 = this.FloorName2
-        //    .Select(x => String.Join(Environment.NewLine, x.ToCharArray()))
-        //    .ToReadOnlyReactivePropertySlim<string>()
-        //    .AddTo(this.Disposables);
+        this.SelectedTabIndex
+            .Subscribe(this.SelectedTabIndex_OnChanged)
+            .AddTo(this.Disposables);
 
         #endregion SearchCondition
 
@@ -246,14 +75,63 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         #endregion Function
     }
 
+    /// <summary>
+    /// 初期化よりあとのタイミングで、あらかじめ必要なデータをロードします。
+    /// </summary>
+    /// <remarks>
+    /// 画面から同期的に呼べる ContentRendered イベントで呼びます。
+    /// </remarks>
+    public async Task Preload()
+    {
+        var equips = await this._cache.GetOrFetchEquipments();
+
+        // 全部作ると時間がかかるので、入れ物だけ用意する
+        // バインドされているので、タブが選択されて Refresh が走るはず
+        foreach (var equip in equips)
+        {
+            var vm = new ReservationEquipTabItemViewModel(this._logger, this._cache)
+            {
+                EquipId = equip.EquipId,
+                EquipName = equip.EquipName,
+            };
+
+            this.ReservationEquipTabItems.Add(vm);
+        }
+    }
+
+    /// <summary>
+    /// 開始年月が変わったときに、アクティブなタブの内容を更新します。
+    /// </summary>
     private async void StartMonth_OnChanged(string startMonth)
     {
+        var tabIndex = this.SelectedTabIndex.Value;
+        await this.RefreshAsync(startMonth, tabIndex);
+    }
 
+    /// <summary>
+    /// タブが切り替わったときに、アクティブなタブの内容を更新します。
+    /// </summary>
+    private async void SelectedTabIndex_OnChanged(int tabIndex)
+    {
+        var startMonth = this.StartMonth.Value;
+        await this.RefreshAsync(startMonth, tabIndex);
+    }
 
-        await this.LoadDataAsync();
+    private async Task RefreshAsync(string startMonth, int tabIndex)
+    {
+        if (this.ReservationEquipTabItems == null! ||
+            this.ReservationEquipTabItems.Count == 0)
+        {
+            // Preload 前は回避
+            return;
+        }
 
-        this.RefreshAction?.Invoke(startMonth.ToDateOrToday());
-
+        var tabItem = this.ReservationEquipTabItems[tabIndex];
+        var date = startMonth.ToDateOrToday();
+        tabItem.Year = date.Year;
+        tabItem.Month = date.Month;
+        await tabItem.LoadAsync();
+        tabItem.RefreshAction?.Invoke();
     }
 
     #region Function
@@ -266,7 +144,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
 
         var functions = new List<Function>
         {
-            new(FunctionKey.F5, "検索", this.ExecuteReloadCommand),
+            new(FunctionKey.F5, "検索", this.ExecuteSearchCommand),
 
             new(FunctionKey.F9, "前月へ", () => this.FunctionBar.ExecutePrevMonthCommand(this.StartMonth, format)),
             new(FunctionKey.F10, "次月へ", () => this.FunctionBar.ExecuteNextMonthCommand(this.StartMonth, format)),
@@ -277,7 +155,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         return functions;
     }
 
-    private async void ExecuteReloadCommand()
+    private async void ExecuteSearchCommand()
     {
         try
         {
@@ -285,8 +163,9 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             var isAlt = this.FunctionBar.IsAltKeyPressed.Value;
             if (!isAlt)
             {
-                await this.LoadDataAsync();
-                this._logger.LogInformation("F5");
+                var startMonth = this.StartMonth.Value;
+                var tabIndex = this.SelectedTabIndex.Value;
+                await this.RefreshAsync(startMonth, tabIndex);
             }
         }
         finally
@@ -295,12 +174,19 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         }
     }
 
-    public async Task LoadDataAsync()
+    /// <summary>
+    /// 検索など、ユーザーが初回に必ず実行するコマンドを呼び出します。
+    /// </summary>
+    public void ExecuteFirstCommand()
     {
-        // TODO
-        // equipId をキーとしたDicにDataTableを入れる？
-
-        await Task.Delay(3000);
+        if (this.FunctionBar.F5Command.CanExecute())
+        {
+            this.FunctionBar.F5Command.Execute();
+        }
+        else
+        {
+            throw new InvalidOperationException();
+        }
     }
 
     #endregion Function

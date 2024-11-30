@@ -35,4 +35,16 @@ public class Policy : AuditableEntityBase<string>
 
     [Column("is_active")]
     public bool IsActive { get; set; } = false;
+
+    public Policy() { }
+
+    public Policy(string policyCode, string policyName, string dataType, string policyValue, string policyDesc)
+    {
+        this.PolicyCode = policyCode;
+        this.PolicyName = policyName;
+        this.DataType = dataType;
+        this.PolicyValue = policyValue;
+        this.PolicyDesc = policyDesc;
+        this.IsActive = true;
+    }
 }

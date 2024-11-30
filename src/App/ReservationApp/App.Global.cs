@@ -34,35 +34,6 @@ public partial class App
 
     public static bool HasSession => App.Session != null;
 
-    // WindowServiceを作ってDIするようにしてもよい
-
-    public static T CreateWindow<T>()
-        where T : Window
-    {
-        var window = App.Resolve<T>();
-
-        var type = typeof(T);
-        return window ?? throw new Exception($"Not Found Window. (Type: {type})");
-    }
-
-    public static T? GetWindow<T>()
-        where T : Window
-    {
-        var window = Application.Current.Windows
-            .OfType<T>()
-            .FirstOrDefault();
-
-        return window;
-    }
-
-    public static T GetOrCreateWindow<T>()
-        where T : Window
-    {
-        var window = App.GetWindow<T>()
-                     ?? App.CreateWindow<T>();
-
-        return window;
-    }
 
     #endregion Global
 

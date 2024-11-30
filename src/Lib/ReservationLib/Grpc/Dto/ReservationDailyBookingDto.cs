@@ -36,7 +36,7 @@ public class ReservationDailyBookingDto
     public required int BkgUserId { get; set; } = 0;
 
     [Key(8)]
-    public required DateTime BkgAt { get; set; } = DateTime.UtcNow;
+    public required DateTime BkgAt { get; set; } = DateTime.Now;
 
     [Key(9)]
     public required string BkgSymbolText { get; set; } = String.Empty;

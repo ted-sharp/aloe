@@ -1,4 +1,7 @@
-﻿using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
+﻿using System.Diagnostics;
+using AloeReservationGrid.Lib.CoreLib.Util;
+using AloeReservationGrid.Lib.ReservationLib.Data.EFCore;
+using AloeReservationGrid.Lib.ReservationLib.Domain.Constants;
 using AloeReservationGrid.Lib.ReservationLib.Grpc.Dto;
 using MagicOnion;
 using MagicOnion.Server;
@@ -13,9 +16,9 @@ public interface IReservationEquipmentGrpcService : IService<IReservationEquipme
 {
     UnaryResult<List<ReservationEquipmentDto>> FetchEquipmentDtosAsync();
 
-    UnaryResult<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month);
+    UnaryResult<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month, int? orEquipId);
 
-    UnaryResult<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int equipId);
+    UnaryResult<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int? orEquipId);
 }
 
 public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipmentGrpcService>, IReservationEquipmentGrpcService
@@ -24,7 +27,7 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
     private readonly AppDbContext _context;
 
     public ReservationEquipmentGrpcService(
-        ILogger logger,
+        ILogger<ReservationEquipmentGrpcService> logger,
         AppDbContext context)
     {
         this._logger = logger;
@@ -35,22 +38,26 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
     {
         var equips = await this._context.Equipments
             .Where(x => x.IsDeleted == false)
+            .OrderBy(x => x.Seq)
             .Select(x => x.ToReservationEquipmentDto())
             .ToListAsync();
         return equips;
     }
 
-    public async UnaryResult<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month)
+    public async UnaryResult<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month, int? orEquipId)
     {
         var firstDay = new DateTime(year, month, 1);
         var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var zeroOrEquipId = orEquipId ?? 0;
 
         var options = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;
-        var slots = await this._context.EquipmentSlots
+        var query = this._context.EquipmentSlots
             .Where(x =>
                 x.StartDate <= lastDay
                 && x.EndDate >= firstDay
-                && x.IsDeleted == false)
+                && x.IsDeleted == false
+                && (x.EquipId == 0 || x.EquipId == zeroOrEquipId)
+            )
             .Select(x => new ReservationEquipmentSlotDto
             {
                 ResvEquipSlotId = x.ResvEquipSlotId,
@@ -58,24 +65,28 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
                 EndDate = x.EndDate,
                 DowCode = x.DowCode,
                 EquipId = x.EquipId,
-                Slots = x.Slots.Split(',', options),
+                Slots = x.SplitSlots(),
             })
-            .OrderBy(x => x.StartDate)
-            .ToListAsync();
-        return slots;
+            .OrderBy(x => x.StartDate);
+
+        this._logger.LogDebug(query.ToQueryString());
+
+        return await query.ToListAsync();
     }
 
-    public async UnaryResult<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int equipId)
+    public async UnaryResult<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int? orEquipId)
     {
         var firstDay = new DateTime(year, month, 1);
         var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var zeroOrEquipId = orEquipId ?? 0;
 
         var bookings = await this._context.EquipmentBookings
             .Where(x =>
                 firstDay <= x.BkgDate
                 && x.BkgDate <= lastDay
-                && x.EquipId == equipId
-                && x.IsDeleted == false)
+                && x.IsDeleted == false
+                && (x.EquipId == 0 || x.EquipId == zeroOrEquipId)
+            )
             .Select(x => new ReservationEquipmentBookingDto
             {
                 ResvEquipBkgId = x.ResvEquipBkgId,

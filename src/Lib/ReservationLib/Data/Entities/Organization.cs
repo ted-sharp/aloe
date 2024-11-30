@@ -9,33 +9,55 @@ using System.Threading.Tasks;
 namespace AloeReservationGrid.Lib.ReservationLib.Data.Entities;
 
 [Table("organizations")]
-public class Organization
+public class Organization : AuditableEntityBase<int>
 {
+    [NotMapped]
+    public override int Id => this.OrgId;
+
+    [Column("org_id")]
     [Key]
     [Required]
-    public int OrganizationId { get; set; }
+    public int OrgId { get; set; }
 
+    [Column("insurance_type_code")]
+    [Required]
     public string InsuranceTypeCode { get; set; } = String.Empty;
 
+    [Column("insurance_provider_id")]
+    [Required]
     public int InsuranceProviderId { get; set; } = 0;
 
-    public int ParentOrganizationId { get; set; } = 0;
+    [Column("parent_org_id")]
+    [Required]
+    public int ParentOrgId { get; set; } = 0;
 
-    public string OrganizationName { get; set; } = String.Empty;
+    [Column("org_name")]
+    [Required]
+    public string OrgName { get; set; } = String.Empty;
 
-    public string OrganizationNameKatakana { get; set; } = String.Empty;
+    [Column("org_name_katakana")]
+    [Required]
+    public string OrgNameKatakana { get; set; } = String.Empty;
 
-    public string OrganizationNameKatakanaNormalized { get; set; } = String.Empty;
+    [Column("org_name_katakana_normalized")]
+    [Required]
+    public string OrgNameKatakanaNormalized { get; set; } = String.Empty;
 
-    public string OrganizationNameDisplay { get; set; } = String.Empty;
+    [Column("org_name_display")]
+    [Required]
+    public string OrgNameDisplay { get; set; } = String.Empty;
 
-    public string OrganizationNamePrint { get; set; } = String.Empty;
+    [Column("org_name_print")]
+    [Required]
+    public string OrgNamePrint { get; set; } = String.Empty;
 
-    public bool IsDeleted { get; set; } = false;
+    public Organization() { }
 
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
-
-    public int UpdatedUserId { get; set; } = 0;
-
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
+    public Organization(string orgName, string katakana, string displayName, string printName)
+    {
+        this.OrgName = orgName;
+        this.OrgNameKatakana = katakana;
+        this.OrgNameDisplay = displayName;
+        this.OrgNamePrint = printName;
+    }
 }
