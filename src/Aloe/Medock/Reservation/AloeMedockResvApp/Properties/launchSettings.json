@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ReservationApp": {
+      "commandName": "Project",
+      "commandLineArgs": "-s -d -n"
+    }
+  }
+}
