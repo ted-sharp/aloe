@@ -4,30 +4,55 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:LoginViewModel}"
         Title="LoginWindow"
         Height="250" Width="400"
         WindowStartupLocation="CenterScreen"
         Closing="LoginWindow_OnClosing">
-    <DockPanel LastChildFill="True">
+
+    <Window.Resources>
+        <Style TargetType="Label">
+            <Setter Property="HorizontalContentAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="5,0" />
+        </Style>
+        <Style TargetType="ui:PackIcon">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
         <!-- ステータスバー -->
-        <StatusBar DockPanel.Dock="Bottom">
+        <StatusBar DockPanel.Dock="Bottom" Padding="0">
             <StatusBarItem>
-                <TextBlock Text="Processing..." />
+                <TextBlock x:Name="StatusText"
+                           Text="Startup processing..."
+                           Margin="5,0" />
             </StatusBarItem>
-            <StatusBarItem Width="200">
+            <StatusBarItem HorizontalContentAlignment="Stretch">
                 <ProgressBar x:Name="ProgressBar"
-                             Height="20"
                              IsIndeterminate="True"
-                             Margin="5,0,0,0" />
+                             Margin="5,0" />
             </StatusBarItem>
         </StatusBar>
 
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -35,18 +60,27 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <Label Grid.Column="0" Grid.Row="1" HorizontalContentAlignment="Right">User</Label>
-            <Label Grid.Column="0" Grid.Row="2" HorizontalContentAlignment="Right">Password</Label>
-
-            <TextBox Grid.Column="1" Grid.Row="1" x:Name="UserTextBox"
+            <ui:PackIcon Grid.Row="1" Grid.Column="0" Kind="Account"/>
+            <!-- MaterialDesignOutlinedTextBox にしたい(参考: デモアプリ) -->
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="UserTextBox"
+                     ui:HintAssist.Hint="User"
                      Text="{Binding User.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}"></TextBox>
-            <TextBox Grid.Column="1" Grid.Row="2" x:Name="PasswordTextBox"
+
+            <ui:PackIcon Grid.Row="2" Grid.Column="0" Kind="Key" HorizontalAlignment="Right"/>
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="PasswordTextBox"
+                     ui:HintAssist.Hint="Password"
                      Text="{Binding Password.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}"></TextBox>
 
-            <Button Grid.Column="1" Grid.Row="3" x:Name="LoginButton" Content="Login" Click="LoginButton_OnClick" />
+            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="UserRememberedCheckBox" Content="Remember me" IsChecked="False" />
+
+            <Button Grid.Row="4" Grid.Column="1" x:Name="LoginButton" Content="Login" IsEnabled="False" Click="LoginButton_OnClick" />
+
+            <ui:Snackbar Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Grid.ColumnSpan="3"
+                         x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
         </Grid>
     </DockPanel>
 </Window>

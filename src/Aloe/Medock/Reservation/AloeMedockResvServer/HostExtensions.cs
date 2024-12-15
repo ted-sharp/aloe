@@ -73,17 +73,17 @@ internal static class HostExtensions
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<AppDbContext>(options =>
-        {
-            options.UseNpgsql(connStr);
+        //builder.Services.AddDbContext<AppDbContext>(options =>
+        //{
+        //    options.UseNpgsql(connStr);
 
-            if (builder.Environment.IsDevelopment())
-            {
-                options.EnableSensitiveDataLogging();
-            }
-        });
+        //    if (builder.Environment.IsDevelopment())
+        //    {
+        //        options.EnableSensitiveDataLogging();
+        //    }
+        //});
 
-        // スレッドセーフではないので、都度生成します。
+        // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
         builder.Services.AddDbContextFactory<AppDbContext>(options =>
         {
             options.UseNpgsql(connStr);
@@ -93,7 +93,6 @@ internal static class HostExtensions
                 options.EnableSensitiveDataLogging();
             }
         });
-
         return builder;
     }
 

@@ -3,13 +3,13 @@
     See https://heptapod.host/thirteen/switchstartupproject/blob/branch/current/Configuration.md
 */
 {
-    /*  Configuration File Version  */
-    "Version": 3,
+  /*  Configuration File Version  */
+  "Version": 3,
 
-    /*  Create an item in the dropdown list for each project in the solution?  */
-    "ListAllProjects": false,
+  /*  Create an item in the dropdown list for each project in the solution?  */
+  "ListAllProjects": false,
 
-    /*
+  /*
         Dictionary of named configurations with one or multiple startup projects
         and optional parameters like command line arguments and working directory.
         Example:
@@ -55,7 +55,37 @@
     "App(Standalone)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "-s -d -n",
+          "CommandLineArguments": "--standalone --development -q --seed",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+    "App(Standalone login failed)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone --development -q --seed -uadmin -padminyyyy",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+    "App(Standalone login)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone --development -q --seed -uadmin -padmin",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+    "App(Standalone login Equip)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone --development -q --seed -uadmin -padmin --screen=4 ",
           "WorkingDirectory": "",
           "StartProject": true
         }

@@ -2,7 +2,7 @@
   "profiles": {
     "ReservationApp": {
       "commandName": "Project",
-      "commandLineArgs": "-s -d -n"
+      "commandLineArgs": "--standalone --development -q --seed -uadmin -padmin --screen=4 "
     }
   }
 }

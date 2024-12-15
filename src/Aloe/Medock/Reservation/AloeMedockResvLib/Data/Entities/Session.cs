@@ -27,7 +27,7 @@ public class Session
     [Required]
     public int UserId { get; set; } = 0;
 
-    [Column("user_name")]
+    [Column("user_display_name")]
     [Required]
     [StringLength(Int32.MaxValue)]
     public string UserDisplayName { get; set; } = String.Empty;

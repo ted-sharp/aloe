@@ -1,8 +1,18 @@
 ﻿using System.ComponentModel;
+using System.Diagnostics;
 using System.Windows;
 using Aloe.Common.AloeCoreLib.Ini;
+using Aloe.Common.AloeCoreLib.Logging;
+using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
+using MaterialDesignThemes.Wpf;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 
@@ -10,15 +20,31 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 /// アプリケーションの開始画面となるメインウィンドウです。
 /// </summary>
 /// <remarks>
-/// できるだけ初期表示時間を早めるため、DI も MVVM も使用しません。
+/// できるだけ初期表示時間を早めるため、初期表示には DI を使用しません。
+/// DI が使用できないので ViewModel も使用しません。
 /// </remarks>
 public partial class LoginWindow : Window
 {
+    private readonly LoginIni _ini;
+
     private bool _isForceClose = false;
 
     public LoginWindow(LoginIni ini)
     {
         this.InitializeComponent();
+
+        this.Title = App.AppName;
+
+        this._ini = ini;
+        this.InitializeValue(ini);
+    }
+
+    /// <summary>
+    /// 設定ファイルの値を反映します。
+    /// </summary>
+    private void InitializeValue(LoginIni ini)
+    {
+        this.UserRememberedCheckBox.IsChecked = ini.IsUserRemembered ?? false;
 
         if (ini.IsUserRemembered.HasValue && ini.IsUserRemembered.Value)
         {
@@ -28,32 +54,48 @@ public partial class LoginWindow : Window
         {
             this.PasswordTextBox.Text = ini.Password ?? "";
         }
-
-        // TODO: ファイルに保存してある前回値などを入れたい
-        // Window位置の前回値もそこに記録してあるはず
-        // そのためには、Configurationだけ別で先にやる必要がある
-        // ログイン画面をスキップする場合もこの設定に記述されるはず
-        // 最速にしたいのでini形式にする
-
-        // HostUrl=http://192.168.100.1:81
-        // IsUserRemembered=true
-        // IsPasswordRemembered
-        // IsLoginSkipped=true
-        // User=xxxx
-        // Password=xxxx
-
-
-        // この画面をスキップする場合はどうする？
-        // 引数でusr/pwd指定された場合とか？
-        // すでに起動済みのときにusr/pwd違いで指定されたらどうする？
-        // 複数ログインに対応する？つまりSessionContextが必要？
-        // 他の画面を開く際にSessionContextを要求すればよいか
     }
 
-    public void StopIndicator()
+    /// <summary>
+    /// ステータスバーのテキストを更新します。
+    /// </summary>
+    public void SetStatus(string message)
+    {
+        if (String.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        this.StatusText.Text = message;
+    }
+
+    /// <summary>
+    /// スナックバーを表示します。
+    /// すでに表示中のスナックバーがある場合はクリアします。
+    /// </summary>
+    public void ShowSnackbar(string? message)
+    {
+        if (String.IsNullOrWhiteSpace(message))
+        {
+            return;
+        }
+
+        this.Snackbar.MessageQueue ??= new();
+        this.Snackbar.MessageQueue.Clear();
+        this.Snackbar.MessageQueue.Enqueue(message);
+    }
+
+    /// <summary>
+    /// 初期化タスクの完了を通知します。
+    /// プログレスバーを止めて、ログインボタンを押せるようにします。
+    /// </summary>
+    public void CompleteInitializingTask(string message)
     {
         // 非表示にする
         this.ProgressBar.Visibility = Visibility.Collapsed;
+
+        this.StatusText.Text = message;
+
         // ボタンを押せるようにする
         this.LoginButton.IsEnabled = true;
     }
@@ -63,6 +105,10 @@ public partial class LoginWindow : Window
     /// </summary>
     private void LoginWindow_OnClosing(object? sender, CancelEventArgs e)
     {
+        // 閉じるときに設定を保存します。
+        // 閉じる関連のイベントで await にはしません。
+        this.SaveIniFile();
+
         // 強制閉じるだとキャンセルしません。
         if (this._isForceClose)
         {
@@ -75,6 +121,47 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
+    /// ログイン画面の情報をINIファイルに保存します。
+    /// </summary>
+    private void SaveIniFile()
+    {
+        try
+        {
+            var isRemembered = this.UserRememberedCheckBox.IsChecked ?? false;
+
+            this._ini.IsUserRemembered = isRemembered;
+            this._ini.IsPasswordRemembered = isRemembered;
+            if (isRemembered)
+            {
+                this._ini.User = this.UserTextBox.Text;
+                this._ini.Password = this.PasswordTextBox.Text;
+            }
+            else
+            {
+                this._ini.User = "";
+                this._ini.Password = "";
+            }
+
+            // TODO: 空だったら HostUrl をいれる？
+            //this._ini.HostUrl
+
+            this._ini.Save(App.IniFilePath);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                var logger = App.Resolve<ILogger<LoginWindow>>();
+                logger.LogError(ex, ex.ToString());
+            }
+            catch
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+    }
+
+    /// <summary>
     /// キャンセルせずに閉じます。
     /// </summary>
     public void ForceClose()
@@ -83,16 +170,71 @@ public partial class LoginWindow : Window
         this.Close();
     }
 
-    private void LoginButton_OnClick(object sender, RoutedEventArgs e)
+    private async void LoginButton_OnClick(object sender, RoutedEventArgs e)
     {
-        // TODO: ログインを試す
+        try
+        {
+            this.LoginButton.IsEnabled = false;
 
-        // 設定ファイルからサーバー接続先情報を取得して、チャネルを作ってgRPCでコールする(ここではDIは使わない)
-        // ログインができたらWindowを表示する
+            await this.LoginAsync(
+                this.UserTextBox.Text,
+                this.PasswordTextBox.Text);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                var logger = App.Resolve<ILogger<LoginWindow>>();
+                logger.LogError(ex, ex.ToString());
+            }
+            catch
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+        finally
+        {
+            this.LoginButton.IsEnabled = true;
+        }
+    }
 
-        // ログインできたら、この画面は隠す
-        // 以降、ログアウトしたときだけ再表示される
+    /// <summary>
+    /// ログインを試行します。
+    /// </summary>
+    private async Task LoginAsync(string user, string password)
+    {
+        this.SetStatus("Login trying...");
 
+        // 連続で実行できないように、少し間を置く
+        var delayTask = Task.Delay(1000);
 
+        var request = new LoginRequest()
+        {
+            LoginName = user,
+            Password = password,
+            ClientAppName = App.AppName,
+        };
+
+        var auth = App.Resolve<IAuthGrpcService>();
+        var result = await auth.LoginAsync(request);
+
+        await delayTask;
+
+        if (result.IsSuccess)
+        {
+            this.SetStatus("Login successful.");
+
+            App.Session = result.SessionDto;
+
+            var window = App.Resolve<ReservationMainWindow>();
+            window.Show();
+            this.Close();
+        }
+        else
+        {
+            var msg = "Login failed.";
+            this.SetStatus(msg);
+            this.ShowSnackbar(result.ErrorMessage);
+        }
     }
 }

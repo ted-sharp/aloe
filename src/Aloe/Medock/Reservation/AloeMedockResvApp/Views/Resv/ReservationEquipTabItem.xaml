@@ -5,6 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
              xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+             xmlns:dto="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;assembly=Aloe.Medock.Reservation.AloeMedockResvLib"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
              d:Background="Azure"
@@ -13,7 +14,7 @@
 
     <UserControl.Resources>
         <!-- カラムヘッダー: 日付毎に表示 -->
-        <Style TargetType="DataGridColumnHeader">
+        <!--<Style TargetType="DataGridColumnHeader">
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="DataGridColumnHeader">
@@ -32,40 +33,46 @@
                     </ControlTemplate>
                 </Setter.Value>
             </Setter>
-        </Style>
+        </Style>-->
 
         <!-- ローヘッダー: スロットを表示 -->
         <Style TargetType="DataGridRowHeader">
-            <!-- デザイナ上では ViewModel がそのまま渡っていますが、実際には ItemsSource の項目のひとつが渡ってきます。 -->
             <Setter Property="Content" Value="{Binding}"/>
             <Setter Property="ContentTemplate">
                 <Setter.Value>
                     <DataTemplate>
-                        <TextBlock d:DataContext="{d:DesignInstance Type=vm:SlotRowData}"
-                                   Text="{Binding Slot}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Red" />
+                        <TextBlock
+                            d:DataContext="{d:DesignInstance Type=vm:BookingRow}"
+                            Text="{Binding SlotDisplay}" HorizontalAlignment="Center" VerticalAlignment="Center" Foreground="Red" />
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
         </Style>
     </UserControl.Resources>
 
-    <Grid x:Name="LayoutGrid">
-        <Grid.RowDefinitions>
-            <!-- 上部のヘッダーを確保 -->
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
+    <DockPanel>
+        <ListBox
+            DockPanel.Dock="Right"
+            x:Name="BookingOverflowListBox"
+            DisplayMemberPath="DisplayText">
+            <!--
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <TextBlock Text="{Binding DisplayText}" />
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+            -->
+        </ListBox>
 
-        <!-- デザイナ上では DataRows の型が正常に解釈されていません。そのためデザイナではローヘッダーテンプレートへ渡す情報が不正確になっています。 -->
-        <DataGrid Grid.Row="1"
-                  x:Name="TabItemDataGrid"
-                  ItemsSource="{Binding Rows}"
-                  AutoGenerateColumns="False"
-                  CanUserAddRows="False"
-                  CanUserResizeRows="False"
-                  HeadersVisibility="All"
-                  SelectionUnit="Cell"
-                  SelectionMode="Extended"
+        <DataGrid
+            x:Name="BookingDataGrid"
+            AutoGenerateColumns="False"
+            CanUserAddRows="False"
+            CanUserResizeRows="False"
+            HeadersVisibility="All"
+            SelectionUnit="Cell"
+            SelectionMode="Extended"
         />
-    </Grid>
+
+    </DockPanel>
 </UserControl>

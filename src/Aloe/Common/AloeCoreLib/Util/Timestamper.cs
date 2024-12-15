@@ -32,7 +32,7 @@ public class Timestamper
     /// <summary>
     /// 経過時間の計測ポイントです。
     /// </summary>
-    private readonly List<TimestampPoint> _points = new(1000);
+    private readonly List<TimestampPoint> _points = new(32);
 
     /// <summary>
     /// Ctor.
@@ -47,6 +47,8 @@ public class Timestamper
     /// <summary>
     /// 時間を記録します。
     /// </summary>
+    [Conditional("DEBUG")]
+    [DebuggerHidden()]
     public void Stamp(string name, string message = "")
     {
         this._points.Add(new TimestampPoint(Stopwatch.GetTimestamp(), name, message));
@@ -55,15 +57,21 @@ public class Timestamper
     /// <summary>
     /// Debug 出力に計測結果を印字します。
     /// </summary>
-    public void Dump()
+    [Conditional("DEBUG")]
+    [DebuggerHidden()]
+    public async void DumpAsync()
     {
-        var log = this.Build();
-        Debug.WriteLine(log);
+        await Task.Run(() =>
+        {
+            var log = this.Build();
+            Debug.WriteLine(log);
+        });
     }
 
     /// <summary>
     /// ログに整形します。
     /// </summary>
+    [DebuggerHidden()]
     public string Build()
     {
         var str = new StringBuilder();

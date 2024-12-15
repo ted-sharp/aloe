@@ -19,12 +19,12 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvEquipBkgId { get; set; }
 
-    [Column("bkg_date")]
-    public DateTime? BkgDate { get; set; }
-
     [Column("equip_id")]
     [Required]
     public int EquipId { get; set; } = 0;
+
+    [Column("bkg_date")]
+    public DateTime? BkgDate { get; set; }
 
     [Column("slot")]
     [Required]
@@ -68,4 +68,16 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
     [Column("sub_order_id")]
     [Required]
     public int SubOrderId { get; set; } = 0;
+
+    public ReservationEquipmentBooking() { }
+
+    public ReservationEquipmentBooking(int equipId, DateTime bkgDate, string slot, string symbol, string remark, bool isHeld)
+    {
+        this.EquipId = equipId;
+        this.BkgDate = bkgDate;
+        this.Slot = slot;
+        this.BkgSymbolText = symbol;
+        this.BkgRemarkText = remark;
+        this.IsHeld = isHeld;
+    }
 }

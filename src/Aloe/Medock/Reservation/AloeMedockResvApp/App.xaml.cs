@@ -20,120 +20,104 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Aloe.Common.AloeCoreLib.Ini;
 using System.Reflection;
-using static Aloe.Medock.Reservation.AloeMedockResvApp.Program;
-using System.Threading.Tasks;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using CommandLine;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
 /// <summary>
 /// アプリケーション本体の処理の開始点です。
-/// Program.Main → WpfHostService.StartAsync → App と呼び出されます。
+/// Program.Main → App.Ctor → App.OnStartup と呼び出されます。
 /// </summary>
 public partial class App : Application
 {
-    private static readonly AssemblyName s_asmName = Assembly.GetExecutingAssembly().GetName();
-
-    private static readonly string s_iniFilePath =
-        System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            App.s_asmName.Name ?? "AppName",
-            "app.ini");
+    private readonly Timestamper _ts = new Timestamper("App");
 
     private readonly Arguments _arguments;
-    private IHost? _host;
     private ILogger? _logger;
+    private IHost? _host;
 
+    private LoginWindow? _loginWindow;
     private TaskbarIcon? _notifyIcon;
 
     public App(Arguments arguments)
     {
-        Timestamper.Global.Stamp("App ctor.");
+        this._ts.Stamp("Ctor");
 
         this._arguments = arguments;
         this.RegisterUnhandledExceptionHandlers();
+
+        this._ts.Stamp("Ctor finished");
     }
 
     protected async override void OnStartup(StartupEventArgs e)
     {
         try
         {
-            Timestamper.Global.Stamp("App OnStartup.");
+            this._ts.Stamp("OnStartup");
 
             base.OnStartup(e);
 
-            var ini = LoginIni.Load(App.s_iniFilePath);
+            var ini = LoginIni.Load(App.IniFilePath);
 
-            var loginWindow = new LoginWindow(ini);
-            Application.Current.MainWindow = loginWindow;
-
-            Timestamper.Global.Stamp("App OnStartup: Create LoginWindow.");
+            if (this._arguments.ScreenCode.IsDefault())
+            {
+                this._loginWindow = new LoginWindow(ini);
+                Application.Current.MainWindow = this._loginWindow;
+                this._loginWindow.Show();
+            }
 
             var task = Task.Run(async () =>
             {
-                // _host を起点に処理するので最初に初期化する
-                this._host = this.InitializeHost();
-                this._logger = this._host.Services.GetService<ILogger<App>>();
+                this._host = this.InitializeHost(this._arguments);
+                App.s_services = this.Host.Services;
+                this._logger = this.Host.Services.GetService<ILogger<App>>();
 
-
-                if (this._arguments.IsDevelopment)
+                if (this._arguments.Standalone)
                 {
-                    // 開発中ならサンプルデータを追加
+                    await this.InitializeDatabaseAsync();
+                }
+
+                if (this._arguments.IsSeed)
+                {
                     await this.InitializeSeedAsync();
                 }
-                else
+            }).ContinueWith(_ =>
+            {
+                if (this._loginWindow is not null)
                 {
-                    // 開発中じゃなければタスクトレイ起動
-                    this.Dispatcher.Invoke(this.InitializeNotifyIcon);
-                }
+                    // 別スレッドからUIスレッドを操作
+                    this.Dispatcher.Invoke(() =>
+                    {
+                        this.InitializeNotifyIcon();
 
-                this.Dispatcher.Invoke(() =>
-                {
-                    // ロードが終わったらインジケーターを止める
-                    loginWindow.StopIndicator();
-                });
+                        // ロードが終わったらインジケーターを止める
+                        this._loginWindow.CompleteInitializingTask("Startup finished.");
+                    });
+                }
             });
 
-
-            if (this._arguments.IsDevelopment)
+            if (!String.IsNullOrWhiteSpace(this._arguments.User))
             {
-                //開発中は特定のWindowを直接表示したい
-                await Task.WhenAll(task);
-
-                this.ShowDevelWindow();
-                //this.ShowFirstLoginWindow();
-                return;
-            }
-
-            // TODO: arguments で指定された場合も許可したい
-            if (ini.IsReadyForAutoLogin)
-            {
-                // IHost が使えるようになるまで待つ
-                await Task.WhenAll(task);
-
-                var auth = this._host?.Services.GetRequiredService<IAuthGrpcService>();
-                var request = new LoginRequest()
+                var isSuccessful = await this.LoginAsync(task, this._arguments.User, this._arguments.Password);
+                if (isSuccessful)
                 {
-                    LoginName = ini.User!,
-                    Password = ini.Password!,
-                    ClientAppName = $"{App.s_asmName.Name} {App.s_asmName.Version}",
-                };
-                var result = await auth!.LoginAsync(request);
-
-                if (result.IsSuccess)
-                {
-                    App.Session = result.SessionDto;
-                    // TODO: Window の表示
-                    // とりあえず loginwindow を表示しておく
-                    loginWindow.Show();
-                }
-                else
-                {
-                    MessageBox.Show(result.ErrorMessage);
+                    return;
                 }
             }
-            else
+            else if (ini.IsReadyForAutoLogin)
             {
-                loginWindow.Show();
+                var isSuccessful = await this.LoginAsync(task, ini.User!, ini.Password!);
+                if (isSuccessful)
+                {
+                    return;
+                }
+            }
+
+            if (this._loginWindow is null)
+            {
+                // 画面指定があったら開けないので終了
+                this.Shutdown(0);
             }
         }
         catch (Exception ex)
@@ -143,30 +127,35 @@ public partial class App : Application
         }
         finally
         {
-            Timestamper.Global.Stamp("App OnStartup: finally.");
-            Timestamper.Global.Dump();
+            this._ts.Stamp("OnStartup finally");
+            this._ts.DumpAsync();
         }
     }
 
-    private void ShowDevelWindow()
+    private void SetStatus(string message)
     {
-        //var window = this._windowService.CreateWindow<ReservationMainWindow>();
-        var window = this._host!.Services.GetRequiredService<ReservationEquipWindow>();
-
-        window.ActivateOrShow();
-        Application.Current.MainWindow = window;
+        this._ts.Stamp(message);
+        if (this._loginWindow is not null)
+        {
+            this.Dispatcher.Invoke(() =>
+            {
+                this._loginWindow.SetStatus(message);
+            });
+        }
     }
 
     /// <summary>
     /// Generic Host(IHost) で Configuration, ILogger, IServiceProvider を使用できるようにします。
     /// </summary>
-    private IHost InitializeHost()
+    private IHost InitializeHost(Arguments arguments)
     {
+        this.SetStatus("Host Initializing...");
+
         var args = Environment.GetCommandLineArgs();
 
         // Generic Host を使って設定を共通化している
-        var host = Host.CreateApplicationBuilder(args)
-            .ConfigureBuilder(this._arguments)
+        var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
+            .ConfigureBuilder(arguments)
             .Build();
 
         // App.Run と競合するため IHost.Run はしない
@@ -175,7 +164,75 @@ public partial class App : Application
         // 必要なら手動で実行する
         //host.StartAsync();
 
+        this._ts.Stamp("Host initialized");
+
         return host;
+    }
+
+    private async Task<bool> LoginAsync(Task task, string user, string password)
+    {
+        // TODO: クラサバのときini から HostUrl が取れる場合は待たずに生成してしまえばよい
+        this.SetStatus("Task Waiting...");
+        await Task.WhenAll(task);
+
+        var sp = this.Host.Services;
+        var auth = sp.GetRequiredService<IAuthGrpcService>();
+        var request = new LoginRequest()
+        {
+            LoginName = user,
+            Password = password,
+            ClientAppName = App.AppName,
+        };
+
+        this.SetStatus("Login trying...");
+        var result = await auth.LoginAsync(request);
+
+        if (result.IsSuccess)
+        {
+            this.SetStatus("Login successful.");
+
+            App.Session = result.SessionDto;
+
+            Window window = this._arguments.ScreenCode switch
+            {
+                ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipWindow>(),
+                _ => sp.GetRequiredService<ReservationMainWindow>(),
+            };
+
+            window.Show();
+            this._loginWindow?.Close();
+            Application.Current.MainWindow = window;
+            return true;
+        }
+        else
+        {
+            var msg = $"Login failed. {result.ErrorMessage}";
+            this.SetStatus(msg);
+            this._logger?.LogInformation(msg);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// ポリシーを事前にロードしておきます。
+    /// EFCore は初回アクセス時にマッピングなどが行われるため時間がかかります。
+    /// スタンドアローンで動かす場合には非同期で呼び出してください。
+    /// </summary>
+    private async ValueTask InitializeDatabaseAsync()
+    {
+        this.SetStatus("DB Initializing...");
+
+        try
+        {
+            var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
+            await auth.LoadPoliciesAsync();
+        }
+        catch (Exception ex)
+        {
+            this._logger?.LogError(ex, "Error!");
+        }
+
+        this._ts.Stamp("DB initialized");
     }
 
     /// <summary>
@@ -184,9 +241,11 @@ public partial class App : Application
     /// </summary>
     private async ValueTask InitializeSeedAsync()
     {
+        this.SetStatus("DB Seeding...");
+
         try
         {
-            var seed = this._host?.Services.GetService<ISeedGrpcService>();
+            var seed = this.Host.Services.GetService<ISeedGrpcService>();
             if (seed is not null)
             {
                 await seed.SeedAsync();
@@ -196,10 +255,17 @@ public partial class App : Application
         {
             this._logger?.LogError(ex, "Error!");
         }
+
+        this._ts.Stamp("DB Seeded");
     }
 
+    /// <summary>
+    /// タスクトレイアイコンを作成します。
+    /// </summary>
     private void InitializeNotifyIcon()
     {
+        this.SetStatus("NotifyIcon Initializing...");
+
         try
         {
             this._notifyIcon = this.CreateNotifyIcon();
@@ -219,6 +285,8 @@ public partial class App : Application
         {
             this._logger?.LogError(ex, "Error!");
         }
+
+        this._ts.Stamp("NotifyIcon initialized");
     }
 
     private TaskbarIcon CreateNotifyIcon()
@@ -231,8 +299,7 @@ public partial class App : Application
         // 必要なリソースを参照して使用する
         if (resources["NotifyIcon"] is TaskbarIcon notifyIcon)
         {
-
-            notifyIcon.DataContext = this._host?.Services.GetService<NotifyIconViewModel>();
+            notifyIcon.DataContext = this.Host.Services.GetService<NotifyIconViewModel>();
             return notifyIcon;
         }
 
@@ -249,6 +316,4 @@ public partial class App : Application
 
         base.OnExit(e);
     }
-
 }
-

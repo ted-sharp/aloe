@@ -29,8 +29,7 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
 
     public ReservationEquipmentGrpcService(
         ILogger<ReservationEquipmentGrpcService> logger,
-        IDbContextFactory<AppDbContext> factory,
-        AppDbContext context)
+        IDbContextFactory<AppDbContext> factory)
     {
         this._logger = logger;
         this._factory = factory;

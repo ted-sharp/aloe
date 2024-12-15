@@ -11,5 +11,5 @@ public static class Delimiter
     /// <summary>
     /// 各種スロットの記述はスペースで分割するものとします。
     /// </summary>
-    public static readonly string SlotDelimiter = " ";
+    public static readonly char SlotDelimiter = ' ';
 }

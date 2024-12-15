@@ -31,8 +31,8 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 /// </summary>
 /// <param name="Key"><see cref="FunctionKey"/>を使います。</param>
 /// <param name="Name">ボタンに表示するテキストです。</param>
-/// <param name="Action">コマンドで実行する処理です。コマンド自体はF1とAltF1で共通ですので、メソッド内でガード節を使ってください。</param>
-public record Function(string Key, string Name, Action Action);
+/// <param name="FuncAsync">コマンドで実行する処理です。コマンド自体はF1とAltF1で共通ですので、メソッド内でガード節を使ってください。</param>
+public record Function(string Key, string Name, Func<Task> FuncAsync);
 
 // バインドするだけで、実行の定義などは親側でやる
 public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
@@ -52,7 +52,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// キーリピートでイベントが上手く処理できないため、トグルにしています。
     /// ひとまず名前はそのままです。
     /// </remarks>
-    public ReactivePropertySlim<bool> IsAltKeyPressed { get; } = new ();
+    public ReactivePropertySlim<bool> IsAltKeyPressed { get; } = new();
 
     public ReactivePropertySlim<string> EscText { get; } = new();
     public ReactivePropertySlim<string> F1Text { get; } = new();
@@ -68,8 +68,18 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     public ReactivePropertySlim<string> F11Text { get; } = new();
     public ReactivePropertySlim<string> F12Text { get; } = new();
 
+    /// <summary>
+    /// ESCコマンドの実行制御プロパティです。
+    /// </summary>
     public ReactivePropertySlim<bool> EscCanExecute { get; } = new(false);
 
+    /// <summary>
+    /// 共通コマンドの実行制御プロパティです。
+    /// </summary>
+    /// <remarks>
+    /// コマンドをバインドしているボタンの IsEnabled プロパティに影響します。
+    /// CanExecute が false のときは、コマンドを実行しようとしても無視されます。
+    /// </remarks>
     public ReactivePropertySlim<bool> SharedCanExecute { get; } = new(true);
 
     public ReactiveCommandSlim EscCommand { get; }
@@ -193,17 +203,24 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
         {
             if (this._functions?.TryGetValue(key, out var function) ?? false)
             {
-                // 非同期アクションの登録
                 command.Subscribe(async void () =>
                 {
                     try
                     {
-                        // function.Action が非同期である場合に備えて await
-                        await Task.Run(() => Application.Current.Dispatcher.InvokeAsync(function.Action));
+                        this.SharedCanExecute.Value = false;
+
+                        // ある程度のディレイを入れないと Button.IsEnabled の切り替えが遅くなる
+                        await Task.Delay(200);
+
+                        await function.FuncAsync.Invoke();
                     }
                     catch (Exception ex)
                     {
                         this._logger.LogError(ex, "Error!");
+                    }
+                    finally
+                    {
+                        this.SharedCanExecute.Value = true;
                     }
                 }).AddTo(this.Disposables);
             }
@@ -295,21 +312,19 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
 
     #region Common Command Method
 
-    // よく使う共通コマンドはこちらで定義しておく
-
     /// <summary>
     /// Windowを開くコマンドです。
     /// </summary>
     /// <typeparam name="TWindow">開きたいWindowの型です。</typeparam>
     /// <typeparam name="TParent">Ownerに指定するWindowの型です。</typeparam>
     /// <param name="isAltCond">Altキーありのコマンドの場合は true を設定します。</param>
-    public void ExecuteOpenCommand<TWindow, TParent>(bool isAltCond = false)
+    public Task ExecuteOpenCommand<TWindow, TParent>(bool isAltCond = false)
         where TWindow : Window
         where TParent : Window
     {
         try
         {
-            this.SharedCanExecute.Value = false;
+            //this.SharedCanExecute.Value = false;
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
@@ -323,19 +338,21 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
 
                 window?.ActivateOrShow();
             }
+
+            return Task.CompletedTask;
         }
         finally
         {
-            this.SharedCanExecute.Value = true;
+            //this.SharedCanExecute.Value = true;
         }
     }
 
-    public void ExecuteOpenCommand<TWindow>(bool isAltCond = false)
+    public Task ExecuteOpenCommand<TWindow>(bool isAltCond = false)
         where TWindow : Window
     {
         try
         {
-            this.SharedCanExecute.Value = false;
+            //this.SharedCanExecute.Value = false;
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
@@ -343,10 +360,12 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
 
                 window?.ActivateOrShow();
             }
+
+            return Task.CompletedTask;
         }
         finally
         {
-            this.SharedCanExecute.Value = true;
+            //this.SharedCanExecute.Value = true;
         }
     }
 
@@ -355,89 +374,93 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// </summary>
     /// <typeparam name="TWindow">開きたいWindowの型です。</typeparam>
     /// <param name="isAltCond">Altキーありのコマンドの場合は true を設定します。</param>
-    public void ExecuteCloseCommand<TWindow>(bool isAltCond = false)
+    public Task ExecuteCloseCommand<TWindow>(bool isAltCond = false)
         where TWindow : Window
     {
         try
         {
-            this.SharedCanExecute.Value = false;
+            //this.SharedCanExecute.Value = false;
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
                 var window = this._windowService.GetWindow<TWindow>();
                 window?.Close();
             }
+
+            return Task.CompletedTask;
         }
         finally
         {
-            this.SharedCanExecute.Value = true;
+            //this.SharedCanExecute.Value = true;
         }
     }
 
     /// <summary>
     /// 特定のプロパティに日付文字列を設定するコマンドです。
     /// </summary>
-    public void ExecuteSetDateTimeCommand(ReactivePropertySlim<string> dateProp, DateTime date, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetDateTimeCommand(ReactivePropertySlim<string> dateProp, DateTime date, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
         try
         {
-            this.SharedCanExecute.Value = false;
+            //this.SharedCanExecute.Value = false;
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
                 dateProp.Value = date.ToString(format);
             }
+
+            return Task.CompletedTask;
         }
         finally
         {
-            this.SharedCanExecute.Value = true;
+            //this.SharedCanExecute.Value = true;
         }
     }
 
-    public void ExecuteSetTodayCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetTodayCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
-        this.ExecuteSetDateTimeCommand(dateProp, DateTime.Today, format, isAltCond);
+        return this.ExecuteSetDateTimeCommand(dateProp, DateTime.Today, format, isAltCond);
     }
 
-    public void ExecuteSetCurrentMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetCurrentMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
         var date = DateTime.Today;
         var newDate = date.AddDays(1 - date.Day);
-        this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
     }
 
-    public void ExecuteAddDateCommand(ReactivePropertySlim<string> dateProp, TimeSpan span, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteAddDateCommand(ReactivePropertySlim<string> dateProp, TimeSpan span, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
         var date = dateProp.Value.ToDateOrToday();
         var newDate = date.Add(span);
-        this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
     }
 
-    public void ExecutePrevDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecutePrevDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
-        this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(-1), format);
+        return this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(-1), format);
     }
 
-    public void ExecuteNextDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteNextDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
-        this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(1), format);
+        return this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(1), format);
     }
 
-    public void ExecuteAddMonthCommand(ReactivePropertySlim<string> dateProp, int monthSpan, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteAddMonthCommand(ReactivePropertySlim<string> dateProp, int monthSpan, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
         var date = dateProp.Value.ToDateOrToday();
         var newDate = date.AddMonths(monthSpan);
-        this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
     }
 
-    public void ExecutePrevMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecutePrevMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
-        this.ExecuteAddMonthCommand(dateProp, -1, format, isAltCond);
+        return this.ExecuteAddMonthCommand(dateProp, -1, format, isAltCond);
     }
 
-    public void ExecuteNextMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteNextMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
     {
-        this.ExecuteAddMonthCommand(dateProp, 1, format, isAltCond);
+        return this.ExecuteAddMonthCommand(dateProp, 1, format, isAltCond);
     }
 
     #endregion Common Command Method

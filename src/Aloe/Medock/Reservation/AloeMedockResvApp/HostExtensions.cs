@@ -24,6 +24,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using CommandLine;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -33,15 +34,19 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
 internal static class HostExtensions
 {
-
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
     internal static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder, Arguments arguments)
     {
         builder.AddServices();
+        //builder.Wait();
 
-        if (!arguments.IsNullLogger)
+        if (arguments.IsSilent)
+        {
+            builder.Logging.ClearProviders();
+        }
+        else
         {
             builder.AddSerilog();
         }
@@ -58,24 +63,9 @@ internal static class HostExtensions
         return builder;
     }
 
-    /// <summary>
-    /// Serilog を有効にします。
-    /// </summary>
-    private static IHostApplicationBuilder AddSerilog(this IHostApplicationBuilder builder)
+    private static void Wait(this IHostApplicationBuilder builder)
     {
-        var template = "APP [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
-
-        Serilog.Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .Enrich.WithThreadId()
-            .WriteTo.Debug(outputTemplate: template)
-            .WriteTo.Console(theme: AnsiConsoleTheme.Literate, outputTemplate: template)
-            .CreateLogger();
-
-        builder.Logging.ClearProviders();
-        builder.Logging.AddSerilog();
-
-        return builder;
+        Task.Delay(5000).Wait();
     }
 
     /// <summary>
@@ -117,6 +107,26 @@ internal static class HostExtensions
         //builder.Services.AddTransient<PatientWindow>();
         //builder.Services.AddTransient<OrganizationPatientSearchWindow>();
         builder.Services.AddTransient<MaintenanceWindow>();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Serilog を有効にします。
+    /// </summary>
+    private static IHostApplicationBuilder AddSerilog(this IHostApplicationBuilder builder)
+    {
+        var template = "APP [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
+
+        Serilog.Log.Logger = new LoggerConfiguration()
+            .MinimumLevel.Debug()
+            .Enrich.WithThreadId()
+            .WriteTo.Debug(outputTemplate: template)
+            .WriteTo.Console(theme: AnsiConsoleTheme.Literate, outputTemplate: template)
+            .CreateLogger();
+
+        builder.Logging.ClearProviders();
+        builder.Logging.AddSerilog();
 
         return builder;
     }
@@ -180,17 +190,17 @@ internal static class HostExtensions
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-        builder.Services.AddDbContext<AppDbContext>(options =>
-        {
-            options.UseNpgsql(connStr);
+        //builder.Services.AddDbContext<AppDbContext>(options =>
+        //{
+        //    options.UseNpgsql(connStr);
 
-            if (builder.Environment.IsDevelopment())
-            {
-                options.EnableSensitiveDataLogging();
-            }
-        });
+        //    if (builder.Environment.IsDevelopment())
+        //    {
+        //        options.EnableSensitiveDataLogging();
+        //    }
+        //});
 
-        // スレッドセーフではないので、都度生成します。
+        // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
         builder.Services.AddDbContextFactory<AppDbContext>(options =>
         {
             options.UseNpgsql(connStr);

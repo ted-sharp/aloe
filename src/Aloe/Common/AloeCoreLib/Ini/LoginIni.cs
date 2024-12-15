@@ -121,6 +121,13 @@ public class LoginIni
             lines.Add($"Password={this.Password}");
         }
 
+        var directoryPath = Path.GetDirectoryName(filePath);
+        if (!String.IsNullOrWhiteSpace(directoryPath) &&
+            !Directory.Exists(directoryPath))
+        {
+            Directory.CreateDirectory(directoryPath);
+        }
+
         File.WriteAllLines(filePath, lines);
     }
 }

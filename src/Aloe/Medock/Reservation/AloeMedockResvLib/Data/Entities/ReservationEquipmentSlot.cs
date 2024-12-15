@@ -51,6 +51,14 @@ public class ReservationEquipmentSlot : AuditableEntityBase<int>
         this.Slots = slots;
     }
 
+    public ReservationEquipmentSlot(DateTime start, DateTime end, DowCode dowCode, string[] slots)
+    {
+        this.StartDate = start.Date;
+        this.EndDate = end.Date;
+        this.DowCode = (int)dowCode;
+        this.Slots = String.Join(Delimiter.SlotDelimiter, slots);
+    }
+
     public string[] SplitSlots()
     {
         var options = StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries;

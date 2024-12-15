@@ -158,11 +158,34 @@ public class ReservationEquipmentCacheService
         return bookings;
     }
 
-    public void SetSlotRowDataList(int year, int month, int equipId, List<SlotRowData> rows)
+    public void SetColumn(int year, int month, int day, object column)
     {
-        var key = $"equipmentBookings_{nameof(SlotRowData)}List_{year:0000}{month:00}_{equipId}";
+        var key = $"equipmentBookings_DataGridColumn_{year:0000}{month:00}{day:00}";
 
-        this._cache.Set(key, rows, new MemoryCacheEntryOptions
+        this._cache.Set(key, column, new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(1),
+            SlidingExpiration = null,
+        });
+    }
+
+    public object? GetColumn(int year, int month, int day)
+    {
+        var key = $"equipmentBookings_DataGridColumn_{year:0000}{month:00}{day:00}";
+        if (this._cache.TryGetValue<object>(
+                key, out var column))
+        {
+            return column;
+        }
+
+        return null;
+    }
+
+    public void SetBookingData(int year, int month, int equipId, BookingData data)
+    {
+        var key = $"equipmentBookings_{nameof(BookingRow)}List_{year:0000}{month:00}_{equipId}";
+
+        this._cache.Set(key, data, new MemoryCacheEntryOptions
         {
             // リアルタイムなので数秒とする
             AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5),
@@ -170,16 +193,15 @@ public class ReservationEquipmentCacheService
         });
     }
 
-    public List<SlotRowData>? GetSlotRowDataList(int year, int month, int equipId)
+    public BookingData? GetBookingData(int year, int month, int equipId)
     {
-        var key = $"equipmentBookings_{nameof(SlotRowData)}List_{year:0000}{month:00}_{equipId}";
-        if (this._cache.TryGetValue<List<SlotRowData>>(
-                key, out var rows))
+        var key = $"equipmentBookings_{nameof(BookingRow)}List_{year:0000}{month:00}_{equipId}";
+        if (this._cache.TryGetValue<BookingData>(
+                key, out var data))
         {
-            return rows ?? [];
+            return data;
         }
 
         return null;
     }
-
 }

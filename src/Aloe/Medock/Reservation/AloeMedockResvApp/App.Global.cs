@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -13,19 +15,30 @@ public partial class App
 {
     #region Global
 
+    public static readonly AssemblyName AsmName = Assembly.GetExecutingAssembly().GetName();
+
+    public static readonly string AppName = $"{App.AsmName.Name} {App.AsmName.Version}";
+
+    public static readonly string IniFilePath =
+        System.IO.Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            App.AsmName.Name ?? "AloeMedockResvApp",
+            "app.ini");
+
     #region Global / Resolve
+
+    public IHost Host => this._host
+        ?? throw new InvalidOperationException("IHost is not initialized.");
 
     private static IServiceProvider? s_services;
 
-    public static IServiceProvider Services
-    {
-        get => App.s_services ?? throw new InvalidOperationException("Service provider is not initialized.");
-        private set => App.s_services = value ?? throw new ArgumentNullException(nameof(value));
-    }
+    public static IServiceProvider Services => App.s_services
+        ?? throw new InvalidOperationException("IServiceProvider is not initialized.");
 
-    public static T? Resolve<T>()
+    public static T Resolve<T>()
     {
-        return App.Services.GetService<T>();
+        return App.Services.GetRequiredService<T>()
+            ?? throw new InvalidOperationException($"{typeof(T).Name} can not resolve.");
     }
 
     #endregion  Global / Resolve

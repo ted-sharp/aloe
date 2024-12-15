@@ -48,15 +48,53 @@ public partial class ReservationEquipWindow : Window
         {
             base.OnContentRendered(e);
 
-            // 準備
+            this.BeginInit();
+            this._vm.FunctionBar.SharedCanExecute.Value = false;
+
+            // 準備で、設備をロードしておく
             await this._vm.Preload();
 
             // 初回自動実行(検索)
-            this._vm.ExecuteFirstCommand();
+            await this._vm.SearchAsync();
         }
         catch (Exception ex)
         {
-            this._logger.LogError(ex, "Error!");
+            this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this._vm.FunctionBar.SharedCanExecute.Value = true;
+            this.EndInit();
+        }
+    }
+
+    private async void EquipTabControl_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        try
+        {
+            if (sender != e.OriginalSource)
+            {
+                // 自身以外のイベントを除外
+                // ListBox.OnSelectionChanged がバブルアップしてきます。
+                return;
+            }
+
+            this._vm.FunctionBar.SharedCanExecute.Value = false;
+
+            var index = this.EquipTabControl.SelectedIndex;
+            if (index >= 0)
+            {
+                this._vm.SelectedTabIndex = index;
+                await this._vm.SearchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this._vm.FunctionBar.SharedCanExecute.Value = true;
         }
     }
 }

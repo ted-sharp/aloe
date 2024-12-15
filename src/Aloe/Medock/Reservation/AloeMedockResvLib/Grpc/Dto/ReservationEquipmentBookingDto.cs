@@ -53,4 +53,6 @@ public class ReservationEquipmentBookingDto
 
     [Key(12)]
     public required int SubOrderId { get; set; } = 0;
+
+    public string DisplayText => $"{this.Slot} {this.BkgDate: MM/dd} {this.PtId}";
 }

@@ -4,10 +4,10 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
-        xmlns:viewModels="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+        xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
         xmlns:behaviors="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=viewModels:ReservationEquipViewModel}"
+        d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
         behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBar.KeyDownCommand}"
         Title="設備予約" Height="450" Width="800"
         ResizeMode="CanResizeWithGrip">
@@ -17,11 +17,15 @@
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Label>　</Label>
             <Label>予約月</Label>
-            <TextBox Text="{Binding StartMonth.Value}" MinWidth="80" />
+            <TextBox
+                IsEnabled="{Binding FunctionBar.SharedCanExecute.Value}"
+                Text="{Binding StartMonth.Value}"
+                MinWidth="80" />
         </StackPanel>
 
         <TabControl x:Name="EquipTabControl"
-                    SelectedIndex="{Binding SelectedTabIndex.Value}"
+                    SelectionChanged="EquipTabControl_OnSelectionChanged"
+                    IsEnabled="{Binding FunctionBar.SharedCanExecute.Value}"
                     ItemsSource="{Binding ReservationEquipTabItems}">
 
             <!-- TabItem ヘッダー部分 -->

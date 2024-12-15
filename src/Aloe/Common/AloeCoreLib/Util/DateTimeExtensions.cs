@@ -176,4 +176,10 @@ public static class DateTimeExtensions
         return ToDateTimeOrDefault(dateString, DateTime.Today).Date;
     }
 
+    public static DateTime ToMonthEndDateOrCurrentMonth(this string dateString)
+    {
+        var today = DateTime.Today;
+        var date = ToDateTimeOrDefault(dateString, today);
+        return new DateTime(date.Year, date.Month, 1).AddMonths(1).AddDays(-1).Date;
+    }
 }

@@ -65,7 +65,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     {
         try
         {
-            if (!this.Users.Any())
+            if (!this.Users.AsNoTracking().Any())
             {
                 this.Users.AddRange([
                     new("Administrator", "admin", "admin@example.com", "admin"),
@@ -81,13 +81,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
-            if (!this.Policies.Any())
+            if (!this.Policies.AsNoTracking().Any())
             {
                 var policies = PolicyService.CreateDefaultPolicies();
                 this.Policies.AddRange(policies.Values);
             }
 
-            if (!this.Patients.Any())
+            if (!this.Patients.AsNoTracking().Any())
             {
                 this.Patients.AddRange([
                     new("1", "山田　太郎", "ヤマダ　タロウ", "2000/4/1".ToDateOrToday(), (int)SexCode.Male),
@@ -96,14 +96,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
-            if (!this.Organizations.Any())
+            if (!this.Organizations.AsNoTracking().Any())
             {
                 this.Organizations.AddRange([
                     new("株式会社 ABC", "カブシキガイシャ　エービーシー", "ABC", "ABC"),
                 ]);
             }
 
-            if (!this.Equipments.Any())
+            if (!this.Equipments.AsNoTracking().Any())
             {
                 this.Equipments.AddRange([
                     new("胃カメラ", "院内の胃カメラです。", 1),
@@ -115,16 +115,51 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
-            if (!this.EquipmentSlots.Any())
+            if (!this.EquipmentSlots.AsNoTracking().Any())
             {
                 this.EquipmentSlots.AddRange([
-                    new("1900/1/1".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.None, "09:00 09:00 10:00 10:00 11:00 11:00 13:00 13:00 14:00 14:00 15:00 15:00"),
+                    new("1900/1/1".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.None,
+                        [
+                            "08:30", "08:30", "08:30", "08:30",
+                            "09:00", "09:00", "09:00", "09:00",
+                            "09:30", "09:30", "09:30", "09:30",
+                            "10:00", "10:00", "10:00",
+                            "10:30", "10:30", "10:30",
+                            "11:00", "11:00", "11:00",
+                            "11:30", "11:30", "11:30",
+                            "12:00", "12:00",
+                            "13:30", "13:30", "13:30",
+                            "14:00", "14:00", "14:00",
+                            "14:30", "14:30", "14:30",
+                            "15:00", "15:00", "15:00",
+                            "15:30", "15:30", "15:30",
+                            "16:00", "16:00", "16:00",
+                            "16:30", "16:30", "16:30",
+                            "17:00", "17:00",
+                            "EX", "EX", "EX", "EX",
+                        ]),
                     new("1900/1/2".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.Sunday, ""),
                     new("1900/1/3".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.Saturday, ""),
                 ]);
             }
 
-            if (!this.Floors.Any())
+            if (!this.EquipmentBookings.AsNoTracking().Any())
+            {
+                var equipId = this.Equipments.FirstOrDefault(x => !x.IsDeleted)?.EquipId ?? 0;
+                this.EquipmentBookings.AddRange([
+                    new(equipId, DateTime.Today, "08:00", "鼻", "sample_0800", true),
+                    new(equipId, DateTime.Today, "09:00", "口", "sample1", true),
+                    new(equipId, DateTime.Today, "09:00", "✘", "sample_0900", true),
+                    new(equipId, DateTime.Today, "09:00(2)", "★", "sample2", true),
+                    new(equipId, DateTime.Today, "09:30", "●", "sample3", true),
+                    new(equipId, DateTime.Today, "09:30(2)", "◉", "sample4", true),
+                    new(equipId, DateTime.Today, "10:00", "◯", "sample5", true),
+                    new(equipId, DateTime.Today, "10:00(3)", "◎", "sample6", true),
+                    new(equipId, DateTime.Today, "EX", "EX", "sample7", true),
+                ]);
+            }
+
+            if (!this.Floors.AsNoTracking().Any())
             {
                 this.Floors.AddRange([
                     new("8階", "メインフロアです。", 1),
@@ -134,7 +169,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
-            if (!this.Rooms.Any())
+            if (!this.Rooms.AsNoTracking().Any())
             {
                 this.Rooms.AddRange([
                     new("子宮細胞診", "子宮細胞診です。", 1),
@@ -155,7 +190,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
-            if (!this.DailySlots.Any())
+            if (!this.DailySlots.AsNoTracking().Any())
             {
                 this.DailySlots.AddRange([
                     new("1900/1/1".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.None, 40, 40, "09:00 09:30 10:00 10:30 11:00 11:30 13:00 13:30 14:00 14:30 15:00 15:30", "6 6 7 7 7 7 6 6 7 7 7 7"),

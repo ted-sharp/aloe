@@ -32,19 +32,23 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
-// TODO: 表示用Slot文字列を用意して、(2)以降は空欄にしたい
+/// <summary>
+/// DataGrid に表示するためのデータと、割り当てられなかった残りのデータです。
+/// キャッシュするときにひとまとめで扱います。
+/// </summary>
+public record BookingData(List<BookingRow> Rows, List<ReservationEquipmentBookingDto> Overflows);
+
 /// <summary>
 /// DataGrid に表示するためのローデータです。
 /// </summary>
-public record SlotRowData(string Slot, Dictionary<DateTime, SlotCellData> DateCells);
+public record BookingRow(string Slot, string SlotDisplay, Dictionary<DateTime, BookingCell> DateCells);
 
-// TODO: エラーテキストもあった方が良い
 /// <summary>
 /// DataGrid に表示するためのセルデータです。
 /// </summary>
-public record SlotCellData(string Symbol, string Name, string Remark)
+public record BookingCell(string Symbol, string Name, string Remark, string Error)
 {
-    public SlotCellData() : this("", "", "") { }
+    public BookingCell() : this("", "", "", "") { }
 }
 
 public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
@@ -60,24 +64,19 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
     public required string EquipName { get; init; } = String.Empty;
 
     /// <summary>
-    /// 対象年です。
-    /// </summary>
-    public int Year { get; set; }
-
-    /// <summary>
-    /// 対象月です。
-    /// </summary>
-    public int Month { get; set; }
-
-    /// <summary>
     /// 対象年月設備毎の予約データです。
     /// </summary>
-    public List<SlotRowData> Rows { get; set; } = [];
+    public List<BookingRow> Rows { get; set; } = [];
+
+    /// <summary>
+    /// 対象年月設備でスロットに割り振れなかった残りの予約データです。
+    /// </summary>
+    public List<ReservationEquipmentBookingDto> Overflows { get; set; } = [];
 
     /// <summary>
     /// 画面側の更新メソッドを登録します。
     /// </summary>
-    public Action? RefreshAction { get; set; }
+    public Func<DateTime /* monthEndDate */, int /* equipId */, Task>? RefreshFuncAsync { get; set; }
 
     private readonly ReservationEquipmentCacheService _cache;
     private readonly ILogger _logger;
@@ -93,33 +92,31 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
         this._cache = cache;
     }
 
-    public async Task LoadAsync()
+    public async Task LoadAsync(DateTime monthEndDate, int equipId)
     {
-        var year = this.Year;
-        var month = this.Month;
-        var equipId = this.EquipId;
+        var year = monthEndDate.Year;
+        var month = monthEndDate.Month;
 
         // キャッシュがあるなら使う
-        var rows = this._cache.GetSlotRowDataList(year, month, equipId);
-        if (rows is { Count: > 0 })
+        var data = this._cache.GetBookingData(year, month, equipId);
+        if (data is not null && data.Rows is { Count: > 0 })
         {
-            this.Rows = rows;
+            this.Rows = data.Rows;
+            this.Overflows = data.Overflows;
             return;
         }
 
+        var rows = new List<BookingRow>();
         var slots = await this._cache.GetOrFetchSlotStrings(year, month, equipId);
         var monthBookings = await this._cache.GetOrFetchBookings(year, month, equipId);
-
-        var lastDate = new DateTime(year, month, 1).AddMonths(1).AddDays(-1);
-
-        rows = [];
 
         // スロット分の行を生成する
         foreach (var slot in slots)
         {
-            var slotRowData = new SlotRowData(slot, []);
+            var slotDisplay = slot.Contains('(') ? "" : slot;
+            var slotRowData = new BookingRow(slot, slotDisplay, []);
 
-            for (var day = 1; day <= lastDate.Day; day++)
+            for (var day = 1; day <= monthEndDate.Day; day++)
             {
                 var date = new DateTime(year, month, day);
                 var booking = monthBookings.Find(x => x.BkgDate == date && x.Slot == slot && x.EquipId == equipId);
@@ -129,14 +126,20 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
                 }
                 else
                 {
-                    slotRowData.DateCells.Add(date, new(booking.BkgSymbolText, booking.PtId.ToString(), booking.BkgRemarkText));
+                    slotRowData.DateCells.Add(date, new(booking.BkgSymbolText, booking.PtId.ToString(), booking.BkgRemarkText, ""));
+                    monthBookings.Remove(booking);
                 }
             }
 
             rows.Add(slotRowData);
         }
 
-        this.Rows = rows;
-        this._cache.SetSlotRowDataList(year, month, equipId, rows);
+        this.Rows.Clear();
+        this.Rows.AddRange(rows);
+        this.Overflows.Clear();
+        this.Overflows.AddRange(monthBookings);
+
+        data = new BookingData(rows, monthBookings);
+        this._cache.SetBookingData(year, month, equipId, data);
     }
 }

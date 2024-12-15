@@ -16,7 +16,7 @@ namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 /// </summary>
 public interface IAuthGrpcService : IService<IAuthGrpcService>
 {
-    UnaryResult TestAsync();
+    UnaryResult LoadPoliciesAsync();
 
     UnaryResult<LoginResult> LoginAsync(LoginRequest request);
 
@@ -39,11 +39,9 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         this._policyService = policyService;
     }
 
-    public async UnaryResult TestAsync()
+    public async UnaryResult LoadPoliciesAsync()
     {
-        //await Task.CompletedTask;
         await this._policyService.LoadPoliciesAsync();
-        this._logger.LogDebug("Test");
     }
 
     public async UnaryResult<LoginResult> LoginAsync(LoginRequest request)
@@ -70,7 +68,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
 
             if (user.IsLocked(now))
             {
-                var span = now - user.LockedUntilAt;
+                var span = user.LockedUntilAt - now;
                 var format = span.ToApproximateJaString();
                 result.ErrorMessage = $"ロックされています。(解除まで {format})";
                 return result;
@@ -100,7 +98,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
                 return result;
             }
 
-            var clientEndpoint = base.Context.CallContext.Peer;
+            var clientEndpoint = base.Context?.CallContext.Peer ?? "";
             var session = await this.CreateAndAddNewSessionAsync(
                 context, user, request.ClientAppName, clientEndpoint, now);
             var sessionDto = session.ToSessionDto();
@@ -138,8 +136,8 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         // TODO: セッションを作る
         var newSession = new Session
         {
-            // TODO: Guid の生成は PostgreSQL側にした方がかぶるリスクがない
-            SessionId = Guid.NewGuid(),
+            // TODO: Guid の生成は PostgreSQL側にした方がかぶるリスクがないはず
+            SessionId = Guid.CreateVersion7(),
             UserId = user.UserId,
             UserDisplayName = user.DisplayName,
             ClientAppName = clientAppName,

@@ -130,7 +130,11 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
     {
         var functions = new List<Function>
         {
-            new(FunctionKey.Esc, "中止", () => this._logger.LogInformation("ESC")),
+            new(FunctionKey.Esc, "中止", () =>
+            {
+                this._logger.LogInformation("ESC");
+                return Task.CompletedTask;
+            }),
 
             new(FunctionKey.F4, "クリア", this.ExecuteClearCommand),
 
@@ -144,14 +148,22 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
             new(FunctionKey.F11, "今日", () => this.FunctionBar.ExecuteSetTodayCommand(this.StartDate)),
             new(FunctionKey.F12, "設定", () => this.FunctionBar.ExecuteOpenCommand<MaintenanceWindow, ReservationMainWindow>()),
 
-            new(FunctionKey.AltF1, "Alt F1", () => this._logger.LogInformation("F1")),
-            new(FunctionKey.AltF12, "Alt F12", () => this._logger.LogInformation("F12")),
+            new(FunctionKey.AltF1, "Alt F1", () =>
+            {
+                this._logger.LogInformation("F1");
+                return Task.CompletedTask;
+            }),
+            new(FunctionKey.AltF12, "Alt F12", () =>
+            {
+                this._logger.LogInformation("F12");
+                return Task.CompletedTask;
+            }),
         }.ToDictionary(x => x.Key);
 
         return functions;
     }
 
-    private async void ExecuteSearchCommand()
+    private Task ExecuteSearchCommand()
     {
         try
         {
@@ -165,7 +177,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
             {
                 this._logger.LogInformation("F3");
             }
-            await Task.Delay(3000);
+            return Task.Delay(3000);
         }
         finally
         {
@@ -173,7 +185,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         }
     }
 
-    private void ExecuteClearCommand()
+    private Task ExecuteClearCommand()
     {
         try
         {
@@ -190,6 +202,8 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
                 // デフォルト値を入れる(変更ないなら何もしない)
                 // 今日を入れる(変更ないなら何もしない)
             }
+
+            return Task.CompletedTask;
         }
         finally
         {
@@ -197,7 +211,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         }
     }
 
-    private async void ExecuteReloadCommand()
+    private Task ExecuteReloadCommand()
     {
         try
         {
@@ -205,16 +219,18 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
             var isAlt = this.FunctionBar.IsAltKeyPressed.Value;
             if (!isAlt)
             {
-                await this.LoadSchedulesAsync();
+                return this.LoadSchedulesAsync();
             }
         }
         finally
         {
             this.FunctionBar.SharedCanExecute.Value = true;
         }
+
+        return Task.CompletedTask;
     }
 
-    public async Task LoadSchedulesAsync()
+    public Task LoadSchedulesAsync()
     {
         // TODO: データを作成する
         // 横が1ヶ月間の日付
@@ -222,7 +238,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         // 内容は件数
         //this.Schedules.
 
-        await Task.Delay(3000);
+        return Task.Delay(3000);
     }
 
     #endregion Function

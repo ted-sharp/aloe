@@ -26,6 +26,8 @@ using CommandLine;
 using System.Reflection;
 using Microsoft.Extensions.Options;
 using System.IO;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using System.IO.Pipes;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -34,26 +36,55 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 /// </summary>
 public class Arguments
 {
-    [Option('s', "standalone", HelpText = "Enable standalone mode.")]
+    /// <summary>
+    /// スタンドアローンモードを有効にします。
+    /// 通常のClient/Serverモードではなく、単独で実行できるようになります。
+    /// 直接データベースへ接続するため接続文字列の設定が必要です。
+    /// </summary>
+    [Option("standalone", HelpText = "Enable standalone mode.")]
     public bool Standalone { get; set; }
 
-    [Option('d', "development", HelpText = "Enable development mode.")]
+    /// <summary>
+    /// 開発中モードを有効にします。
+    /// サンプルデータの挿入を試行します。
+    /// 通常のログイン画面ではなく、現在開発中の画面を直接起動します。
+    /// その他、開発で必要な特殊処理を行います。
+    /// </summary>
+    [Option("development", HelpText = "Enable development mode.")]
     public bool IsDevelopment { get; set; }
 
+    /// <summary>
+    /// サンプルデータの挿入を試行します。
+    /// 空の場合のみ挿入できます。
+    /// </summary>
+    [Option("seed", HelpText = "Try insert sample data.")]
+    public bool IsSeed { get; set; }
 
-    [Option('n', "null", HelpText = "Enable NullLogger mode.")]
-    public bool IsNullLogger { get; set; }
+    /// <summary>
+    /// ログを抑制します。
+    /// コンソール出力とロガーが無効化されます。
+    /// </summary>
+    [Option('q', "quiet", HelpText = "Enable quiet/silent mode.")]
+    public bool IsSilent { get; set; }
 
+    [Option('u', "user", HelpText = "Login User")]
+    public string User { get; set; } = "";
 
-    //[Option('d', "debug", HelpText = "Enable debug mode.")]
-    //public bool Debug { get; set; }
+    [Option('p', "password", HelpText = "Login User")]
+    public string Password { get; set; } = "";
+
+    [Option("pt", HelpText = "Karte Number")]
+    public string KarteNumber { get; set; } = "";
+
+    [Option("screen", HelpText = "ScreenCode")]
+    public ScreenCode ScreenCode { get; set; }
 }
 
 internal static class Program
 {
     /// <summary>
     /// プログラムのエントリポイントです。
-    /// Program.Main → WpfHostService.StartAsync → App と呼び出されます。
+    /// Program.Main → App と呼び出されます。
     /// </summary>
     [STAThread]
     internal static void Main(string[] args)
@@ -62,21 +93,48 @@ internal static class Program
         {
             Timestamper.Global.Stamp("Main start.");
 
-            // TODO: グローバルに保持しておく
-            var arguments = Parser.Default.ParseArguments<Arguments>(args).Value;
+            var arguments = Parser.Default.ParseArguments<Arguments>(args)
+                .WithNotParsed(x =>
+                {
+                    Console.WriteLine($"Arguments Parse Error: {args}");
+                })
+                .Value;
 
-            if (arguments.IsNullLogger)
+            if (arguments.IsSilent)
             {
                 // コンソール出力を無効化
                 Console.SetOut(TextWriter.Null);
             }
 
-            // TODO: 名前付きMutexで複数起動制御する
-            // 起動済みだったら名前付きパイプで引数を送る
+            // TODO: 引数なしで、すでに起動中だったらアクティブにしたい
+            // KarteNumber, ScreenCode が指定されていた場合は、まったく同じやつだったらアクティブにする？
+            //const string mutexName = @"Global\AloeMedockResvAppMutex";
+            //using var mutex = new Mutex(false, mutexName, out var isCreatedNew);
+            //if (!isCreatedNew)
+            //{
+            //    using var pipeClient = new NamedPipeClientStream(
+            //        ".",
+            //        mutexName,
+            //        PipeDirection.Out,
+            //        PipeOptions.Asynchronous);
+
+            //    pipeClient.Connect();
+
+            //    using var writer = new StreamWriter(pipeClient)
+            //    {
+            //        AutoFlush = true,
+            //    };
+
+            //    foreach (var arg in args)
+            //    {
+            //        writer.WriteLine(arg);
+            //    }
+
+            //    return;
+            //}
 
             var app = new App(arguments);
             app.InitializeComponent();
-
             app.Run();
         }
         catch (Exception ex)
