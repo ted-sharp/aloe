@@ -22,4 +22,8 @@ public class LoginResult
 
     [Key(2)]
     public required SessionDto? SessionDto { get; set; }
+
+    [Key(3)]
+    public required string? Host { get; set; }
+
 }

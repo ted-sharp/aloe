@@ -33,7 +33,7 @@
 
   <ItemGroup>
     <PackageReference Include="CommandLineParser" Version="2.9.1" />
-    <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.3.2" />
+    <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.2.0" />
     <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />

@@ -28,6 +28,8 @@ using System.Windows.Documents;
 using Microsoft.VisualBasic.CompilerServices;
 using System.DirectoryServices.ActiveDirectory;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using MaterialDesignThemes.Wpf;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -48,6 +50,8 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// </summary>
     public int SelectedTabIndex { get; set; } = -1;
 
+    public SnackbarMessageQueue SnackbarMessageQueue { get; } = new();
+
     private readonly ILogger _logger;
 
     private readonly ReservationEquipmentCacheService _cache;
@@ -55,23 +59,28 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     public ReservationEquipViewModel(
         ILogger<ReservationEquipViewModel> logger,
         ReservationEquipmentCacheService cache,
-        FunctionBarViewModel functionBar)
+        InformationBarViewModel informationBarVm,
+        FunctionBarViewModel functionBarVm)
     {
         this._logger = logger;
         this._cache = cache;
 
+        this.InformationBarVm = informationBarVm;
+
         #region Function
 
         var functions = this.CreateFunctions();
-        functionBar.InitializeFunctions(functions);
-        this.FunctionBar = functionBar;
+        functionBarVm.InitializeFunctions(functions);
+        this.FunctionBarVm = functionBarVm;
 
         #endregion Function
     }
 
+    public InformationBarViewModel InformationBarVm { get; set; }
+
     #region Function
 
-    public FunctionBarViewModel FunctionBar { get; set; }
+    public FunctionBarViewModel FunctionBarVm { get; set; }
 
     private Dictionary<string, Function> CreateFunctions()
     {
@@ -83,24 +92,20 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
 
                 new(FunctionKey.F9, "前月へ", async Task () =>
                 {
-                    var time = new Timestamper("GoToPrevMonth");
-                    await this.FunctionBar.ExecutePrevMonthCommand(this.StartMonth, format);
-                    time.Stamp("Prev");
+                    await this.FunctionBarVm.ExecutePrevMonthCommand(this.StartMonth, format);
                     await this.SearchAsync();
-                    time.Stamp("Searched");
-                    time.DumpAsync();
                 }),
                 new(FunctionKey.F10, "次月へ", async Task () =>
                 {
-                    await this.FunctionBar.ExecuteNextMonthCommand(this.StartMonth, format);
+                    await this.FunctionBarVm.ExecuteNextMonthCommand(this.StartMonth, format);
                     await this.SearchAsync();
                 }),
                 new(FunctionKey.F11, "今月", async Task () =>
                 {
-                    await this.FunctionBar.ExecuteSetCurrentMonthCommand(this.StartMonth, format);
+                    await this.FunctionBarVm.ExecuteSetCurrentMonthCommand(this.StartMonth, format);
                     await this.SearchAsync();
                 }),
-                new(FunctionKey.F12, "閉じる", () => this.FunctionBar.ExecuteCloseCommand<ReservationEquipWindow>()),
+                new(FunctionKey.F12, "閉じる", () => this.FunctionBarVm.ExecuteCloseCommand<ReservationEquipWindow>()),
             }
             .ToDictionary(x => x.Key);
 
@@ -140,8 +145,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     {
         try
         {
-            //this.FunctionBar.SharedCanExecute.Value = false;
-            var isAlt = this.FunctionBar.IsAltKeyPressed.Value;
+            var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
             if (!isAlt)
             {
                 await this.SearchAsync();
@@ -149,12 +153,9 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         }
         catch (Exception ex)
         {
+            this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
             this._logger.LogError(ex, ex.ToString());
         }
-        //finally
-        //{
-        //    this.FunctionBar.SharedCanExecute.Value = true;
-        //}
     }
 
     public async Task SearchAsync()
@@ -183,6 +184,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         }
         catch (Exception ex)
         {
+            this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
             this._logger.LogError(ex, ex.ToString());
         }
     }

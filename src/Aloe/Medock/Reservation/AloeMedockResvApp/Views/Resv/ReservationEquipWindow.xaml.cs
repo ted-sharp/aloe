@@ -49,7 +49,7 @@ public partial class ReservationEquipWindow : Window
             base.OnContentRendered(e);
 
             this.BeginInit();
-            this._vm.FunctionBar.SharedCanExecute.Value = false;
+            this._vm.FunctionBarVm.SharedCanExecute.Value = false;
 
             // 準備で、設備をロードしておく
             await this._vm.Preload();
@@ -63,7 +63,7 @@ public partial class ReservationEquipWindow : Window
         }
         finally
         {
-            this._vm.FunctionBar.SharedCanExecute.Value = true;
+            this._vm.FunctionBarVm.SharedCanExecute.Value = true;
             this.EndInit();
         }
     }
@@ -79,7 +79,7 @@ public partial class ReservationEquipWindow : Window
                 return;
             }
 
-            this._vm.FunctionBar.SharedCanExecute.Value = false;
+            this._vm.FunctionBarVm.SharedCanExecute.Value = false;
 
             var index = this.EquipTabControl.SelectedIndex;
             if (index >= 0)
@@ -94,7 +94,20 @@ public partial class ReservationEquipWindow : Window
         }
         finally
         {
-            this._vm.FunctionBar.SharedCanExecute.Value = true;
+            this._vm.FunctionBarVm.SharedCanExecute.Value = true;
         }
+    }
+
+    private void EquipTabControl_OnPreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers != ModifierKeys.Control)
+        {
+            return;
+        }
+
+        var delta = e.Delta > 0 ? InformationBarViewModel.WheelStepScale : -InformationBarViewModel.WheelStepScale;
+        this._vm.InformationBarVm.ZoomInCommand.Execute(delta);
+
+        e.Handled = true;
     }
 }

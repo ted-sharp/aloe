@@ -6,44 +6,75 @@
         xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
         xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
         xmlns:behaviors="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors"
+        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBar.KeyDownCommand}"
+        behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="設備予約" Height="450" Width="800"
         ResizeMode="CanResizeWithGrip">
+
     <DockPanel LastChildFill="True">
-        <local:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBar}" />
+
+
+        <local:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
+        <local:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Label>　</Label>
+            <ui:PackIcon Kind="CalendarMonth"/>
             <Label>予約月</Label>
             <TextBox
-                IsEnabled="{Binding FunctionBar.SharedCanExecute.Value}"
+                IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
                 Text="{Binding StartMonth.Value}"
                 MinWidth="80" />
         </StackPanel>
 
-        <TabControl x:Name="EquipTabControl"
+        <Grid>
+            <TabControl x:Name="EquipTabControl"
                     SelectionChanged="EquipTabControl_OnSelectionChanged"
-                    IsEnabled="{Binding FunctionBar.SharedCanExecute.Value}"
-                    ItemsSource="{Binding ReservationEquipTabItems}">
+                    IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
+                    ItemsSource="{Binding ReservationEquipTabItems}"
+                    PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel"
+                    >
+                <!--<TabControl.LayoutTransform >
+                <ScaleTransform ScaleX="{Binding InformationBarVm.SelectedPercentage.Value, Converter={StaticResource Int32ValueToScaleConverter}}"
+                                ScaleY="{Binding InformationBarVm.SelectedPercentage.Value, Converter={StaticResource Int32ValueToScaleConverter}}" />
+            </TabControl.LayoutTransform>-->
 
-            <!-- TabItem ヘッダー部分 -->
-            <TabControl.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding EquipName}" />
-                </DataTemplate>
-            </TabControl.ItemTemplate>
+                <!-- TabItem ヘッダー部分 -->
+                <TabControl.ItemTemplate>
+                    <DataTemplate>
+                        <TextBlock Text="{Binding EquipName}" />
+                    </DataTemplate>
+                </TabControl.ItemTemplate>
 
-            <!-- TabItem 中身 -->
-            <TabControl.ContentTemplate>
-                <DataTemplate>
-                    <local:ReservationEquipTabItem DataContext="{Binding .}"/>
-                </DataTemplate>
-            </TabControl.ContentTemplate>
+                <!-- TabItem 中身 -->
+                <TabControl.ContentTemplate>
+                    <DataTemplate>
+                        <local:ReservationEquipTabItem DataContext="{Binding .}">
+                            <local:ReservationEquipTabItem.LayoutTransform>
+                                <ScaleTransform
+                                ScaleX="{
+                                    Binding DataContext.InformationBarVm.SelectedPercentage.Value,
+                                    RelativeSource={RelativeSource AncestorType=Window},
+                                    Converter={StaticResource Int32ValueToScaleConverter}}"
+                                ScaleY="{
+                                    Binding DataContext.InformationBarVm.SelectedPercentage.Value,
+                                    RelativeSource={RelativeSource AncestorType=Window},
+                                    Converter={StaticResource Int32ValueToScaleConverter}}"
+                            />
+                            </local:ReservationEquipTabItem.LayoutTransform>
+                        </local:ReservationEquipTabItem>
+                    </DataTemplate>
+                </TabControl.ContentTemplate>
 
-            <!-- サンプル -->
-            <TabItem Header="Sample" />
-        </TabControl>
+                <!-- サンプル -->
+                <TabItem Header="Sample" />
+            </TabControl>
+
+            <ui:Snackbar x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                         MessageQueue="{Binding SnackbarMessageQueue}"/>
+        </Grid>
+
     </DockPanel>
 </Window>

@@ -45,8 +45,11 @@ public partial class App
 
     public static SessionDto? Session { get; set; }
 
+
+
     public static bool HasSession => App.Session != null;
 
+    public static string HostName { get; set; } = "";
 
     #endregion Global
 

@@ -1,9 +1,11 @@
-﻿using System.Diagnostics;
+﻿using System.Data.Common;
+using System.Diagnostics;
 using Aloe.Common.AloeCoreLib.Security;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -57,6 +59,35 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ReservationDailyBooking> DailyBookings { get; set; } = null!;
 
     #endregion ResvDailyService
+
+    /// <summary>
+    /// 接続文字列からホスト名を取得します。
+    /// </summary>
+    public string GetHost()
+    {
+        // 現在の接続文字列を取得
+        var connectionString = this.Database.GetDbConnection().ConnectionString;
+
+        // 接続文字列を解析して Host を取り出す
+        var builder = new DbConnectionStringBuilder
+        {
+            ConnectionString = connectionString
+        };
+
+        // Npgsql（PostgreSQL）向けの解析 (例: Host=localhost;Port=5432;...)
+        if (builder.ContainsKey("Host"))
+        {
+            return builder["Host"].ToString() ?? "";
+        }
+
+        // SQL Server の場合 (例: Server=localhost;Database=SampleDB;...)
+        if (builder.ContainsKey("Server"))
+        {
+            return builder["Server"].ToString() ?? "";
+        }
+
+        return "Host information not found";
+    }
 
     /// <summary>
     /// サンプルデータ挿入用のメソッドです。
@@ -115,29 +146,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
                 ]);
             }
 
+            var slots = new[] {
+                "08:30", "08:30", "08:30", "08:30",
+                "09:00", "09:00", "09:00", "09:00",
+                "09:30", "09:30", "09:30", "09:30",
+                "10:00", "10:00", "10:00",
+                "10:30", "10:30", "10:30",
+                "11:00", "11:00", "11:00",
+                "11:30", "11:30", "11:30",
+                "12:00", "12:00",
+                "13:30", "13:30", "13:30",
+                "14:00", "14:00", "14:00",
+                "14:30", "14:30", "14:30",
+                "15:00", "15:00", "15:00",
+                "15:30", "15:30", "15:30",
+                "16:00", "16:00", "16:00",
+                "16:30", "16:30", "16:30",
+                "17:00", "17:00",
+                "EX", "EX", "EX", "EX",
+            };
+
             if (!this.EquipmentSlots.AsNoTracking().Any())
             {
                 this.EquipmentSlots.AddRange([
-                    new("1900/1/1".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.None,
-                        [
-                            "08:30", "08:30", "08:30", "08:30",
-                            "09:00", "09:00", "09:00", "09:00",
-                            "09:30", "09:30", "09:30", "09:30",
-                            "10:00", "10:00", "10:00",
-                            "10:30", "10:30", "10:30",
-                            "11:00", "11:00", "11:00",
-                            "11:30", "11:30", "11:30",
-                            "12:00", "12:00",
-                            "13:30", "13:30", "13:30",
-                            "14:00", "14:00", "14:00",
-                            "14:30", "14:30", "14:30",
-                            "15:00", "15:00", "15:00",
-                            "15:30", "15:30", "15:30",
-                            "16:00", "16:00", "16:00",
-                            "16:30", "16:30", "16:30",
-                            "17:00", "17:00",
-                            "EX", "EX", "EX", "EX",
-                        ]),
+                    new("1900/1/1".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.None, slots),
                     new("1900/1/2".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.Sunday, ""),
                     new("1900/1/3".ToDateOrToday(), DateTime.MaxValue.Date, DowCode.Saturday, ""),
                 ]);
@@ -145,18 +177,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
             if (!this.EquipmentBookings.AsNoTracking().Any())
             {
-                var equipId = this.Equipments.FirstOrDefault(x => !x.IsDeleted)?.EquipId ?? 0;
-                this.EquipmentBookings.AddRange([
-                    new(equipId, DateTime.Today, "08:00", "鼻", "sample_0800", true),
-                    new(equipId, DateTime.Today, "09:00", "口", "sample1", true),
-                    new(equipId, DateTime.Today, "09:00", "✘", "sample_0900", true),
-                    new(equipId, DateTime.Today, "09:00(2)", "★", "sample2", true),
-                    new(equipId, DateTime.Today, "09:30", "●", "sample3", true),
-                    new(equipId, DateTime.Today, "09:30(2)", "◉", "sample4", true),
-                    new(equipId, DateTime.Today, "10:00", "◯", "sample5", true),
-                    new(equipId, DateTime.Today, "10:00(3)", "◎", "sample6", true),
-                    new(equipId, DateTime.Today, "EX", "EX", "sample7", true),
-                ]);
+                var rnd = new Random();
+
+                var equipments = this.Equipments.ToList();
+                var equipmentMax = equipments.Count;
+
+                slots = this.CreateSlotStrings(slots);
+                var slotMax = slots.Length;
+
+                var symbols = new[] { "", "鼻", "口", "★" };
+                var symbolMax = symbols.Length;
+
+                var firstDate = DateTime.Today.AddDays(1 - DateTime.Today.Day);
+                for (var i = 0; i < 3000; i++)
+                {
+                    var equipId = equipments.Skip(rnd.Next(0, equipmentMax)).First().EquipId;
+                    var date = firstDate.AddDays(rnd.Next(0, 60));
+                    var slot = slots[rnd.Next(0, slotMax)];
+                    var symbol = symbols[rnd.Next(0, symbolMax)];
+                    var booking = new ReservationEquipmentBooking(equipId, date, slot, symbol, $"remark_{i}", true);
+                    this.EquipmentBookings.Add(booking);
+                }
             }
 
             if (!this.Floors.AsNoTracking().Any())
@@ -206,5 +247,35 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             Debug.WriteLine(ex.ToString());
             throw;
         }
+    }
+
+    /// <summary>
+    /// 最大公約数的なスロットのリストを作成します。
+    /// </summary>
+    private string[] CreateSlotStrings(string[] slots)
+    {
+        // 定義されている最大の slot の一覧を作成する
+        var cols = new HashSet<string>();
+
+
+        // def 毎の slot 重複数を数える
+        var slotCounts = new Dictionary<string, int>();
+
+        for (var i = 0; i < slots.Length; i++)
+        {
+            var slot = slots[i];
+
+            if (!slotCounts.TryAdd(slot, 1))
+            {
+                slotCounts[slot]++;
+                // 重複したら (n) をつける
+                slot = $"{slot}({slotCounts[slot]})";
+                slots[i] = slot;
+            }
+
+            cols.Add(slot);
+        }
+
+        return cols.OrderBy(x => x).ToArray();
     }
 }

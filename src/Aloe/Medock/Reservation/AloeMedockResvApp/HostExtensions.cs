@@ -92,6 +92,7 @@ internal static class HostExtensions
         // ViewModel
         builder.Services.AddTransient<NotifyIconViewModel>();
         builder.Services.AddTransient<LoginViewModel>();
+        builder.Services.AddTransient<InformationBarViewModel>();
         builder.Services.AddTransient<FunctionBarViewModel>();
         builder.Services.AddTransient<ReservationMainViewModel>();
         builder.Services.AddTransient<ReservationEquipViewModel>();
@@ -136,6 +137,8 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddMagicOnionClient(this IHostApplicationBuilder builder)
     {
+        // TODO: コマンドライン引数からも設定できるようにする
+
         // クライアントの gRPC ターゲット設定を読み取る
         var grpcConfigSection = builder.Configuration.GetSection("Client:Targets:gRPC");
 
@@ -189,6 +192,7 @@ internal static class HostExtensions
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
+        // TODO: コマンドライン引数からも設定できるようにする
         var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
         //builder.Services.AddDbContext<AppDbContext>(options =>
         //{
@@ -204,7 +208,6 @@ internal static class HostExtensions
         builder.Services.AddDbContextFactory<AppDbContext>(options =>
         {
             options.UseNpgsql(connStr);
-
             if (builder.Environment.IsDevelopment())
             {
                 options.EnableSensitiveDataLogging();

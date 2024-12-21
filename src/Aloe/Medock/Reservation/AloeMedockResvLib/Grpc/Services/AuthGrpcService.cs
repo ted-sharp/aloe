@@ -18,6 +18,8 @@ public interface IAuthGrpcService : IService<IAuthGrpcService>
 {
     UnaryResult LoadPoliciesAsync();
 
+    UnaryResult<string> GetHostAsync();
+
     UnaryResult<LoginResult> LoginAsync(LoginRequest request);
 
     UnaryResult LogoutAsync(SessionDto session);
@@ -44,6 +46,21 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         await this._policyService.LoadPoliciesAsync();
     }
 
+    public async UnaryResult<string> GetHostAsync()
+    {
+        try
+        {
+            await using var context = await this._factory.CreateDbContextAsync();
+            return context.GetHost();
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.ToString());
+        }
+
+        return "";
+    }
+
     public async UnaryResult<LoginResult> LoginAsync(LoginRequest request)
     {
         var result = new LoginResult
@@ -51,6 +68,7 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
             IsSuccess = false,
             ErrorMessage = null,
             SessionDto = null,
+            Host = null,
         };
 
         try

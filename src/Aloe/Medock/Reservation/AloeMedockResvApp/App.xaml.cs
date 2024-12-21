@@ -20,8 +20,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Aloe.Common.AloeCoreLib.Ini;
 using System.Reflection;
+using System.Windows.Interop;
+using System.Windows.Media;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using CommandLine;
+using Grpc.Net.Client;
+using MagicOnion;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -46,6 +50,11 @@ public partial class App : Application
 
         this._arguments = arguments;
         this.RegisterUnhandledExceptionHandlers();
+
+        if (arguments.IsDevelopment)
+        {
+            //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
+        }
 
         this._ts.Stamp("Ctor finished");
     }
@@ -75,7 +84,14 @@ public partial class App : Application
 
                 if (this._arguments.Standalone)
                 {
-                    await this.InitializeDatabaseAsync();
+                    var dbHost = await this.InitializeDatabaseAsync();
+                    // standalone の場合はDBホスト名を使う
+                    App.HostName = dbHost;
+                }
+                else
+                {
+                    var channel = this.Host.Services.GetRequiredService<GrpcChannel>();
+                    App.HostName = channel.Target;
                 }
 
                 if (this._arguments.IsSeed)
@@ -213,19 +229,35 @@ public partial class App : Application
         }
     }
 
+    public async Task<bool> TryLogoutAsync()
+    {
+        var session = App.Session;
+        if (session is null)
+        {
+            return false;
+        }
+
+        var auth = App.Resolve<IAuthGrpcService>();
+        await auth.LogoutAsync(session);
+        App.Session = null;
+        return true;
+    }
+
     /// <summary>
     /// ポリシーを事前にロードしておきます。
     /// EFCore は初回アクセス時にマッピングなどが行われるため時間がかかります。
     /// スタンドアローンで動かす場合には非同期で呼び出してください。
     /// </summary>
-    private async ValueTask InitializeDatabaseAsync()
+    private async ValueTask<string> InitializeDatabaseAsync()
     {
         this.SetStatus("DB Initializing...");
 
         try
         {
             var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
+            var dbHost = await auth.GetHostAsync();
             await auth.LoadPoliciesAsync();
+            return dbHost;
         }
         catch (Exception ex)
         {
@@ -233,6 +265,7 @@ public partial class App : Application
         }
 
         this._ts.Stamp("DB initialized");
+        return "";
     }
 
     /// <summary>
@@ -306,8 +339,12 @@ public partial class App : Application
         throw new InvalidOperationException("Can Not CreateNotifyIcon.");
     }
 
+    // ReSharper disable once AsyncVoidMethod
     protected override void OnExit(ExitEventArgs e)
     {
+        // ログアウト処理
+        Task.Run(Task? () => this.TryLogoutAsync()).GetAwaiter().GetResult();
+
         // アイコンのクリーンアップ
         this._notifyIcon?.Dispose();
         this._notifyIcon = null;

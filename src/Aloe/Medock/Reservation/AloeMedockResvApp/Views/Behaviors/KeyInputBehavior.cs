@@ -9,7 +9,7 @@ using System.Windows;
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors;
 
 
-// Behavior<UIElement> 使わなくてよいの？
+// TODO: Behavior<UIElement> 使わなくてよいの？
 public static class KeyInputBehavior
 {
     #region KeyDown

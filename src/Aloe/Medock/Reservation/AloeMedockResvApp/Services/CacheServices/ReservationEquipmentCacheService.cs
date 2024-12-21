@@ -204,4 +204,27 @@ public class ReservationEquipmentCacheService
 
         return null;
     }
+    public void SetBookingData2(int year, int month, int equipId, BookingData2 data)
+    {
+        var key = $"equipmentBookings_{nameof(RecyclingBookingRow)}List_{year:0000}{month:00}_{equipId}";
+
+        this._cache.Set(key, data, new MemoryCacheEntryOptions
+        {
+            // リアルタイムなので数秒とする
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5),
+            SlidingExpiration = null,
+        });
+    }
+
+    public BookingData2? GetBookingData2(int year, int month, int equipId)
+    {
+        var key = $"equipmentBookings_{nameof(RecyclingBookingRow)}List_{year:0000}{month:00}_{equipId}";
+        if (this._cache.TryGetValue<BookingData2>(
+                key, out var data))
+        {
+            return data;
+        }
+
+        return null;
+    }
 }
