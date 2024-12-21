@@ -160,7 +160,6 @@ internal static class HostExtensions
         });
 
         // MagicOnion クライアントを登録
-        AddSingletonGrpcService<ISeedGrpcService>();
         AddSingletonGrpcService<IAuthGrpcService>();
         AddSingletonGrpcService<IReservationEquipmentGrpcService>();
 
@@ -226,7 +225,6 @@ internal static class HostExtensions
 
         // GrpcChannel ではなく、直接サーバー側のサービスを使えるようにします。
 
-        builder.Services.AddTransient<ISeedGrpcService, SeedGrpcService>();
         builder.Services.AddTransient<IAuthGrpcService, AuthGrpcService>();
         builder.Services.AddTransient<IReservationEquipmentGrpcService, ReservationEquipmentGrpcService>();
 

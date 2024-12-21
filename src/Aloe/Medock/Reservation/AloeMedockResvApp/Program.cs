@@ -54,13 +54,6 @@ public class Arguments
     public bool IsDevelopment { get; set; }
 
     /// <summary>
-    /// サンプルデータの挿入を試行します。
-    /// 空の場合のみ挿入できます。
-    /// </summary>
-    [Option("seed", HelpText = "Try insert sample data.")]
-    public bool IsSeed { get; set; }
-
-    /// <summary>
     /// ログを抑制します。
     /// コンソール出力とロガーが無効化されます。
     /// </summary>

@@ -24,6 +24,7 @@ internal static class HostExtensions
             .AddSerilog()
             .AddSwagger()
             .AddPostgreSql()
+            .AddServerServices()
             .AddDomainServices()
             .AddMagicOnionServer();
 
@@ -93,6 +94,16 @@ internal static class HostExtensions
                 options.EnableSensitiveDataLogging();
             }
         });
+        return builder;
+    }
+
+    /// <summary>
+    /// サーバー用サービスクラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddServerServices(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddTransient<Seeder>();
+
         return builder;
     }
 

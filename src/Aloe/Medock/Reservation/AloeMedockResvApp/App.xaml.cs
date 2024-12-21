@@ -72,7 +72,7 @@ public partial class App : Application
             if (this._arguments.ScreenCode.IsDefault())
             {
                 this._loginWindow = new LoginWindow(ini);
-                Application.Current.MainWindow = this._loginWindow;
+                Application.Current.MainWindow = this._loginWindow as Window;
                 this._loginWindow.Show();
             }
 
@@ -92,11 +92,6 @@ public partial class App : Application
                 {
                     var channel = this.Host.Services.GetRequiredService<GrpcChannel>();
                     App.HostName = channel.Target;
-                }
-
-                if (this._arguments.IsSeed)
-                {
-                    await this.InitializeSeedAsync();
                 }
             }).ContinueWith(_ =>
             {
@@ -266,30 +261,6 @@ public partial class App : Application
 
         this._ts.Stamp("DB initialized");
         return "";
-    }
-
-    /// <summary>
-    /// 必要なサンプルデータを作成します。
-    /// すでにデータが存在する場合は何もしません。
-    /// </summary>
-    private async ValueTask InitializeSeedAsync()
-    {
-        this.SetStatus("DB Seeding...");
-
-        try
-        {
-            var seed = this.Host.Services.GetService<ISeedGrpcService>();
-            if (seed is not null)
-            {
-                await seed.SeedAsync();
-            }
-        }
-        catch (Exception ex)
-        {
-            this._logger?.LogError(ex, "Error!");
-        }
-
-        this._ts.Stamp("DB Seeded");
     }
 
     /// <summary>

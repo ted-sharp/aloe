@@ -52,16 +52,6 @@
         }
     */
   "MultiProjectConfigurations": {
-    "App(Standalone, Seed)": {
-      "Projects": {
-        "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --development -q --seed",
-          "WorkingDirectory": "",
-          "StartProject": true
-        }
-      }
-    },
-
     "App(Standalone login failed)": {
       "Projects": {
         "AloeMedockResvApp": {
@@ -97,6 +87,16 @@
         "AloeMedockResvServer": {},
         "AloeMedockResvApp": {
           "CommandLineArguments": "",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+    "Seed": {
+      "Projects": {
+        "AloeMedockResvServer": {
+          "CommandLineArguments": "--seed",
           "WorkingDirectory": "",
           "StartProject": true
         }

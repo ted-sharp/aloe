@@ -7,17 +7,17 @@
              xmlns:converters="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Converters">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--<ui:BundledTheme BaseTheme="Dark" PrimaryColor="DeepPurple" SecondaryColor="Lime" />-->
+                <!--<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />-->
+            </ResourceDictionary.MergedDictionaries>
+
+
             <converters:Int32ValueToScaleConverter x:Key="Int32ValueToScaleConverter" />
 
-            <ResourceDictionary.MergedDictionaries>
-
-                <!-- <ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" /> -->
-                <!-- <ui:BundledTheme /> -->
-                <!-- <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign2.Defaults.xaml" /> -->
-                <!-- <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" /> -->
-            </ResourceDictionary.MergedDictionaries>
         </ResourceDictionary>
     </Application.Resources>
+
 
 
 </Application>

@@ -6,9 +6,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>Aloe.Medock.Reservation.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
     <UserSecretsId>cb8056b6-68f9-4300-a04e-7e6d46e55f72</UserSecretsId>
+    <StartupObject>Aloe.Medock.Reservation.AloeMedockResvServer.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
     <PackageReference Include="EFCore.BulkExtensions.PostgreSql" Version="9.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />

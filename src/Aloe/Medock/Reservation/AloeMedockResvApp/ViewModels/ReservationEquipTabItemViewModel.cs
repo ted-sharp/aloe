@@ -192,6 +192,11 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
         foreach (var slot in slots)
         {
             var row = this.RecyclingRows.Find(x => x.Slot == slot);
+            if (row is null)
+            {
+                continue;
+            }
+
             for (var day = 1; day <= 31; day++)
             {
                 if (day <= monthEndDate.Day)

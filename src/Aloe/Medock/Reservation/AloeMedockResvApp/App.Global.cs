@@ -36,6 +36,7 @@ public partial class App
         ?? throw new InvalidOperationException("IServiceProvider is not initialized.");
 
     public static T Resolve<T>()
+        where T : notnull
     {
         return App.Services.GetRequiredService<T>()
             ?? throw new InvalidOperationException($"{typeof(T).Name} can not resolve.");
