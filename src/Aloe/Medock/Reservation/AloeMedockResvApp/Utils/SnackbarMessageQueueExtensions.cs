@@ -15,16 +15,16 @@ public static class SnackbarMessageQueueExtensions
         queue.Clear();
         queue.Enqueue(message);
     }
-    public static void ShowErrorMessage(this SnackbarMessageQueue queue, string message)
-    {
-        var errorMessage = new
-        {
-            Message = "エラーが発生しました！",
-            Background = Brushes.DarkRed,
-        };
 
-        queue.Clear();
-        queue.Enqueue(message);
-    }
+    //public static void ShowErrorMessage(this SnackbarMessageQueue queue, string message)
+    //{
+    //    var errorMessage = new
+    //    {
+    //        Message = "エラーが発生しました！",
+    //        Background = Brushes.DarkRed,
+    //    };
 
+    //    queue.Clear();
+    //    queue.Enqueue(message);
+    //}
 }

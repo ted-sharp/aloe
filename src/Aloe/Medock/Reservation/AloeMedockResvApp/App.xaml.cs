@@ -20,8 +20,11 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using Aloe.Common.AloeCoreLib.Ini;
 using System.Reflection;
+using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using CommandLine;
 using Grpc.Net.Client;
@@ -35,13 +38,14 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 /// </summary>
 public partial class App : Application
 {
-    private readonly Timestamper _ts = new Timestamper("App");
+    private readonly Timestamper _ts = new("App");
 
     private readonly Arguments _arguments;
     private ILogger? _logger;
     private IHost? _host;
 
     private LoginWindow? _loginWindow;
+    private LogWindow? _logWindow;
     private TaskbarIcon? _notifyIcon;
 
     public App(Arguments arguments)
@@ -59,7 +63,7 @@ public partial class App : Application
         this._ts.Stamp("Ctor finished");
     }
 
-    protected async override void OnStartup(StartupEventArgs e)
+    protected override async void OnStartup(StartupEventArgs e)
     {
         try
         {
@@ -69,24 +73,36 @@ public partial class App : Application
 
             var ini = LoginIni.Load(App.IniFilePath);
 
-            if (this._arguments.ScreenCode.IsDefault())
+            // 常駐するかどうか
+            var isResided = this._arguments.ScreenCode.IsDefault();
+
+            if (isResided)
             {
+                // IHost 作成前から使う
                 this._loginWindow = new LoginWindow(ini);
-                Application.Current.MainWindow = this._loginWindow as Window;
+                Application.Current.MainWindow = this._loginWindow;
+
                 this._loginWindow.Show();
+
+                // IHost 作成前から使う
+                this._logWindow = new LogWindow();
             }
 
             var task = Task.Run(async () =>
             {
-                this._host = this.InitializeHost(this._arguments);
+                this._host = this.InitializeHost(this._arguments, this._logWindow?.LogRichTextBox);
+                this._loginWindow?.InvokeCompleteInitHost("Host initialized.");
+
                 App.s_services = this.Host.Services;
                 this._logger = this.Host.Services.GetService<ILogger<App>>();
 
                 if (this._arguments.Standalone)
                 {
-                    var dbHost = await this.InitializeDatabaseAsync();
+                    var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
                     // standalone の場合はDBホスト名を使う
-                    App.HostName = dbHost;
+                    App.HostName = await auth.GetHostAsync();
+
+                    await this.InitializeDatabaseAsync();
                 }
                 else
                 {
@@ -95,21 +111,19 @@ public partial class App : Application
                 }
             }).ContinueWith(_ =>
             {
-                if (this._loginWindow is not null)
+                if (isResided)
                 {
-                    // 別スレッドからUIスレッドを操作
-                    this.Dispatcher.Invoke(() =>
-                    {
-                        this.InitializeNotifyIcon();
-
-                        // ロードが終わったらインジケーターを止める
-                        this._loginWindow.CompleteInitializingTask("Startup finished.");
-                    });
+                    // 常駐する場合はトレイアイコンを作成する
+                    this.InitializeNotifyIcon();
                 }
+
+                // ロードが終わったらインジケーターを止める
+                this._loginWindow?.InvokeCompleteInitTask("Startup finished.");
             });
 
             if (!String.IsNullOrWhiteSpace(this._arguments.User))
             {
+                // 引数指定があるとき
                 var isSuccessful = await this.LoginAsync(task, this._arguments.User, this._arguments.Password);
                 if (isSuccessful)
                 {
@@ -118,6 +132,7 @@ public partial class App : Application
             }
             else if (ini.IsReadyForAutoLogin)
             {
+                // 自動ログインのとき
                 var isSuccessful = await this.LoginAsync(task, ini.User!, ini.Password!);
                 if (isSuccessful)
                 {
@@ -125,16 +140,15 @@ public partial class App : Application
                 }
             }
 
-            if (this._loginWindow is null)
+            if (!isResided)
             {
-                // 画面指定があったら開けないので終了
+                // 画面指定があって開けなかったら終了
                 this.Shutdown(0);
             }
         }
         catch (Exception ex)
         {
-            this._logger?.LogError(ex, "Error!");
-            throw;
+            this.SetError(ex, "OnStartup failed.");
         }
         finally
         {
@@ -146,19 +160,30 @@ public partial class App : Application
     private void SetStatus(string message)
     {
         this._ts.Stamp(message);
-        if (this._loginWindow is not null)
+        this._loginWindow?.InvokeSetStatus(message);
+    }
+
+    private void SetError(Exception ex, string message)
+    {
+        this._ts.Stamp(message);
+
+        if (this._logger is not null)
         {
-            this.Dispatcher.Invoke(() =>
-            {
-                this._loginWindow.SetStatus(message);
-            });
+            this._logger.LogError(ex, message);
         }
+        else
+        {
+            Debug.WriteLine(message);
+            Debug.WriteLine(ex.ToString());
+        }
+
+        this._loginWindow?.InvokeSetStatus(message);
     }
 
     /// <summary>
     /// Generic Host(IHost) で Configuration, ILogger, IServiceProvider を使用できるようにします。
     /// </summary>
-    private IHost InitializeHost(Arguments arguments)
+    private IHost InitializeHost(Arguments arguments, RichTextBox? logTextBox)
     {
         this.SetStatus("Host Initializing...");
 
@@ -166,7 +191,7 @@ public partial class App : Application
 
         // Generic Host を使って設定を共通化している
         var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
-            .ConfigureBuilder(arguments)
+            .ConfigureBuilder(arguments, logTextBox)
             .Build();
 
         // App.Run と競合するため IHost.Run はしない
@@ -175,14 +200,13 @@ public partial class App : Application
         // 必要なら手動で実行する
         //host.StartAsync();
 
-        this._ts.Stamp("Host initialized");
+        this.SetStatus("Host initialized");
 
         return host;
     }
 
     private async Task<bool> LoginAsync(Task task, string user, string password)
     {
-        // TODO: クラサバのときini から HostUrl が取れる場合は待たずに生成してしまえばよい
         this.SetStatus("Task Waiting...");
         await Task.WhenAll(task);
 
@@ -207,6 +231,7 @@ public partial class App : Application
             Window window = this._arguments.ScreenCode switch
             {
                 ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipWindow>(),
+                ScreenCode.OrganizationPatientSearch => sp.GetRequiredService<OrganizationPatientSearchWindow>(),
                 _ => sp.GetRequiredService<ReservationMainWindow>(),
             };
 
@@ -218,24 +243,10 @@ public partial class App : Application
         else
         {
             var msg = $"Login failed. {result.ErrorMessage}";
-            this.SetStatus(msg);
-            this._logger?.LogInformation(msg);
+            var ex = new Exception(msg);
+            this.SetError(ex, "Login failed.");
             return false;
         }
-    }
-
-    public async Task<bool> TryLogoutAsync()
-    {
-        var session = App.Session;
-        if (session is null)
-        {
-            return false;
-        }
-
-        var auth = App.Resolve<IAuthGrpcService>();
-        await auth.LogoutAsync(session);
-        App.Session = null;
-        return true;
     }
 
     /// <summary>
@@ -243,24 +254,21 @@ public partial class App : Application
     /// EFCore は初回アクセス時にマッピングなどが行われるため時間がかかります。
     /// スタンドアローンで動かす場合には非同期で呼び出してください。
     /// </summary>
-    private async ValueTask<string> InitializeDatabaseAsync()
+    private async Task InitializeDatabaseAsync()
     {
-        this.SetStatus("DB Initializing...");
-
         try
         {
+            this.SetStatus("DB Initializing...");
+
             var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
-            var dbHost = await auth.GetHostAsync();
             await auth.LoadPoliciesAsync();
-            return dbHost;
+
+            this.SetStatus("DB initialized.");
         }
         catch (Exception ex)
         {
-            this._logger?.LogError(ex, "Error!");
+            this.SetError(ex, "DB initialization failed.");
         }
-
-        this._ts.Stamp("DB initialized");
-        return "";
     }
 
     /// <summary>
@@ -268,29 +276,32 @@ public partial class App : Application
     /// </summary>
     private void InitializeNotifyIcon()
     {
-        this.SetStatus("NotifyIcon Initializing...");
-
         try
         {
-            this._notifyIcon = this.CreateNotifyIcon();
+            this.SetStatus("NotifyIcon Initializing...");
 
-            // Window なしでタスクトレイに表示
-            this._notifyIcon.ForceCreate();
+            this.Dispatcher.InvokeIfNeeded(() =>
+            {
+                this._notifyIcon = this.CreateNotifyIcon();
 
-            // タスクトレイにあることを明示
-            this._notifyIcon.ShowNotification(
-                "予約システム",
-                "予約システムが起動しました。\n常駐しますので、タスクトレイから操作してください。",
-                NotificationIcon.Info,
-                largeIcon: true,
-                sound: false);
+                // Window なしでタスクトレイに表示
+                this._notifyIcon.ForceCreate();
+
+                // タスクトレイにあることを明示
+                this._notifyIcon.ShowNotification(
+                    "予約システム",
+                    "予約システムが起動しました。\n常駐しますので、タスクトレイから操作してください。",
+                    NotificationIcon.Info,
+                    largeIcon: true,
+                    sound: false);
+            });
+
+            this.SetStatus("NotifyIcon initialized.");
         }
         catch (Exception ex)
         {
-            this._logger?.LogError(ex, "Error!");
+            this.SetError(ex, "NotifyIcon initialization failed.");
         }
-
-        this._ts.Stamp("NotifyIcon initialized");
     }
 
     private TaskbarIcon CreateNotifyIcon()
@@ -310,17 +321,24 @@ public partial class App : Application
         throw new InvalidOperationException("Can Not CreateNotifyIcon.");
     }
 
-    // ReSharper disable once AsyncVoidMethod
     protected override void OnExit(ExitEventArgs e)
     {
         // ログアウト処理
-        Task.Run(Task? () => this.TryLogoutAsync()).GetAwaiter().GetResult();
+        Task.Run(Task? () => App.TryLogoutAsync())
+            .GetAwaiter()
+            .GetResult();
 
         // アイコンのクリーンアップ
         this._notifyIcon?.Dispose();
         this._notifyIcon = null;
 
         this.UnregisterUnhandledExceptionHandlers();
+
+        Serilog.Log.CloseAndFlush();
+
+        // キャンセルされないように念の為閉じる
+        this._loginWindow?.ForceClose();
+        this._logWindow?.ForceClose();
 
         base.OnExit(e);
     }

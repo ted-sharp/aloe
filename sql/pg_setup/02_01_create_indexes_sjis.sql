@@ -29,7 +29,7 @@ DROP INDEX IF EXISTS reservation_daily_bookings_IX_is_held;
 
 
 CREATE INDEX users_IX1
-  ON users(user_name);
+  ON users(login_name);
 
 
 

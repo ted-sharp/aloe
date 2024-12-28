@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -67,7 +68,7 @@ public class LoginViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
             // ログインウィンドウの子として表示する
             var window = this._windowService.GetOrCreateWindow<ReservationMainWindow>();
             window.Owner = loginWindow;
-            window.ActivateOrShow();
+            window.ShowOrActivate();
         }
         catch (Grpc.Core.RpcException ex)
         {

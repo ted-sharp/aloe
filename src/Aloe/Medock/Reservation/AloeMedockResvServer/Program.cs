@@ -16,58 +16,70 @@ internal class Arguments
     public bool IsSeed { get; set; }
 
     /// <summary>
-    /// ログを抑制します。
-    /// コンソール出力とロガーが無効化されます。
+    /// ロガーをクリアします。
     /// </summary>
     /// <remarks>
     /// 計測時に余計なログを出したくないときに使います。
     /// </remarks>
     [Option('q', "quiet", HelpText = "Enable quiet/silent mode.")]
     public bool IsSilent { get; set; }
-}
 
-public static class Program
-{
-    private static Arguments s_arguments = null!;
+    /// <summary>
+    /// DB のログを出力します。
+    /// </summary>
+    [Option("sql", HelpText = "Enable DB Logging.")]
+    public bool IsSqlLoggingEnabled { get; set; }
 
-    public static async Task Main(string[] args)
+    /// <summary>
+    /// コマンドライン引数からパースします。
+    /// </summary>
+    public static Arguments Parse(string[] args)
     {
-        s_arguments = Parser.Default.ParseArguments<Arguments>(args)
+        return Parser.Default.ParseArguments<Arguments>(args)
             .WithNotParsed(x =>
             {
                 Console.WriteLine($"Arguments Parse Error: {args}");
             })
             .Value ?? new();
+    }
+}
 
-        if (s_arguments.IsSilent)
-        {
-            // コンソール出力を無効化
-            Console.SetOut(TextWriter.Null);
-        }
+public static class Program
+{
+    public static async Task Main(string[] args)
+    {
+        var arguments = Arguments.Parse(args);
 
         var host = WebApplication.CreateSlimBuilder(args)
-            .ConfigureBuilder()
+            .ConfigureBuilder(arguments)
             .ConfigureKestrel()
             .Build();
 
         try
         {
-            if (s_arguments.IsSeed)
+            if (arguments.IsSeed)
             {
                 var seeder = host.Services.GetRequiredService<Seeder>();
                 await seeder.InsertDataAsync();
-                Console.WriteLine();
-                Console.WriteLine("Press any key to exit...");
-                _ = Console.ReadKey();
                 return;
             }
 
-            host.ConfigureApp()
-                .Run();
+            await host.ConfigureApp()
+                .RunAsync();
         }
         finally
         {
             await host.DisposeAsync();
+
+            // Serilogはグローバルで保持しているので明示的に開放する
+            await Serilog.Log.CloseAndFlushAsync();
+
+            if (arguments.IsSeed)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press any key to exit...");
+                _ = Console.ReadKey();
+            }
         }
     }
 

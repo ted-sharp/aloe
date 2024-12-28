@@ -26,15 +26,39 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<User> Users { get; set; } = null!;
 
+    public DbSet<Role> Roles { get; set; } = null!;
+
+    public DbSet<UserRole> UserRoles { get; set; } = null!;
+
+    public DbSet<Permission> Permissions { get; set; } = null!;
+
+    public DbSet<RolePermission> RolePermissions { get; set; } = null!;
+
     public DbSet<Policy> Policies { get; set; } = null!;
 
     #endregion AuthService
+
+    #region Organization
+
+    public DbSet<InsuranceProvider> InsuranceProviders { get; set; } = null!;
+
+    public DbSet<Organization> Organizations { get; set; } = null!;
+
+    public DbSet<OrganizationContact> OrganizationContacts { get; set; } = null!;
+
+    public DbSet<OrganizationRemark> OrganizationRemarks { get; set; } = null!;
+
+    #endregion Organization
 
     #region Patient
 
     public DbSet<Patient> Patients { get; set; } = null!;
 
-    public DbSet<Organization> Organizations { get; set; } = null!;
+    public DbSet<PatientContact> PatientContacts { get; set; } = null!;
+
+    public DbSet<PatientRemark> PatientRemarks { get; set; } = null!;
+
+    public DbSet<PatientInsuranceCard> PatientInsuranceCards { get; set; } = null!;
 
     #endregion Patient
 

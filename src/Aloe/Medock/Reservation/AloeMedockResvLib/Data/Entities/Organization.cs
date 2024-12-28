@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -19,17 +20,21 @@ public class Organization : AuditableEntityBase<int>
     [Required]
     public int OrgId { get; set; }
 
-    [Column("insurance_type_code")]
+    [Column("insur_prov_type_code")]
     [Required]
-    public string InsuranceTypeCode { get; set; } = String.Empty;
+    public int InsurProvTypeCode { get; set; }
 
-    [Column("insurance_provider_id")]
+    [Column("insur_prov_id")]
     [Required]
-    public int InsuranceProviderId { get; set; } = 0;
+    public int InsurProvId { get; set; } = 0;
 
     [Column("parent_org_id")]
     [Required]
     public int ParentOrgId { get; set; } = 0;
+
+    [Column("org_number")]
+    [Required]
+    public string OrgNumber { get; set; } = String.Empty;
 
     [Column("org_name")]
     [Required]
@@ -51,10 +56,16 @@ public class Organization : AuditableEntityBase<int>
     [Required]
     public string OrgNamePrint { get; set; } = String.Empty;
 
+    [Column("memo")]
+    [Required]
+    public string Memo { get; set; } = String.Empty;
+
     public Organization() { }
 
-    public Organization(string orgName, string katakana, string displayName, string printName)
+    public Organization(int insurProvTypeCode, int insurProvId, string orgName, string katakana, string displayName, string printName)
     {
+        this.InsurProvTypeCode = insurProvTypeCode;
+        this.InsurProvId = insurProvId;
         this.OrgName = orgName;
         this.OrgNameKatakana = katakana;
         this.OrgNameDisplay = displayName;

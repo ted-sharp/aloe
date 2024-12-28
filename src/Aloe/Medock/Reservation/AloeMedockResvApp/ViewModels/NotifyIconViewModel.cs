@@ -12,6 +12,8 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Common.AloeCoreLib.Mvvm;
+using Microsoft.Extensions.Logging;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -19,19 +21,28 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
 {
     public ReactiveCommandSlim ShowReservationMainWindowCommand { get; } = new();
     public ReactiveCommandSlim ShowXxxWindowCommand { get; } = new();
+    public ReactiveCommandSlim ShowLogWindowCommand { get; } = new();
     public ReactiveCommandSlim ShowMaintenanceWindowCommand { get; } = new();
     public ReactiveCommandSlim LogoutCommand { get; } = new();
     public ReactiveCommandSlim RestartAppCommand { get; } = new();
     public ReactiveCommandSlim ExitAppCommand { get; } = new();
 
+    private readonly ILogger _logger;
     private readonly WindowService _windowService;
 
-    public NotifyIconViewModel(WindowService windowService)
+    public NotifyIconViewModel(
+        ILogger<NotifyIconViewModel> logger,
+        WindowService windowService)
     {
+        this._logger = logger;
         this._windowService = windowService;
 
         this.ShowReservationMainWindowCommand
             .Subscribe(this.ShowReservationMainWindow)
+            .AddTo(this.Disposables);
+
+        this.ShowLogWindowCommand
+            .Subscribe(this.ShowLogWindow)
             .AddTo(this.Disposables);
 
         this.ShowMaintenanceWindowCommand
@@ -56,7 +67,7 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
     {
         var window = this._windowService.GetOrCreateWindow<T>();
         window.Owner = Application.Current.MainWindow;
-        window.ActivateOrShow();
+        window.ShowOrActivate();
         return window;
     }
 
@@ -65,6 +76,18 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         if (App.HasSession)
         {
             this.ShowWindow<ReservationMainWindow>();
+        }
+        else
+        {
+            this.Logout();
+        }
+    }
+
+    private void ShowLogWindow()
+    {
+        if (App.HasSession)
+        {
+            this.ShowWindow<LogWindow>();
         }
         else
         {
@@ -84,37 +107,44 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         }
     }
 
-    private void Logout()
+    private async void Logout()
     {
-        // TODO: ログアウトするか確認する
-
-        // セッションを破棄する
-        App.Session = null;
-
-        // 既存の LoginWindow を取得する
-        var oldLoginWindow = this._windowService.GetWindow<LoginWindow>();
-
-        // 新しい LoginWindow を作る
-        var newLoginWindow = this._windowService.CreateWindow<LoginWindow>();
-        Application.Current.MainWindow = newLoginWindow;
-
-        // キャンセルさせない
-        oldLoginWindow?.ForceClose();
-
-        // 念の為、他の Window も探す
-        var oldWindows = Application.Current.Windows
-            .OfType<Window>()
-            .Where(x => x != newLoginWindow)
-            .ToArray();
-
-        // すべて閉じる
-        foreach (var oldWindow in oldWindows)
+        try
         {
-            oldWindow.Close();
-        }
+            // TODO: ログアウトするか確認する
 
-        // 新しい LoginWindow を表示する
-        newLoginWindow.ActivateOrShow();
+            // セッションを破棄する
+            await App.TryLogoutAsync();
+
+            // 既存の LoginWindow を取得する
+            var oldLoginWindow = this._windowService.GetWindow<LoginWindow>();
+            Application.Current.MainWindow = oldLoginWindow;
+
+            //// 新しい LoginWindow を作る
+            //var newLoginWindow = this._windowService.CreateWindow<LoginWindow>();
+
+            //// キャンセルさせない
+            //oldLoginWindow?.ForceClose();
+
+            // 念の為、他の Window も探す
+            var oldWindows = Application.Current.Windows
+                .OfType<Window>()
+                .Where(x => x != oldLoginWindow)
+                .ToArray();
+
+            // すべて閉じる
+            foreach (var oldWindow in oldWindows)
+            {
+                oldWindow.Close();
+            }
+
+            // 新しい LoginWindow を表示する
+            oldLoginWindow?.ShowOrActivate();
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.ToString());
+        }
     }
 
     private void RestartApplication()

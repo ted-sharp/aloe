@@ -54,8 +54,7 @@ public class Arguments
     public bool IsDevelopment { get; set; }
 
     /// <summary>
-    /// ログを抑制します。
-    /// コンソール出力とロガーが無効化されます。
+    /// ロガーをクリアします。
     /// </summary>
     [Option('q', "quiet", HelpText = "Enable quiet/silent mode.")]
     public bool IsSilent { get; set; }
@@ -71,6 +70,19 @@ public class Arguments
 
     [Option("screen", HelpText = "ScreenCode")]
     public ScreenCode ScreenCode { get; set; }
+
+    /// <summary>
+    /// コマンドライン引数からパースします。
+    /// </summary>
+    public static Arguments Parse(string[] args)
+    {
+        return Parser.Default.ParseArguments<Arguments>(args)
+            .WithNotParsed(x =>
+            {
+                Console.WriteLine($"Arguments Parse Error: {args}");
+            })
+            .Value ?? new();
+    }
 }
 
 internal static class Program
@@ -86,18 +98,7 @@ internal static class Program
         {
             Timestamper.Global.Stamp("Main start.");
 
-            var arguments = Parser.Default.ParseArguments<Arguments>(args)
-                .WithNotParsed(x =>
-                {
-                    Console.WriteLine($"Arguments Parse Error: {args}");
-                })
-                .Value;
-
-            if (arguments.IsSilent)
-            {
-                // コンソール出力を無効化
-                Console.SetOut(TextWriter.Null);
-            }
+            var arguments = Arguments.Parse(args);
 
             // TODO: 引数なしで、すでに起動中だったらアクティブにしたい
             // KarteNumber, ScreenCode が指定されていた場合は、まったく同じやつだったらアクティブにする？

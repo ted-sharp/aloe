@@ -10,7 +10,9 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
         behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
-        Title="設備予約" Height="450" Width="800"
+        Title="設備予約"
+        Width="1920" Height="1080"
+        d:Width="640" d:Height="480"
         ResizeMode="CanResizeWithGrip">
 
     <DockPanel LastChildFill="True">

@@ -9,23 +9,30 @@ using System.Threading.Tasks;
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 [Table("roles")]
-
-public class Role
+public class Role : AuditableEntityBase<int>
 {
+    [NotMapped] public override int Id => this.RoleId;
+
     [Key]
-    [Required]
+    [Column("role_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int RoleId { get; set; }
 
+    [Column("role_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string RoleName { get; set; } = String.Empty;
 
+    [Column("role_desc")]
+    [Required]
+    [MaxLength(Int32.MaxValue)]
     public string RoleDesc { get; set; } = String.Empty;
 
-    public bool IsDeleted { get; set; } = false;
+    public Role() { }
 
-    public DateTime UpdatedAt { get; set; } = DateTime.Now;
-
-    public int UpdatedUserId { get; set; } = 0;
-
-    public Guid UpdatedSessionId { get; set; } = Guid.Empty;
+    public Role(string roleName, string roleDesc)
+    {
+        this.RoleName = roleName;
+        this.RoleDesc = roleDesc;
+    }
 }

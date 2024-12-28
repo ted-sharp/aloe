@@ -5,10 +5,10 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp;
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 internal static class WindowExtensions
 {
-    public static void ActivateOrShow(this Window window)
+    public static void ShowOrActivate(this Window window)
     {
         ArgumentNullException.ThrowIfNull(window);
 

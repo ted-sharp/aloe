@@ -2,16 +2,14 @@
 using System.Diagnostics;
 using System.Windows;
 using Aloe.Common.AloeCoreLib.Ini;
-using Aloe.Common.AloeCoreLib.Logging;
-using Aloe.Common.AloeCoreLib.Util;
-using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using MaterialDesignThemes.Wpf;
-using Microsoft.Extensions.DependencyInjection;
+using MagicOnion;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
@@ -23,17 +21,18 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 /// できるだけ初期表示時間を早めるため、初期表示には DI を使用しません。
 /// DI が使用できないので ViewModel も使用しません。
 /// </remarks>
-public partial class LoginWindow : Window
+public partial class LoginWindow
 {
     private readonly LoginIni _ini;
 
-    private bool _isForceClose = false;
+    private bool _isForceClose;
 
     public LoginWindow(LoginIni ini)
     {
         this.InitializeComponent();
 
         this.Title = App.AppName;
+        this.VersionText.Text = App.AppVersion;
 
         this._ini = ini;
         this.InitializeValue(ini);
@@ -57,47 +56,68 @@ public partial class LoginWindow : Window
     }
 
     /// <summary>
-    /// ステータスバーのテキストを更新します。
+    /// IHost 初期化の完了を通知します。
+    /// 一部のボタンを押せるようにします。
     /// </summary>
-    public void SetStatus(string message)
+    public void InvokeCompleteInitHost(string message)
     {
-        if (String.IsNullOrWhiteSpace(message))
+        this.Dispatcher.InvokeIfNeeded(() =>
         {
-            return;
-        }
+            this.StatusText.Text = message;
 
-        this.StatusText.Text = message;
-    }
-
-    /// <summary>
-    /// スナックバーを表示します。
-    /// すでに表示中のスナックバーがある場合はクリアします。
-    /// </summary>
-    public void ShowSnackbar(string? message)
-    {
-        if (String.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
-
-        this.Snackbar.MessageQueue ??= new();
-        this.Snackbar.MessageQueue.Clear();
-        this.Snackbar.MessageQueue.Enqueue(message);
+            // ボタンを押せるようにする
+            this.ShowLogWindowButton.IsEnabled = true;
+            this.RefreshButton.IsEnabled = true;
+        });
     }
 
     /// <summary>
     /// 初期化タスクの完了を通知します。
     /// プログレスバーを止めて、ログインボタンを押せるようにします。
     /// </summary>
-    public void CompleteInitializingTask(string message)
+    public void InvokeCompleteInitTask(string message)
     {
-        // 非表示にする
-        this.ProgressBar.Visibility = Visibility.Collapsed;
+        this.Dispatcher.InvokeIfNeeded(() =>
+        {
+            // 非表示にする
+            this.ProgressBar.Visibility = Visibility.Collapsed;
 
-        this.StatusText.Text = message;
+            this.StatusText.Text = message;
 
-        // ボタンを押せるようにする
-        this.LoginButton.IsEnabled = true;
+            // ボタンを押せるようにする
+            this.LoginButton.IsEnabled = true;
+
+        });
+    }
+
+    /// <summary>
+    /// ステータスバーのテキストを更新します。
+    /// </summary>
+    public void InvokeSetStatus(string message)
+    {
+        this.Dispatcher.InvokeIfNeeded(() =>
+        {
+            this.StatusText.Text = message;
+        });
+    }
+
+    /// <summary>
+    /// スナックバーを表示します。
+    /// すでに表示中のスナックバーがある場合はクリアします。
+    /// </summary>
+    public void InvokeShowSnackbar(string? message)
+    {
+        this.Dispatcher.InvokeIfNeeded(() =>
+        {
+            if (String.IsNullOrWhiteSpace(message))
+            {
+                return;
+            }
+
+            this.Snackbar.MessageQueue ??= new();
+            this.Snackbar.MessageQueue.Clear();
+            this.Snackbar.MessageQueue.Enqueue(message);
+        });
     }
 
     /// <summary>
@@ -142,8 +162,8 @@ public partial class LoginWindow : Window
                 this._ini.Password = "";
             }
 
-            // TODO: 空だったら HostUrl をいれる？
-            //this._ini.HostUrl
+            var config = App.Resolve<IConfiguration>();
+            this._ini.HostUrl = config.GetGrpcUrl();
 
             this._ini.Save(App.IniFilePath);
         }
@@ -203,7 +223,7 @@ public partial class LoginWindow : Window
     /// </summary>
     private async Task LoginAsync(string user, string password)
     {
-        this.SetStatus("Login trying...");
+        this.InvokeSetStatus("Login trying...");
 
         // 連続で実行できないように、少し間を置く
         var delayTask = Task.Delay(1000);
@@ -222,7 +242,7 @@ public partial class LoginWindow : Window
 
         if (result.IsSuccess)
         {
-            this.SetStatus("Login successful.");
+            this.InvokeSetStatus("Login successful.");
 
             App.Session = result.SessionDto;
 
@@ -233,8 +253,70 @@ public partial class LoginWindow : Window
         else
         {
             var msg = "Login failed.";
-            this.SetStatus(msg);
-            this.ShowSnackbar(result.ErrorMessage);
+            this.InvokeSetStatus(msg);
+            this.InvokeShowSnackbar(result.ErrorMessage);
+        }
+    }
+
+    private void RefreshButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        this.RefreshHostUrl();
+    }
+
+    /// <summary>
+    /// INIファイルのHost情報を更新します。
+    /// </summary>
+    private void RefreshHostUrl()
+    {
+        try
+        {
+            var config = App.Resolve<IConfiguration>();
+
+            this._ini.HostUrl = config.GetGrpcUrl();
+
+            this._ini.Save(App.IniFilePath);
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                var logger = App.Resolve<ILogger<LoginWindow>>();
+                logger.LogError(ex, ex.ToString());
+            }
+            catch
+            {
+                Debug.WriteLine(ex.ToString());
+            }
+        }
+    }
+
+    private void ShowLogWindowButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        this.ShowLogWindow();
+    }
+
+    /// <summary>
+    /// LogWindow を表示します。
+    /// </summary>
+    private void ShowLogWindow()
+    {
+        try
+        {
+            var windowService = App.Resolve<WindowService>();
+            var window = windowService.GetWindow<LogWindow>();
+            window?.ShowOrActivate();
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                var logger = App.Resolve<ILogger<LoginWindow>>();
+                logger.LogError(ex, ex.ToString());
+            }
+            catch
+            {
+                Debug.WriteLine(ex.ToString());
+            }
         }
     }
 }

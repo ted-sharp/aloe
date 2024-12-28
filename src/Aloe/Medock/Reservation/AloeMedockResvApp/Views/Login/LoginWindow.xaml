@@ -1,13 +1,10 @@
 ﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login.LoginWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:metro="http://metro.mahapps.com/winfx/xaml/controls"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
         xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:LoginViewModel}"
         Title="LoginWindow"
         Height="250" Width="400"
         WindowStartupLocation="CenterScreen"
@@ -38,16 +35,59 @@
     <DockPanel>
         <!-- ステータスバー -->
         <StatusBar DockPanel.Dock="Bottom" Padding="0">
+            <!-- コーナーを丸める -->
+            <StatusBar.Template>
+                <ControlTemplate>
+                    <Border CornerRadius="0,0,10,10"
+                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                            BorderThickness="1">
+                        <ItemsPresenter />
+                    </Border>
+                </ControlTemplate>
+            </StatusBar.Template>
+
             <StatusBarItem>
                 <TextBlock x:Name="StatusText"
                            Text="Startup processing..."
                            Margin="5,0" />
             </StatusBarItem>
+
+            <!-- TODO: 関連する処理が未実装なので隠しておく -->
+            <StatusBarItem DockPanel.Dock="Right" Visibility="Collapsed">
+                <Button x:Name="RefreshButton"
+                        IsEnabled="False"
+                        BorderThickness="0"
+                        Margin="5,0"
+                        Click="RefreshButton_OnClick"
+                >
+                    <ui:PackIcon Kind="CogClockwise" />
+                </Button>
+            </StatusBarItem>
+
+            <StatusBarItem DockPanel.Dock="Right">
+                <Button x:Name="ShowLogWindowButton"
+                        IsEnabled="False"
+                        BorderThickness="0"
+                        Margin="0,0,5,0"
+                        Click="ShowLogWindowButton_OnClick"
+                >
+                    <ui:PackIcon Kind="Console" />
+                </Button>
+            </StatusBarItem>
+
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock x:Name="VersionText"
+                           Text="Ver.0.0.0.0"
+                           Margin="0" />
+            </StatusBarItem>
+
             <StatusBarItem HorizontalContentAlignment="Stretch">
                 <ProgressBar x:Name="ProgressBar"
                              IsIndeterminate="True"
                              Margin="5,0" />
             </StatusBarItem>
+
         </StatusBar>
 
         <Grid>
@@ -68,13 +108,11 @@
             <ui:PackIcon Grid.Row="1" Grid.Column="0" Kind="Account"/>
             <!-- MaterialDesignOutlinedTextBox にしたい(参考: デモアプリ) -->
             <TextBox Grid.Row="1" Grid.Column="1" x:Name="UserTextBox"
-                     ui:HintAssist.Hint="User"
-                     Text="{Binding User.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}"></TextBox>
+                     ui:HintAssist.Hint="User" />
 
             <ui:PackIcon Grid.Row="2" Grid.Column="0" Kind="Key" HorizontalAlignment="Right"/>
             <TextBox Grid.Row="2" Grid.Column="1" x:Name="PasswordTextBox"
-                     ui:HintAssist.Hint="Password"
-                     Text="{Binding Password.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}"></TextBox>
+                     ui:HintAssist.Hint="Password" />
 
             <CheckBox Grid.Row="3" Grid.Column="1" x:Name="UserRememberedCheckBox" Content="Remember me" IsChecked="False" />
 

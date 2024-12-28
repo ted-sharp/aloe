@@ -18,6 +18,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
 using Grpc.Net.Client;
 using MagicOnion.Client;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +26,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using CommandLine;
+using System.Windows.Controls;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -37,18 +39,19 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder, Arguments arguments)
+    internal static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder, Arguments arguments, RichTextBox? logTextBox)
     {
         builder.AddServices();
-        //builder.Wait();
 
         if (arguments.IsSilent)
         {
             builder.Logging.ClearProviders();
+            //// コンソール出力を無効化
+            //Console.SetOut(TextWriter.Null);
         }
         else
         {
-            builder.AddSerilog();
+            builder.AddSerilog(logTextBox);
         }
 
         if (arguments.Standalone)
@@ -61,11 +64,6 @@ internal static class HostExtensions
         }
 
         return builder;
-    }
-
-    private static void Wait(this IHostApplicationBuilder builder)
-    {
-        Task.Delay(5000).Wait();
     }
 
     /// <summary>
@@ -106,28 +104,8 @@ internal static class HostExtensions
         builder.Services.AddTransient<ReservationDailyBookingWindow>();
         //builder.Services.AddTransient<OrganizationWindow>();
         //builder.Services.AddTransient<PatientWindow>();
-        //builder.Services.AddTransient<OrganizationPatientSearchWindow>();
+        builder.Services.AddTransient<OrganizationPatientSearchWindow>();
         builder.Services.AddTransient<MaintenanceWindow>();
-
-        return builder;
-    }
-
-    /// <summary>
-    /// Serilog を有効にします。
-    /// </summary>
-    private static IHostApplicationBuilder AddSerilog(this IHostApplicationBuilder builder)
-    {
-        var template = "APP [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
-
-        Serilog.Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .Enrich.WithThreadId()
-            .WriteTo.Debug(outputTemplate: template)
-            .WriteTo.Console(theme: AnsiConsoleTheme.Literate, outputTemplate: template)
-            .CreateLogger();
-
-        builder.Logging.ClearProviders();
-        builder.Logging.AddSerilog();
 
         return builder;
     }
@@ -140,9 +118,9 @@ internal static class HostExtensions
         // TODO: コマンドライン引数からも設定できるようにする
 
         // クライアントの gRPC ターゲット設定を読み取る
-        var grpcConfigSection = builder.Configuration.GetSection("Client:Targets:gRPC");
-
-        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
+        //var grpcConfigSection = builder.Configuration.GetSection("Client:Targets:gRPC");
+        //var grpcUrl = grpcConfigSection.GetValue<string>("Url");
+        var grpcUrl = builder.Configuration.GetGrpcUrl();
         if (String.IsNullOrEmpty(grpcUrl))
         {
             throw new InvalidOperationException("gRPC URL is not configured.");
@@ -176,6 +154,22 @@ internal static class HostExtensions
                 return MagicOnionClient.Create<T>(channel);
             });
         }
+    }
+
+    /// <summary>
+    /// 設定から gRPC 用のURLを取得します。
+    /// </summary>
+    public static string GetGrpcUrl(this IConfiguration config)
+    {
+        var grpcConfigSection = config.GetSection("Client:Targets:gRPC");
+
+        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
+        if (String.IsNullOrEmpty(grpcUrl))
+        {
+            throw new InvalidOperationException("gRPC URL is not configured.");
+        }
+
+        return grpcUrl;
     }
 
     /// <summary>

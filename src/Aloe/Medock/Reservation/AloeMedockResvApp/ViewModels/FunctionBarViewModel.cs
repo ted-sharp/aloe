@@ -23,6 +23,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using System.DirectoryServices.ActiveDirectory;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -336,7 +337,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
                     window.Owner = parent;
                 }
 
-                window?.ActivateOrShow();
+                window?.ShowOrActivate();
             }
 
             return Task.CompletedTask;
@@ -358,7 +359,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             {
                 var window = this._windowService.GetOrCreateWindow<TWindow>();
 
-                window?.ActivateOrShow();
+                window?.ShowOrActivate();
             }
 
             return Task.CompletedTask;

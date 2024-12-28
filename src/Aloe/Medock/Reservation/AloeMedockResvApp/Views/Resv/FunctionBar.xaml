@@ -26,7 +26,7 @@
         </Style>
     </UserControl.Resources>
 
-    <Grid ShowGridLines="true">
+    <Grid ShowGridLines="false">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="2*"/>
             <ColumnDefinition Width="*"/>

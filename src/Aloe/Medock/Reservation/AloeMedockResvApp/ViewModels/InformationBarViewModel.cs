@@ -15,6 +15,8 @@ using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using System.Collections.ObjectModel;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Serilog.Events;
 using Grpc.Core;
 
@@ -47,7 +49,10 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
 
     public ReactiveCommandSlim<int> ZoomInCommand { get; } = new();
 
+    public ReactiveCommandSlim ShowLogWindowCommand { get; } = new();
+
     private readonly ILogger _logger;
+    private readonly WindowService _windowService;
 
     private bool _isUpdating = false;
 
@@ -57,10 +62,13 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
         IAuthGrpcService authGrpcService)
     {
         this._logger = logger;
+        this._windowService = windowService;
 
         this.ZoomOutCommand.Subscribe(this.ChangeScale);
 
         this.ZoomInCommand.Subscribe(this.ChangeScale);
+
+        this.ShowLogWindowCommand.Subscribe(this.ShowLogWindow);
 
         this.SelectedPercentageText.Subscribe(text =>
         {
@@ -116,5 +124,10 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
             InformationBarViewModel.MinScale,
             InformationBarViewModel.MaxScale);
         this.SelectedPercentage.Value = scale;
+    }
+
+    private void ShowLogWindow()
+    {
+        this._windowService.GetWindow<LogWindow>()?.ShowOrActivate();
     }
 }

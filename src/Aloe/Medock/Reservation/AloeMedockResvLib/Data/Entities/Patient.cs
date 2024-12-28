@@ -51,6 +51,10 @@ public class Patient : AuditableEntityBase<int>
     [Required]
     public int SexCode { get; set; } = 0;
 
+    [Column("memo")]
+    [Required]
+    public string Memo { get; set; } = String.Empty;
+
     public Patient() { }
 
     public Patient(string karteNumber, string fullName, string katakana, DateTime birthDate, int sexCode)

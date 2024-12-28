@@ -19,6 +19,10 @@
             Command="{Binding ShowXxxWindowCommand}"
         />
         <MenuItem
+            Header="ログ"
+            Command="{Binding ShowLogWindowCommand}"
+        />
+        <MenuItem
             Header="設定"
             Command="{Binding ShowMaintenanceWindowCommand}"
         />

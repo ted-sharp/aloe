@@ -22,9 +22,19 @@ public class Permission : AuditableEntityBase<int>
 
     [Column("perm_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string PermName { get; set; } = String.Empty;
 
     [Column("perm_desc")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string PermDesc { get; set; } = String.Empty;
+
+    public Permission() { }
+
+    public Permission(string permName, string permDesc)
+    {
+        this.PermName = permName;
+        this.PermDesc = permDesc;
+    }
 }

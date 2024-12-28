@@ -1,8 +1,8 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
 using Microsoft.EntityFrameworkCore;
-using Serilog.Sinks.SystemConsole.Themes;
-using Serilog;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -18,35 +18,25 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder)
+    internal static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder, Arguments arguments)
     {
         builder
-            .AddSerilog()
-            .AddSwagger()
             .AddPostgreSql()
             .AddServerServices()
             .AddDomainServices()
             .AddMagicOnionServer();
 
-        return builder;
-    }
-
-    /// <summary>
-    /// Serilog を有効にします。
-    /// </summary>
-    private static IHostApplicationBuilder AddSerilog(this IHostApplicationBuilder builder)
-    {
-        var template = "API [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
-
-        Serilog.Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Debug()
-            .Enrich.WithThreadId()
-            .WriteTo.Debug(outputTemplate: template)
-            .WriteTo.Console(theme: AnsiConsoleTheme.Literate, outputTemplate: template)
-            .CreateLogger();
-
-        builder.Logging.ClearProviders();
-        builder.Logging.AddSerilog();
+        if (arguments.IsSilent)
+        {
+            builder.Logging.ClearProviders();
+            //// コンソール出力を無効化
+            //Console.SetOut(TextWriter.Null);
+        }
+        else
+        {
+            builder.AddSerilog()
+                .AddSwagger();
+        }
 
         return builder;
     }
@@ -68,24 +58,13 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder)
     {
-        //builder.Configuration.AddUserSecrets<SecretDummy>();
-
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
         var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-        //builder.Services.AddDbContext<AppDbContext>(options =>
-        //{
-        //    options.UseNpgsql(connStr);
-
-        //    if (builder.Environment.IsDevelopment())
-        //    {
-        //        options.EnableSensitiveDataLogging();
-        //    }
-        //});
 
         // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
-        builder.Services.AddDbContextFactory<AppDbContext>(options =>
+        builder.Services.AddDbContextFactory<AppDbContext>((services, options) =>
         {
             options.UseNpgsql(connStr);
 
@@ -94,6 +73,7 @@ internal static class HostExtensions
                 options.EnableSensitiveDataLogging();
             }
         });
+
         return builder;
     }
 
@@ -205,7 +185,7 @@ internal static class HostExtensions
 
     internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
     {
-        public int TemperatureF => 32 + (int)(this.TemperatureC / 0.5556);
+        //public int TemperatureF => 32 + (int)(this.TemperatureC / 0.5556);
     }
 
     #endregion ConfigureApp

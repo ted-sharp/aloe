@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -17,7 +18,9 @@ public partial class App
 
     public static readonly AssemblyName AsmName = Assembly.GetExecutingAssembly().GetName();
 
-    public static readonly string AppName = $"{App.AsmName.Name} {App.AsmName.Version}";
+    public static readonly string AppVersion = $"v{App.AsmName.Version?.Major ?? 0}.{App.AsmName.Version?.Minor ?? 0}";
+
+    public static readonly string AppName = $"{App.AsmName.Name} {App.AppVersion}";
 
     public static readonly string IniFilePath =
         System.IO.Path.Combine(
@@ -43,15 +46,31 @@ public partial class App
     }
 
     #endregion  Global / Resolve
+    public static string HostName { get; set; } = "";
+
+    public static string HostUrl { get; set; } = "";
+
+    #region Global / Session
 
     public static SessionDto? Session { get; set; }
 
-
-
     public static bool HasSession => App.Session != null;
 
-    public static string HostName { get; set; } = "";
+    public static async Task<bool> TryLogoutAsync()
+    {
+        var session = App.Session;
+        if (session is null)
+        {
+            return false;
+        }
+
+        var auth = App.Resolve<IAuthGrpcService>();
+        await auth.LogoutAsync(session);
+        App.Session = null;
+        return true;
+    }
+
+    #endregion Global / Session
 
     #endregion Global
-
 }
