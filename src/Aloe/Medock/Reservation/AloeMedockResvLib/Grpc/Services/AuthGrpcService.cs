@@ -16,7 +16,7 @@ namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 /// </summary>
 public interface IAuthGrpcService : IService<IAuthGrpcService>
 {
-    UnaryResult LoadPoliciesAsync();
+    UnaryResult PreloadAsync();
 
     UnaryResult<string> GetHostAsync();
 
@@ -30,20 +30,24 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
     private readonly ILogger _logger;
     private readonly IDbContextFactory<AppDbContext> _factory;
     private readonly IPolicyService _policyService;
+    private readonly IPreferenceService _preferenceService;
 
     public AuthGrpcService(
         ILogger<AuthGrpcService> logger,
         IDbContextFactory<AppDbContext> factory,
-        IPolicyService policyService)
+        IPolicyService policyService,
+        IPreferenceService preferenceService)
     {
         this._logger = logger;
         this._factory = factory;
         this._policyService = policyService;
+        this._preferenceService = preferenceService;
     }
 
-    public async UnaryResult LoadPoliciesAsync()
+    public async UnaryResult PreloadAsync()
     {
         await this._policyService.LoadPoliciesAsync();
+        await this._preferenceService.LoadPreferencesAsync();
     }
 
     public async UnaryResult<string> GetHostAsync()
@@ -97,9 +101,8 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
             {
                 result.ErrorMessage = "パスワードが正しくありません。";
 
-                await this._policyService.LoadPoliciesAsync();
-                var lockingFailAttempts = this._policyService.GetValue<int>(PolicyCode.LoginLockingFailAtempts);
-                var lockingSeconds = this._policyService.GetValue<int>(PolicyCode.LoginLockingSeconds);
+                var lockingFailAttempts = await this._policyService.GetValueAsync<int>(PolicyCode.LoginLockingFailAtempts);
+                var lockingSeconds = await this._policyService.GetValueAsync<int>(PolicyCode.LoginLockingSeconds);
 
                 user.FailLogin(
                     lockingFailAttempts,
@@ -116,7 +119,8 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
                 return result;
             }
 
-            var clientEndpoint = base.Context?.CallContext.Peer ?? "";
+            // スタンドアローンモードだと gRPC 経由にならないため null になる
+            var clientEndpoint = this.Context?.CallContext.Peer ?? "";
             var session = await this.CreateAndAddNewSessionAsync(
                 context, user, request.ClientAppName, clientEndpoint, now);
             var sessionDto = session.ToSessionDto();

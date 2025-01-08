@@ -165,6 +165,24 @@ internal class Seeder
                 context.Policies.AddRange(policies.Values);
             }
 
+            if (!context.Preferences.AsNoTracking().Any())
+            {
+                var preferences = PreferenceService.CreateDefaultPreferences();
+                context.Preferences.AddRange(preferences.Values);
+            }
+
+            if (!context.UserPreferences.AsNoTracking().Any())
+            {
+                // 挿入したデータを使うため保存する
+                count += await context.SaveChangesAsync();
+
+                var adminUser = context.Users.First(x => x.LoginName == "admin");
+
+                context.UserPreferences.AddRange([
+                    new (adminUser.UserId, PreferenceCode.WindowRememberPosition, "", true),
+                ]);
+            }
+
             #endregion マスターデータ/ユーザー
 
             #region マスターデータ/予約

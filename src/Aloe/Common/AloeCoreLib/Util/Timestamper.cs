@@ -61,11 +61,18 @@ public class Timestamper
     [DebuggerHidden()]
     public async void DumpAsync()
     {
-        await Task.Run(() =>
+        try
         {
-            var log = this.Build();
-            Debug.WriteLine(log);
-        });
+            await Task.Run(() =>
+            {
+                var log = this.Build();
+                Debug.WriteLine(log);
+            });
+        }
+        catch (Exception e)
+        {
+            Debug.WriteLine(e.ToString());
+        }
     }
 
     /// <summary>

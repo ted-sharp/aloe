@@ -3,19 +3,89 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         mc:Ignorable="d"
         Title="ログ"
         Width="1920" Height="1080"
+        MinWidth="640" MinHeight="480"
         d:Width="640" d:Height="480"
         ResizeMode="CanResizeWithGrip"
         Closing="LogWindow_OnClosing"
     >
-    <Grid>
+
+    <Window.Resources>
+        <Style TargetType="Label">
+            <Setter Property="HorizontalContentAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Padding" Value="5,0" />
+        </Style>
+        <Style TargetType="ui:PackIcon">
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="VerticalAlignment" Value="Stretch" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3" />
+        </Style>
+    </Window.Resources>
+
+    <DockPanel>
+        <StackPanel
+            DockPanel.Dock="Top"
+            Orientation="Horizontal"
+            ui:ElevationAssist.Elevation="Dp4"
+        >
+            <Label Content="LogLevel: " />
+            <Button ToolTip="Trace">
+                <StackPanel Orientation="Horizontal">
+                    <ui:PackIcon Kind="ShoePrint"/>
+                    <TextBlock Text="Trace" />
+                </StackPanel>
+            </Button>
+            <Button ToolTip="Debug" ui:ElevationAssist.Elevation="Dp8">
+                <StackPanel Orientation="Horizontal">
+                    <ui:PackIcon Kind="BugOutline"/>
+                    <TextBlock Text="Debug" />
+                </StackPanel>
+            </Button>
+            <Button ToolTip="Info" ui:ElevationAssist.Elevation="Dp12">
+                <StackPanel Orientation="Horizontal">
+                    <ui:PackIcon Kind="InfoBoxOutline"/>
+                    <TextBlock Text="Info" />
+                </StackPanel>
+            </Button>
+            <Button ToolTip="Warn" ui:ElevationAssist.Elevation="Dp16">
+                <StackPanel Orientation="Horizontal">
+                    <ui:PackIcon Kind="AlertBoxOutline"/>
+                    <TextBlock Text="Warn" />
+                </StackPanel>
+            </Button>
+
+            <Label Content="MaxLines: " />
+            <TextBox Text="1000" />
+            <Button Content="Clear" />
+
+            <Label Content="Find: " />
+            <TextBox Text="find text" />
+            <Button Content="Prev" />
+            <Button Content="Next" />
+
+            <Label Content="Mail: " />
+            <Button Content="Send" />
+        </StackPanel>
+
         <RichTextBox
+            DockPanel.Dock="Bottom"
             x:Name="LogRichTextBox"
             Background="MidnightBlue"
             Foreground="LightGray"
             VerticalScrollBarVisibility="Auto"
         />
-    </Grid>
+    </DockPanel>
 </Window>

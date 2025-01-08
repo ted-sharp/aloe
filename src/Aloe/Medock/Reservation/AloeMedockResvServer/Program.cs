@@ -16,15 +16,6 @@ internal class Arguments
     public bool IsSeed { get; set; }
 
     /// <summary>
-    /// ロガーをクリアします。
-    /// </summary>
-    /// <remarks>
-    /// 計測時に余計なログを出したくないときに使います。
-    /// </remarks>
-    [Option('q', "quiet", HelpText = "Enable quiet/silent mode.")]
-    public bool IsSilent { get; set; }
-
-    /// <summary>
     /// DB のログを出力します。
     /// </summary>
     [Option("sql", HelpText = "Enable DB Logging.")]
@@ -51,7 +42,7 @@ public static class Program
         var arguments = Arguments.Parse(args);
 
         var host = WebApplication.CreateSlimBuilder(args)
-            .ConfigureBuilder(arguments)
+            .ConfigureBuilder()
             .ConfigureKestrel()
             .Build();
 

@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Net.Http;
 using System.Windows;
-using Aloe.Common.AloeCoreLib.Ini;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
@@ -42,7 +41,7 @@ public class Arguments
     /// 直接データベースへ接続するため接続文字列の設定が必要です。
     /// </summary>
     [Option("standalone", HelpText = "Enable standalone mode.")]
-    public bool Standalone { get; set; }
+    public bool IsStandalone { get; set; }
 
     /// <summary>
     /// 開発中モードを有効にします。
@@ -52,12 +51,6 @@ public class Arguments
     /// </summary>
     [Option("development", HelpText = "Enable development mode.")]
     public bool IsDevelopment { get; set; }
-
-    /// <summary>
-    /// ロガーをクリアします。
-    /// </summary>
-    [Option('q', "quiet", HelpText = "Enable quiet/silent mode.")]
-    public bool IsSilent { get; set; }
 
     [Option('u', "user", HelpText = "Login User")]
     public string User { get; set; } = "";

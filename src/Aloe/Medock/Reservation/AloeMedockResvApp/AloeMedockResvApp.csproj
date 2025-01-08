@@ -36,7 +36,7 @@
     <PackageReference Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
     <PackageReference Include="H.NotifyIcon.Wpf" Version="2.2.0" />
     <PackageReference Include="MahApps.Metro" Version="2.4.10" />
-    <PackageReference Include="MaterialDesignThemes" Version="5.1.0" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.2.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.0" />
@@ -49,6 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Client\Aloe.Common.AloeCoreLib.Client.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />

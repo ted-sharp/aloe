@@ -18,25 +18,15 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder, Arguments arguments)
+    internal static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder)
     {
         builder
             .AddPostgreSql()
             .AddServerServices()
             .AddDomainServices()
-            .AddMagicOnionServer();
-
-        if (arguments.IsSilent)
-        {
-            builder.Logging.ClearProviders();
-            //// コンソール出力を無効化
-            //Console.SetOut(TextWriter.Null);
-        }
-        else
-        {
-            builder.AddSerilog()
-                .AddSwagger();
-        }
+            .AddMagicOnionServer()
+            .AddSerilog()
+            .AddSwagger();
 
         return builder;
     }
@@ -82,6 +72,8 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddServerServices(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddMemoryCache();
+
         builder.Services.AddTransient<Seeder>();
 
         return builder;
@@ -92,9 +84,8 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
     {
-        //builder.Services.AddSingleton<IUuidGenerator, UuidGeneratorFriendlyPostgreSql>();
-
         builder.Services.AddScoped<IPolicyService, PolicyService>();
+        builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 
         return builder;
     }

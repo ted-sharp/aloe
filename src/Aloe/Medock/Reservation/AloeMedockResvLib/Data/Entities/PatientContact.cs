@@ -20,7 +20,7 @@ public class PatientContact : AuditableEntityBase<int>
 
     [Column("ctc_name")]
     [MaxLength(Int32.MaxValue)]
-    public string CtcName { get; set; }
+    public string CtcName { get; set; } = "";
 
     [Column("is_primary")]
     public bool IsPrimary { get; set; }
@@ -36,45 +36,45 @@ public class PatientContact : AuditableEntityBase<int>
 
     [Column("zip_code")]
     [MaxLength(Int32.MaxValue)]
-    public string ZipCode { get; set; }
+    public string ZipCode { get; set; } = "";
 
     [Column("adr1")]
     [MaxLength(Int32.MaxValue)]
-    public string Adr1 { get; set; }
+    public string Adr1 { get; set; } = "";
 
     [Column("adr2")]
     [MaxLength(Int32.MaxValue)]
-    public string Adr2 { get; set; }
+    public string Adr2 { get; set; } = "";
 
     [Column("adr3")]
     [MaxLength(Int32.MaxValue)]
-    public string Adr3 { get; set; }
+    public string Adr3 { get; set; } = "";
 
     [Column("recipient_name")]
     [MaxLength(Int32.MaxValue)]
-    public string RecipientName { get; set; }
+    public string RecipientName { get; set; } = "";
 
     [Column("honorific")]
     [MaxLength(Int32.MaxValue)]
-    public string Honorific { get; set; }
+    public string Honorific { get; set; } = "";
 
     [Column("tel")]
     [MaxLength(Int32.MaxValue)]
-    public string Tel { get; set; }
+    public string Tel { get; set; } = "";
 
     [Column("tel2")]
     [MaxLength(Int32.MaxValue)]
-    public string Tel2 { get; set; }
+    public string Tel2 { get; set; } = "";
 
     [Column("fax")]
     [MaxLength(Int32.MaxValue)]
-    public string Fax { get; set; }
+    public string Fax { get; set; } = "";
 
     [Column("email")]
     [MaxLength(Int32.MaxValue)]
-    public string Email { get; set; }
+    public string Email { get; set; } = "";
 
     [Column("memo")]
     [MaxLength(Int32.MaxValue)]
-    public string Memo { get; set; }
+    public string Memo { get; set; } = "";
 }

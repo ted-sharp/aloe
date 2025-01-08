@@ -1,5 +1,4 @@
-﻿using Aloe.Common.AloeCoreLib.Mvvm;
-using Reactive.Bindings;
+﻿using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,6 +14,7 @@ using System.Data;
 using System.Runtime.CompilerServices;
 using System.Globalization;
 using System.Windows.Input;
+using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;

@@ -75,4 +75,5 @@ dotnet_naming_style.begins_with_s_.capitalization = camel_case
 dotnet_diagnostic.CA2254.severity = none
 # プライマリ コンストラクターを使用する (IDE0290)
 dotnet_diagnostic.IDE0290.severity = none
-
+# fluent にコレクション式を使用する (IDE0305)
+dotnet_diagnostic.IDE0305.severity = none

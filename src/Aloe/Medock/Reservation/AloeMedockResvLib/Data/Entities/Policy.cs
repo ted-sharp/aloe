@@ -24,27 +24,27 @@ public class Policy : AuditableEntityBase<string>
     [Column("policy_name")]
     public string PolicyName { get; set; } = String.Empty;
 
+    [Column("policy_desc")]
+    public string PolicyDesc { get; set; } = String.Empty;
+
     [Column("data_type")]
     public string DataType { get; set; } = String.Empty;
 
     [Column("policy_value")]
     public string PolicyValue { get; set; } = String.Empty;
 
-    [Column("policy_desc")]
-    public string PolicyDesc { get; set; } = String.Empty;
-
     [Column("is_active")]
     public bool IsActive { get; set; } = false;
 
     public Policy() { }
 
-    public Policy(string policyCode, string policyName, string dataType, string policyValue, string policyDesc)
+    public Policy(string policyCode, string policyName, string policyDesc, string dataType, string policyValue)
     {
         this.PolicyCode = policyCode;
         this.PolicyName = policyName;
+        this.PolicyDesc = policyDesc;
         this.DataType = dataType;
         this.PolicyValue = policyValue;
-        this.PolicyDesc = policyDesc;
         this.IsActive = true;
     }
 }

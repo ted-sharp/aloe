@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel;
 
-namespace Aloe.Common.AloeCoreLib.Mvvm;
+namespace Aloe.Common.AloeCoreLib.Client.Mvvm;
 
 // フィールド 'PropertyChanged' が割り当てられていますが、値は使用されていません
 #pragma warning disable CS0414

@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 
+/// <summary>
+/// アプリケーション全体に影響する設定コードです。
+/// </summary>
 public static class PolicyCode
 {
     /// <summary>

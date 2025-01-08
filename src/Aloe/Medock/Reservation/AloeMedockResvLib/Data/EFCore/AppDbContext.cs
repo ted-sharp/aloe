@@ -36,6 +36,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Policy> Policies { get; set; } = null!;
 
+    public DbSet<Preference> Preferences { get; set; } = null!;
+    public DbSet<UserPreference> UserPreferences { get; set; } = null!;
+
     #endregion AuthService
 
     #region Organization

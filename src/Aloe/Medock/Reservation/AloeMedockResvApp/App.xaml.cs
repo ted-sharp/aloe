@@ -18,11 +18,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using Aloe.Common.AloeCoreLib.Ini;
 using System.Reflection;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
@@ -84,7 +84,7 @@ public partial class App : Application
 
                 this._loginWindow.Show();
 
-                // IHost 作成前から使う
+                // IHost 初期化時にログを出力する RichTextBox を渡すために事前に作成しておく
                 this._logWindow = new LogWindow();
             }
 
@@ -95,8 +95,9 @@ public partial class App : Application
 
                 App.s_services = this.Host.Services;
                 this._logger = this.Host.Services.GetService<ILogger<App>>();
+                //var confRoot = this.Host.Services.GetService<IConfigurationRoot>();
 
-                if (this._arguments.Standalone)
+                if (this._arguments.IsStandalone)
                 {
                     var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
                     // standalone の場合はDBホスト名を使う
@@ -145,6 +146,8 @@ public partial class App : Application
                 // 画面指定があって開けなかったら終了
                 this.Shutdown(0);
             }
+
+            //await Task.WhenAll(task);
         }
         catch (Exception ex)
         {
@@ -250,9 +253,9 @@ public partial class App : Application
     }
 
     /// <summary>
-    /// ポリシーを事前にロードしておきます。
+    /// スタンドアローンで動かす場合には呼び出してください。
     /// EFCore は初回アクセス時にマッピングなどが行われるため時間がかかります。
-    /// スタンドアローンで動かす場合には非同期で呼び出してください。
+    /// 必ず使うポリシーをロードしておきます。
     /// </summary>
     private async Task InitializeDatabaseAsync()
     {
@@ -261,7 +264,7 @@ public partial class App : Application
             this.SetStatus("DB Initializing...");
 
             var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
-            await auth.LoadPoliciesAsync();
+            await auth.PreloadAsync();
 
             this.SetStatus("DB initialized.");
         }
@@ -324,9 +327,9 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         // ログアウト処理
-        Task.Run(Task? () => App.TryLogoutAsync())
-            .GetAwaiter()
-            .GetResult();
+        _ = Task.Run(App.TryLogoutAsync)
+                .GetAwaiter()
+                .GetResult();
 
         // アイコンのクリーンアップ
         this._notifyIcon?.Dispose();

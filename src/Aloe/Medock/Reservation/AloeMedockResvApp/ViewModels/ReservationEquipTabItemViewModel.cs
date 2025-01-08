@@ -1,5 +1,4 @@
-﻿using Aloe.Common.AloeCoreLib.Mvvm;
-using Reactive.Bindings;
+﻿using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -27,6 +26,7 @@ using Microsoft.Extensions.Caching.Memory;
 using System.Windows.Documents;
 using Microsoft.VisualBasic.CompilerServices;
 using System.DirectoryServices.ActiveDirectory;
+using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 

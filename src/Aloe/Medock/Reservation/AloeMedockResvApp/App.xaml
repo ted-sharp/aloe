@@ -8,10 +8,11 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
-                <!--<ui:BundledTheme BaseTheme="Dark" PrimaryColor="DeepPurple" SecondaryColor="Lime" />-->
                 <!--<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />-->
-            </ResourceDictionary.MergedDictionaries>
 
+                <!-- 色の組み合わせは MaterialDesign のリリースにある DemoApp.zip の Palette を参照のこと -->
+                <ui:BundledTheme BaseTheme="Inherit" PrimaryColor="BlueGrey" SecondaryColor="Cyan" />
+            </ResourceDictionary.MergedDictionaries>
 
             <converters:Int32ValueToScaleConverter x:Key="Int32ValueToScaleConverter" />
 

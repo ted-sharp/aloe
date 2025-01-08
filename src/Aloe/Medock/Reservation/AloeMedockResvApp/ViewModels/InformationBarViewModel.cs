@@ -1,5 +1,4 @@
-﻿using Aloe.Common.AloeCoreLib.Mvvm;
-using Reactive.Bindings;
+﻿using Reactive.Bindings;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -15,6 +14,7 @@ using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using System.Collections.ObjectModel;
+using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Serilog.Events;

@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Aloe.Common.AloeCoreLib.Mvvm;
+namespace Aloe.Common.AloeCoreLib.Client.Mvvm;
 
 /// <summary>
 /// Implementation of <see cref="INotifyPropertyChanged"/> to simplify models.

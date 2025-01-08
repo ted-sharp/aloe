@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
-using Aloe.Common.AloeCoreLib.Ini;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
@@ -20,6 +20,7 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 /// <remarks>
 /// できるだけ初期表示時間を早めるため、初期表示には DI を使用しません。
 /// DI が使用できないので ViewModel も使用しません。
+/// 起動時に必要な画面以外は MVVM で実装しています。
 /// </remarks>
 public partial class LoginWindow
 {
@@ -66,8 +67,8 @@ public partial class LoginWindow
             this.StatusText.Text = message;
 
             // ボタンを押せるようにする
+            this.IniRemoveButton.IsEnabled = true;
             this.ShowLogWindowButton.IsEnabled = true;
-            this.RefreshButton.IsEnabled = true;
         });
     }
 
@@ -162,6 +163,7 @@ public partial class LoginWindow
                 this._ini.Password = "";
             }
 
+            // 変更になることを考慮して毎回取得し直します。
             var config = App.Resolve<IConfiguration>();
             this._ini.HostUrl = config.GetGrpcUrl();
 
@@ -169,15 +171,24 @@ public partial class LoginWindow
         }
         catch (Exception ex)
         {
-            try
-            {
-                var logger = App.Resolve<ILogger<LoginWindow>>();
-                logger.LogError(ex, ex.ToString());
-            }
-            catch
-            {
-                Debug.WriteLine(ex.ToString());
-            }
+            LoginWindow.LogError(ex);
+        }
+    }
+
+    /// <summary>
+    /// 例外をログ出力します。
+    /// ただし、IHost.IServiceProvider の準備が整っていなければ、DebugConsole にのみ出力します。
+    /// </summary>
+    private static void LogError(Exception ex)
+    {
+        try
+        {
+            var logger = App.Resolve<ILogger<LoginWindow>>();
+            logger.LogError(ex, ex.ToString());
+        }
+        catch
+        {
+            Debug.WriteLine(ex.ToString());
         }
     }
 
@@ -188,6 +199,15 @@ public partial class LoginWindow
     {
         this._isForceClose = true;
         this.Close();
+    }
+
+    private void IniRemoveButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        this.UserRememberedCheckBox.IsChecked = false;
+
+        this._ini.Clear();
+
+        // TODO: Window位置情報ファイルもリセットする
     }
 
     private async void LoginButton_OnClick(object sender, RoutedEventArgs e)
@@ -202,15 +222,7 @@ public partial class LoginWindow
         }
         catch (Exception ex)
         {
-            try
-            {
-                var logger = App.Resolve<ILogger<LoginWindow>>();
-                logger.LogError(ex, ex.ToString());
-            }
-            catch
-            {
-                Debug.WriteLine(ex.ToString());
-            }
+            LoginWindow.LogError(ex);
         }
         finally
         {
@@ -258,47 +270,15 @@ public partial class LoginWindow
         }
     }
 
-    private void RefreshButton_OnClick(object sender, RoutedEventArgs e)
-    {
-        this.RefreshHostUrl();
-    }
-
-    /// <summary>
-    /// INIファイルのHost情報を更新します。
-    /// </summary>
-    private void RefreshHostUrl()
-    {
-        try
-        {
-            var config = App.Resolve<IConfiguration>();
-
-            this._ini.HostUrl = config.GetGrpcUrl();
-
-            this._ini.Save(App.IniFilePath);
-        }
-        catch (Exception ex)
-        {
-            try
-            {
-                var logger = App.Resolve<ILogger<LoginWindow>>();
-                logger.LogError(ex, ex.ToString());
-            }
-            catch
-            {
-                Debug.WriteLine(ex.ToString());
-            }
-        }
-    }
-
     private void ShowLogWindowButton_OnClick(object sender, RoutedEventArgs e)
     {
-        this.ShowLogWindow();
+        LoginWindow.ShowLogWindow();
     }
 
     /// <summary>
     /// LogWindow を表示します。
     /// </summary>
-    private void ShowLogWindow()
+    private static void ShowLogWindow()
     {
         try
         {
@@ -308,15 +288,7 @@ public partial class LoginWindow
         }
         catch (Exception ex)
         {
-            try
-            {
-                var logger = App.Resolve<ILogger<LoginWindow>>();
-                logger.LogError(ex, ex.ToString());
-            }
-            catch
-            {
-                Debug.WriteLine(ex.ToString());
-            }
+            LoginWindow.LogError(ex);
         }
     }
 }

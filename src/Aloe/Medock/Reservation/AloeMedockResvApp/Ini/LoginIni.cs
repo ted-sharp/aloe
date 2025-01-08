@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static System.Collections.Specialized.BitVector32;
+﻿
+using System.IO;
 
-namespace Aloe.Common.AloeCoreLib.Ini;
-
-// TODO: AloeCoreLib.Wpf ができたらそっちに移す
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 
 public class LoginIni
 {
@@ -44,11 +38,11 @@ public class LoginIni
             }
 
             var trimmedLine = line.Trim();
-            if (trimmedLine.StartsWith("#") ||
+            if (trimmedLine.StartsWith('#') ||
                 trimmedLine.StartsWith("//") ||
                 trimmedLine.StartsWith("--") ||
-                trimmedLine.StartsWith("[") ||
-                trimmedLine.StartsWith(";"))
+                trimmedLine.StartsWith('[') ||
+                trimmedLine.StartsWith(';'))
             {
                 continue;
             }
@@ -86,6 +80,19 @@ public class LoginIni
         }
 
         return ini;
+    }
+
+    /// <summary>
+    /// クリアします。
+    /// </summary>
+    public void Clear()
+    {
+        this.HostUrl = "";
+        this.IsUserRemembered = false;
+        this.IsPasswordRemembered = false;
+        this.IsLoginSkipped = false;
+        this.User = "";
+        this.Password = "";
     }
 
     /// <summary>

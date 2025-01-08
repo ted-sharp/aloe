@@ -41,20 +41,11 @@ internal static class HostExtensions
     /// </summary>
     internal static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder, Arguments arguments, RichTextBox? logTextBox)
     {
-        builder.AddServices();
+        builder
+            .AddServices()
+            .AddSerilog(logTextBox);
 
-        if (arguments.IsSilent)
-        {
-            builder.Logging.ClearProviders();
-            //// コンソール出力を無効化
-            //Console.SetOut(TextWriter.Null);
-        }
-        else
-        {
-            builder.AddSerilog(logTextBox);
-        }
-
-        if (arguments.Standalone)
+        if (arguments.IsStandalone)
         {
             builder.AddStandaloneService();
         }
@@ -83,7 +74,7 @@ internal static class HostExtensions
         builder.Services.AddMemoryCache(options =>
         {
             // 有効期限のチェック間隔
-            options.ExpirationScanFrequency = TimeSpan.FromSeconds(1);
+            options.ExpirationScanFrequency = TimeSpan.FromSeconds(5);
         });
         builder.Services.AddTransient<ReservationEquipmentCacheService>();
 
@@ -212,6 +203,7 @@ internal static class HostExtensions
         #region DomainService
 
         builder.Services.AddScoped<IPolicyService, PolicyService>();
+        builder.Services.AddScoped<IPreferenceService, PreferenceService>();
 
         #endregion DomainService
 

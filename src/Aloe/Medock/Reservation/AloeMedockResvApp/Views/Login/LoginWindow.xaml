@@ -9,7 +9,6 @@
         Height="250" Width="400"
         WindowStartupLocation="CenterScreen"
         Closing="LoginWindow_OnClosing">
-
     <Window.Resources>
         <Style TargetType="Label">
             <Setter Property="HorizontalContentAlignment" Value="Right" />
@@ -21,6 +20,12 @@
             <Setter Property="VerticalAlignment" Value="Stretch" />
             <Setter Property="VerticalContentAlignment" Value="Center" />
         </Style>
+        <!--<Style x:Key="MaterialDesignOutlinedTextBox2" BasedOn="{StaticResource MaterialDesignOutlinedTextBox}">
+            <Setter Property="ui:TextFieldAssist.HasClearButton" Value="True" />
+            <Setter Property="ui:TextFieldAssist.RippleOnFocusEnabled" Value="True" />
+            <Setter Property="ui:HintAssist.IsFloating" Value="True" />
+            <Setter Property="ui:TextFieldAssist.HasLeadingIcon" Value="True" />
+        </Style>-->
         <Style TargetType="TextBox">
             <Setter Property="Margin" Value="3" />
         </Style>
@@ -53,18 +58,6 @@
                            Margin="5,0" />
             </StatusBarItem>
 
-            <!-- TODO: 関連する処理が未実装なので隠しておく -->
-            <StatusBarItem DockPanel.Dock="Right" Visibility="Collapsed">
-                <Button x:Name="RefreshButton"
-                        IsEnabled="False"
-                        BorderThickness="0"
-                        Margin="5,0"
-                        Click="RefreshButton_OnClick"
-                >
-                    <ui:PackIcon Kind="CogClockwise" />
-                </Button>
-            </StatusBarItem>
-
             <StatusBarItem DockPanel.Dock="Right">
                 <Button x:Name="ShowLogWindowButton"
                         IsEnabled="False"
@@ -78,7 +71,7 @@
 
             <StatusBarItem DockPanel.Dock="Right">
                 <TextBlock x:Name="VersionText"
-                           Text="Ver.0.0.0.0"
+                           Text="v0.0"
                            Margin="0" />
             </StatusBarItem>
 
@@ -94,6 +87,7 @@
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
@@ -107,19 +101,54 @@
 
             <ui:PackIcon Grid.Row="1" Grid.Column="0" Kind="Account"/>
             <!-- MaterialDesignOutlinedTextBox にしたい(参考: デモアプリ) -->
-            <TextBox Grid.Row="1" Grid.Column="1" x:Name="UserTextBox"
-                     ui:HintAssist.Hint="User" />
+            <TextBox
+                Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                x:Name="UserTextBox"
+                ui:HintAssist.Hint="User"
+                ui:TextFieldAssist.LeadingIcon="User"
+            />
 
             <ui:PackIcon Grid.Row="2" Grid.Column="0" Kind="Key" HorizontalAlignment="Right"/>
-            <TextBox Grid.Row="2" Grid.Column="1" x:Name="PasswordTextBox"
-                     ui:HintAssist.Hint="Password" />
+            <TextBox
+                Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
+                x:Name="PasswordTextBox"
+                ui:HintAssist.Hint="Password"
+                ui:TextFieldAssist.LeadingIcon="Key"
+                ui:PasswordBoxAssist.PasswordMaskedIcon="Circle"
+            />
 
-            <CheckBox Grid.Row="3" Grid.Column="1" x:Name="UserRememberedCheckBox" Content="Remember me" IsChecked="False" />
+            <CheckBox
+                Grid.Row="3" Grid.Column="1"
+                x:Name="UserRememberedCheckBox"
+                Content="Remember me"
+                IsChecked="False"
+            />
+            <Button
+                Grid.Row="3" Grid.Column="2"
+                x:Name="IniRemoveButton"
+                Background="Transparent"
+                BorderThickness="0"
+                IsEnabled="False"
+                Click="IniRemoveButton_OnClick"
+                ToolTip="ログイン情報および Window 位置情報をクリアします。"
+            >
+                <ui:PackIcon Kind="CloseCircle" HorizontalAlignment="Right"/>
+            </Button>
 
-            <Button Grid.Row="4" Grid.Column="1" x:Name="LoginButton" Content="Login" IsEnabled="False" Click="LoginButton_OnClick" />
+            <Button
+                Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
+                x:Name="LoginButton"
+                Content="Login"
+                IsEnabled="False"
+                Click="LoginButton_OnClick"
+            />
 
-            <ui:Snackbar Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Grid.ColumnSpan="3"
-                         x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"/>
+            <ui:Snackbar
+                Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Grid.ColumnSpan="4"
+                x:Name="Snackbar"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+            />
         </Grid>
     </DockPanel>
 </Window>

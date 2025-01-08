@@ -52,8 +52,8 @@ public static class HostExtensionsSerilog
 
     private static Serilog.Core.Logger CreateOutputLogger(RichTextBox? logTextBox)
     {
-        var template = "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
         //var template = "{SourceContext} [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
+        var template = "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
 
         var serilogConfiguration = new LoggerConfiguration()
             .MinimumLevel.Verbose()
