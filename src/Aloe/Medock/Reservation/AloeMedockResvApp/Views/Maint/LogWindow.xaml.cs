@@ -12,6 +12,10 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Serilog.Core;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 
@@ -29,6 +33,8 @@ public partial class LogWindow : Window
 {
     private bool _isForceClose = false;
 
+    private readonly Lazy<ILogger> _logger = new(App.Resolve<ILogger<LogWindow>>);
+
     public LogWindow()
     {
         this.InitializeComponent();
@@ -39,8 +45,6 @@ public partial class LogWindow : Window
     /// </summary>
     private void LogWindow_OnClosing(object? sender, CancelEventArgs e)
     {
-        // TODO: 閉じるときにWindow位置を記憶
-
         // 強制閉じるだとキャンセルしません。
         if (this._isForceClose)
         {
@@ -61,5 +65,37 @@ public partial class LogWindow : Window
         this._isForceClose = true;
         this.Close();
     }
+
+    #region LogLevel
+
+    private void SetTraceButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var logLevelService = App.Resolve<ILogLevelService>();
+        logLevelService.SetLogLevel(LogLevel.Trace);
+        this._logger.Value.LogTrace($"Set LogLevel: {nameof(LogLevel.Trace)}");
+    }
+
+    private void SetDebugButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var logLevelService = App.Resolve<ILogLevelService>();
+        logLevelService.SetLogLevel(LogLevel.Debug);
+        this._logger.Value.LogDebug($"Set LogLevel: {nameof(LogLevel.Debug)}");
+    }
+
+    private void SetInfoButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var logLevelService = App.Resolve<ILogLevelService>();
+        logLevelService.SetLogLevel(LogLevel.Information);
+        this._logger.Value.LogInformation($"Set LogLevel: {nameof(LogLevel.Information)}");
+    }
+
+    private void SetWarnButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        var logLevelService = App.Resolve<ILogLevelService>();
+        logLevelService.SetLogLevel(LogLevel.Warning);
+        this._logger.Value.LogWarning($"Set LogLevel: {nameof(LogLevel.Warning)}");
+    }
+
+    #endregion LogLevel
 
 }

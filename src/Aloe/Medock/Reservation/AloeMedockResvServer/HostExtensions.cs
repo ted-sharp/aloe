@@ -1,8 +1,10 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -12,34 +14,19 @@ namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
 internal static class HostExtensions
 {
-
-    #region ConfigureBuilder
+    #region ConfigureSeeder
 
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static WebApplicationBuilder ConfigureBuilder(this WebApplicationBuilder builder)
+    internal static T ConfigureSeeder<T>(this T builder)
+        where T : IHostApplicationBuilder
     {
         builder
             .AddPostgreSql()
-            .AddServerServices()
-            .AddDomainServices()
-            .AddMagicOnionServer()
-            .AddSerilog()
-            .AddSwagger();
+            .AddSeederServices()
+            .AddSerilog();
 
-        return builder;
-    }
-
-    /// <summary>
-    /// Swagger を追加します。
-    /// </summary>
-    private static IHostApplicationBuilder AddSwagger(this IHostApplicationBuilder builder)
-    {
-        // Add services to the container.
-        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-        builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
         return builder;
     }
 
@@ -70,11 +57,38 @@ internal static class HostExtensions
     /// <summary>
     /// サーバー用サービスクラスを追加します。
     /// </summary>
+    private static IHostApplicationBuilder AddSeederServices(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddTransient<Seeder>();
+
+        return builder;
+    }
+
+    #endregion ConfigureSeeder
+
+    #region ConfigureServer
+
+    /// <summary>
+    /// 構成の追加を行います。
+    /// </summary>
+    internal static T ConfigureServer<T>(this T builder)
+        where T : IHostApplicationBuilder
+    {
+        builder
+            .AddPostgreSql()
+            .AddServerServices()
+            .AddDomainServices()
+            .AddSerilog();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// サーバー用サービスクラスを追加します。
+    /// </summary>
     private static IHostApplicationBuilder AddServerServices(this IHostApplicationBuilder builder)
     {
         builder.Services.AddMemoryCache();
-
-        builder.Services.AddTransient<Seeder>();
 
         return builder;
     }
@@ -90,6 +104,22 @@ internal static class HostExtensions
         return builder;
     }
 
+    #region ConfigureServer / Kestrel
+
+    internal static WebApplicationBuilder ConfigureKestrel(this WebApplicationBuilder builder)
+    {
+        builder
+            .AddMagicOnionServer()
+            .AddSwagger();
+
+        builder.WebHost.ConfigureKestrel((context, options) =>
+        {
+            options.Configure(context.Configuration.GetSection("Kestrel"));
+        });
+
+        return builder;
+    }
+
     /// <summary>
     /// gRPC と MagicOnion と関連クラスを追加します。
     /// </summary>
@@ -99,7 +129,6 @@ internal static class HostExtensions
     private static IHostApplicationBuilder AddMagicOnionServer(this IHostApplicationBuilder builder)
     {
         builder.Services.AddGrpc();
-        //builder.Services.AddMagicOnion();
         builder.Services.AddMagicOnion(options =>
         {
             options.IsReturnExceptionStackTraceInErrorDetail = true;
@@ -111,27 +140,28 @@ internal static class HostExtensions
         return builder;
     }
 
-    #endregion ConfigureBuilder
-
-    #region ConfigureKestrel
-
-    internal static WebApplicationBuilder ConfigureKestrel(this WebApplicationBuilder builder)
+    /// <summary>
+    /// Swagger を追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddSwagger(this IHostApplicationBuilder builder)
     {
-        builder.WebHost.ConfigureKestrel((context, options) =>
-        {
-            options.Configure(context.Configuration.GetSection("Kestrel"));
-        });
+        // Add services to the container.
+        // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+        builder.Services.AddEndpointsApiExplorer();
+        builder.Services.AddSwaggerGen();
         return builder;
     }
 
-    #endregion ConfigureKestrel
+    #endregion ConfigureServer / Kestrel
 
-    #region ConfigureApp
+    #endregion ConfigureServer
+
+    #region ConfigureServerApp
 
     /// <summary>
     /// ホストを設定します。
     /// </summary>
-    internal static WebApplication ConfigureApp(this WebApplication host)
+    internal static WebApplication ConfigureServerWebApp(this WebApplication host)
     {
         // Configure the HTTP request pipeline.
         if (host.Environment.IsDevelopment())
@@ -179,5 +209,5 @@ internal static class HostExtensions
         //public int TemperatureF => 32 + (int)(this.TemperatureC / 0.5556);
     }
 
-    #endregion ConfigureApp
+    #endregion ConfigureServerApp
 }

@@ -55,7 +55,7 @@
     "App(Standalone)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --development",
+          "CommandLineArguments": "--standalone --sql",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -65,7 +65,7 @@
     "App(Standalone login)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --development -uadmin -padmin",
+          "CommandLineArguments": "--standalone --sql -uadmin -padmin",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -75,7 +75,7 @@
     "App(Standalone login Equip)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --development -uadmin -padmin --screen=4 ",
+          "CommandLineArguments": "--standalone --sql -uadmin -padmin --screen=4 ",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -85,7 +85,7 @@
     "App(Standalone login OrgPtSearch)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --development -uadmin -padmin --screen=8 ",
+          "CommandLineArguments": "--standalone --sql -uadmin -padmin --screen=8 ",
           "WorkingDirectory": "",
           "StartProject": true
         }

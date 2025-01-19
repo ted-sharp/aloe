@@ -27,6 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using CommandLine;
 using System.Windows.Controls;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -37,22 +38,31 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 internal static class HostExtensions
 {
     /// <summary>
+    /// 設定から gRPC 用のURLを取得します。
+    /// </summary>
+    public static string GetGrpcUrl(this IConfiguration config)
+    {
+        var grpcConfigSection = config.GetSection("Client:Targets:gRPC");
+
+        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
+        if (String.IsNullOrEmpty(grpcUrl))
+        {
+            throw new InvalidOperationException("gRPC URL is not configured.");
+        }
+
+        return grpcUrl;
+    }
+
+    /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static HostApplicationBuilder ConfigureBuilder(this HostApplicationBuilder builder, Arguments arguments, RichTextBox? logTextBox)
+    internal static T ConfigureClient<T>(this T builder, RichTextBox? logTextBox)
+        where T : IHostApplicationBuilder
     {
         builder
+            .AddMagicOnionClient()
             .AddServices()
             .AddSerilog(logTextBox);
-
-        if (arguments.IsStandalone)
-        {
-            builder.AddStandaloneService();
-        }
-        else
-        {
-            builder.AddMagicOnionClient();
-        }
 
         return builder;
     }
@@ -66,11 +76,10 @@ internal static class HostExtensions
 
         //builder.Services.Configure<GrpcConfig>(builder.Configuration.GetSection("Client:Targets:gRPC"));
 
-        builder.Services.AddSingleton<Application, App>();
-        builder.Services.AddSingleton<WindowService>();
+        builder.Services.AddTransient<WindowService>();
+        builder.Services.AddTransient<ILogLevelService, SerilogLogLevelService>();
 
         // Singleton で IMemoryCache が登録されます
-        //builder.Services.AddMemoryCache();
         builder.Services.AddMemoryCache(options =>
         {
             // 有効期限のチェック間隔
@@ -80,14 +89,13 @@ internal static class HostExtensions
 
         // ViewModel
         builder.Services.AddTransient<NotifyIconViewModel>();
-        builder.Services.AddTransient<LoginViewModel>();
         builder.Services.AddTransient<InformationBarViewModel>();
         builder.Services.AddTransient<FunctionBarViewModel>();
         builder.Services.AddTransient<ReservationMainViewModel>();
         builder.Services.AddTransient<ReservationEquipViewModel>();
 
         // Window
-        builder.Services.AddTransient<LoginWindow>();
+        builder.Services.AddTransient<ErrorWindow>();
         builder.Services.AddTransient<ReservationMainWindow>();
         builder.Services.AddTransient<ReservationEquipWindow>();
         builder.Services.AddTransient<ReservationEquipBookingWindow>();
@@ -147,20 +155,66 @@ internal static class HostExtensions
         }
     }
 
+    #region Standalone
+
     /// <summary>
-    /// 設定から gRPC 用のURLを取得します。
+    /// 構成の追加を行います。
     /// </summary>
-    public static string GetGrpcUrl(this IConfiguration config)
+    internal static T ConfigureStandalone<T>(this T builder, RichTextBox? logTextBox, bool isStandaloneSqlLogging)
+        where T : IHostApplicationBuilder
     {
-        var grpcConfigSection = config.GetSection("Client:Targets:gRPC");
+        builder
+            .AddPostgreSql(isStandaloneSqlLogging)
+            .AddDomainServices()
+            .AddStandaloneService()
+            .AddServices()
+            .AddSerilog(logTextBox);
 
-        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
-        if (String.IsNullOrEmpty(grpcUrl))
+        return builder;
+    }
+
+    /// <summary>
+    /// PostgreSQL(EFCore) と関連クラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isStandaloneSqlLogging)
+    {
+        // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
+        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
+        // TODO: 引数で DefaultConnection 以外を指定できるようにしたい
+        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+
+        // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
+        builder.Services.AddDbContextFactory<AppDbContext>((services, options) =>
         {
-            throw new InvalidOperationException("gRPC URL is not configured.");
-        }
+            options.UseNpgsql(connStr);
 
-        return grpcUrl;
+            if (builder.Environment.IsDevelopment())
+            {
+                // パラメータを表示する
+                options.EnableSensitiveDataLogging();
+            }
+
+            if (!isStandaloneSqlLogging)
+            {
+                // ログを出力しない
+                options.UseLoggerFactory(NullLoggerFactory.Instance);
+            }
+
+        });
+
+        return builder;
+    }
+
+    /// <summary>
+    /// ドメインサービスクラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
+    {
+        builder.Services.AddTransient<IPolicyService, PolicyService>();
+        builder.Services.AddTransient<IPreferenceService, PreferenceService>();
+
+        return builder;
     }
 
     /// <summary>
@@ -169,44 +223,6 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddStandaloneService(this IHostApplicationBuilder builder)
     {
-        #region EFCore
-
-        builder.Configuration.AddUserSecrets<App>();
-
-        // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
-        AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
-
-        // TODO: コマンドライン引数からも設定できるようにする
-        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
-        //builder.Services.AddDbContext<AppDbContext>(options =>
-        //{
-        //    options.UseNpgsql(connStr);
-
-        //    if (builder.Environment.IsDevelopment())
-        //    {
-        //        options.EnableSensitiveDataLogging();
-        //    }
-        //});
-
-        // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
-        builder.Services.AddDbContextFactory<AppDbContext>(options =>
-        {
-            options.UseNpgsql(connStr);
-            if (builder.Environment.IsDevelopment())
-            {
-                options.EnableSensitiveDataLogging();
-            }
-        });
-
-        #endregion EFCore
-
-        #region DomainService
-
-        builder.Services.AddScoped<IPolicyService, PolicyService>();
-        builder.Services.AddScoped<IPreferenceService, PreferenceService>();
-
-        #endregion DomainService
-
         #region MagicOnion(Direct)
 
         // GrpcChannel ではなく、直接サーバー側のサービスを使えるようにします。
@@ -218,4 +234,6 @@ internal static class HostExtensions
 
         return builder;
     }
+
+    #endregion Standalone
 }

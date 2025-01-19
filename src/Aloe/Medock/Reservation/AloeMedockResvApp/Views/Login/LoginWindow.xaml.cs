@@ -228,6 +228,9 @@ public partial class LoginWindow
         {
             this.LoginButton.IsEnabled = true;
         }
+
+
+        throw new Exception("test");
     }
 
     /// <summary>

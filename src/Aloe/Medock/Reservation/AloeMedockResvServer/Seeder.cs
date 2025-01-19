@@ -30,7 +30,6 @@ internal class Seeder
             Console.WriteLine("Seeding...");
             await using var context = await this._factory.CreateDbContextAsync();
             var count = await Seeder.SeedAsync(context);
-            count += await Seeder.SeedAsync(context);
             Console.WriteLine($"{nameof(Seeder)}.{nameof(this.InsertDataAsync)}() Inserted: {count}");
         }
         catch (Exception ex)

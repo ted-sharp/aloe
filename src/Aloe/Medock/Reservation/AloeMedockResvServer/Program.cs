@@ -1,5 +1,6 @@
 ﻿
 using CommandLine;
+using Microsoft.Extensions.Hosting;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -15,11 +16,11 @@ internal class Arguments
     [Option("seed", HelpText = "Try insert sample data.")]
     public bool IsSeed { get; set; }
 
-    /// <summary>
-    /// DB のログを出力します。
-    /// </summary>
-    [Option("sql", HelpText = "Enable DB Logging.")]
-    public bool IsSqlLoggingEnabled { get; set; }
+    ///// <summary>
+    ///// DB のログを出力します。
+    ///// </summary>
+    //[Option("sql", HelpText = "Enable DB Logging.")]
+    //public bool IsSqlLoggingEnabled { get; set; }
 
     /// <summary>
     /// コマンドライン引数からパースします。
@@ -41,37 +42,43 @@ public static class Program
     {
         var arguments = Arguments.Parse(args);
 
-        var host = WebApplication.CreateSlimBuilder(args)
-            .ConfigureBuilder()
-            .ConfigureKestrel()
-            .Build();
-
         try
         {
             if (arguments.IsSeed)
             {
+                // サンプルデータを挿入する
+                var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
+                    .ConfigureSeeder()
+                    .Build();
+
                 var seeder = host.Services.GetRequiredService<Seeder>();
-                await seeder.InsertDataAsync();
-                return;
-            }
+                await seeder.InsertDataAsync()
+                    .ConfigureAwait(false);
 
-            await host.ConfigureApp()
-                .RunAsync();
-        }
-        finally
-        {
-            await host.DisposeAsync();
-
-            // Serilogはグローバルで保持しているので明示的に開放する
-            await Serilog.Log.CloseAndFlushAsync();
-
-            if (arguments.IsSeed)
-            {
                 Console.WriteLine();
                 Console.WriteLine("Press any key to exit...");
                 _ = Console.ReadKey();
             }
+            else
+            {
+                // Kestrel で待ち受ける
+                var host = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder(args)
+                    .ConfigureServer()
+                    .ConfigureKestrel()
+                    .Build();
+
+                await host.ConfigureServerWebApp()
+                    .RunAsync()
+                    .ConfigureAwait(false);
+            }
         }
+        finally
+        {
+            // Serilogはグローバルで保持しているので明示的に開放する
+            await Serilog.Log.CloseAndFlushAsync()
+                .ConfigureAwait(false);
+        }
+
     }
 
 }

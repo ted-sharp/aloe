@@ -33,17 +33,17 @@ public interface IPolicyService
 public class PolicyService : IPolicyService
 {
     private readonly ILogger _logger;
+    private readonly IDbContextFactory<AppDbContext> _factory;
     private readonly IMemoryCache _cache;
-    private readonly AppDbContext _context;
 
     public PolicyService(
         ILogger<PolicyService> logger,
-        IMemoryCache cache,
-        AppDbContext context)
+        IDbContextFactory<AppDbContext> factory,
+        IMemoryCache cache)
     {
         this._logger = logger;
+        this._factory = factory;
         this._cache = cache;
-        this._context = context;
     }
 
     public async Task LoadPoliciesAsync()
@@ -71,7 +71,8 @@ public class PolicyService : IPolicyService
             policies = PolicyService.CreateDefaultPolicies();
 
             // DBにある設定で上書きする
-            var policyList = this._context.Policies
+            using var context = this._factory.CreateDbContext();
+            var policyList = context.Policies
                 .AsNoTracking()
                 .ToList();
             foreach (var policy in policyList)

@@ -7,6 +7,7 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Windows.Controls;
 using Serilog.Sinks.RichTextBox.Themes;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -42,7 +43,7 @@ public static class HostExtensionsSerilog
         return new LoggerConfiguration()
             .MinimumLevel.Information()
             //.ReadFrom.Configuration()
-            //.MinimumLevel.ControlledBy(logLevelSwitch)
+            .MinimumLevel.ControlledBy(SerilogLogLevelService.Switch)
             .Enrich.WithProcessId()
             .Enrich.WithThreadId()
             .Enrich.WithMachineName()

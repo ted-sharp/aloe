@@ -57,11 +57,11 @@
                             <local:ReservationEquipTabItem.LayoutTransform>
                                 <ScaleTransform
                                 ScaleX="{
-                                    Binding DataContext.InformationBarVm.SelectedPercentage.Value,
+                                    Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                                     RelativeSource={RelativeSource AncestorType=Window},
                                     Converter={StaticResource Int32ValueToScaleConverter}}"
                                 ScaleY="{
-                                    Binding DataContext.InformationBarVm.SelectedPercentage.Value,
+                                    Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                                     RelativeSource={RelativeSource AncestorType=Window},
                                     Converter={StaticResource Int32ValueToScaleConverter}}"
                             />

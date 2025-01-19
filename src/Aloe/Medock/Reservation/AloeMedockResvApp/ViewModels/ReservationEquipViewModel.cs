@@ -75,8 +75,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
 
         #endregion Function
     }
-
-    public InformationBarViewModel InformationBarVm { get; set; }
+    public required InformationBarViewModel InformationBarVm { get; set; }
 
     #region Function
 
@@ -84,27 +83,13 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
 
     private Dictionary<string, Function> CreateFunctions()
     {
-        var format = ReservationEquipViewModel.StartMonthFormat;
-
         var functions = new List<Function>
             {
                 new(FunctionKey.F5, "検索", this.ExecuteSearchCommand),
 
-                new(FunctionKey.F9, "前月へ", async Task () =>
-                {
-                    await this.FunctionBarVm.ExecutePrevMonthCommand(this.StartMonth, format);
-                    await this.SearchAsync();
-                }),
-                new(FunctionKey.F10, "次月へ", async Task () =>
-                {
-                    await this.FunctionBarVm.ExecuteNextMonthCommand(this.StartMonth, format);
-                    await this.SearchAsync();
-                }),
-                new(FunctionKey.F11, "今月", async Task () =>
-                {
-                    await this.FunctionBarVm.ExecuteSetCurrentMonthCommand(this.StartMonth, format);
-                    await this.SearchAsync();
-                }),
+                new(FunctionKey.F9, "前月へ", this.ExecutePrevMonthSearchCommand),
+                new(FunctionKey.F10, "次月へ", this.ExecuteNextMonthSearchCommand),
+                new(FunctionKey.F11, "今月", this.ExecuteCurrentMonthSearchCommand),
                 new(FunctionKey.F12, "閉じる", () => this.FunctionBarVm.ExecuteCloseCommand<ReservationEquipWindow>()),
             }
             .ToDictionary(x => x.Key);
@@ -145,6 +130,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     {
         try
         {
+            this.InformationBarVm.StartProgress();
             var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
             if (!isAlt)
             {
@@ -155,6 +141,10 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         {
             this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
             this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this.InformationBarVm.StopProgress();
         }
     }
 
@@ -189,4 +179,74 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
         }
     }
 
+    public async Task ExecutePrevMonthSearchCommand()
+    {
+        try
+        {
+            this.InformationBarVm.StartProgress();
+            var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
+            if (!isAlt)
+            {
+                await this.FunctionBarVm.ExecutePrevMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.SearchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
+            this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this.InformationBarVm.StopProgress();
+        }
+    }
+
+
+    public async Task ExecuteNextMonthSearchCommand()
+    {
+        try
+        {
+            this.InformationBarVm.StartProgress();
+            var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
+            if (!isAlt)
+            {
+                await this.FunctionBarVm.ExecuteNextMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.SearchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
+            this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this.InformationBarVm.StopProgress();
+        }
+    }
+
+
+    public async Task ExecuteCurrentMonthSearchCommand()
+    {
+        try
+        {
+            this.InformationBarVm.StartProgress();
+            var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
+            if (!isAlt)
+            {
+                await this.FunctionBarVm.ExecuteSetCurrentMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.SearchAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            this.SnackbarMessageQueue.ShowMessage($"検索に失敗しました。({ex.Message})");
+            this._logger.LogError(ex, ex.ToString());
+        }
+        finally
+        {
+            this.InformationBarVm.StopProgress();
+        }
+    }
 }

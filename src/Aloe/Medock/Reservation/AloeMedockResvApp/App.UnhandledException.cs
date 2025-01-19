@@ -7,6 +7,11 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Windows;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
+using System.Text.RegularExpressions;
+using NetTopologySuite.Utilities;
+using Serilog;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -17,9 +22,20 @@ public partial class App
 
     private void RegisterUnhandledExceptionHandlers()
     {
+        this.SessionEnding += this.App_SessionEnding;
+
         AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
         this.DispatcherUnhandledException += this.App_DispatcherUnhandledException;
+    }
+
+    private void App_SessionEnding(object sender, SessionEndingCancelEventArgs e)
+    {
+        var actionName = (e.ReasonSessionEnding == ReasonSessionEnding.Shutdown) ? "シャットダウン"
+            : (e.ReasonSessionEnding == ReasonSessionEnding.Logoff) ? "ログオフ"
+            : "終了";
+
+        this.LogInformation($"OSが{actionName}されました。");
     }
 
     private void UnregisterUnhandledExceptionHandlers()
@@ -34,34 +50,20 @@ public partial class App
     {
         if (e.ExceptionObject is Exception ex)
         {
-            if (this._logger is null)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
-            else
-            {
-                this._logger.LogError(ex, ex.ToString());
-            }
+            this.LogError(ex);
+            ErrorWindow.Show(ex);
         }
     }
 
     // タスクのGC時の未処理例外を補足する
     private void TaskScheduler_UnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e)
     {
-        var aggregateException = e.Exception;
-
-        // 内部の例外をすべて展開してログに記録
-        foreach (var ex in aggregateException.InnerExceptions)
+        foreach (var ex in e.Exception.InnerExceptions)
         {
-            if (this._logger is null)
-            {
-                Debug.WriteLine(ex.ToString());
-            }
-            else
-            {
-                this._logger.LogError(ex, ex.ToString());
-            }
+            this.LogError(ex);
         }
+
+        ErrorWindow.Show(e.Exception);
 
         // 例外を「観察済み」に設定する
         e.SetObserved();
@@ -70,19 +72,8 @@ public partial class App
     // WPFのUIスレッドでキャッチされていない例外を補足する
     private void App_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
     {
-        // 例外をログに記録する
-        var ex = e.Exception;
-
-        if (this._logger is null)
-        {
-            Debug.WriteLine(ex.ToString());
-        }
-        else
-        {
-            this._logger.LogError(ex, ex.ToString());
-        }
-
-        MessageBox.Show("予期しないエラーが発生しました: " + ex.Message, "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+        this.LogError(e.Exception);
+        ErrorWindow.Show(e.Exception);
 
         // 例外が処理されたことを通知し、アプリケーションが強制終了しないようにする
         e.Handled = true;

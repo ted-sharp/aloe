@@ -27,17 +27,17 @@ public interface IPreferenceService
 public class PreferenceService : IPreferenceService
 {
     private readonly ILogger _logger;
+    private readonly IDbContextFactory<AppDbContext> _factory;
     private readonly IMemoryCache _cache;
-    private readonly AppDbContext _context;
 
     public PreferenceService(
         ILogger<PreferenceService> logger,
-        IMemoryCache cache,
-        AppDbContext context)
+        IDbContextFactory<AppDbContext> factory,
+        IMemoryCache cache)
     {
         this._logger = logger;
+        this._factory = factory;
         this._cache = cache;
-        this._context = context;
     }
 
     public async Task LoadPreferencesAsync()
@@ -65,7 +65,8 @@ public class PreferenceService : IPreferenceService
             prefs = PreferenceService.CreateDefaultPreferences();
 
             // DBにある設定で上書きする
-            var prefList = this._context.Preferences
+            using var context = this._factory.CreateDbContext();
+            var prefList = context.Preferences
                 .AsNoTracking()
                 .ToList();
             foreach (var pref in prefList)
@@ -98,7 +99,8 @@ public class PreferenceService : IPreferenceService
             var prefs = await this.FetchPreferencesAsync();
 
             // ユーザーの設定で上書きする
-            var prefList = this._context.UserPreferences
+            await using var context = await this._factory.CreateDbContextAsync();
+            var prefList = context.UserPreferences
                 .AsNoTracking()
                 .Where(x => x.UserId == userId)
                 .ToList();

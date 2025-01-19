@@ -17,6 +17,9 @@
         <Style TargetType="StatusBar">
             <Setter Property="Padding" Value="0" />
         </Style>
+        <Style TargetType="ui:PackIcon">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
         <Style TargetType="TextBlock">
             <Setter Property="Padding" Value="0,0,5,0" />
         </Style>
@@ -80,7 +83,7 @@
                 <ComboBox ItemsSource="{Binding ScaleOptions}"
                           SelectedItem="{Binding SelectedPercentage.Value}"
                           IsEditable="True"
-                          Text="{Binding SelectedPercentageText.Value, UpdateSourceTrigger=PropertyChanged}"
+                          Text="{Binding SelectedScalePercentageText.Value, UpdateSourceTrigger=PropertyChanged}"
                           ItemStringFormat="{}{0} %"/>
                 <Button Command="{Binding ZoomInCommand}" CommandParameter="{ext:Int32 10}">
                     <!-- コーナーを丸める -->

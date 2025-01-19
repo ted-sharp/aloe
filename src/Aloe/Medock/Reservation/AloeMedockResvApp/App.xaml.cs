@@ -55,13 +55,42 @@ public partial class App : Application
         this._arguments = arguments;
         this.RegisterUnhandledExceptionHandlers();
 
-        if (arguments.IsDevelopment)
-        {
-            //RenderOptions.ProcessRenderMode = RenderMode.SoftwareOnly;
-        }
-
         this._ts.Stamp("Ctor finished");
     }
+
+    #region ILogger
+
+    private void LogError(Exception ex)
+    {
+        this.LogError(ex, ex.Message);
+    }
+
+    private void LogError(Exception ex, string message)
+    {
+        if (this._logger is not null)
+        {
+            this._logger.LogError(ex, message);
+        }
+        else
+        {
+            Debug.WriteLine(message);
+            Debug.WriteLine(ex.ToString());
+        }
+    }
+
+    private void LogInformation(string message)
+    {
+        if (this._logger is not null)
+        {
+            this._logger.LogInformation(message);
+        }
+        else
+        {
+            Debug.WriteLine(message);
+        }
+    }
+
+    #endregion ILogger
 
     protected override async void OnStartup(StartupEventArgs e)
     {
@@ -90,25 +119,34 @@ public partial class App : Application
 
             var task = Task.Run(async () =>
             {
-                this._host = this.InitializeHost(this._arguments, this._logWindow?.LogRichTextBox);
-                this._loginWindow?.InvokeCompleteInitHost("Host initialized.");
-
-                App.s_services = this.Host.Services;
-                this._logger = this.Host.Services.GetService<ILogger<App>>();
-                //var confRoot = this.Host.Services.GetService<IConfigurationRoot>();
-
-                if (this._arguments.IsStandalone)
+                try
                 {
-                    var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
-                    // standalone の場合はDBホスト名を使う
-                    App.HostName = await auth.GetHostAsync();
+                    this._host = this.InitializeHost(this._arguments, this._logWindow?.LogRichTextBox);
+                    this._loginWindow?.InvokeCompleteInitHost("Host initialized.");
 
-                    await this.InitializeDatabaseAsync();
+                    App.s_services = this.Host.Services;
+                    this._logger = this.Host.Services.GetService<ILogger<App>>(); App.s_services = this.Host.Services;
+                    //var confRoot = this.Host.Services.GetService<IConfigurationRoot>();
+
+                    if (this._arguments.IsStandalone)
+                    {
+                        var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
+                        // standalone の場合はDBホスト名を使う
+                        App.HostName = await auth.GetHostAsync();
+
+                        await this.InitializeDatabaseAsync();
+                    }
+                    else
+                    {
+                        var channel = this.Host.Services.GetRequiredService<GrpcChannel>();
+                        App.HostName = channel.Target;
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    var channel = this.Host.Services.GetRequiredService<GrpcChannel>();
-                    App.HostName = channel.Target;
+                    Console.WriteLine(ex);
+                    Debug.WriteLine(ex);
+                    throw;
                 }
             }).ContinueWith(_ =>
             {
@@ -170,15 +208,7 @@ public partial class App : Application
     {
         this._ts.Stamp(message);
 
-        if (this._logger is not null)
-        {
-            this._logger.LogError(ex, message);
-        }
-        else
-        {
-            Debug.WriteLine(message);
-            Debug.WriteLine(ex.ToString());
-        }
+        this.LogError(ex, message);
 
         this._loginWindow?.InvokeSetStatus(message);
     }
@@ -186,22 +216,28 @@ public partial class App : Application
     /// <summary>
     /// Generic Host(IHost) で Configuration, ILogger, IServiceProvider を使用できるようにします。
     /// </summary>
+    /// <remarks>
+    /// App.Run が実行済みのため、IHost.Run はしません。
+    /// IHostedService を使いたい場合は、host.StartAsync を呼び出します。
+    /// </remarks>
     private IHost InitializeHost(Arguments arguments, RichTextBox? logTextBox)
     {
         this.SetStatus("Host Initializing...");
 
         var args = Environment.GetCommandLineArgs();
 
-        // Generic Host を使って設定を共通化している
-        var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
-            .ConfigureBuilder(arguments, logTextBox)
-            .Build();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
 
-        // App.Run と競合するため IHost.Run はしない
-        //host.Run();
+        if (arguments.IsStandalone)
+        {
+            builder.ConfigureStandalone(logTextBox, arguments.IsStandaloneSqlLogging);
+        }
+        else
+        {
+            builder.ConfigureClient(logTextBox);
+        }
 
-        // 必要なら手動で実行する
-        //host.StartAsync();
+        var host = builder.Build();
 
         this.SetStatus("Host initialized");
 
@@ -327,9 +363,9 @@ public partial class App : Application
     protected override void OnExit(ExitEventArgs e)
     {
         // ログアウト処理
-        _ = Task.Run(App.TryLogoutAsync)
-                .GetAwaiter()
-                .GetResult();
+        Task.Run(Task? () => App.TryLogoutAsync())
+            .GetAwaiter()
+            .GetResult();
 
         // アイコンのクリーンアップ
         this._notifyIcon?.Dispose();

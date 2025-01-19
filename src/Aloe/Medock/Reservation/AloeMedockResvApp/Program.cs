@@ -44,13 +44,10 @@ public class Arguments
     public bool IsStandalone { get; set; }
 
     /// <summary>
-    /// 開発中モードを有効にします。
-    /// サンプルデータの挿入を試行します。
-    /// 通常のログイン画面ではなく、現在開発中の画面を直接起動します。
-    /// その他、開発で必要な特殊処理を行います。
+    /// スタンドアローンモードのとき、SQLのログを出力できるようにします。
     /// </summary>
-    [Option("development", HelpText = "Enable development mode.")]
-    public bool IsDevelopment { get; set; }
+    [Option("sql", HelpText = "Enable SQL Logging in standalone mode.")]
+    public bool IsStandaloneSqlLogging { get; set; }
 
     [Option('u', "user", HelpText = "Login User")]
     public string User { get; set; } = "";
