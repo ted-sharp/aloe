@@ -7,7 +7,7 @@ using System.Windows.Markup;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Extensions;
 
-// TODO: こちらの Extension は拡張メソッドではなく、MarkupExtension の方
+// TODO: こちらの Extension は拡張メソッド(Extensions)ではなく、MarkupExtension の方
 
 public class PrimitiveExtension<T>(T value) : MarkupExtension
     where T : notnull

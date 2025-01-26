@@ -41,7 +41,8 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public ReactivePropertySlim<string> StartMonth { get; set; } = new(DateTime.Today.ToString(StartMonthFormat));
+    public ReactivePropertySlim<string> StartMonth { get; set; } =
+        new(DateTime.Today.ToString(ReservationEquipViewModel.StartMonthFormat));
 
     public ObservableCollection<ReservationEquipTabItemViewModel> ReservationEquipTabItems { get; set; } = new([]);
 

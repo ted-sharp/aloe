@@ -39,9 +39,9 @@ public class Patient : AuditableEntityBase<int>
     [Required]
     public string GivenName { get; set; } = String.Empty;
 
-    [Column("pt_old_full_name")]
+    [Column("pt_former_full_name")]
     [Required]
-    public string OldFullName { get; set; } = String.Empty;
+    public string FormerFullName { get; set; } = String.Empty;
 
     [Column("birth_date")]
     [Required]

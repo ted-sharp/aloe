@@ -78,4 +78,22 @@ public class OrganizationContact : AuditableEntityBase<int>
     [Column("memo")]
     [MaxLength(Int32.MaxValue)]
     public string Memo { get; set; } = "";
+
+    public OrganizationContact() { }
+
+    public OrganizationContact(int orgId, string ctcName, string zipCode, string addr, string tel, string memo)
+    {
+        this.OrgId = orgId;
+        this.CtcName = ctcName;
+        this.IsPrimary = true;
+        this.IsFormShipping = true;
+        this.IsResultShipping = true;
+        this.IsBilling = true;
+
+        this.ZipCode = zipCode;
+        this.Adr1 = addr;
+        this.Tel = tel;
+
+        this.Memo = memo;
+    }
 }

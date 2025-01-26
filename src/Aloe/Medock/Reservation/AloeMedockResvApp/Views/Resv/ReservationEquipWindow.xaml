@@ -12,6 +12,7 @@
         behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="設備予約"
         Width="1920" Height="1080"
+        MinWidth="640" MinHeight="480"
         d:Width="640" d:Height="480"
         ResizeMode="CanResizeWithGrip">
 
@@ -26,9 +27,11 @@
             <ui:PackIcon Kind="CalendarMonth"/>
             <Label>予約月</Label>
             <TextBox
+                x:Name="CalendarMonthTextBox"
                 IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
                 Text="{Binding StartMonth.Value}"
-                MinWidth="80" />
+                MinWidth="80"
+                PreviewMouseDoubleClick="CalendarMonthTextBox_OnPreviewMouseDoubleClick"/>
         </StackPanel>
 
         <Grid>
@@ -36,6 +39,7 @@
                     SelectionChanged="EquipTabControl_OnSelectionChanged"
                     IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
                     ItemsSource="{Binding ReservationEquipTabItems}"
+                    SelectedIndex="{Binding SelectedTabIndex}"
                     PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel"
                     >
                 <!--<TabControl.LayoutTransform >

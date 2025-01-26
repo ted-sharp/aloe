@@ -51,6 +51,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<OrganizationRemark> OrganizationRemarks { get; set; } = null!;
 
+    public DbSet<OrganizationPatient> OrganizationPatients { get; set; } = null!;
+
     #endregion Organization
 
     #region Patient
@@ -64,6 +66,30 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<PatientInsuranceCard> PatientInsuranceCards { get; set; } = null!;
 
     #endregion Patient
+
+    #region Contract
+
+    public DbSet<DefaultTaxRate> DefaultTaxRates { get; set; } = null!;
+
+    public DbSet<CheckupPlanCategory> CheckupPlanCategories { get; set; } = null!;
+
+    public DbSet<CheckupPlan> CheckupPlans { get; set; } = null!;
+
+    public DbSet<CheckupOption> CheckupOptions { get; set; } = null!;
+
+    public DbSet<Contract> Contracts { get; set; } = null!;
+
+    public DbSet<ContractPlan> ContractPlans { get; set; } = null!;
+
+    public DbSet<ContractOption> ContractOptions { get; set; } = null!;
+
+    public DbSet<ContractPrice> ContractPrices { get; set; } = null!;
+
+    public DbSet<ContractCap> ContractCaps { get; set; } = null!;
+
+    public DbSet<ContractCapDetail> ContractCapDetails { get; set; } = null!;
+
+    #endregion Contract
 
     #region ResvEquipService
 

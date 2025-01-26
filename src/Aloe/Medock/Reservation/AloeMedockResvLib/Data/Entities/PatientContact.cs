@@ -77,4 +77,22 @@ public class PatientContact : AuditableEntityBase<int>
     [Column("memo")]
     [MaxLength(Int32.MaxValue)]
     public string Memo { get; set; } = "";
+
+    public PatientContact() { }
+
+    public PatientContact(int ptId, string ctcName, string zipCode, string addr, string tel, string memo)
+    {
+        this.PtId = ptId;
+        this.CtcName = ctcName;
+        this.IsPrimary = true;
+        this.IsFormShipping = true;
+        this.IsResultShipping = true;
+        this.IsBilling = true;
+
+        this.ZipCode = zipCode;
+        this.Adr1 = addr;
+        this.Tel = tel;
+
+        this.Memo = memo;
+    }
 }

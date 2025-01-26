@@ -28,6 +28,8 @@ public partial class ReservationEquipWindow : Window
     private readonly ILogger _logger;
     private readonly ReservationEquipViewModel _vm;
 
+    private bool _isLoading = false;
+
     public ReservationEquipWindow(
         ILogger<ReservationEquipWindow> logger,
         ReservationEquipViewModel vm)
@@ -46,11 +48,13 @@ public partial class ReservationEquipWindow : Window
     {
         try
         {
-            base.OnContentRendered(e);
+            this._vm.InformationBarVm.StartProgress();
+            this._vm.FunctionBarVm.SharedCanExecute.Value = false;
+            this._isLoading = true;
 
             this.BeginInit();
-            this._vm.InformationBarVm.StartProgress("Loading...");
-            this._vm.FunctionBarVm.SharedCanExecute.Value = false;
+
+            base.OnContentRendered(e);
 
             // 準備で、設備をロードしておく
             await this._vm.Preload();
@@ -64,8 +68,9 @@ public partial class ReservationEquipWindow : Window
         }
         finally
         {
+            this._isLoading = false;
             this._vm.FunctionBarVm.SharedCanExecute.Value = true;
-            this._vm.InformationBarVm.StopProgress("Loaded.");
+            this._vm.InformationBarVm.StopProgress();
             this.EndInit();
         }
     }
@@ -81,26 +86,17 @@ public partial class ReservationEquipWindow : Window
                 return;
             }
 
-            //this.BeginInit();
-            this._vm.InformationBarVm.StartProgress("Loading...");
-            this._vm.FunctionBarVm.SharedCanExecute.Value = false;
-
-            var index = this.EquipTabControl.SelectedIndex;
-            if (index >= 0)
+            if (this._isLoading)
             {
-                this._vm.SelectedTabIndex = index;
-                await this._vm.SearchAsync();
+                // タブのロード中に選択されるので除外
+                return;
             }
+
+            await this._vm.ExecuteSearchCommand();
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, ex.ToString());
-        }
-        finally
-        {
-            this._vm.FunctionBarVm.SharedCanExecute.Value = true;
-            this._vm.InformationBarVm.StopProgress("Loaded.");
-            //this.EndInit();
         }
     }
 
@@ -114,5 +110,10 @@ public partial class ReservationEquipWindow : Window
 
             e.Handled = true;
         }
+    }
+
+    private void CalendarMonthTextBox_OnPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        MessageBox.Show("ダブルクリックでカレンダーを表示して選択できるようにしたい");
     }
 }
