@@ -4,6 +4,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
@@ -19,11 +20,11 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureSeeder<T>(this T builder)
+    internal static T ConfigureSeeder<T>(this T builder, bool isSqlLoggingEnabled)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql()
+            .AddPostgreSql(isSqlLoggingEnabled)
             .AddSeederServices()
             .AddSerilog();
 
@@ -33,7 +34,7 @@ internal static class HostExtensions
     /// <summary>
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
-    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder)
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isSqlLoggingEnabled)
     {
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -48,6 +49,12 @@ internal static class HostExtensions
             if (builder.Environment.IsDevelopment())
             {
                 options.EnableSensitiveDataLogging();
+            }
+
+            if (!isSqlLoggingEnabled)
+            {
+                // ログを出力しない
+                options.UseLoggerFactory(NullLoggerFactory.Instance);
             }
         });
 
@@ -71,11 +78,11 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureServer<T>(this T builder)
+    internal static T ConfigureServer<T>(this T builder, bool isSqlLoggingEnabled)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql()
+            .AddPostgreSql(isSqlLoggingEnabled)
             .AddServerServices()
             .AddDomainServices()
             .AddSerilog();
@@ -100,6 +107,7 @@ internal static class HostExtensions
     {
         builder.Services.AddScoped<IPolicyService, PolicyService>();
         builder.Services.AddScoped<IPreferenceService, PreferenceService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
 
         return builder;
     }

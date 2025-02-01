@@ -139,7 +139,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
             new(FunctionKey.F4, "クリア", this.ExecuteClearCommand),
 
             new(FunctionKey.F5, "検索", this.ExecuteSearchCommand),
-            new(FunctionKey.F6, "設備予約", () => this.FunctionBar.ExecuteOpenCommand<ReservationEquipWindow, ReservationMainWindow>()),
+            new(FunctionKey.F6, "設備予約", () => this.FunctionBar.ExecuteOpenCommand<ReservationEquipMonthlyWindow, ReservationMainWindow>()),
             new(FunctionKey.F7, "日別予約", () => this.FunctionBar.ExecuteOpenCommand<ReservationDailyWindow, ReservationMainWindow>()),
             new(FunctionKey.F8, "団体患者", () => this.FunctionBar.ExecuteOpenCommand<MaintenanceWindow, ReservationMainWindow>()),
 

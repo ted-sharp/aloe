@@ -91,7 +91,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
                 new(FunctionKey.F9, "前月へ", this.ExecutePrevMonthSearchCommand),
                 new(FunctionKey.F10, "次月へ", this.ExecuteNextMonthSearchCommand),
                 new(FunctionKey.F11, "今月", this.ExecuteCurrentMonthSearchCommand),
-                new(FunctionKey.F12, "閉じる", () => this.FunctionBarVm.ExecuteCloseCommand<ReservationEquipWindow>()),
+                new(FunctionKey.F12, "閉じる", () => this.FunctionBarVm.ExecuteCloseCommand<ReservationEquipMonthlyWindow>()),
             }
             .ToDictionary(x => x.Key);
 

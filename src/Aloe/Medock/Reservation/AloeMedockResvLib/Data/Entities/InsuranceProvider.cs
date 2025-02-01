@@ -29,17 +29,25 @@ public class InsuranceProvider : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string InsurProvName { get; set; } = String.Empty;
 
-    [Column("memo")]
+    [Column("insur_prov_desc")]
     [MaxLength(Int32.MaxValue)]
-    public string? Memo { get; set; }
+    public string? InsurProvDesc { get; set; }
+
+    [Column("seq")]
+    [Required]
+    public int Seq { get; set; }
 
     public InsuranceProvider() { }
 
-    public InsuranceProvider(int insurProvTypeCode, string insurProvNumber, string insurProvName, string memo)
+    public InsuranceProvider(
+        int insurProvTypeCode,
+        string insurProvNumber,
+        string insurProvName,
+        string insurProvDesc)
     {
         this.InsurProvTypeCode = insurProvTypeCode;
         this.InsurProvNumber = insurProvNumber;
         this.InsurProvName = insurProvName;
-        this.Memo = memo;
+        this.InsurProvDesc = insurProvDesc;
     }
 }

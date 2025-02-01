@@ -37,7 +37,17 @@ public enum InsuranceProviderType
     NationalHealthInsurance = 4,
 
     /// <summary>
-    /// その他、船員保険とか
+    /// 共済
     /// </summary>
-    Others = 5,
+    MutualAidAssociation = 5,
+
+    /// <summary>
+    /// 船員保険
+    /// </summary>
+    MarinersInsurance = 6,
+
+    /// <summary>
+    /// その他
+    /// </summary>
+    Others = 7,
 }

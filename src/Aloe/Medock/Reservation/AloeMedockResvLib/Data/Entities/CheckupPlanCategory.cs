@@ -36,6 +36,10 @@ public class CheckupPlanCategory : AuditableEntityBase<int>
     [Required]
     public string PlanCatDesc { get; set; } = String.Empty;
 
+    [Column("seq")]
+    [Required]
+    public int Seq { get; set; } = 0;
+
     public CheckupPlanCategory() { }
 
     public CheckupPlanCategory(string catName, string shortName, string desc)

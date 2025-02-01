@@ -10,15 +10,17 @@ namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 
 [Table("permissions")]
-public class Permission : AuditableEntityBase<int>
+public class Permission : AuditableEntityBase<string>
 {
     [NotMapped]
-    public override int Id => this.PermId;
+    public override string Id => this.PermCode;
 
     [Key]
-    [Column("perm_id")]
+    [Column("perm_code")]
     [Required]
-    public int PermId { get; set; }
+    [MaxLength(Int32.MaxValue)]
+    public string PermCode { get; set; } = String.Empty;
+
 
     [Column("perm_name")]
     [Required]
@@ -30,10 +32,17 @@ public class Permission : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string PermDesc { get; set; } = String.Empty;
 
+    [Column("is_active")]
+    public bool IsActive { get; set; } = false;
+
     public Permission() { }
 
-    public Permission(string permName, string permDesc)
+    public Permission(
+        string permCode,
+        string permName,
+        string permDesc)
     {
+        this.PermCode = permCode;
         this.PermName = permName;
         this.PermDesc = permDesc;
     }

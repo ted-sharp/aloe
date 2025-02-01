@@ -24,6 +24,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using CommandLine;
@@ -269,8 +270,9 @@ public partial class App : Application
 
             Window window = this._arguments.ScreenCode switch
             {
-                ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipWindow>(),
+                ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipMonthlyWindow>(),
                 ScreenCode.OrganizationPatientSearch => sp.GetRequiredService<OrganizationPatientSearchWindow>(),
+                ScreenCode.Organization => sp.GetRequiredService<OrganizationWindow>(),
                 _ => sp.GetRequiredService<ReservationMainWindow>(),
             };
 

@@ -16,11 +16,11 @@ internal class Arguments
     [Option("seed", HelpText = "Try insert sample data.")]
     public bool IsSeed { get; set; }
 
-    ///// <summary>
-    ///// DB のログを出力します。
-    ///// </summary>
-    //[Option("sql", HelpText = "Enable DB Logging.")]
-    //public bool IsSqlLoggingEnabled { get; set; }
+    /// <summary>
+    /// DB のログを出力します。
+    /// </summary>
+    [Option("sql", HelpText = "Enable DB Logging.")]
+    public bool IsSqlLoggingEnabled { get; set; }
 
     /// <summary>
     /// コマンドライン引数からパースします。
@@ -47,23 +47,20 @@ public static class Program
             if (arguments.IsSeed)
             {
                 // サンプルデータを挿入する
+                //var host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
                 var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
-                    .ConfigureSeeder()
+                    .ConfigureSeeder(arguments.IsSqlLoggingEnabled)
                     .Build();
 
                 var seeder = host.Services.GetRequiredService<Seeder>();
                 await seeder.InsertDataAsync()
                     .ConfigureAwait(false);
-
-                Console.WriteLine();
-                Console.WriteLine("Press any key to exit...");
-                _ = Console.ReadKey();
             }
             else
             {
                 // Kestrel で待ち受ける
                 var host = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder(args)
-                    .ConfigureServer()
+                    .ConfigureServer(arguments.IsSqlLoggingEnabled)
                     .ConfigureKestrel()
                     .Build();
 
@@ -77,6 +74,13 @@ public static class Program
             // Serilogはグローバルで保持しているので明示的に開放する
             await Serilog.Log.CloseAndFlushAsync()
                 .ConfigureAwait(false);
+
+            if (arguments.IsSeed)
+            {
+                Console.WriteLine();
+                Console.WriteLine("Press any key to exit...");
+                _ = Console.ReadKey();
+            }
         }
 
     }

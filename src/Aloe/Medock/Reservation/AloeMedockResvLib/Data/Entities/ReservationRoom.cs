@@ -33,10 +33,6 @@ public class ReservationRoom : AuditableEntityBase<int>
     [Required]
     public int FloorId { get; set; } = 0;
 
-    [Column("exam_cat_id")]
-    [Required]
-    public int ExamCatId { get; set; } = 0;
-
     [Column("seq")]
     [Required]
     public int Seq { get; set; } = 0;

@@ -17,12 +17,13 @@ public class Sample : AuditableEntityBase<int>
 {
     public override int Id => this.SampleId;
 
-    [Key]
     [Column("id")]
+    [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int SampleId { get; set; }
 
     [Column("name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public required string Name { get; set; }
 }

@@ -10,23 +10,35 @@ using System.Threading.Tasks;
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 [Table("role_permissions")]
-[PrimaryKey(nameof(RolePermission.RoleId), nameof(RolePermission.PermId))]
 public class RolePermission : AuditableEntityBase<int>
 {
     [NotMapped]
-    public override int Id => this.RoleId;
+    public override int Id => this.RolePermId;
 
-    [Column("role_id", Order = 0)]
+    [Key]
+    [Column("role_perm_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int RolePermId { get; set; }
+
+    [Column("role_id")]
     public int RoleId { get; set; }
 
-    [Column("perm_id", Order = 1)]
-    public int PermId { get; set; } = 0;
+    [Column("perm_code")]
+    [MaxLength(Int32.MaxValue)]
+    public string PermCode { get; set; } = String.Empty;
+
+    [Column("is_active")]
+    public bool IsActive { get; set; } = false;
 
     public RolePermission() { }
 
-    public RolePermission(int roleId, int permId)
+    public RolePermission(
+        int roleId,
+        string permCode,
+        bool isActivate)
     {
         this.RoleId = roleId;
-        this.PermId = permId;
+        this.PermCode = permCode;
+        this.IsActive = isActivate;
     }
 }

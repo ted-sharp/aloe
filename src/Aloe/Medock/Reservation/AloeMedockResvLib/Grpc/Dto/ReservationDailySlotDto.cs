@@ -33,17 +33,5 @@ public class ReservationDailySlotDto
     public required int RoomId { get; set; }
 
     [Key(6)]
-    public required int DailyCap { get; set; }
-
-    [Key(7)]
-    public required int AmCap { get; set; }
-
-    [Key(8)]
-    public required int PmCap { get; set; }
-
-    [Key(9)]
     public required string Slots { get; set; }
-
-    [Key(10)]
-    public required string SlotCaps { get; set; }
 }

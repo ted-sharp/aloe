@@ -10,21 +10,27 @@ using System.Threading.Tasks;
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 [Table("user_roles")]
-[PrimaryKey(nameof(UserRole.UserId), nameof(UserRole.RoleId))]
 public class UserRole : AuditableEntityBase<int>
 {
     [NotMapped]
-    public override int Id => this.RoleId;
+    public override int Id => this.UserRoleId;
 
-    [Column("user_id", Order = 0)]
+    [Key]
+    [Column("user_role_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int UserRoleId { get; set; }
+
+    [Column("user_id")]
     public int UserId { get; set; }
 
-    [Column("role_id", Order = 1)]
+    [Column("role_id")]
     public int RoleId { get; set; } = 0;
 
     public UserRole() { }
 
-    public UserRole(int userId, int roleId)
+    public UserRole(
+        int userId,
+        int roleId)
     {
         this.UserId = userId;
         this.RoleId = roleId;

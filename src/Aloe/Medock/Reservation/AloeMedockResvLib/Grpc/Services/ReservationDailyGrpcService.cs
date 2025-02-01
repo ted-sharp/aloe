@@ -83,11 +83,7 @@ public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcServ
                 DowCode = x.DowCode,
                 FloorId = x.FloorId,
                 RoomId = x.RoomId,
-                DailyCap = x.DailyCap,
-                AmCap = x.AmCap,
-                PmCap = x.PmCap,
                 Slots = x.Slots,
-                SlotCaps = x.SlotCaps,
             })
             .OrderBy(x => x.StartDate)
             .ToListAsync();

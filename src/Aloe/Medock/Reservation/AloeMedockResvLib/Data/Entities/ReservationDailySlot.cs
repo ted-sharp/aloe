@@ -40,40 +40,23 @@ public class ReservationDailySlot : AuditableEntityBase<int>
     [Required]
     public int RoomId { get; set; } = 0;
 
-    [Column("daily_cap")]
-    [Required]
-    public int DailyCap { get; set; } = 0;
-
-    [Column("am_cap")]
-    [Required]
-    public int AmCap { get; set; } = 0;
-
-    [Column("pm_cap")]
-    [Required]
-    public int PmCap { get; set; } = 0;
-
     [Column("slots")]
     [Required]
     [MaxLength(Int32.MaxValue)]
     public string Slots { get; set; } = String.Empty;
 
-    [Column("slot_caps")]
-    [Required]
-    [MaxLength(Int32.MaxValue)]
-    public string SlotCaps { get; set; } = String.Empty;
-
     public ReservationDailySlot() { }
 
-    public ReservationDailySlot(DateTime start, DateTime end, DowCode dowCode, int ampCap, int pmCap, string slots, string slotCaps)
+    public ReservationDailySlot(
+        DateTime start,
+        DateTime end,
+        DowCode dowCode,
+        string slots)
     {
         this.StartDate = start.Date;
         this.EndDate = end.Date;
         this.DowCode = (int)dowCode;
-        this.DailyCap = ampCap + pmCap;
-        this.AmCap = ampCap;
-        this.PmCap = pmCap;
         this.Slots = slots;
-        this.SlotCaps = slotCaps;
     }
 
     public string[] SplitSlots()

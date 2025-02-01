@@ -10,19 +10,25 @@ using System.Threading.Tasks;
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 [Table("user_preferences")]
-[PrimaryKey(nameof(UserPreference.UserId), nameof(UserPreference.PrefCode))]
 public class UserPreference : AuditableEntityBase<int>
 {
     [NotMapped]
-    public override int Id => this.UserId;
+    public override int Id => this.UserPrefId;
 
-    [Column("user_id", Order = 0)]
+    [Key]
+    [Column("user_pref_id")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+    public int UserPrefId { get; set; }
+
+    [Column("user_id")]
     public int UserId { get; set; }
 
-    [Column("pref_code", Order = 1)]
+    [Column("pref_code")]
+    [MaxLength(Int32.MaxValue)]
     public string PrefCode { get; set; } = String.Empty;
 
     [Column("pref_value")]
+    [MaxLength(Int32.MaxValue)]
     public string PrefValue { get; set; } = String.Empty;
 
     [Column("is_active")]
@@ -30,7 +36,11 @@ public class UserPreference : AuditableEntityBase<int>
 
     public UserPreference() { }
 
-    public UserPreference(int userId, string prefCode, string prefValue, bool isActive)
+    public UserPreference(
+        int userId,
+        string prefCode,
+        string prefValue,
+        bool isActive)
     {
         this.UserId = userId;
         this.PrefCode = prefCode;

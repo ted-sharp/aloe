@@ -18,6 +18,7 @@ public enum ScreenCode
     ReservationDaily = 6,
     ReservationDailyBooking = 7,
     OrganizationPatientSearch = 8,
+    Organization = 9,
 }
 
 public static class ScreenCodeExtensions

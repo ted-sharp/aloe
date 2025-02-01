@@ -26,6 +26,7 @@ public class DefaultTaxRate : AuditableEntityBase<int>
 
     [Column("tax_rate_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string TaxRateName { get; set; } = String.Empty;
 
     [Column("tax_rate")]
@@ -50,6 +51,7 @@ public class DefaultTaxRate : AuditableEntityBase<int>
 
     [Column("memo")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string Memo { get; set; } = String.Empty;
 
     public DefaultTaxRate() { }

@@ -54,4 +54,13 @@
     <ProjectReference Include="..\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Views\Cust\PatientInsuranceCardTabItem.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Views\Cust\OrganizationWindow.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
 </Project>

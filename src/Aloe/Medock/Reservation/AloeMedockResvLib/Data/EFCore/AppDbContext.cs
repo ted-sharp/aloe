@@ -37,9 +37,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Policy> Policies { get; set; } = null!;
 
     public DbSet<Preference> Preferences { get; set; } = null!;
+
     public DbSet<UserPreference> UserPreferences { get; set; } = null!;
 
     #endregion AuthService
+
+    #region OrgPt
+
+    public DbSet<Location> Locations { get; set; } = null!;
+
+    public DbSet<Note> Notes { get; set; } = null!;
+
+    #endregion OrgPt
 
     #region Organization
 
@@ -47,11 +56,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Organization> Organizations { get; set; } = null!;
 
-    public DbSet<OrganizationContact> OrganizationContacts { get; set; } = null!;
+    public DbSet<OrganizationNoteCode> OrganizationNoteCodes { get; set; } = null!;
 
-    public DbSet<OrganizationRemark> OrganizationRemarks { get; set; } = null!;
+    public DbSet<OrganizationXNote> OrganizationXNotes { get; set; } = null!;
 
-    public DbSet<OrganizationPatient> OrganizationPatients { get; set; } = null!;
+    public DbSet<OrganizationMember> OrganizationMembers { get; set; } = null!;
 
     #endregion Organization
 
@@ -59,23 +68,41 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Patient> Patients { get; set; } = null!;
 
-    public DbSet<PatientContact> PatientContacts { get; set; } = null!;
+    public DbSet<PatientNoteCode> PatientNoteCodes{ get; set; } = null!;
 
-    public DbSet<PatientRemark> PatientRemarks { get; set; } = null!;
+    public DbSet<PatientXNote> PatientXNotes{ get; set; } = null!;
 
     public DbSet<PatientInsuranceCard> PatientInsuranceCards { get; set; } = null!;
 
     #endregion Patient
 
-    #region Contract
-
-    public DbSet<DefaultTaxRate> DefaultTaxRates { get; set; } = null!;
+    #region Plan
 
     public DbSet<CheckupPlanCategory> CheckupPlanCategories { get; set; } = null!;
 
     public DbSet<CheckupPlan> CheckupPlans { get; set; } = null!;
 
+    public DbSet<CheckupPlanDetail> CheckupPlanDetails { get; set; } = null!;
+
     public DbSet<CheckupOption> CheckupOptions { get; set; } = null!;
+
+    public DbSet<CheckupOptionDetail> CheckupOptionDetails { get; set; } = null!;
+
+    public DbSet<ExamCategory> ExamCategories { get; set; } = null!;
+
+    public DbSet<Exam> Exams { get; set; } = null!;
+
+    public DbSet<ExamDetail> ExamDetails { get; set; } = null!;
+
+    public DbSet<ExamObservationCategory> ExamObservationCategories { get; set; } = null!;
+
+    public DbSet<ExamObservation> ExamObservations { get; set; } = null!;
+
+    #endregion Plan
+
+    #region Contract
+
+    public DbSet<DefaultTaxRate> DefaultTaxRates { get; set; } = null!;
 
     public DbSet<Contract> Contracts { get; set; } = null!;
 
@@ -106,6 +133,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ReservationFloor> Floors { get; set; } = null!;
 
     public DbSet<ReservationRoom> Rooms { get; set; } = null!;
+
+    public DbSet<ReservationRoomDetail> RoomDetails { get; set; } = null!;
 
     public DbSet<ReservationDailySlot> DailySlots { get; set; } = null!;
 

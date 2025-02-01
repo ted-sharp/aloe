@@ -27,6 +27,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using CommandLine;
 using System.Windows.Controls;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
@@ -97,13 +98,14 @@ internal static class HostExtensions
         // Window
         builder.Services.AddTransient<ErrorWindow>();
         builder.Services.AddTransient<ReservationMainWindow>();
-        builder.Services.AddTransient<ReservationEquipWindow>();
+        builder.Services.AddTransient<ReservationEquipMonthlyWindow>();
         builder.Services.AddTransient<ReservationEquipBookingWindow>();
         builder.Services.AddTransient<ReservationDailyWindow>();
         builder.Services.AddTransient<ReservationDailyBookingWindow>();
         //builder.Services.AddTransient<OrganizationWindow>();
         //builder.Services.AddTransient<PatientWindow>();
         builder.Services.AddTransient<OrganizationPatientSearchWindow>();
+        builder.Services.AddTransient<OrganizationWindow>();
         builder.Services.AddTransient<MaintenanceWindow>();
 
         return builder;
@@ -160,11 +162,11 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureStandalone<T>(this T builder, RichTextBox? logTextBox, bool isStandaloneSqlLogging)
+    internal static T ConfigureStandalone<T>(this T builder, RichTextBox? logTextBox, bool isSqlLoggingEnabled)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql(isStandaloneSqlLogging)
+            .AddPostgreSql(isSqlLoggingEnabled)
             .AddDomainServices()
             .AddStandaloneService()
             .AddServices()
@@ -176,7 +178,7 @@ internal static class HostExtensions
     /// <summary>
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
-    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isStandaloneSqlLogging)
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isSqlLoggingEnabled)
     {
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -195,7 +197,7 @@ internal static class HostExtensions
                 options.EnableSensitiveDataLogging();
             }
 
-            if (!isStandaloneSqlLogging)
+            if (!isSqlLoggingEnabled)
             {
                 // ログを出力しない
                 options.UseLoggerFactory(NullLoggerFactory.Instance);
@@ -213,6 +215,7 @@ internal static class HostExtensions
     {
         builder.Services.AddTransient<IPolicyService, PolicyService>();
         builder.Services.AddTransient<IPreferenceService, PreferenceService>();
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
 
         return builder;
     }
