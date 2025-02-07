@@ -4,10 +4,11 @@
              xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp"
              xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
              xmlns:tb="http://www.hardcodet.net/taskbar"
-             xmlns:converters="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Converters">
+             xmlns:converters="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Converters;assembly=Aloe.Common.AloeCoreLib.Wpf">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+
                 <!--<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />-->
 
                 <!-- 色の組み合わせは MaterialDesign のリリースにある DemoApp.zip の Palette を参照のこと -->

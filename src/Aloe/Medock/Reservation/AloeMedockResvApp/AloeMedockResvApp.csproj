@@ -49,6 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\Aloe.Common.AloeCoreLib.Wpf\Aloe.Common.AloeCoreLib.Wpf.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib.Client\Aloe.Common.AloeCoreLib.Client.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />

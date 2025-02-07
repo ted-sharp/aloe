@@ -34,10 +34,12 @@ public class Contract : AuditableEntityBase<int>
 
     [Column("parent_ct_code")]
     [Required]
-    public string ParentCtCode { get; set; }
+    [MaxLength(Int32.MaxValue)]
+    public string ParentCtCode { get; set; } = String.Empty;
 
     [Column("ct_code")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string CtCode { get; set; } = String.Empty;
 
     [Column("ct_rev")]
@@ -46,10 +48,12 @@ public class Contract : AuditableEntityBase<int>
 
     [Column("ct_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string CtName { get; set; } = String.Empty;
 
     [Column("ct_desc")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string CtDesc { get; set; } = String.Empty;
 
     [Column("start_date")]
@@ -58,7 +62,7 @@ public class Contract : AuditableEntityBase<int>
 
     [Column("end_date")]
     [Required]
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     [Column("is_tax_including")]
     [Required]

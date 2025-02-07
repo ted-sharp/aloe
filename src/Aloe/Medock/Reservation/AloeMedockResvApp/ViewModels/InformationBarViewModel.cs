@@ -20,6 +20,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Serilog.Events;
 using Grpc.Core;
 using System.Diagnostics;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using ControlzEx.Standard;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
@@ -37,6 +38,14 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
     public ReactivePropertySlim<string> User { get; } = new(App.Session?.UserDisplayName ?? "");
 
     public ReactivePropertySlim<string> HostName { get; } = new(App.HostName);
+
+    public ReactivePropertySlim<Visibility> LastUpdateVisibility { get; } = new(Visibility.Collapsed);
+
+    public ReactivePropertySlim<string> LastUpdateText { get; } = new("");
+
+    public ReactivePropertySlim<Visibility> LockVisibility { get; } = new(Visibility.Collapsed);
+
+    public ReactivePropertySlim<string> LockText { get; } = new("");
 
     public ObservableCollection<int> ScaleOptions { get; } =
         [
@@ -135,6 +144,38 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
         this._logger.LogTrace(status);
     }
 
+    #region LastUpdate
+
+    public void ClearLastUpdate()
+    {
+        this.LastUpdateVisibility.Value = Visibility.Collapsed;
+        this.LastUpdateText.Value = "";
+    }
+
+    private void SetLastUpdateText(DateTime updatedAt, string updatedUserName)
+    {
+        this.LastUpdateText.Value = $"最終更新日: {updatedAt:yyyy/MM/dd HH:mm:ss} by {updatedUserName}";
+        this.LastUpdateVisibility.Value = Visibility.Visible;
+    }
+
+    #endregion LastUpdate
+
+    #region Lock
+
+    public void ClearLock()
+    {
+        this.LockVisibility.Value = Visibility.Collapsed;
+        this.LastUpdateText.Value = "";
+    }
+
+    private void SetLockText(string state, DateTime lockedAt, string lockedUserName)
+    {
+        this.LastUpdateText.Value = $"{state}: {lockedAt:yyyy/MM/dd HH:mm:ss} by {lockedUserName}";
+        this.LockVisibility.Value = Visibility.Visible;
+    }
+
+    #endregion Lock
+
     /// <summary>
     /// スケールを変更し、MinScaleとMaxScaleを考慮して値を制限する
     /// </summary>
@@ -154,4 +195,5 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
     {
         this._windowService.GetWindow<LogWindow>()?.ShowOrActivate();
     }
+
 }

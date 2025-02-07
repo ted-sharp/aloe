@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
         xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:behaviors="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors"
         xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+        xmlns:bhv="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+        bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="団体"
         Width="1920" Height="1080"
         MinWidth="640" MinHeight="480"
@@ -63,6 +63,7 @@
 
             <Grid>
                 <!-- 大まかに三分割する。(団体情報、マークやノート、契約情報) -->
+                <!-- TODO: 子団体、メンバーなどの情報も表示できたらよいかも -->
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="5" />
@@ -99,9 +100,21 @@
 
                         <Label Grid.Row="0" Grid.Column="2">保険者</Label>
                         <TextBox Grid.Row="0" Grid.Column="3">12345678901234567890</TextBox>
+                        <Button Grid.Row="0" Grid.Column="4" HorizontalAlignment="Left">
+                            <ui:PackIcon Kind="DotsHorizontal"/>
+                        </Button>
 
                         <Label Grid.Row="1" Grid.Column="0">団体 No.</Label>
                         <TextBox Grid.Row="1" Grid.Column="1">12345678901234567890</TextBox>
+
+                        <Label Grid.Row="1" Grid.Column="2">親団体 No.</Label>
+                        <TextBox Grid.Row="1" Grid.Column="3">12345678901234567890</TextBox>
+                        <Button Grid.Row="1" Grid.Column="3" HorizontalAlignment="Right">
+                            <ui:PackIcon Kind="CloseCircle"/>
+                        </Button>
+                        <Button Grid.Row="1" Grid.Column="4" HorizontalAlignment="Left">
+                            <ui:PackIcon Kind="DotsHorizontal"/>
+                        </Button>
 
                         <Label Grid.Row="2" Grid.Column="0">カナ</Label>
                         <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
@@ -151,7 +164,9 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Label Grid.Row="0">マーク</Label>
+                    <WrapPanel Grid.Row="0">
+                        <Label>マーク</Label>
+                    </WrapPanel>
 
                     <DataGrid
                         Grid.Row="1"
@@ -197,8 +212,9 @@
 
                     <GridSplitter Grid.Row="2" />
 
-
-                    <Label Grid.Row="3">ノート</Label>
+                    <WrapPanel Grid.Row="3">
+                        <Label>ノート</Label>
+                    </WrapPanel>
 
                     <DataGrid
                         Grid.Row="4"
@@ -247,7 +263,7 @@
 
                 <!-- 契約譲歩 -->
                 <Grid Grid.Row="2" Grid.Column="0">
-
+                    <!-- TODO: 契約、プラン、オプション、価格、按分割合、上限、割引など -->
                 </Grid>
             </Grid>
 

@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;

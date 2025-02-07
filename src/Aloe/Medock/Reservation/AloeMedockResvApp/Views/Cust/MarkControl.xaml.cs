@@ -22,7 +22,12 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust
     {
         public MarkControl()
         {
-            InitializeComponent();
+            this.InitializeComponent();
+        }
+
+        private void MarkControl_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+
         }
     }
 }

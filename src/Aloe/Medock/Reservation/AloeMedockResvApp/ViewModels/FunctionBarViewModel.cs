@@ -1,29 +1,17 @@
 ﻿using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Runtime.CompilerServices;
-using System.Globalization;
 using System.Windows.Input;
 using System.Reactive.Linq;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using System.DirectoryServices.ActiveDirectory;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
+using Aloe.Common.AloeCoreLib.Wpf.Behaviors;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Key = System.Windows.Input.Key;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -41,7 +29,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     private Dictionary<string /* key */, Function>? _functions;
 
     /// <summary>
-    /// <see cref="Views.Behaviors.KeyInputBehavior"/> で Window の KeyDown にバインドします。
+    /// <see cref="Common.AloeCoreLib.Wpf.Behaviors.Key"/> で Window の KeyDown にバインドします。
     /// </summary>
     public ReactiveCommandSlim<KeyEventArgs> KeyDownCommand { get; } = new();
 

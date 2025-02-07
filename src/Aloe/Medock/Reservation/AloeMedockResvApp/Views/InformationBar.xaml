@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:viewModels="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
              xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:ext="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Extensions"
+             xmlns:ext="http://schemas.aloe/wpf/extension"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=viewModels:InformationBarViewModel}"
              d:Background="PaleGreen"
@@ -64,6 +64,15 @@
 
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
+                <Button>
+                    <!-- TODO: キャッシュを矯正開放 -->
+                    <ui:PackIcon Kind="HeadSnowflake"/>
+                </Button>
+            </StackPanel>
+        </StatusBarItem>
+
+        <StatusBarItem DockPanel.Dock="Right">
+            <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding ZoomOutCommand}" CommandParameter="{ext:Int32 -10}">
                     <!-- コーナーを丸める -->
                     <!--<Button.Template>
@@ -80,7 +89,7 @@
                     <ui:PackIcon Kind="Minus"/>
                 </Button>
                 <ComboBox ItemsSource="{Binding ScaleOptions}"
-                          SelectedItem="{Binding SelectedPercentage.Value}"
+                          SelectedItem="{Binding SelectedScalePercentage.Value}"
                           IsEditable="True"
                           Text="{Binding SelectedScalePercentageText.Value, UpdateSourceTrigger=PropertyChanged}"
                           ItemStringFormat="{}{0} %"/>
@@ -105,24 +114,22 @@
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <ui:PackIcon Kind="Account"/>
-                <TextBlock x:Name="AccountTextBlock"
-                           Text="{Binding User.Value}" />
+                <TextBlock Text="{Binding User.Value}" />
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <ui:PackIcon Kind="Lan"/>
-                <TextBlock x:Name="RemoteTextBlock"
-                           Text="{Binding HostName.Value}" />
+                <TextBlock Text="{Binding HostName.Value}" />
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem HorizontalContentAlignment="Stretch">
-            <ProgressBar x:Name="ProgressBar"
-                         IsIndeterminate="True"
-                         Visibility="{Binding ProgressBarVisibility.Value}"
-                         Margin="5,0" />
+            <ProgressBar
+                IsIndeterminate="True"
+                Visibility="{Binding ProgressBarVisibility.Value}"
+                Margin="5,0" />
         </StatusBarItem>
     </StatusBar>
 

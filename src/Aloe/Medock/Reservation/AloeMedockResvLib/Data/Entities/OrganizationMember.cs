@@ -25,15 +25,17 @@ public class OrganizationMember : AuditableEntityBase<int>
 
     [Column("personal_number")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string PersonalNumber { get; set; } = String.Empty;
 
     [Column("department")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string Department { get; set; } = String.Empty;
 
-    [Column("is_member")]
+    [Column("is_active")]
     [Required]
-    public bool IsMember { get; set; }
+    public bool IsActive { get; set; }
 
     [Column("start_date")]
     [Required]
@@ -43,16 +45,17 @@ public class OrganizationMember : AuditableEntityBase<int>
     public DateTime? EndDate { get; set; }
 
     [Column("memo")]
+    [MaxLength(Int32.MaxValue)]
     public string Memo { get; set; } = String.Empty;
 
     public OrganizationMember() { }
 
-    public OrganizationMember(int orgId, int ptId, string personalNumber, string department, bool isMember)
+    public OrganizationMember(int orgId, int ptId, string personalNumber, string department, bool isActive)
     {
         this.OrgId = orgId;
         this.PtId = ptId;
         this.PersonalNumber = personalNumber;
         this.Department = department;
-        this.IsMember = isMember;
+        this.IsActive = isActive;
     }
 }

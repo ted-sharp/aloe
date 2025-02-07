@@ -30,6 +30,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using CommandLine;
 using Grpc.Net.Client;
 using MagicOnion;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -273,6 +274,7 @@ public partial class App : Application
                 ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipMonthlyWindow>(),
                 ScreenCode.OrganizationPatientSearch => sp.GetRequiredService<OrganizationPatientSearchWindow>(),
                 ScreenCode.Organization => sp.GetRequiredService<OrganizationWindow>(),
+                ScreenCode.Patient => sp.GetRequiredService<PatientWindow>(),
                 _ => sp.GetRequiredService<ReservationMainWindow>(),
             };
 

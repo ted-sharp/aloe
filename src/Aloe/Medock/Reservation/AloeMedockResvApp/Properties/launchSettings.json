@@ -2,7 +2,7 @@
   "profiles": {
     "ReservationApp": {
       "commandName": "Project",
-      "commandLineArgs": "--standalone -uadmin -padmin --screen=9 ",
+      "commandLineArgs": "--standalone -uadmin -padmin --screen=10 ",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

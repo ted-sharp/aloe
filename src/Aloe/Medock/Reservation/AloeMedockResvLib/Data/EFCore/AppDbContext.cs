@@ -42,39 +42,35 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     #endregion AuthService
 
-    #region OrgPt
+    #region Customer
 
-    public DbSet<Location> Locations { get; set; } = null!;
-
-    public DbSet<Note> Notes { get; set; } = null!;
-
-    #endregion OrgPt
-
-    #region Organization
+    #region Customer/Organization
 
     public DbSet<InsuranceProvider> InsuranceProviders { get; set; } = null!;
 
     public DbSet<Organization> Organizations { get; set; } = null!;
 
-    public DbSet<OrganizationNoteCode> OrganizationNoteCodes { get; set; } = null!;
-
-    public DbSet<OrganizationXNote> OrganizationXNotes { get; set; } = null!;
-
     public DbSet<OrganizationMember> OrganizationMembers { get; set; } = null!;
 
-    #endregion Organization
+    #endregion Customer/Organization
 
-    #region Patient
+    #region Customer/Patient
 
     public DbSet<Patient> Patients { get; set; } = null!;
 
-    public DbSet<PatientNoteCode> PatientNoteCodes{ get; set; } = null!;
-
-    public DbSet<PatientXNote> PatientXNotes{ get; set; } = null!;
-
     public DbSet<PatientInsuranceCard> PatientInsuranceCards { get; set; } = null!;
 
-    #endregion Patient
+    #endregion Customer/Patient
+
+    public DbSet<CustomerLocation> CustomerLocations { get; set; } = null!;
+
+    public DbSet<CustomerMark> CustomerMarks { get; set; } = null!;
+
+    public DbSet<CustomerNote> CustomerNotes { get; set; } = null!;
+
+    public DbSet<CustomerFile> CustomerFiles { get; set; } = null!;
+
+    #endregion Customer
 
     #region Plan
 

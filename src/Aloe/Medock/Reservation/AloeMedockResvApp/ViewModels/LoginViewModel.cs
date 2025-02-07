@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;

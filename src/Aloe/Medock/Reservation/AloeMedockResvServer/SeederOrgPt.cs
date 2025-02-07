@@ -65,7 +65,7 @@ internal partial class Seeder
                 }
             }
 
-            if (!context.Locations.AsNoTracking().Any())
+            if (!context.CustomerLocations.AsNoTracking().Any())
             {
                 // 挿入したデータを使うため保存する
                 count += await context.SaveChangesAsync();
@@ -73,8 +73,8 @@ internal partial class Seeder
                 var orgs = context.Organizations.ToList();
                 foreach (var org in orgs)
                 {
-                    var ctc = new Location(org.OrgId, 0, "本社", "000-0000", "北海道札幌市中央区", "(代表) 011-000-0000", "");
-                    context.Locations.Add(ctc);
+                    var ctc = new CustomerLocation(org.OrgId, 0, "本社", "000-0000", "北海道札幌市中央区", "(代表) 011-000-0000", "");
+                    context.CustomerLocations.Add(ctc);
                 }
             }
 
@@ -96,7 +96,7 @@ internal partial class Seeder
                 }
             }
 
-            if (!context.Locations.AsNoTracking().Any())
+            if (!context.CustomerLocations.AsNoTracking().Any())
             {
                 // 挿入したデータを使うため保存する
                 count += await context.SaveChangesAsync();
@@ -104,8 +104,8 @@ internal partial class Seeder
                 var pts = context.Patients.ToList();
                 foreach (var pt in pts)
                 {
-                    var location = new Location(0, pt.PtId, "自宅", "000-0000", "北海道札幌市中央区", "(携帯) 090-000-0000", "");
-                    context.Locations.Add(location);
+                    var location = new CustomerLocation(0, pt.PtId, "自宅", "000-0000", "北海道札幌市中央区", "(携帯) 090-000-0000", "");
+                    context.CustomerLocations.Add(location);
                 }
             }
 
@@ -310,7 +310,7 @@ internal partial class Seeder
         ("無量塔",   "ムヤタ"),     // 「むりょうとう」「むやた」など諸説
         ("道祖土",   "サイド"),     // 「どうそど」「さいど」など地域によって異なる
         ("夜神",     "ヤガミ"),
-        ("一尺八寸",   "イッシャクハッスン"),
+        ("一尺八寸",   "カマツカ"),
         ("四十物谷",   "アイモノヤ"),
         ("蕨",         "ワラビ"),
         ("春夏冬",     "アキナイ"), // 「春・夏・冬」があって「秋」がない→「あきない」
@@ -389,6 +389,61 @@ internal partial class Seeder
         ("御厨",       "ミクリヤ"),     // 「みくり」「おくりや」などと誤読されがち
         ("我那覇",     "ガナハ"),       // 沖縄特有の難読苗字
         ("摩文仁",     "マブニ"),       // こちらも沖縄系で「まぶに」
+
+
+        // 1. 一般的によく見るもの
+        ("渡辺",  "ワタナベ"), // U+6E21 U+8FBA
+        ("渡邊",  "ワタナベ"), // U+6E21 U+908A
+        ("渡邉",  "ワタナベ"), // U+6E21 U+9089
+
+        // 2. 簡体字系
+        ("渡边",  "ワタナベ"), // U+6E21 U+8FB9 (中国簡体字)
+
+        // 3. 旧字体・異体など
+        ("渡邊",  "ワタナベ"), // U+6E21 U+908A (重複で書いていますがあえて例示)
+        ("渡邉",  "ワタナベ"), // U+6E21 U+9089 (これも上と同字ですが、フォント差による形状の違いがしばしば)
+
+        // 邉(やや別の異体字)
+        ("渡邉",  "ワタナベ"), // （再掲）U+9089
+        // 邊(旁の中が更に細かく異なるケース)
+        ("渡邊",  "ワタナベ"), // （再掲）U+908A
+
+        // ここから下は「辺」の部分がさらに微妙に異なるとされる字形を想定
+        // (下記コードポイントは実在例を一部引用していますが、完全一致でない可能性も)
+        ("渡\uFA2E", "ワタナベ"), // U+FA2E (CJK互換漢字: 邊 の互換表現)
+        ("渡\uFA2F", "ワタナベ"), // U+FA2F (CJK互換漢字: 邉 の互換表現)
+
+        // ほか、拡張漢字 (Extension B 〜 E 辺り) に類似の字形が多数
+        // 以下は一例：U+273CF, U+273D0, … のように何十種もありますが、
+        // 全部はフォント環境次第で表示可否に差が出るため、一部のみ例示。
+        ("渡\u273CF", "ワタナベ"), // 参考: 𧏏 など (実際に辺の異体かは要確認)
+        ("渡\u273D0", "ワタナベ"), // 参考: 𧏐 など
+        ("渡\u2A097", "ワタナベ"), // 参考: 𪂗 など (こちらは別の部首かもしれませんが例示)
+
+        // 一般によく使われる代表的な4種
+        ("斉藤",  "サイトウ"), // U+6589 + U+85E4
+        ("斊藤",  "サイトウ"), // U+658A「斉」の異体字の一つ
+        ("斋藤",  "サイトウ"), // U+658B 中国の簡体字「斋」(本来は「齋」の簡体字)
+        ("斎藤",  "サイトウ"), // U+658E + U+85E4
+        ("齊藤",  "サイトウ"), // U+9F4A + U+85E4
+        ("齋藤",  "サイトウ"), // U+9F4B + U+85E4
+
+        // 亯（上が「享」に似た形）などと結合したもの
+        ("亯藤",  "サイトウ"), // 本来「亯」に「齒」的な部首が合わさった字形がある
+        // 斉(異字体) 上部の「文」の形が違うもの
+        ("斉\uFE00藤", "サイトウ"), // Variation Selectorで無理やり例示（実際に表示されるか不明）
+        // 斉(異字体) 上部の「ヽ」が別形
+        ("斉\uFE01藤", "サイトウ"),
+
+        // ﹟(U+F9E8)  [CJK 互換漢字] - 「齊」の互換表現
+        //   文字名: CJK COMPATIBILITY IDEOGRAPH-F9E8
+        //   実際には「齊」と同形ですが、別コードポイント。
+        ("\uF9E8藤", "サイトウ"), // 環境によってはうまく表示できないかも
+
+        // 敬 (U+2F8C9) [CJK 互換漢字サプリブロック]
+        //   こちらも「齊」の互換で定義されている補助漢字。
+        ("\U0002F8C9藤", "サイトウ") // これもフォント依存で表示されるかは不明
+
     ];
 
     // 名とフリガナ

@@ -5,17 +5,46 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
         xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:behaviors="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors"
         xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+        xmlns:bhv="http://schemas.aloe/wpf/behaviors"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+        bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="予約(フロア,日別)"
         Width="1920" Height="1080"
         MinWidth="640" MinHeight="480"
         d:Width="640" d:Height="480"
         ResizeMode="CanResizeWithGrip">
+
+    <Window.Resources>
+        <Style TargetType="ui:PackIcon">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="Label">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Margin" Value="1" />
+        </Style>
+        <!--<Style TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+        </Style>-->
+        <!--<Style TargetType="Button">
+            <Setter Property="Margin" Value="0" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalAlignment" Value="Center" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>-->
+    </Window.Resources>
 
     <DockPanel LastChildFill="True">
 
@@ -23,57 +52,90 @@
         <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
         <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+            <!-- ここでTransformで拡大率を設定したい -->
 
-            <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                <Label>フロア1</Label>
-                <Label>予約日</Label>
-                <TextBox
-                    x:Name="CalendarMonthTextBox"
+            <DockPanel Margin="3,0,0,0" LastChildFill="True">
+                <Grid DockPanel.Dock="Left">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+
+                    <Label Grid.Row="0" Grid.Column="0" >Floor</Label>
+                    <WrapPanel Grid.Row="0" Grid.Column="1">
+                        <TextBox
+                            x:Name="CalendarMonthTextBox2"
+                            ToolTip="Floor Code"
+                            bhv:Hint.EnableToolTipMark="True"
+                            IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
+                            Text="{Binding StartMonth.Value}"
+                            MinWidth="20" MaxWidth="40"
+                            PreviewMouseDoubleClick="CalendarMonthTextBox_OnPreviewMouseDoubleClick"/>
+                        <TextBlock>8階</TextBlock>
+                    </WrapPanel>
+
+                    <Label Grid.Row="1" Grid.Column="0" >予約日</Label>
+                    <WrapPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                        <TextBox
+                            x:Name="CalendarMonthTextBox"
+                            bhv:Hint.Watermark="yyyyMMdd"
+                            IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
+                            Text="{Binding StartMonth.Value}"
+                            MinWidth="80"
+                            PreviewMouseDoubleClick="CalendarMonthTextBox_OnPreviewMouseDoubleClick"/>
+                    </WrapPanel>
+
+                    <Viewbox Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Stretch="Uniform" MaxWidth="250">
+                        <Calendar />
+                    </Viewbox>
+
+                    <Label Grid.Row="3" Grid.Column="0">備考</Label>
+                    <WrapPanel Grid.Row="3" Grid.Column="1">
+                        <ui:PackIcon Kind="History" />
+                        <TextBlock> by User</TextBlock>
+                    </WrapPanel>
+                    <TextBox
+                        Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
+                        VerticalAlignment="Stretch"
+                        AcceptsReturn="True"
+                        TextWrapping="Wrap"
+                        VerticalScrollBarVisibility="Visible"
+                    >{備考}</TextBox>
+                </Grid>
+
+
+                <local:ReservationRoomDailyGrid
+                    Grid.Row="0" Grid.Column="1" Grid.RowSpan="5"
+                    x:Name="RoomTabControl"
                     IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
-                    Text="{Binding StartMonth.Value}"
-                    MinWidth="80"
-                    PreviewMouseDoubleClick="CalendarMonthTextBox_OnPreviewMouseDoubleClick"/>
-            </StackPanel>
-            <Viewbox Grid.Row="1" Grid.Column="0"  MaxWidth="150">
-                <Calendar />
-            </Viewbox>
-            <Label Grid.Row="2" Grid.Column="0">備考</Label>
-            <TextBox Grid.Row="3" Grid.Column="0" Text="[備考]" />
-
-            <local:ReservationRoomDailyGrid
-                Grid.Row="0" Grid.Column="1" Grid.RowSpan="4"
-                x:Name="RoomTabControl"
-                IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
-                PreviewMouseWheel="RoomTabControl_OnPreviewMouseWheel"
-                DataContext="{Binding .}"
-            >
-                <local:ReservationRoomDailyGrid.LayoutTransform>
-                    <ScaleTransform
-                        ScaleX="{
+                    PreviewMouseWheel="RoomTabControl_OnPreviewMouseWheel"
+                    DataContext="{Binding .}"
+                >
+                    <local:ReservationRoomDailyGrid.LayoutTransform>
+                        <ScaleTransform
+                            ScaleX="{
                                 Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                                 RelativeSource={RelativeSource AncestorType=Window},
                                 Converter={StaticResource Int32ValueToScaleConverter}}"
-                        ScaleY="{
+                            ScaleY="{
                                 Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                                 RelativeSource={RelativeSource AncestorType=Window},
                                 Converter={StaticResource Int32ValueToScaleConverter}}"
-                    />
-                </local:ReservationRoomDailyGrid.LayoutTransform>
-            </local:ReservationRoomDailyGrid>
+                        />
+                    </local:ReservationRoomDailyGrid.LayoutTransform>
+                </local:ReservationRoomDailyGrid>
 
+            </DockPanel>
 
             <ui:Snackbar
-                Grid.Row="0" Grid.Column="0" Grid.RowSpan="4" Grid.ColumnSpan="2"
+                Grid.Row="1" Grid.Column="0" Grid.RowSpan="4" Grid.ColumnSpan="2"
                 x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 MessageQueue="{Binding SnackbarMessageQueue}"/>
         </Grid>

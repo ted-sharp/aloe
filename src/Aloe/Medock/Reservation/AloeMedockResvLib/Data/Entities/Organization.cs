@@ -20,13 +20,13 @@ public class Organization : AuditableEntityBase<int>
     [Required]
     public int OrgId { get; set; }
 
-    [Column("insur_prov_type_code")]
-    [Required]
-    public int InsurProvTypeCode { get; set; }
-
     [Column("insur_prov_id")]
     [Required]
     public int InsurProvId { get; set; } = 0;
+
+    [Column("insur_prov_type_code")]
+    [Required]
+    public int InsurProvTypeCode { get; set; }
 
     [Column("parent_org_id")]
     [Required]
@@ -34,30 +34,37 @@ public class Organization : AuditableEntityBase<int>
 
     [Column("org_number")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgNumber { get; set; } = String.Empty;
 
     [Column("org_name")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgName { get; set; } = String.Empty;
 
     [Column("org_name_katakana")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgNameKatakana { get; set; } = String.Empty;
 
     [Column("org_name_katakana_normalized")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgNameKatakanaNormalized { get; set; } = String.Empty;
 
     [Column("org_name_display")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgNameDisplay { get; set; } = String.Empty;
 
     [Column("org_name_print")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string OrgNamePrint { get; set; } = String.Empty;
 
     [Column("memo")]
     [Required]
+    [MaxLength(Int32.MaxValue)]
     public string Memo { get; set; } = String.Empty;
 
     public Organization() { }

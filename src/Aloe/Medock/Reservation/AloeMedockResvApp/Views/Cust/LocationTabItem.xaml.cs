@@ -56,7 +56,7 @@ public partial class LocationTabItem : UserControl
     /// <summary>
     /// 親要素から DataContext が設定されたときに追加で関連付けます。
     /// </summary>
-    private void ContactTabItem_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private void LocationTabItem_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
         //this._vm = this.DataContext as ReservationRoomTabItemViewModel;
         //if (this._vm != null)

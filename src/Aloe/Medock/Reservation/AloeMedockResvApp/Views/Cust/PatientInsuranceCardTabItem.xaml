@@ -42,10 +42,9 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" MinWidth="72" MaxWidth="120" />
-            <ColumnDefinition Width="Auto" MinWidth="72" MaxWidth="120" />
-            <ColumnDefinition Width="Auto" MinWidth="24" MaxWidth="40" />
-            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" MinWidth="72" MaxWidth="120" />
+            <ColumnDefinition Width="*" MinWidth="72" MaxWidth="120" />
+            <ColumnDefinition Width="*" MinWidth="24" MaxWidth="40" />
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
@@ -98,13 +97,13 @@
             <Label>被保険者名</Label>
             <ui:PackIcon Kind="AccountTie"/>
         </StackPanel>
-        <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="3">被保険者名</TextBox>
+        <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="5">被保険者名</TextBox>
 
         <StackPanel Grid.Row="6" Grid.Column="0">
             <Label>本人家族区分</Label>
             <ui:PackIcon Kind="FamilyTree"/>
         </StackPanel>
-        <WrapPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3">
+        <WrapPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="5">
             <RadioButton>なし</RadioButton>
             <RadioButton>本人</RadioButton>
             <RadioButton>家族</RadioButton>
@@ -114,7 +113,7 @@
             <Label>支援区分</Label>
             <ui:PackIcon Kind="CurrencyJpy"/>
         </StackPanel>
-        <WrapPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="3">
+        <WrapPanel Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="5">
             <RadioButton>なし</RadioButton>
             <RadioButton>国保0割</RadioButton>
             <RadioButton>船員1割</RadioButton>
@@ -124,7 +123,7 @@
             <Label>継続区分</Label>
             <ui:PackIcon Kind="Update"/>
         </StackPanel>
-        <WrapPanel Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="4">
+        <WrapPanel Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5">
             <RadioButton>なし</RadioButton>
             <RadioButton>継続療養</RadioButton>
             <RadioButton>任意継続</RadioButton>
@@ -134,7 +133,7 @@
             <Label>有効期間</Label>
             <ui:PackIcon Kind="CalendarRange"/>
         </StackPanel>
-        <WrapPanel Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="4">
+        <WrapPanel Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="5">
             <DatePicker></DatePicker>
             <Label>～</Label>
             <DatePicker></DatePicker>
@@ -144,7 +143,7 @@
             <Label>メモ</Label>
             <ui:PackIcon Kind="NoteTextOutline"/>
         </StackPanel>
-        <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="4"
+        <TextBox Grid.Row="10" Grid.Column="1" Grid.ColumnSpan="5"
                  VerticalAlignment="Stretch"
                  AcceptsReturn="True"
                  TextWrapping="Wrap"

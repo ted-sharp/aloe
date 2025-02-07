@@ -16,6 +16,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 /// <summary>

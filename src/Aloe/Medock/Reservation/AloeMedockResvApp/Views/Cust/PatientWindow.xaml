@@ -5,12 +5,12 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
         xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:behaviors="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Behaviors"
         xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+        xmlns:bhv="http://schemas.aloe/wpf/behaviors"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        behaviors:KeyInputBehavior.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+        bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="個人"
         Width="1920" Height="1080"
         MinWidth="640" MinHeight="480"
@@ -54,25 +54,33 @@
         <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label>個人No.</Label>
+            <Label>個人 No.</Label>
+            <TextBox
+                MinWidth="80" />
+            <Label>カルテNo.</Label>
             <TextBox Text="{Binding StartDate.Value}" MinWidth="80" />
-            <Label>カルテ No.</Label>
-            <TextBox Text="{Binding StartDate.Value}" MinWidth="80" />
+            <Button>
+                呼出
+            </Button>
+            <Button>
+                クリア
+            </Button>
             <ui:PackIcon Kind="History" />
-            <Label>最終更新日: yyyy/MM/dd HH:mm:ss by User</Label>
+            <TextBlock Text="{Binding LastUpdateText.Value}" />
             <ui:PackIcon Kind="Key" />
-            <Label>ロック中: yyyy/MM/dd HH:mm:ss by User</Label>
+            <TextBlock Text="{Binding LockText.Value}" />
         </StackPanel>
 
         <Grid>
             <!-- ここでTransformで拡大率を設定したい -->
 
             <Grid>
-                <!-- 大まかに三分割する。(個人情報、マークやノート、保険情報) -->
+                <!-- 大まかに三分割する。(個人情報、マークやノート、過去の受診歴など) -->
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="5" />
                     <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="5" />
                     <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
 

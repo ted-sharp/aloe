@@ -102,10 +102,9 @@ internal static class HostExtensions
         builder.Services.AddTransient<ReservationEquipBookingWindow>();
         builder.Services.AddTransient<ReservationDailyWindow>();
         builder.Services.AddTransient<ReservationDailyBookingWindow>();
-        //builder.Services.AddTransient<OrganizationWindow>();
-        //builder.Services.AddTransient<PatientWindow>();
         builder.Services.AddTransient<OrganizationPatientSearchWindow>();
         builder.Services.AddTransient<OrganizationWindow>();
+        builder.Services.AddTransient<PatientWindow>();
         builder.Services.AddTransient<MaintenanceWindow>();
 
         return builder;

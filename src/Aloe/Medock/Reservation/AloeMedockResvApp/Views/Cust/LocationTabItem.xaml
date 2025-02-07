@@ -10,7 +10,7 @@
              d:Background="PaleGreen"
              d:DesignHeight="220" d:DesignWidth="400"
              MinHeight="180" MinWidth="400"
-             DataContextChanged="ContactTabItem_OnDataContextChanged">
+             DataContextChanged="LocationTabItem_OnDataContextChanged">
 
     <UserControl.Resources>
         <Style TargetType="ui:PackIcon">

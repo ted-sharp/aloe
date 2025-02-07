@@ -92,7 +92,17 @@
       }
     },
 
-    "Svr + App": {
+    "App(Standalone login Pt)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone -uadmin -padmin --screen=10 ",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+            "Svr + App": {
       "Projects": {
         "AloeMedockResvServer": {},
         "AloeMedockResvApp": {
