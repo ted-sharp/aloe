@@ -57,6 +57,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Views\Cust\OrganizationBar.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
     <Page Update="Views\Cust\PatientInsuranceCardTabItem.xaml">
       <SubType>Designer</SubType>
     </Page>

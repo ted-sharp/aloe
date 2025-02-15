@@ -49,9 +49,9 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string BkgRemarkText { get; set; } = String.Empty;
 
-    [Column("is_held")]
+    [Column("is_tentative")]
     [Required]
-    public bool IsHeld { get; set; } = false;
+    public bool IsTentative { get; set; } = false;
 
     [Column("org_id")]
     [Required]
@@ -71,13 +71,13 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
 
     public ReservationEquipmentBooking() { }
 
-    public ReservationEquipmentBooking(int equipId, DateTime bkgDate, string slot, string symbol, string remark, bool isHeld)
+    public ReservationEquipmentBooking(int equipId, DateTime bkgDate, string slot, string symbol, string remark, bool isTentative)
     {
         this.EquipId = equipId;
         this.BkgDate = bkgDate;
         this.Slot = slot;
         this.BkgSymbolText = symbol;
         this.BkgRemarkText = remark;
-        this.IsHeld = isHeld;
+        this.IsTentative = isTentative;
     }
 }

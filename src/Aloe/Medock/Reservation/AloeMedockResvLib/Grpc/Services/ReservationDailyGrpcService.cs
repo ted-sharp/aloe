@@ -119,7 +119,7 @@ public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcServ
                 BkgDate = x.BkgDate,
                 BkgSymbolText = x.BkgSymbolText,
                 BkgRemarkText = x.BkgRemarkText,
-                IsHeld = x.IsHeld,
+                IsHeld = x.IsTentative,
                 OrgId = x.OrgId,
                 ResvCount = x.ResvCount,
                 PtId = x.PtId,

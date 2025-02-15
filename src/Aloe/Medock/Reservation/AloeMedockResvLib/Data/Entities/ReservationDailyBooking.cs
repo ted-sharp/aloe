@@ -57,9 +57,9 @@ public class ReservationDailyBooking : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]  // TEXT型に対応
     public string BkgRemarkText { get; set; } = String.Empty;
 
-    [Column("is_held")]
+    [Column("is_tentative")]
     [Required]
-    public bool IsHeld { get; set; } = false;
+    public bool IsTentative { get; set; } = false;
 
     [Column("org_id")]
     [Required]

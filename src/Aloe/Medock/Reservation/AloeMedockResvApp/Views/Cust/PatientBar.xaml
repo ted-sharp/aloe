@@ -1,0 +1,84 @@
+﻿<UserControl x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust.PatientBar"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
+             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             mc:Ignorable="d"
+             d:Background="PaleGreen"
+             d:DesignHeight="80"
+             d:DesignWidth="800">
+
+    <UserControl.Resources>
+        <Style TargetType="StackPanel">
+            <Setter Property="Orientation" Value="Horizontal" />
+        </Style>
+        <Style TargetType="ToggleButton">
+            <Setter Property="Margin" Value="3,0,3,1" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="3,0,3,1" />
+            <Setter Property="Padding" Value="0" />
+        </Style>
+    </UserControl.Resources>
+
+
+    <DockPanel>
+        <Grid DockPanel.Dock="Right">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <materialDesign:PackIcon Grid.Row="0" Grid.Column="0" Kind="History" />
+            <TextBlock Grid.Row="0" Grid.Column="1">yyyy/MM/dd HH:mm:ss by user</TextBlock>
+            <materialDesign:PackIcon Grid.Row="1" Grid.Column="0" Kind="Key" />
+            <TextBlock Grid.Row="1" Grid.Column="1">yyyy/MM/dd HH:mm:ss by user</TextBlock>
+        </Grid>
+
+        <Grid DockPanel.Dock="Left">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Grid.Column="0">個人 No.</TextBlock>
+            <TextBox  Grid.Row="0" Grid.Column="1" MinWidth="80" />
+            <TextBlock Grid.Row="0" Grid.Column="2">カルテNo.</TextBlock>
+            <TextBox  Grid.Row="0" Grid.Column="3" MinWidth="80" />
+
+            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4">{FullName}</TextBlock>
+
+            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7">
+                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4">{Address}</TextBlock>
+                <TextBlock>TEL/Mail</TextBlock>
+            </StackPanel>
+
+            <TextBlock Grid.Row="0" Grid.Column="4">男/女</TextBlock>
+            <StackPanel Grid.Row="0" Grid.Column="5" Grid.RowSpan="3">
+                <TextBlock>yyyy/MM/dd (元号 R6)</TextBlock>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Grid.Column="5" Grid.RowSpan="3">
+                <TextBlock>満 999 才(年度内年齢 999 才)</TextBlock>
+            </StackPanel>
+        </Grid>
+    </DockPanel>
+</UserControl>

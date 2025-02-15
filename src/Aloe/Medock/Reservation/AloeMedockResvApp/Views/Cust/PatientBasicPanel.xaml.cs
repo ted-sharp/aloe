@@ -13,14 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-/// <summary>
-/// FunctionBar.xaml の相互作用ロジック
-/// </summary>
-public partial class FunctionBar : UserControl
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust
 {
-    public FunctionBar()
+    /// <summary>
+    /// PatientBasicPanel.xaml の相互作用ロジック
+    /// </summary>
+    public partial class PatientBasicPanel : UserControl
     {
-        this.InitializeComponent();
+        public PatientBasicPanel()
+        {
+            InitializeComponent();
+        }
     }
 }

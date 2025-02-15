@@ -13,14 +13,16 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-/// <summary>
-/// InformationBar.xaml の相互作用ロジック
-/// </summary>
-public partial class InformationBar : UserControl
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust
 {
-    public InformationBar()
+    /// <summary>
+    /// PatientBar.xaml の相互作用ロジック
+    /// </summary>
+    public partial class PatientBar : UserControl
     {
-        this.InitializeComponent();
+        public PatientBar()
+        {
+            InitializeComponent();
+        }
     }
 }

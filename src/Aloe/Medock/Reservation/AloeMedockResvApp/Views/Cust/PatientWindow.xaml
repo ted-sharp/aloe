@@ -53,258 +53,59 @@
         <views:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
         <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label>個人 No.</Label>
-            <TextBox
-                MinWidth="80" />
-            <Label>カルテNo.</Label>
-            <TextBox Text="{Binding StartDate.Value}" MinWidth="80" />
-            <Button>
-                呼出
-            </Button>
-            <Button>
-                クリア
-            </Button>
-            <ui:PackIcon Kind="History" />
-            <TextBlock Text="{Binding LastUpdateText.Value}" />
-            <ui:PackIcon Kind="Key" />
-            <TextBlock Text="{Binding LockText.Value}" />
-        </StackPanel>
+
+        <Border
+                DockPanel.Dock="Top"
+                BorderThickness="1"
+                BorderBrush="Black"
+                CornerRadius="3"
+                Padding="3"
+                Margin="3"
+            >
+            <local:PatientBar />
+
+        </Border>
+
 
         <Grid>
             <!-- ここでTransformで拡大率を設定したい -->
 
             <Grid>
-                <!-- 大まかに三分割する。(個人情報、マークやノート、過去の受診歴など) -->
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="5" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="5" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
 
-                <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <!-- 個人基本情報 -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-                        <Label Grid.Row="0" Grid.Column="0">Sys. ID</Label>
-                        <TextBox Grid.Row="0" Grid.Column="1">12345678901234567890</TextBox>
+                <TabControl>
+                    <TabItem Header="患者基本情報">
+                        <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <local:PatientBasicPanel />
+                        </ScrollViewer>
+                    </TabItem>
 
-                        <Label Grid.Row="1" Grid.Column="0">個人 No.</Label>
-                        <TextBox Grid.Row="1" Grid.Column="1">12345678901234567890</TextBox>
+                    <TabItem Header="やりとり">
 
-                        <Label Grid.Row="1" Grid.Column="2">カルテ No.</Label>
-                        <TextBox Grid.Row="1" Grid.Column="3">12345678901234567890</TextBox>
+                    </TabItem>
 
-                        <Label Grid.Row="2" Grid.Column="0">カナ</Label>
-                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    <TabItem Header="ファイル">
 
-                        <Label Grid.Row="3" Grid.Column="0">氏名</Label>
-                        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    </TabItem>
 
-                        <!--以前の氏名はオンオフあり-->
-                        <Label Grid.Row="4" Grid.Column="0">以前の氏名</Label>
-                        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    <TabItem Header="オーダー">
 
-                        <!--優先名はオンオフあり-->
-                        <Label Grid.Row="5" Grid.Column="0">別名</Label>
-                        <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    </TabItem>
 
-                        <Label Grid.Row="6" Grid.Column="0">生年月日</Label>
-                        <StackPanel Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="4" Orientation="Horizontal">
-                            <DatePicker />
-                            <Label>(元号 R6.12.31)</Label>
-                            <Label>満年齢 999 才</Label>
-                            <Label>(年度内年齢 999 才)</Label>
-                        </StackPanel>
+                    <TabItem Header="受付">
 
-                        <Label Grid.Row="7" Grid.Column="0">性別</Label>
-                        <ComboBox Grid.Row="7" Grid.Column="1" />
+                    </TabItem>
 
-                        <StackPanel Grid.Row="8" Grid.Column="0" VerticalAlignment="Top" Orientation="Horizontal" HorizontalAlignment="Right">
-                            <Label>メモ</Label>
-                            <ui:PackIcon Kind="NoteTextOutline"/>
-                        </StackPanel>
-                        <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5"
-                                 VerticalAlignment="Stretch"
-                                 AcceptsReturn="True"
-                                 TextWrapping="Wrap"
-                                 VerticalScrollBarVisibility="Visible"
-                        >{メモ}</TextBox>
+                    <TabItem Header="予約">
 
-                        <!-- 住所 -->
-                        <TabControl Grid.Row="9" Grid.Column="0" Grid.ColumnSpan="5">
-                            <!-- TabItem ヘッダー部分 -->
-                            <TabControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding LocName}" />
-                                </DataTemplate>
-                            </TabControl.ItemTemplate>
+                    </TabItem>
 
-                            <!-- TabItem 中身 -->
-                            <TabControl.ContentTemplate>
-                                <DataTemplate>
-                                    <local:LocationTabItem DataContext="{Binding .}" />
-                                </DataTemplate>
-                            </TabControl.ContentTemplate>
+                </TabControl>
 
-                            <!-- サンプル -->
-                            <TabItem Header="Sample" />
-                            <TabItem Header="Sample2" />
-                            <TabItem Header="Sample3" />
-                        </TabControl>
-
-
-                        <!-- 保険証 -->
-                        <TabControl Grid.Row="10" Grid.Column="0" Grid.ColumnSpan="5">
-                            <!-- TabItem ヘッダー部分 -->
-                            <TabControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding LocName}" />
-                                </DataTemplate>
-                            </TabControl.ItemTemplate>
-
-                            <!-- TabItem 中身 -->
-                            <TabControl.ContentTemplate>
-                                <DataTemplate>
-                                    <local:PatientInsuranceCardTabItem DataContext="{Binding .}" />
-                                </DataTemplate>
-                            </TabControl.ContentTemplate>
-
-                            <!-- サンプル -->
-                            <TabItem Header="Sample" />
-                            <TabItem Header="Sample2" />
-                            <TabItem Header="Sample3" />
-                        </TabControl>
-                    </Grid>
-                </ScrollViewer>
-
-                <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="1" />
-
-                <!-- マークやノート -->
-                <Grid Grid.Row="0" Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="5" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <Label Grid.Row="0">マーク</Label>
-
-                    <DataGrid
-                        Grid.Row="1"
-                        x:Name="MarkDataGrid"
-                        AutoGenerateColumns="False"
-                        AlternatingRowBackground="GhostWhite"
-
-                        CanUserAddRows="False"
-                        CanUserDeleteRows="False"
-                        CanUserResizeRows="False"
-                        CanUserResizeColumns="False"
-                        CanUserSortColumns="False"
-
-                        EnableRowVirtualization="True"
-                        EnableColumnVirtualization="True"
-                        VirtualizingPanel.IsVirtualizing="True"
-                        VirtualizingPanel.VirtualizationMode="Recycling"
-                        VirtualizingPanel.ScrollUnit="Pixel"
-                        ScrollViewer.CanContentScroll="True"
-                        ScrollViewer.IsDeferredScrollingEnabled="False"
-
-                        HorizontalScrollBarVisibility="Visible"
-                        VerticalScrollBarVisibility="Visible"
-
-                        HeadersVisibility="All"
-                        RowHeaderWidth="48"
-                        MinRowHeight="24"
-                        RowHeight="24"
-
-                        ColumnHeaderHeight="24"
-                        MaxColumnWidth="160"
-                        MinColumnWidth="160"
-                        ColumnWidth="160"
-
-
-
-                        Effect="{x:Null}"
-
-                        SelectionUnit="Cell"
-                        SelectionMode="Extended">
-
-                    </DataGrid>
-
-                    <GridSplitter Grid.Row="2" />
-
-
-                    <Label Grid.Row="3">ノート</Label>
-
-                    <DataGrid
-                        Grid.Row="4"
-                        x:Name="NoteDataGrid"
-                        AutoGenerateColumns="False"
-                        AlternatingRowBackground="GhostWhite"
-
-                        CanUserAddRows="False"
-                        CanUserDeleteRows="False"
-                        CanUserResizeRows="False"
-                        CanUserResizeColumns="False"
-                        CanUserSortColumns="False"
-
-                        EnableRowVirtualization="True"
-                        EnableColumnVirtualization="True"
-                        VirtualizingPanel.IsVirtualizing="True"
-                        VirtualizingPanel.VirtualizationMode="Recycling"
-                        VirtualizingPanel.ScrollUnit="Pixel"
-                        ScrollViewer.CanContentScroll="True"
-                        ScrollViewer.IsDeferredScrollingEnabled="False"
-
-                        HorizontalScrollBarVisibility="Visible"
-                        VerticalScrollBarVisibility="Visible"
-
-                        HeadersVisibility="All"
-                        RowHeaderWidth="48"
-                        MinRowHeight="24"
-                        RowHeight="24"
-
-                        ColumnHeaderHeight="24"
-                        MaxColumnWidth="160"
-                        MinColumnWidth="160"
-                        ColumnWidth="160"
-
-
-
-                        Effect="{x:Null}"
-
-                        SelectionUnit="Cell"
-                        SelectionMode="Extended">
-
-                    </DataGrid>
-                </Grid>
             </Grid>
 
 

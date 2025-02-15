@@ -103,7 +103,7 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
                 BkgDate = x.BkgDate,
                 BkgSymbolText = x.BkgSymbolText,
                 BkgRemarkText = x.BkgRemarkText,
-                IsHeld = x.IsHeld,
+                IsHeld = x.IsTentative,
                 OrgId = x.OrgId,
                 PtId = x.PtId,
                 OrderId = x.OrderId,

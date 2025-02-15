@@ -89,7 +89,7 @@
 
         <StackPanel Grid.Row="4" Grid.Column="0">
             <Label>移行用 記号・番号・枝番</Label>
-            <ui:PackIcon Kind="NetworkOutline"/>
+            <ui:PackIcon Kind="Import"/>
         </StackPanel>
         <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3">12345678 12345678 00</TextBox>
 
