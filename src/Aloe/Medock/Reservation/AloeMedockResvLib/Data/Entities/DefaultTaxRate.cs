@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -41,13 +42,13 @@ public class DefaultTaxRate : AuditableEntityBase<int>
     [Required]
     public int RoundingScopeCode { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
+    [Column("end_date", TypeName = "Date")]
     [Required]
-    public DateTime EndDate { get; set; }
+    public DateOnly EndDate { get; set; }
 
     [Column("memo")]
     [Required]

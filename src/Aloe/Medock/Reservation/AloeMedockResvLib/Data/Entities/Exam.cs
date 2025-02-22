@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -47,17 +48,16 @@ public class Exam
     [Required]
     public bool IsActive { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; }
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     public Exam() { }
 
-    public Exam(int catId, string code, string name, string shortName, string abbrName, string desc, bool isActive, DateTime startDate, DateTime endDate)
+    public Exam(int catId, string code, string name, string shortName, string abbrName, string desc, bool isActive)
     {
         this.ExamCatId = catId;
         this.ExamCode = code;
@@ -66,7 +66,5 @@ public class Exam
         this.ExamAbbrName = abbrName;
         this.ExamDesc = desc;
         this.IsActive = isActive;
-        this.StartDate = startDate;
-        this.EndDate = endDate;
     }
 }

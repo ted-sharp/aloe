@@ -58,9 +58,9 @@ public class Patient : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string FormerFullName { get; set; } = String.Empty;
 
-    [Column("birth_date")]
+    [Column("birth_date", TypeName = "Date")]
     [Required]
-    public DateTime BirthDate { get; set; } = DateTime.MinValue.Date;
+    public DateOnly BirthDate { get; set; } = DateOnly.MinValue;
 
     [Column("sex_code")]
     [Required]
@@ -73,7 +73,7 @@ public class Patient : AuditableEntityBase<int>
 
     public Patient() { }
 
-    public Patient(string karteNumber, string fullName, string katakana, DateTime birthDate, int sexCode)
+    public Patient(string karteNumber, string fullName, string katakana, DateOnly birthDate, int sexCode)
     {
         this.KarteNumber = karteNumber;
         this.FullName = fullName;

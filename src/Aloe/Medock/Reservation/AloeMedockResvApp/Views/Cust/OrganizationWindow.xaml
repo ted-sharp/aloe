@@ -12,9 +12,9 @@
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
         bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="団体"
-        Width="1920" Height="1080"
+        Width="640" Height="1080"
         MinWidth="640" MinHeight="480"
-        d:Width="1440" d:Height="1080"
+        d:Width="640" d:Height="1080"
         ResizeMode="CanResizeWithGrip">
 
     <Window.Resources>
@@ -53,221 +53,63 @@
         <views:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
         <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
-        <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
-            <Label>団体 No.</Label>
-            <TextBox Text="{Binding StartDate.Value}" MinWidth="80" />
-        </StackPanel>
+
+        <Border
+            DockPanel.Dock="Top"
+            BorderThickness="1"
+            BorderBrush="Black"
+            CornerRadius="3"
+            Padding="3"
+            Margin="3"
+        >
+            <local:OrganizationBar />
+        </Border>
 
         <Grid>
             <!-- ここでTransformで拡大率を設定したい -->
 
+
             <Grid>
-                <!-- 大まかに三分割する。(団体情報、マークやノート、契約情報) -->
-                <!-- TODO: 子団体、メンバーなどの情報も表示できたらよいかも -->
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="5" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
+
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="5"/>
+                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <ScrollViewer Grid.Row="0" Grid.Column="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
-                    <!-- 団体基本情報 -->
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
-                            <ColumnDefinition Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="*" />
-                        </Grid.RowDefinitions>
+                <TabControl>
+                    <TabItem Header="患者基本情報">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                            <local:OrganizationBasicPanel />
+                        </ScrollViewer>
+                    </TabItem>
 
-                        <Label Grid.Row="0" Grid.Column="0">Sys. ID</Label>
-                        <TextBox Grid.Row="0" Grid.Column="1">12345678901234567890</TextBox>
+                    <TabItem Header="やりとり">
 
-                        <Label Grid.Row="0" Grid.Column="2">保険者</Label>
-                        <TextBox Grid.Row="0" Grid.Column="3">12345678901234567890</TextBox>
-                        <Button Grid.Row="0" Grid.Column="4" HorizontalAlignment="Left">
-                            <ui:PackIcon Kind="DotsHorizontal"/>
-                        </Button>
+                    </TabItem>
 
-                        <Label Grid.Row="1" Grid.Column="0">団体 No.</Label>
-                        <TextBox Grid.Row="1" Grid.Column="1">12345678901234567890</TextBox>
+                    <TabItem Header="ファイル">
 
-                        <Label Grid.Row="1" Grid.Column="2">親団体 No.</Label>
-                        <TextBox Grid.Row="1" Grid.Column="3">12345678901234567890</TextBox>
-                        <Button Grid.Row="1" Grid.Column="3" HorizontalAlignment="Right">
-                            <ui:PackIcon Kind="CloseCircle"/>
-                        </Button>
-                        <Button Grid.Row="1" Grid.Column="4" HorizontalAlignment="Left">
-                            <ui:PackIcon Kind="DotsHorizontal"/>
-                        </Button>
+                    </TabItem>
 
-                        <Label Grid.Row="2" Grid.Column="0">カナ</Label>
-                        <TextBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    <TabItem Header="オーダー">
 
-                        <Label Grid.Row="3" Grid.Column="0">名称</Label>
-                        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="4">12345678901234567890</TextBox>
+                    </TabItem>
 
-                        <Label Grid.Row="4" Grid.Column="0">表示名</Label>
-                        <TextBox Grid.Row="4" Grid.Column="1">12345678901234567890</TextBox>
+                    <TabItem Header="契約">
 
-                        <Label Grid.Row="4" Grid.Column="2">印字名</Label>
-                        <TextBox Grid.Row="4" Grid.Column="3">12345678901234567890</TextBox>
+                    </TabItem>
 
-                        <!-- 住所 -->
-                        <TabControl Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="5" Margin="3">
-                            <!-- TabItem ヘッダー部分 -->
-                            <TabControl.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding LocName}" />
-                                </DataTemplate>
-                            </TabControl.ItemTemplate>
+                    <TabItem Header="子団体">
 
-                            <!-- TabItem 中身 -->
-                            <TabControl.ContentTemplate>
-                                <DataTemplate>
-                                    <local:LocationTabItem DataContext="{Binding .}" />
-                                </DataTemplate>
-                            </TabControl.ContentTemplate>
+                    </TabItem>
 
-                            <!-- サンプル -->
-                            <TabItem Header="Sample" />
-                            <TabItem Header="Sample2" />
-                            <TabItem Header="Sample3" />
-                        </TabControl>
-                    </Grid>
-                </ScrollViewer>
+                    <TabItem Header="所属員">
 
-                <GridSplitter Grid.Row="0" Grid.Column="1" Grid.RowSpan="1" />
+                    </TabItem>
 
-                <!-- マークやノート -->
-                <Grid Grid.Row="0" Grid.Column="2">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                        <RowDefinition Height="5" />
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
+                </TabControl>
 
-                    <WrapPanel Grid.Row="0">
-                        <Label>マーク</Label>
-                    </WrapPanel>
-
-                    <DataGrid
-                        Grid.Row="1"
-                        x:Name="MarkDataGrid"
-                        AutoGenerateColumns="False"
-                        AlternatingRowBackground="GhostWhite"
-
-                        CanUserAddRows="False"
-                        CanUserDeleteRows="False"
-                        CanUserResizeRows="False"
-                        CanUserResizeColumns="False"
-                        CanUserSortColumns="False"
-
-                        EnableRowVirtualization="True"
-                        EnableColumnVirtualization="True"
-                        VirtualizingPanel.IsVirtualizing="True"
-                        VirtualizingPanel.VirtualizationMode="Recycling"
-                        VirtualizingPanel.ScrollUnit="Pixel"
-                        ScrollViewer.CanContentScroll="True"
-                        ScrollViewer.IsDeferredScrollingEnabled="False"
-
-                        HorizontalScrollBarVisibility="Visible"
-                        VerticalScrollBarVisibility="Visible"
-
-                        HeadersVisibility="All"
-                        RowHeaderWidth="48"
-                        MinRowHeight="24"
-                        RowHeight="24"
-
-                        ColumnHeaderHeight="24"
-                        MaxColumnWidth="160"
-                        MinColumnWidth="160"
-                        ColumnWidth="160"
-
-
-
-                        Effect="{x:Null}"
-
-                        SelectionUnit="Cell"
-                        SelectionMode="Extended">
-
-                    </DataGrid>
-
-                    <GridSplitter Grid.Row="2" />
-
-                    <WrapPanel Grid.Row="3">
-                        <Label>ノート</Label>
-                    </WrapPanel>
-
-                    <DataGrid
-                        Grid.Row="4"
-                        x:Name="NoteDataGrid"
-                        AutoGenerateColumns="False"
-                        AlternatingRowBackground="GhostWhite"
-
-                        CanUserAddRows="False"
-                        CanUserDeleteRows="False"
-                        CanUserResizeRows="False"
-                        CanUserResizeColumns="False"
-                        CanUserSortColumns="False"
-
-                        EnableRowVirtualization="True"
-                        EnableColumnVirtualization="True"
-                        VirtualizingPanel.IsVirtualizing="True"
-                        VirtualizingPanel.VirtualizationMode="Recycling"
-                        VirtualizingPanel.ScrollUnit="Pixel"
-                        ScrollViewer.CanContentScroll="True"
-                        ScrollViewer.IsDeferredScrollingEnabled="False"
-
-                        HorizontalScrollBarVisibility="Visible"
-                        VerticalScrollBarVisibility="Visible"
-
-                        HeadersVisibility="All"
-                        RowHeaderWidth="48"
-                        MinRowHeight="24"
-                        RowHeight="24"
-
-                        ColumnHeaderHeight="24"
-                        MaxColumnWidth="160"
-                        MinColumnWidth="160"
-                        ColumnWidth="160"
-
-
-
-                        Effect="{x:Null}"
-
-                        SelectionUnit="Cell"
-                        SelectionMode="Extended">
-
-                    </DataGrid>
-                </Grid>
-
-                <GridSplitter Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4" />
-
-                <!-- 契約譲歩 -->
-                <Grid Grid.Row="2" Grid.Column="0">
-                    <!-- TODO: 契約、プラン、オプション、価格、按分割合、上限、割引など -->
-                </Grid>
             </Grid>
-
-
 
             <ui:Snackbar x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"
                          MessageQueue="{Binding SnackbarMessageQueue}"/>

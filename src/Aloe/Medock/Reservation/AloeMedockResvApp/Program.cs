@@ -49,6 +49,13 @@ public class Arguments
     [Option("sql", HelpText = "Enable SQL Logging in standalone mode.")]
     public bool IsStandaloneSqlLogging { get; set; }
 
+    /// <summary>
+    /// 例外が発生したときにTraceレベルでログ出力します。
+    /// 内部で握りつぶしている場合や、例外を制御に使っている場合でも捕捉します。
+    /// </summary>
+    [Option("firstchance", HelpText = "Enable Exception Logging at FirstChanceExceptionEvent.")]
+    public bool IsFirstChanceExceptionLogging { get; set; }
+
     [Option('u', "user", HelpText = "Login User")]
     public string User { get; set; } = "";
 

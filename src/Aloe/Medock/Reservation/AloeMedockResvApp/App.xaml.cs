@@ -92,6 +92,24 @@ public partial class App : Application
         }
     }
 
+    private void LogFirstChanceException(Exception ex)
+    {
+        if (!this._arguments.IsFirstChanceExceptionLogging)
+        {
+            return;
+        }
+
+        var message = "FirstChanceException: " + ex.Message;
+        if (this._logger is not null)
+        {
+            this._logger.LogTrace(message);
+        }
+        else
+        {
+            Debug.WriteLine(message);
+        }
+    }
+
     #endregion ILogger
 
     protected override async void OnStartup(StartupEventArgs e)
@@ -135,6 +153,7 @@ public partial class App : Application
                         var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
                         // standalone の場合はDBホスト名を使う
                         App.HostName = await auth.GetHostAsync();
+                        App.DatabaseName = await auth.GetDatabaseAsync();
 
                         await this.InitializeDatabaseAsync();
                     }
@@ -272,6 +291,7 @@ public partial class App : Application
             Window window = this._arguments.ScreenCode switch
             {
                 ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipMonthlyWindow>(),
+                ScreenCode.ReservationDaily => sp.GetRequiredService<ReservationDailyWindow>(),
                 ScreenCode.OrganizationPatientSearch => sp.GetRequiredService<OrganizationPatientSearchWindow>(),
                 ScreenCode.Organization => sp.GetRequiredService<OrganizationWindow>(),
                 ScreenCode.Patient => sp.GetRequiredService<PatientWindow>(),
@@ -366,7 +386,7 @@ public partial class App : Application
 
     protected override void OnExit(ExitEventArgs e)
     {
-        // ログアウト処理
+        // デッドロックを回避しつつ同期的に待つ
         Task.Run(Task? () => App.TryLogoutAsync())
             .GetAwaiter()
             .GetResult();
@@ -379,7 +399,7 @@ public partial class App : Application
 
         Serilog.Log.CloseAndFlush();
 
-        // キャンセルされないように念の為閉じる
+        // 終了がキャンセルされないように念の為閉じる
         this._loginWindow?.ForceClose();
         this._logWindow?.ForceClose();
 

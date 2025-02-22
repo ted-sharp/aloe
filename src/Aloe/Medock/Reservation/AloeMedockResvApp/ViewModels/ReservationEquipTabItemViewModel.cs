@@ -29,6 +29,7 @@ using System.DirectoryServices.ActiveDirectory;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using System.Collections.Concurrent;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -45,7 +46,7 @@ public record BookingData2(List<RecyclingBookingRow> Rows, List<ReservationEquip
 public record BookingRow(
     string Slot,
     string SlotDisplay,
-    Dictionary<DateTime, BookingCell> DateCells);
+    Dictionary<DateOnly, BookingCell> DateCells);
 
 /// <summary>
 /// DataGrid に表示するためのセルデータです。
@@ -79,6 +80,11 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
     public required string EquipName { get; init; } = String.Empty;
 
     /// <summary>
+    /// 祝日のデータです。
+    /// </summary>
+    public Dictionary<DateOnly, HolidayDto> Holidays { get; set; } = [];
+
+    /// <summary>
     /// 対象年月設備毎の予約データです。
     /// </summary>
     public List<BookingRow> Rows { get; set; } = [];
@@ -92,7 +98,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
     /// <summary>
     /// 画面側の更新メソッドを登録します。
     /// </summary>
-    public Func<DateTime /* monthEndDate */, int /* equipId */, Task>? RefreshFuncAsync { get; set; }
+    public Func<DateOnly /* monthEndDate */, int /* equipId */, Task>? RefreshFuncAsync { get; set; }
 
     private readonly ReservationEquipmentCacheService _cache;
     private readonly ILogger _logger;
@@ -108,7 +114,21 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
         this._cache = cache;
     }
 
-    public async Task LoadAsync(DateTime monthEndDate, int equipId)
+    public async Task LoadHolidaysAsync(DateOnly monthEndDate)
+    {
+        var year = monthEndDate.Year;
+        var month = monthEndDate.Month;
+
+        // キャッシュがあるなら使う
+        var holidays = await this._cache.GetOrFetchHolidays(year, month);
+        if (holidays is not null && holidays is { Count: > 0 })
+        {
+            this.Holidays = holidays.ToDictionary(x => x.HolidayDate);
+            return;
+        }
+    }
+
+    public async Task LoadAsync(DateOnly monthEndDate, int equipId)
     {
         var year = monthEndDate.Year;
         var month = monthEndDate.Month;
@@ -134,7 +154,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
 
             for (var day = 1; day <= monthEndDate.Day; day++)
             {
-                var date = new DateTime(year, month, day);
+                var date = new DateOnly(year, month, day);
                 var booking = monthBookings.Find(x => x.BkgDate == date && x.Slot == slot && x.EquipId == equipId);
                 if (booking == null)
                 {
@@ -201,7 +221,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
             {
                 if (day <= monthEndDate.Day)
                 {
-                    var date = new DateTime(year, month, day);
+                    var date = new DateOnly(year, month, day);
                     var booking = monthBookings.Find(x => x.BkgDate == date && x.Slot == slot && x.EquipId == equipId);
                     if (booking == null)
                     {

@@ -18,7 +18,7 @@ public class ReservationEquipmentBookingDto
     public required int ResvEquipBkgId { get; set; }
 
     [Key(1)]
-    public required DateTime? BkgDate { get; set; }
+    public DateOnly? BkgDate { get; set; }
 
     [Key(2)]
     public required int EquipId { get; set; }

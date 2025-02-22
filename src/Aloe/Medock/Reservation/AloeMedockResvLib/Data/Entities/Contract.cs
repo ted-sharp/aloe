@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -56,13 +57,12 @@ public class Contract : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string CtDesc { get; set; } = String.Empty;
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime? EndDate { get; set; }
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     [Column("is_tax_including")]
     [Required]
@@ -86,6 +86,5 @@ public class Contract : AuditableEntityBase<int>
         this.CtCode = code;
         this.CtName = name;
         this.CtDesc = desc;
-        this.StartDate = DateTime.Today;
     }
 }

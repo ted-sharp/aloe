@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -47,13 +48,12 @@ public class ExamObservation
     [Required]
     public bool IsActive { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; }
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     public ExamObservation() { }
 
@@ -64,9 +64,7 @@ public class ExamObservation
         string obsShortName,
         string obsAbbrName,
         string obsDesc,
-        bool isActive,
-        DateTime startDate,
-        DateTime endDate)
+        bool isActive)
     {
         this.ObsCatId = obsCatId;
         this.ObsCode = obsCode;
@@ -75,7 +73,5 @@ public class ExamObservation
         this.ObsAbbrName = obsAbbrName;
         this.ObsDesc = obsDesc;
         this.IsActive = isActive;
-        this.StartDate = startDate;
-        this.EndDate = endDate;
     }
 }

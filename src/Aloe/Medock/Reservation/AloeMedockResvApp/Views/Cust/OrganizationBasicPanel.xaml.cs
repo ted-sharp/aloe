@@ -10,16 +10,19 @@ using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-/// <summary>
-/// ReservationDailyBookingWindow.xaml の相互作用ロジック
-/// </summary>
-public partial class ReservationDailyBookingWindow : Window
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust
 {
-    public ReservationDailyBookingWindow()
+    /// <summary>
+    /// PatientBasicPanel.xaml の相互作用ロジック
+    /// </summary>
+    public partial class OrganizationBasicPanel : UserControl
     {
-        this.InitializeComponent();
+        public OrganizationBasicPanel()
+        {
+            this.InitializeComponent();
+        }
     }
 }

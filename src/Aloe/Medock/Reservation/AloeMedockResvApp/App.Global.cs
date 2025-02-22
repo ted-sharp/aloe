@@ -46,7 +46,10 @@ public partial class App
     }
 
     #endregion  Global / Resolve
+
     public static string HostName { get; set; } = "";
+
+    public static string DatabaseName { get; set; } = "";
 
     public static string HostUrl { get; set; } = "";
 

@@ -12,6 +12,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using System.Text.RegularExpressions;
 using NetTopologySuite.Utilities;
 using Serilog;
+using System.Runtime.ExceptionServices;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -24,6 +25,7 @@ public partial class App
     {
         this.SessionEnding += this.App_SessionEnding;
 
+        AppDomain.CurrentDomain.FirstChanceException += this.CurrentDomain_FirstChanceException;
         AppDomain.CurrentDomain.UnhandledException += this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException += this.TaskScheduler_UnobservedTaskException;
         this.DispatcherUnhandledException += this.App_DispatcherUnhandledException;
@@ -40,9 +42,16 @@ public partial class App
 
     private void UnregisterUnhandledExceptionHandlers()
     {
+        AppDomain.CurrentDomain.FirstChanceException -= this.CurrentDomain_FirstChanceException;
         AppDomain.CurrentDomain.UnhandledException -= this.CurrentDomain_UnhandledException;
         TaskScheduler.UnobservedTaskException -= this.TaskScheduler_UnobservedTaskException;
         this.DispatcherUnhandledException -= this.App_DispatcherUnhandledException;
+    }
+
+    // 例外を握りつぶしても検出できるのでデバッグ用
+    private void CurrentDomain_FirstChanceException(object? sender, FirstChanceExceptionEventArgs e)
+    {
+        this.LogFirstChanceException(e.Exception);
     }
 
     // 非UIスレッドでの未処理例外を補足する

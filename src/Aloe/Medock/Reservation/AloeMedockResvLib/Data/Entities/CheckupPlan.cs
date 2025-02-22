@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -60,13 +61,12 @@ public class CheckupPlan : AuditableEntityBase<int>
     [Required]
     public bool IsActive { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; }
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     public CheckupPlan() { }
 
@@ -80,7 +80,6 @@ public class CheckupPlan : AuditableEntityBase<int>
         this.ShortName = shortName;
         this.AbbrName = abbrName;
         this.PlanDesc = desc;
-        this.StartDate = DateTime.Today;
         this.IsActive = true;
     }
 }

@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+             xmlns:cvt="http://schemas.aloe/wpf/converters"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
              d:Background="Azure"
@@ -11,6 +12,10 @@
              DataContextChanged="ReservationEquipTabItem_OnDataContextChanged">
 
     <UserControl.Resources>
+        <cvt:StringContainsConverter x:Key="Contains土" Substring="土"/>
+        <cvt:StringContainsConverter x:Key="Contains日" Substring="日"/>
+        <cvt:StringContainsConverter x:Key="Contains祝" Substring="祝"/>
+
         <!-- ローヘッダー: スロットを表示 -->
         <Style TargetType="DataGridRowHeader">
             <Setter Property="Content" Value="{Binding}"/>
@@ -25,6 +30,43 @@
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
+        </Style>
+
+        <Style TargetType="DataGridCell">
+            <Style.Triggers>
+                <!-- "土" を含む場合だけ背景色 = LightBlue -->
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <Binding Path="Column.Header"
+                                 RelativeSource="{RelativeSource Self}"
+                                 Converter="{StaticResource Contains土}" />
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="#2080C0FF" />
+                    <Setter Property="Foreground" Value="Black" />
+                </DataTrigger>
+
+                <!-- "日" を含む場合だけ背景色 = LightPink -->
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <Binding Path="Column.Header"
+                                 RelativeSource="{RelativeSource Self}"
+                                 Converter="{StaticResource Contains日}" />
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="#20FF8080" />
+                    <Setter Property="Foreground" Value="Black" />
+                </DataTrigger>
+
+                <!-- "祝" を含む場合だけ背景色 = LightPink -->
+                <DataTrigger Value="True">
+                    <DataTrigger.Binding>
+                        <Binding Path="Column.Header"
+                                 RelativeSource="{RelativeSource Self}"
+                                 Converter="{StaticResource Contains祝}" />
+                    </DataTrigger.Binding>
+                    <Setter Property="Background" Value="#20FF8080" />
+                    <Setter Property="Foreground" Value="Black" />
+                </DataTrigger>
+            </Style.Triggers>
         </Style>
 
         <!--<Style x:Key="StretchListViewItemStyle" TargetType="ListViewItem">
@@ -49,6 +91,7 @@
     </UserControl.Resources>
 
     <DockPanel>
+        <!-- TODO: キャプションがほしい -->
         <ListBox
             DockPanel.Dock="Right"
             x:Name="BookingOverflowListBox"

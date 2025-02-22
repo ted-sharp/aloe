@@ -60,6 +60,9 @@
     <Compile Update="Views\Cust\OrganizationBar.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="Views\Cust\OrganizationBasicPanel.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
   <ItemGroup>

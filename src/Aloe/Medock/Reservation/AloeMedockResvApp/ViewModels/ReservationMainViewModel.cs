@@ -27,12 +27,12 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
 public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
-    public Action<DateTime>? RefreshAction { get; set; }
+    public Action<DateOnly>? RefreshAction { get; set; }
 
     // TODO: バインドしてるからいらないかも
     public Action? RefreshDataAction { get; set; }
 
-    public ReactivePropertySlim<string> StartDate { get; set; } = new(DateTime.Today.ToString("yyyy.MM.dd"));
+    public ReactivePropertySlim<DateOnly> StartDate { get; set; } = new(DateOnlyHelper.GetToday());
 
     public ReactivePropertySlim<int> OffsetDayCount { get; set; } = new(31);
 
@@ -68,7 +68,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         this.StartDate
             .Subscribe(x =>
             {
-                this.RefreshAction?.Invoke(x.ToDateOrToday());
+                this.RefreshAction?.Invoke(x);
                 this.RefreshDataAction?.Invoke();
             })
             .AddTo(this.Disposables);

@@ -39,13 +39,9 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
 
     public ReactivePropertySlim<string> HostName { get; } = new(App.HostName);
 
-    public ReactivePropertySlim<Visibility> LastUpdateVisibility { get; } = new(Visibility.Collapsed);
+    public ReactivePropertySlim<string> DatabaseName { get; } = new(App.DatabaseName);
 
-    public ReactivePropertySlim<string> LastUpdateText { get; } = new("");
-
-    public ReactivePropertySlim<Visibility> LockVisibility { get; } = new(Visibility.Collapsed);
-
-    public ReactivePropertySlim<string> LockText { get; } = new("");
+    public ReactivePropertySlim<Visibility> DatabaseNameVisibility { get; } = new(Visibility.Collapsed);
 
     public ObservableCollection<int> ScaleOptions { get; } =
         [
@@ -76,11 +72,17 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
         this._logger = logger;
         this._windowService = windowService;
 
-        this.ZoomOutCommand.Subscribe(this.ChangeScale);
+        this.DatabaseName.Subscribe(x =>
+        {
+            this.DatabaseNameVisibility.Value =
+                String.IsNullOrWhiteSpace(x) ? Visibility.Collapsed : Visibility.Visible;
+        }).AddTo(this.Disposables);
 
-        this.ZoomInCommand.Subscribe(this.ChangeScale);
+        this.ZoomOutCommand.Subscribe(this.ChangeScale).AddTo(this.Disposables);
 
-        this.ShowLogWindowCommand.Subscribe(this.ShowLogWindow);
+        this.ZoomInCommand.Subscribe(this.ChangeScale).AddTo(this.Disposables);
+
+        this.ShowLogWindowCommand.Subscribe(this.ShowLogWindow).AddTo(this.Disposables);
 
         this.SelectedScalePercentageText.Subscribe(text =>
         {
@@ -97,7 +99,7 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
             }
 
             this._isUpdating = false;
-        });
+        }).AddTo(this.Disposables);
 
         this.SelectedScalePercentage.Subscribe(x =>
         {
@@ -110,7 +112,7 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
             this.SelectedScalePercentageText.Value = x.ToString();
 
             this._isUpdating = false;
-        });
+        }).AddTo(this.Disposables);
     }
 
     public void SetStatus(string status)
@@ -144,38 +146,6 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
         this._logger.LogTrace(status);
     }
 
-    #region LastUpdate
-
-    public void ClearLastUpdate()
-    {
-        this.LastUpdateVisibility.Value = Visibility.Collapsed;
-        this.LastUpdateText.Value = "";
-    }
-
-    private void SetLastUpdateText(DateTime updatedAt, string updatedUserName)
-    {
-        this.LastUpdateText.Value = $"最終更新日: {updatedAt:yyyy/MM/dd HH:mm:ss} by {updatedUserName}";
-        this.LastUpdateVisibility.Value = Visibility.Visible;
-    }
-
-    #endregion LastUpdate
-
-    #region Lock
-
-    public void ClearLock()
-    {
-        this.LockVisibility.Value = Visibility.Collapsed;
-        this.LastUpdateText.Value = "";
-    }
-
-    private void SetLockText(string state, DateTime lockedAt, string lockedUserName)
-    {
-        this.LastUpdateText.Value = $"{state}: {lockedAt:yyyy/MM/dd HH:mm:ss} by {lockedUserName}";
-        this.LockVisibility.Value = Visibility.Visible;
-    }
-
-    #endregion Lock
-
     /// <summary>
     /// スケールを変更し、MinScaleとMaxScaleを考慮して値を制限する
     /// </summary>
@@ -195,5 +165,4 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
     {
         this._windowService.GetWindow<LogWindow>()?.ShowOrActivate();
     }
-
 }

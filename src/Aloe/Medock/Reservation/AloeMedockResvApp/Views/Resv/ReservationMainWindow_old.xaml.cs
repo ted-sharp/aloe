@@ -79,7 +79,7 @@ public partial class ReservationMainWindow_old : Window
         this.GenerateDataGridColumns("G2", this.BodyDataGrid2);
 
         // StartDate の変更がトリガですが、初回は明示的に呼び出します
-        var startDate = this._vm.StartDate.Value.ToDateOrToday();
+        var startDate = this._vm.StartDate.Value;
         this.RefreshScheduleHeaders(startDate);
     }
 
@@ -87,7 +87,7 @@ public partial class ReservationMainWindow_old : Window
     /// 日付および曜日のヘッダー部分を作成します。
     /// ViewModel側からも呼ぶため、DispatcherでUIスレッドで実行しています。
     /// </summary>
-    private void RefreshScheduleHeaders(DateTime startDate)
+    private void RefreshScheduleHeaders(DateOnly startDate)
     {
         if (Application.Current.Dispatcher.CheckAccess())
         {
@@ -149,7 +149,7 @@ public partial class ReservationMainWindow_old : Window
 
     #region Grid
 
-    private void GenerateHeaderGrid(string gridName, Grid grid, DateTime startDate)
+    private void GenerateHeaderGrid(string gridName, Grid grid, DateOnly startDate)
     {
         try
         {
@@ -205,7 +205,7 @@ public partial class ReservationMainWindow_old : Window
         }
 
         // local function
-        static Label CreateGridDateLabel(DateTime date, int offset)
+        static Label CreateGridDateLabel(DateOnly date, int offset)
         {
             var lbl = new Label
             {
@@ -220,7 +220,7 @@ public partial class ReservationMainWindow_old : Window
         }
 
         // local function
-        static Label CreateGridDowLabel(DateTime date, int offset)
+        static Label CreateGridDowLabel(DateOnly date, int offset)
         {
             var lbl = new Label
             {

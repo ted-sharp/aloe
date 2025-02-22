@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -20,13 +21,12 @@ public class ReservationDailyCap : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvDailyCapId { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; } = DateTime.Today;
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; } = DateTime.Today;
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     [Column("dow_code")]
     [Required]
@@ -52,33 +52,18 @@ public class ReservationDailyCap : AuditableEntityBase<int>
     [Required]
     public int PmCap { get; set; } = 0;
 
-    [Column("slots")]
-    [Required]
-    [MaxLength(Int32.MaxValue)]
-    public string Slots { get; set; } = String.Empty;
-
-    [Column("slots_cap")]
-    [Required]
-    public int SlotsCap { get; set; } = 0;
-
     public ReservationDailyCap() { }
 
     public ReservationDailyCap(
-        DateTime start,
-        DateTime end,
+        DateOnly start,
         DowCode dowCode,
         int ampCap,
-        int pmCap,
-        string slots,
-        int slotsCap)
+        int pmCap)
     {
-        this.StartDate = start.Date;
-        this.EndDate = end.Date;
+        this.StartDate = start;
         this.DowCode = (int)dowCode;
         this.DailyCap = ampCap + pmCap;
         this.AmCap = ampCap;
         this.PmCap = pmCap;
-        this.Slots = slots;
-        this.SlotsCap = slotsCap;
     }
 }

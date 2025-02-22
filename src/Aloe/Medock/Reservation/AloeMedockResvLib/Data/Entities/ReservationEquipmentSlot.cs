@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -20,13 +21,12 @@ public class ReservationEquipmentSlot : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvEquipSlotId { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; } = DateTime.Today;
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; } = DateTime.MaxValue.Date;
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     [Column("dow_code")]
     [Required]
@@ -43,18 +43,16 @@ public class ReservationEquipmentSlot : AuditableEntityBase<int>
 
     public ReservationEquipmentSlot() { }
 
-    public ReservationEquipmentSlot(DateTime start, DateTime end, DowCode dowCode, string slots)
+    public ReservationEquipmentSlot(DateOnly start, DowCode dowCode, string slots)
     {
-        this.StartDate = start.Date;
-        this.EndDate = end.Date;
+        this.StartDate = start;
         this.DowCode = (int)dowCode;
         this.Slots = slots;
     }
 
-    public ReservationEquipmentSlot(DateTime start, DateTime end, DowCode dowCode, string[] slots)
+    public ReservationEquipmentSlot(DateOnly start, DowCode dowCode, string[] slots)
     {
-        this.StartDate = start.Date;
-        this.EndDate = end.Date;
+        this.StartDate = start;
         this.DowCode = (int)dowCode;
         this.Slots = String.Join(Delimiter.SlotDelimiter, slots);
     }

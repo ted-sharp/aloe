@@ -18,10 +18,10 @@ public class ReservationDailySlotDto
     public required int ResvDailySlotId { get; set; }
 
     [Key(1)]
-    public required DateTime StartDate { get; set; }
+    public required DateOnly StartDate { get; set; }
 
     [Key(2)]
-    public required DateTime EndDate { get; set; }
+    public required DateOnly? EndDate { get; set; }
 
     [Key(3)]
     public required int DowCode { get; set; }
@@ -30,8 +30,5 @@ public class ReservationDailySlotDto
     public required int FloorId { get; set; }
 
     [Key(5)]
-    public required int RoomId { get; set; }
-
-    [Key(6)]
     public required string Slots { get; set; }
 }

@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -56,12 +57,12 @@ public class CheckupOption : AuditableEntityBase<int>
     [Required]
     public bool IsActive { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; }
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    public DateTime EndDate { get; set; }
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     public CheckupOption() { }
 
@@ -75,6 +76,5 @@ public class CheckupOption : AuditableEntityBase<int>
         this.OptAbbrName = abbrName;
         this.OptDesc = desc;
         this.IsActive = true;
-        this.StartDate = DateTime.Today;
     }
 }

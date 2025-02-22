@@ -20,6 +20,8 @@ public interface IAuthGrpcService : IService<IAuthGrpcService>
 
     UnaryResult<string> GetHostAsync();
 
+    UnaryResult<string> GetDatabaseAsync();
+
     UnaryResult<LoginResult> LoginAsync(LoginRequest request);
 
     UnaryResult LogoutAsync(SessionDto session);
@@ -56,6 +58,21 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
         {
             await using var context = await this._factory.CreateDbContextAsync();
             return context.GetHost();
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.ToString());
+        }
+
+        return "";
+    }
+
+    public async UnaryResult<string> GetDatabaseAsync()
+    {
+        try
+        {
+            await using var context = await this._factory.CreateDbContextAsync();
+            return context.Database.GetDbConnection().Database;
         }
         catch (Exception ex)
         {
@@ -113,7 +130,8 @@ public class AuthGrpcService : ServiceBase<IAuthGrpcService>, IAuthGrpcService
                 return result;
             }
 
-            if (user.IsExpired(now.Date))
+            var today = DateOnly.FromDateTime(now);
+            if (user.IsExpired(today))
             {
                 result.ErrorMessage = "有効期限を過ぎています。";
                 return result;

@@ -27,7 +27,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 
-public partial class ReservationRoomDailyGrid : UserControl
+public partial class ReservationDailyGrid : UserControl
 {
     private readonly ILogger _logger;
     //private readonly ReservationRoommentCacheService _cache;
@@ -37,11 +37,11 @@ public partial class ReservationRoomDailyGrid : UserControl
         (bool)DesignerProperties.IsInDesignModeProperty
             .GetMetadata(typeof(DependencyObject)).DefaultValue;
 
-    public ReservationRoomDailyGrid()
+    public ReservationDailyGrid()
     {
         this.InitializeComponent();
 
-        if (ReservationRoomDailyGrid.IsInDesignMode)
+        if (ReservationDailyGrid.IsInDesignMode)
         {
             // デザイナーでエラーになるので回避
             this._logger = null!;
@@ -49,7 +49,7 @@ public partial class ReservationRoomDailyGrid : UserControl
             return;
         }
 
-        this._logger = App.Resolve<ILogger<ReservationRoomDailyGrid>>();
+        this._logger = App.Resolve<ILogger<ReservationDailyGrid>>();
         //this._cache = App.Resolve<ReservationRoommentCacheService>();
     }
 
@@ -118,8 +118,8 @@ public partial class ReservationRoomDailyGrid : UserControl
             await this.Dispatcher.InvokeAsync(this.EndInit, DispatcherPriority.Background);
 
             // 中身を入れ替えても即時に反映されないので、強制更新
-            this.BookingOverflowListBox.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
-            this.BookingOverflowListBox.UpdateLayout();
+            //this.BookingOverflowListBox.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
+            //this.BookingOverflowListBox.UpdateLayout();
 
             time.Stamp("finally");
             time.DumpAsync();

@@ -387,7 +387,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// <summary>
     /// 特定のプロパティに日付文字列を設定するコマンドです。
     /// </summary>
-    public Task ExecuteSetDateTimeCommand(ReactivePropertySlim<string> dateProp, DateTime date, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetDateCommand(ReactivePropertySlim<DateOnly> dateProp, DateOnly date, bool isAltCond = false)
     {
         try
         {
@@ -395,7 +395,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             var isAlt = this.IsAltKeyPressed.Value;
             if (isAlt == isAltCond)
             {
-                dateProp.Value = date.ToString(format);
+                dateProp.Value = date;
             }
 
             return Task.CompletedTask;
@@ -406,50 +406,50 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
         }
     }
 
-    public Task ExecuteSetTodayCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetTodayCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteSetDateTimeCommand(dateProp, DateTime.Today, format, isAltCond);
+        return this.ExecuteSetDateCommand(dateProp, DateOnlyHelper.GetToday(), isAltCond);
     }
 
-    public Task ExecuteSetCurrentMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteSetCurrentMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        var date = DateTime.Today;
+        var date = DateOnlyHelper.GetToday();
         var newDate = date.AddDays(1 - date.Day);
-        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecuteAddDateCommand(ReactivePropertySlim<string> dateProp, TimeSpan span, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteAddDaysCommand(ReactivePropertySlim<DateOnly> dateProp, int days, bool isAltCond = false)
     {
-        var date = dateProp.Value.ToDateOrToday();
-        var newDate = date.Add(span);
-        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        var date = dateProp.Value;
+        var newDate = date.AddDays(days);
+        return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecutePrevDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecutePrevDateCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(-1), format);
+        return this.ExecuteAddDaysCommand(dateProp, -1, isAltCond);
     }
 
-    public Task ExecuteNextDateCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteNextDateCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteAddDateCommand(dateProp, TimeSpan.FromDays(1), format);
+        return this.ExecuteAddDaysCommand(dateProp, 1, isAltCond);
     }
 
-    public Task ExecuteAddMonthCommand(ReactivePropertySlim<string> dateProp, int monthSpan, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteAddMonthsCommand(ReactivePropertySlim<DateOnly> dateProp, int months, bool isAltCond = false)
     {
-        var date = dateProp.Value.ToDateOrToday();
-        var newDate = date.AddMonths(monthSpan);
-        return this.ExecuteSetDateTimeCommand(dateProp, newDate, format, isAltCond);
+        var date = dateProp.Value;
+        var newDate = date.AddMonths(months);
+        return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecutePrevMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecutePrevMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteAddMonthCommand(dateProp, -1, format, isAltCond);
+        return this.ExecuteAddMonthsCommand(dateProp, -1, isAltCond);
     }
 
-    public Task ExecuteNextMonthCommand(ReactivePropertySlim<string> dateProp, string format = "yyyy.MM.dd", bool isAltCond = false)
+    public Task ExecuteNextMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteAddMonthCommand(dateProp, 1, format, isAltCond);
+        return this.ExecuteAddMonthsCommand(dateProp, 1, isAltCond);
     }
 
     #endregion Common Command Method

@@ -65,7 +65,7 @@
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <Button>
-                    <!-- TODO: キャッシュを矯正開放 -->
+                    <!-- TODO: キャッシュを強制開放 -->
                     <ui:PackIcon Kind="HeadSnowflake"/>
                 </Button>
             </StackPanel>
@@ -115,6 +115,13 @@
             <StackPanel Orientation="Horizontal">
                 <ui:PackIcon Kind="Account"/>
                 <TextBlock Text="{Binding User.Value}" />
+            </StackPanel>
+        </StatusBarItem>
+
+        <StatusBarItem DockPanel.Dock="Right">
+            <StackPanel Orientation="Horizontal" Visibility="{Binding DatabaseNameVisibility.Value}">
+                <ui:PackIcon Kind="Database"/>
+                <TextBlock Text="{Binding DatabaseName.Value}" />
             </StackPanel>
         </StatusBarItem>
 

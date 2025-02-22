@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
-             xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+             xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
              mc:Ignorable="d"
              d:Background="PaleGreen"
              d:DesignHeight="80"
@@ -36,15 +36,14 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <materialDesign:PackIcon Grid.Row="0" Grid.Column="0" Kind="History" />
+            <ui:PackIcon Grid.Row="0" Grid.Column="0" Kind="History" />
             <TextBlock Grid.Row="0" Grid.Column="1">yyyy/MM/dd HH:mm:ss by user</TextBlock>
-            <materialDesign:PackIcon Grid.Row="1" Grid.Column="0" Kind="Key" />
+            <ui:PackIcon Grid.Row="1" Grid.Column="0" Kind="Key" />
             <TextBlock Grid.Row="1" Grid.Column="1">yyyy/MM/dd HH:mm:ss by user</TextBlock>
         </Grid>
 
         <Grid DockPanel.Dock="Left">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
@@ -57,28 +56,54 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0">個人 No.</TextBlock>
-            <TextBox  Grid.Row="0" Grid.Column="1" MinWidth="80" />
-            <TextBlock Grid.Row="0" Grid.Column="2">カルテNo.</TextBlock>
-            <TextBox  Grid.Row="0" Grid.Column="3" MinWidth="80" />
+            <TextBlock Grid.Row="0" Grid.Column="0">患者No.</TextBlock>
+            <ui:PackIcon Grid.Row="0" Grid.Column="1" Kind="Numeric" />
+            <TextBox Grid.Row="0" Grid.Column="2" MinWidth="80" />
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="4">{FullName}</TextBlock>
+            <TextBlock Grid.Row="0" Grid.Column="3">カルテNo.</TextBlock>
+            <ui:PackIcon Grid.Row="0" Grid.Column="4" Kind="Numeric" />
+            <TextBox Grid.Row="0" Grid.Column="5" MinWidth="80" />
 
-            <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="7">
-                <TextBlock Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4">{Address}</TextBlock>
-                <TextBlock>TEL/Mail</TextBlock>
-            </StackPanel>
+            <ui:PackIcon Grid.Row="1" Grid.Column="1" Kind="Person" />
+            <Grid Grid.Row="1" Grid.Column="2" Grid.ColumnSpan="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0">{FullName}</TextBlock>
+                <TextBlock Grid.Column="1" FontSize="9">{M/F}</TextBlock>
+                <ui:PackIcon Grid.Column="2" Kind="BirthdayCakeOutline" Height="11" />
+                <TextBlock Grid.Column="3" FontSize="9">{yyyy/MM/dd}</TextBlock>
+                <TextBlock Grid.Column="4" FontSize="9">満 {x} 歳</TextBlock>
+                <TextBlock Grid.Column="5" FontSize="9">(年度内 {x} 歳)</TextBlock>
+            </Grid>
 
-            <TextBlock Grid.Row="0" Grid.Column="4">男/女</TextBlock>
-            <StackPanel Grid.Row="0" Grid.Column="5" Grid.RowSpan="3">
-                <TextBlock>yyyy/MM/dd (元号 R6)</TextBlock>
-            </StackPanel>
+            <ui:PackIcon Grid.Row="2" Grid.Column="1" Kind="MapMarkerRadiusOutline" Height="11" />
+            <Grid Grid.Row="2" Grid.Column="2" Grid.ColumnSpan="5">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" FontSize="9">{Address}</TextBlock>
+                <ui:PackIcon Grid.Column="1" Kind="Telephone" Height="11" />
+                <TextBlock Grid.Column="2" FontSize="9">{Phone}</TextBlock>
+                <ui:PackIcon Grid.Column="3" Kind="EMail" Height="11" />
+                <TextBlock Grid.Column="4" FontSize="9">{Mail}</TextBlock>
+            </Grid>
 
-            <StackPanel Grid.Row="1" Grid.Column="5" Grid.RowSpan="3">
-                <TextBlock>満 999 才(年度内年齢 999 才)</TextBlock>
-            </StackPanel>
+            <ui:PackIcon Grid.Row="3" Grid.Column="1" Kind="NoteTextOutline" />
+            <TextBlock Grid.Row="3" Grid.Column="2" Grid.ColumnSpan="5">{Memo}</TextBlock>
         </Grid>
     </DockPanel>
 </UserControl>

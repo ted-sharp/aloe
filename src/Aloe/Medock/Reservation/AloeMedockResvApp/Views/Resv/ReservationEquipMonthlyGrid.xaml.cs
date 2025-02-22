@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -29,13 +30,13 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 
 public partial class ReservationEquipMonthlyGrid : UserControl
 {
-    private readonly ILogger _logger;
-    private readonly ReservationEquipmentCacheService _cache;
-    private ReservationEquipTabItemViewModel? _vm;
-
     public static bool IsInDesignMode =>
         (bool)DesignerProperties.IsInDesignModeProperty
             .GetMetadata(typeof(DependencyObject)).DefaultValue;
+
+    private readonly ILogger _logger;
+    private readonly ReservationEquipmentCacheService _cache;
+    private ReservationEquipTabItemViewModel? _vm;
 
     public ReservationEquipMonthlyGrid()
     {
@@ -71,7 +72,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
     /// <remarks>
     /// View側の処理なのでViewModelにはしません。
     /// </remarks>
-    public async Task RefreshAsync(DateTime monthEndDate, int equipId)
+    public async Task RefreshAsync(DateOnly monthEndDate, int equipId)
     {
         var time = new Timestamper("RefreshAsync");
         try
@@ -88,6 +89,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
             this.BookingDataGrid.ItemsSource = null;
             //this.BookingListView.ItemsSource = null;
 
+            await this._vm.LoadHolidaysAsync(monthEndDate);
             await this._vm.LoadAsync(monthEndDate, equipId);
             //await this._vm.LoadAsync2(monthEndDate, equipId);
             time.Stamp("loaded");
@@ -132,7 +134,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
     /// スロットの数だけ DataGrid のヘッダーを作成します。
     /// 記号、氏名、備考がスロットの数だけ繰り返し作成します。
     /// </summary>
-    private void GenerateDataGridColumns(DataGrid dataGrid, DateTime endDate)
+    private void GenerateDataGridColumns(DataGrid dataGrid, DateOnly endDate)
     {
         try
         {
@@ -156,9 +158,9 @@ public partial class ReservationEquipMonthlyGrid : UserControl
         return;
 
         // local function
-        static DataGridTemplateColumn CreateDataGridColumn(int year, int month, int day)
+        DataGridTemplateColumn CreateDataGridColumn(int year, int month, int day)
         {
-            var date = new DateTime(year, month, day);
+            var date = new DateOnly(year, month, day);
             var col = new DataGridTemplateColumn
             {
                 Header = CreateHeader(date),
@@ -173,12 +175,21 @@ public partial class ReservationEquipMonthlyGrid : UserControl
         }
 
         // local function
-        static TextBlock CreateHeader(DateTime date)
+        TextBlock CreateHeader(DateOnly date)
         {
+            var isHoliday = this._vm?.Holidays.ContainsKey(date) ?? false;
+
+            var format = isHoliday ? "MM/dd (祝)" : "MM/dd (ddd)";
+
+            var foreground = isHoliday ? Brushes.Red :
+                date.DayOfWeek == DayOfWeek.Sunday ? Brushes.Red :
+                date.DayOfWeek == DayOfWeek.Saturday ? Brushes.Blue :
+                Brushes.Black;
+
             // 中央寄せのために必要
             var content = new TextBlock
             {
-                Text = date.ToString("MM/dd (ddd)"),
+                Text = date.ToString(format),
                 TextAlignment = TextAlignment.Center,
                 //// 固定値を設定することでレイアウト計算の負荷を減らす
                 MinWidth = 160,
@@ -189,6 +200,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
                 Height = 160,
                 Margin = new Thickness(0),
                 Padding = new Thickness(0),
+                Foreground = foreground,
                 // 他のスタイルを参照しないことで、Resourcesへのアクセスを減らす
                 Style = null,
                 OverridesDefaultStyle = false,
@@ -197,7 +209,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
         }
 
         // local function
-        static DataTemplate CreateCellTemplate(DateTime date)
+        static DataTemplate CreateCellTemplate(DateOnly date)
         {
             var template = new DataTemplate();
 

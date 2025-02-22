@@ -36,13 +36,10 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
 public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
-    public static readonly string StartMonthFormat = "yyyy.MM";
-
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public ReactivePropertySlim<string> StartMonth { get; set; } =
-        new(DateTime.Today.ToString(ReservationEquipViewModel.StartMonthFormat));
+    public ReactivePropertySlim<DateOnly> StartMonth { get; set; } = new(DateOnlyHelper.GetToday());
 
     public ObservableCollection<ReservationEquipTabItemViewModel> ReservationEquipTabItems { get; set; } = new([]);
 
@@ -170,7 +167,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             }
 
             var startMonth = this.StartMonth.Value;
-            var endDate = startMonth.ToMonthEndDateOrCurrentMonth();
+            var endDate = DateOnlyHelper.GetEndDate(startMonth);
             await tabItem.RefreshFuncAsync.Invoke(endDate, tabItem.EquipId);
         }
         catch (Exception ex)
@@ -188,7 +185,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
             if (!isAlt)
             {
-                await this.FunctionBarVm.ExecutePrevMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.FunctionBarVm.ExecutePrevMonthCommand(this.StartMonth);
                 await this.SearchAsync();
             }
         }
@@ -212,7 +209,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
             if (!isAlt)
             {
-                await this.FunctionBarVm.ExecuteNextMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.FunctionBarVm.ExecuteNextMonthCommand(this.StartMonth);
                 await this.SearchAsync();
             }
         }
@@ -236,7 +233,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             var isAlt = this.FunctionBarVm.IsAltKeyPressed.Value;
             if (!isAlt)
             {
-                await this.FunctionBarVm.ExecuteSetCurrentMonthCommand(this.StartMonth, ReservationEquipViewModel.StartMonthFormat);
+                await this.FunctionBarVm.ExecuteSetCurrentMonthCommand(this.StartMonth);
                 await this.SearchAsync();
             }
         }

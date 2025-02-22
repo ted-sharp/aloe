@@ -132,6 +132,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ReservationRoomDetail> RoomDetails { get; set; } = null!;
 
+    public DbSet<Holiday> Holidays { get; set; } = null!;
+
     public DbSet<ReservationDailySlot> DailySlots { get; set; } = null!;
 
     public DbSet<ReservationDailyBooking> DailyBookings { get; set; } = null!;

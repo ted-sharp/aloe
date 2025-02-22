@@ -23,8 +23,8 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
     [Required]
     public int EquipId { get; set; } = 0;
 
-    [Column("bkg_date")]
-    public DateTime? BkgDate { get; set; }
+    [Column("bkg_date", TypeName = "Date")]
+    public DateOnly? BkgDate { get; set; }
 
     [Column("slot")]
     [Required]
@@ -71,7 +71,7 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
 
     public ReservationEquipmentBooking() { }
 
-    public ReservationEquipmentBooking(int equipId, DateTime bkgDate, string slot, string symbol, string remark, bool isTentative)
+    public ReservationEquipmentBooking(int equipId, DateOnly bkgDate, string slot, string symbol, string remark, bool isTentative)
     {
         this.EquipId = equipId;
         this.BkgDate = bkgDate;

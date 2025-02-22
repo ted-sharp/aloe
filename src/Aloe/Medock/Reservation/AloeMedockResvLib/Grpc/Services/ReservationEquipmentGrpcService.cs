@@ -49,16 +49,16 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
 
     public async UnaryResult<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month, int? orEquipId)
     {
-        var firstDay = new DateTime(year, month, 1);
-        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
+        var endDate = DateOnlyHelper.GetEndDate(firstDate);
         var zeroOrEquipId = orEquipId ?? 0;
 
         await using var context = await this._factory.CreateDbContextAsync();
         var query = context.EquipmentSlots
             .AsNoTracking()
             .Where(x =>
-                x.StartDate <= lastDay
-                && x.EndDate >= firstDay
+                x.StartDate <= endDate
+                && (x.EndDate == null || firstDate <= x.EndDate)
                 && x.IsDeleted == false
                 && (x.EquipId == 0 || x.EquipId == zeroOrEquipId)
             )
@@ -80,16 +80,16 @@ public class ReservationEquipmentGrpcService : ServiceBase<IReservationEquipment
 
     public async UnaryResult<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int? orEquipId)
     {
-        var firstDay = new DateTime(year, month, 1);
-        var lastDay = firstDay.AddMonths(1).AddDays(-1);
+        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
+        var endDate = DateOnlyHelper.GetEndDate(firstDate);
         var zeroOrEquipId = orEquipId ?? 0;
 
         await using var context = await this._factory.CreateDbContextAsync();
         var bookings = await context.EquipmentBookings
             .AsNoTracking()
             .Where(x =>
-                firstDay <= x.BkgDate
-                && x.BkgDate <= lastDay
+                firstDate <= x.BkgDate
+                && x.BkgDate <= endDate
                 && x.IsDeleted == false
                 && (x.EquipId == 0 || x.EquipId == zeroOrEquipId)
             )

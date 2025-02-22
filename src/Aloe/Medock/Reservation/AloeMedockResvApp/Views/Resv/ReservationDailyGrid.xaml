@@ -1,0 +1,38 @@
+﻿<UserControl x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationDailyGrid"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
+             d:Background="Azure"
+             d:DesignHeight="200" d:DesignWidth="400">
+
+    <UserControl.Resources>
+
+    </UserControl.Resources>
+
+    <DockPanel>
+        <ScrollViewer>
+            <Grid x:Name="BookingGrid">
+                <Grid.ColumnDefinitions>
+                    <!-- ローヘッダー、全、Room1、Room2、... -->
+                    <!-- ローヘッダー、全、カテゴリ1、カテゴリ2、... -->
+                    <ColumnDefinition Width="Auto" MinWidth="88" />
+                    <ColumnDefinition Width="Auto" MinWidth="88" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <!-- カラムヘッダー、日計、AM、PM、Slot1、Slot2、... -->
+                    <RowDefinition Height="Auto" MinHeight="24" />
+                    <RowDefinition Height="Auto" MinHeight="24" />
+                    <RowDefinition Height="Auto" MinHeight="24" />
+                    <RowDefinition Height="Auto" MinHeight="24" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+            </Grid>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

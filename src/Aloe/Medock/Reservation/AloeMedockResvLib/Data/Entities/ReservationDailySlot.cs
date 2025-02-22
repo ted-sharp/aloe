@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -20,13 +21,12 @@ public class ReservationDailySlot : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvDailySlotId { get; set; }
 
-    [Column("start_date")]
+    [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateTime StartDate { get; set; } = DateTime.Today;
+    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
 
-    [Column("end_date")]
-    [Required]
-    public DateTime EndDate { get; set; } = DateTime.Today;
+    [Column("end_date", TypeName = "Date")]
+    public DateOnly? EndDate { get; set; }
 
     [Column("dow_code")]
     [Required]
@@ -36,10 +36,6 @@ public class ReservationDailySlot : AuditableEntityBase<int>
     [Required]
     public int FloorId { get; set; } = 0;
 
-    [Column("room_id")]
-    [Required]
-    public int RoomId { get; set; } = 0;
-
     [Column("slots")]
     [Required]
     [MaxLength(Int32.MaxValue)]
@@ -48,13 +44,11 @@ public class ReservationDailySlot : AuditableEntityBase<int>
     public ReservationDailySlot() { }
 
     public ReservationDailySlot(
-        DateTime start,
-        DateTime end,
+        DateOnly start,
         DowCode dowCode,
         string slots)
     {
-        this.StartDate = start.Date;
-        this.EndDate = end.Date;
+        this.StartDate = start;
         this.DowCode = (int)dowCode;
         this.Slots = slots;
     }

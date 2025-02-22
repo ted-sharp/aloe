@@ -18,7 +18,7 @@ public class ReservationDailyBookingDto
     public required int ResvDailyBkgId { get; set; }
 
     [Key(1)]
-    public required DateTime? BkgDate { get; set; }
+    public DateOnly? BkgDate { get; set; }
 
     [Key(3)]
     public int FloorId { get; set; } = 0;

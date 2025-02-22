@@ -12,9 +12,9 @@
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
         bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
         Title="個人"
-        Width="1920" Height="1080"
+        Width="640" Height="1080"
         MinWidth="640" MinHeight="480"
-        d:Width="1440" d:Height="1080"
+        d:Width="640" d:Height="1080"
         ResizeMode="CanResizeWithGrip">
 
     <Window.Resources>
@@ -53,7 +53,6 @@
         <views:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
         <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
 
-
         <Border
                 DockPanel.Dock="Top"
                 BorderThickness="1"
@@ -63,9 +62,7 @@
                 Margin="3"
             >
             <local:PatientBar />
-
         </Border>
-
 
         <Grid>
             <!-- ここでTransformで拡大率を設定したい -->

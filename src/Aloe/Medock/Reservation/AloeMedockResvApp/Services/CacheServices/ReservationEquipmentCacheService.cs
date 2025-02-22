@@ -10,6 +10,7 @@ using System.Data;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 
@@ -18,16 +19,40 @@ public class ReservationEquipmentCacheService
 
     private readonly ILogger _logger;
     private readonly IMemoryCache _cache;
+    private readonly IHolidayGrpcService _holidayGrpcService;
     private readonly IReservationEquipmentGrpcService _equipGrpcService;
 
     public ReservationEquipmentCacheService(
         ILogger<ReservationEquipmentCacheService> logger,
         IMemoryCache cache,
+        IHolidayGrpcService holidayGrpcService,
         IReservationEquipmentGrpcService equipGrpcService)
     {
         this._logger = logger;
         this._cache = cache;
+        this._holidayGrpcService = holidayGrpcService;
         this._equipGrpcService = equipGrpcService;
+    }
+
+    public async Task<List<HolidayDto>> GetOrFetchHolidays(int year, int month, bool useCache = true)
+    {
+
+        var key = $"holidays_{year:0000}{month:00}";
+        if (useCache && this._cache.TryGetValue<List<HolidayDto>>(
+                key, out var holidays))
+        {
+            return holidays ?? [];
+        }
+
+        holidays = await this._holidayGrpcService.FetchHolidayDtosAsync(year, month);
+
+        this._cache.Set(key, holidays, new MemoryCacheEntryOptions
+        {
+            // 祝日はめったに変わらないのでしばらく保持しておく
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+        });
+
+        return holidays;
     }
 
     public async Task<List<ReservationEquipmentDto>> GetOrFetchEquipments(bool useCache = true)

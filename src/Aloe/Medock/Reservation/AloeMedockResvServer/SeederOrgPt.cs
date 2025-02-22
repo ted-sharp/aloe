@@ -89,7 +89,7 @@ internal partial class Seeder
                 for (var i = 0; i < ptMax; i++)
                 {
                     var karteNumber = rnd.Next(1, Int32.MaxValue).ToString("000000000");
-                    var birthDate = DateTime.Today.AddDays(-rnd.Next(3650, 365000));
+                    var birthDate = DateOnlyHelper.GetToday().AddDays(-rnd.Next(3650, 365000));
                     var sex = sexes.Skip(rnd.Next(0, sexMax)).First();
                     var pt = new Patient(karteNumber, names[i].Kanji, names[i].Kana, birthDate, (int)sex);
                     context.Patients.AddRange(pt);

@@ -94,6 +94,7 @@ internal static class HostExtensions
         builder.Services.AddTransient<FunctionBarViewModel>();
         builder.Services.AddTransient<ReservationMainViewModel>();
         builder.Services.AddTransient<ReservationEquipViewModel>();
+        builder.Services.AddTransient<ReservationDailyViewModel>();
 
         // Window
         builder.Services.AddTransient<ErrorWindow>();
@@ -101,7 +102,7 @@ internal static class HostExtensions
         builder.Services.AddTransient<ReservationEquipMonthlyWindow>();
         builder.Services.AddTransient<ReservationEquipBookingWindow>();
         builder.Services.AddTransient<ReservationDailyWindow>();
-        builder.Services.AddTransient<ReservationDailyBookingWindow>();
+        //builder.Services.AddTransient<ReservationDailyBookingWindow>();
         builder.Services.AddTransient<OrganizationPatientSearchWindow>();
         builder.Services.AddTransient<OrganizationWindow>();
         builder.Services.AddTransient<PatientWindow>();
@@ -139,6 +140,7 @@ internal static class HostExtensions
 
         // MagicOnion クライアントを登録
         AddSingletonGrpcService<IAuthGrpcService>();
+        AddSingletonGrpcService<IHolidayGrpcService>();
         AddSingletonGrpcService<IReservationEquipmentGrpcService>();
 
         return builder;
@@ -230,6 +232,7 @@ internal static class HostExtensions
         // GrpcChannel ではなく、直接サーバー側のサービスを使えるようにします。
 
         builder.Services.AddTransient<IAuthGrpcService, AuthGrpcService>();
+        builder.Services.AddTransient<IHolidayGrpcService, HolidayGrpcService>();
         builder.Services.AddTransient<IReservationEquipmentGrpcService, ReservationEquipmentGrpcService>();
 
         #endregion MagicOnion(Direct)

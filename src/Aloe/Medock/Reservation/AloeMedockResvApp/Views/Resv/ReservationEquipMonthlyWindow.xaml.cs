@@ -112,8 +112,4 @@ public partial class ReservationEquipMonthlyWindow : Window
         }
     }
 
-    private void CalendarMonthTextBox_OnPreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
-    {
-        MessageBox.Show("ダブルクリックでカレンダーを表示して選択できるようにしたい");
-    }
 }

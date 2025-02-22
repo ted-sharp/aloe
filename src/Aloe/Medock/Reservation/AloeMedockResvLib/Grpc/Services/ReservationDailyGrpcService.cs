@@ -16,11 +16,11 @@ public interface IReservationDailyGrpcService : IService<IReservationDailyGrpcSe
 
     UnaryResult<List<ReservationRoomDto>> FetchRoomDtosAsync();
 
-    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateTime date);
-    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateTime startDate, DateTime endDate);
+    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateOnly date);
+    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateOnly startDate, DateOnly endDate);
 
-    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateTime ate);
-    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateTime startDate, DateTime endDate);
+    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date);
+    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateOnly startDate, DateOnly endDate);
 }
 
 public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcService>, IReservationDailyGrpcService
@@ -58,22 +58,19 @@ public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcServ
         return rooms;
     }
 
-    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateTime date)
+    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateOnly date)
     {
         return await this.FetchDailySlotDtosBetweenAsync(date, date);
     }
 
-    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateTime startDate, DateTime endDate)
+    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateOnly startDate, DateOnly endDate)
     {
-        var firstDay = startDate.Date;
-        var lastDay = endDate.Date;
-
         await using var context = await this._factory.CreateDbContextAsync();
         var slots = await context.DailySlots
             .AsNoTracking()
             .Where(x =>
-                x.StartDate <= lastDay
-                && x.EndDate >= firstDay
+                x.StartDate <= endDate
+                && (x.EndDate == null || x.EndDate >= startDate)
                 && x.IsDeleted == false)
             .Select(x => new ReservationDailySlotDto
             {
@@ -82,7 +79,6 @@ public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcServ
                 EndDate = x.EndDate,
                 DowCode = x.DowCode,
                 FloorId = x.FloorId,
-                RoomId = x.RoomId,
                 Slots = x.Slots,
             })
             .OrderBy(x => x.StartDate)
@@ -90,22 +86,19 @@ public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcServ
         return slots;
     }
 
-    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateTime date)
+    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date)
     {
         return await this.FetchDailyBookingDtosBetweenAsync(date, date);
     }
 
-    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateTime startDate, DateTime endDate)
+    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateOnly startDate, DateOnly endDate)
     {
-        var firstDay = startDate.Date;
-        var lastDay = endDate.Date;
-
         await using var context = await this._factory.CreateDbContextAsync();
         var bookings = await context.DailyBookings
             .AsNoTracking()
             .Where(x =>
-                firstDay <= x.BkgDate
-                && x.BkgDate <= lastDay
+                startDate <= x.BkgDate
+                && x.BkgDate <= endDate
                 && x.IsDeleted == false)
             .Select(x => new ReservationDailyBookingDto
             {

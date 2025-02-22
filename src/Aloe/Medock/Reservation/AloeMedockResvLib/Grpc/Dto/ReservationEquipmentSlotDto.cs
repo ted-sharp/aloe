@@ -20,10 +20,10 @@ public class ReservationEquipmentSlotDto
     public required int ResvEquipSlotId { get; set; }
 
     [Key(1)]
-    public required DateTime StartDate { get; set; }
+    public required DateOnly StartDate { get; set; }
 
     [Key(2)]
-    public required DateTime EndDate { get; set; }
+    public DateOnly? EndDate { get; set; }
 
     [Key(3)]
     public required int DowCode { get; set; }

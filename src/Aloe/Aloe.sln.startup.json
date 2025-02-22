@@ -82,6 +82,16 @@
       }
     },
 
+    "App(Standalone login Daily)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone -uadmin -padmin --screen=6 ",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
     "App(Standalone login Org)": {
       "Projects": {
         "AloeMedockResvApp": {
@@ -102,7 +112,7 @@
       }
     },
 
-            "Svr + App": {
+    "Svr + App": {
       "Projects": {
         "AloeMedockResvServer": {},
         "AloeMedockResvApp": {
