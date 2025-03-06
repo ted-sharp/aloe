@@ -5,7 +5,7 @@ using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -135,6 +135,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Holiday> Holidays { get; set; } = null!;
 
     public DbSet<ReservationDailySlot> DailySlots { get; set; } = null!;
+
+    public DbSet<ReservationDailyCap> DailyCaps { get; set; } = null!;
+
+    public DbSet<ReservationDailySlotCap> DailySlotCaps { get; set; } = null!;
+
+    public DbSet<ReservationDailyNote> DailyNotes { get; set; } = null!;
 
     public DbSet<ReservationDailyBooking> DailyBookings { get; set; } = null!;
 

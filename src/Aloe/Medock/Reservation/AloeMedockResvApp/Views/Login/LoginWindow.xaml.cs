@@ -2,12 +2,12 @@
 using System.Diagnostics;
 using System.Windows;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using MagicOnion;
 using Microsoft.Extensions.Configuration;

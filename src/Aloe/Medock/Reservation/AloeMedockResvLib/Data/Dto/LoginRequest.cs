@@ -5,10 +5,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
-/// ログインを試行した結果を返します。
+/// ログイン要求のパラメータです。
 /// </summary>
 [MessagePackObject]
 public class LoginRequest
@@ -21,4 +21,10 @@ public class LoginRequest
 
     [Key(2)]
     public required string ClientAppName { get; set; }
+
+    /// <summary>
+    /// gRPCのサーバー側でPeer名が補完されます。
+    /// </summary>
+    [Key(3)]
+    public string ClientEndpoint { get; set; } = "";
 }

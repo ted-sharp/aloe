@@ -15,7 +15,6 @@
                 <ui:BundledTheme BaseTheme="Inherit" PrimaryColor="BlueGrey" SecondaryColor="Cyan" />
             </ResourceDictionary.MergedDictionaries>
 
-            <converters:Int32ValueToScaleConverter x:Key="Int32ValueToScaleConverter" />
 
         </ResourceDictionary>
     </Application.Resources>

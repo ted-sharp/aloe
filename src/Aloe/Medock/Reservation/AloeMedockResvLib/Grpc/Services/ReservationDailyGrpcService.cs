@@ -1,5 +1,7 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using MagicOnion;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
@@ -16,112 +18,55 @@ public interface IReservationDailyGrpcService : IService<IReservationDailyGrpcSe
 
     UnaryResult<List<ReservationRoomDto>> FetchRoomDtosAsync();
 
-    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateOnly date);
-    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateOnly startDate, DateOnly endDate);
+    UnaryResult<List<ReservationRoomDetailDto>> FetchRoomDetailDtosAsync();
 
-    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date);
-    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateOnly startDate, DateOnly endDate);
+    UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(int year, int month);
+
+    UnaryResult<List<ReservationDailyNoteDto>> FetchDailyNoteDtosAsync(DateOnly date, int? orFloorId);
+
+    UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date, int? orFloorId);
 }
 
 public class ReservationDailyGrpcService : ServiceBase<IReservationDailyGrpcService>, IReservationDailyGrpcService
 {
     private readonly ILogger _logger;
-    private readonly IDbContextFactory<AppDbContext> _factory;
+    private readonly IReservationDailyService _dailyService;
 
     public ReservationDailyGrpcService(
-        ILogger logger,
-        IDbContextFactory<AppDbContext> factory)
+        ILogger<ReservationDailyGrpcService> logger,
+        IReservationDailyService dailyService)
     {
         this._logger = logger;
-        this._factory = factory;
+        this._dailyService = dailyService;
     }
 
     public async UnaryResult<List<ReservationFloorDto>> FetchFloorDtosAsync()
     {
-        await using var context = await this._factory.CreateDbContextAsync();
-        var floors = await context.Floors
-            .AsNoTracking()
-            .Where(x => x.IsDeleted == false)
-            .Select(x => x.ToReservationFloorDto())
-            .ToListAsync();
-        return floors;
+        return await this._dailyService.FetchFloorDtosAsync();
     }
 
     public async UnaryResult<List<ReservationRoomDto>> FetchRoomDtosAsync()
     {
-        await using var context = await this._factory.CreateDbContextAsync();
-        var rooms = await context.Rooms
-            .AsNoTracking()
-            .Where(x => x.IsDeleted == false)
-            .Select(x => x.ToReservationRoomDto())
-            .ToListAsync();
-        return rooms;
+        return await this._dailyService.FetchRoomDtosAsync();
     }
 
-    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(DateOnly date)
+    public async UnaryResult<List<ReservationRoomDetailDto>> FetchRoomDetailDtosAsync()
     {
-        return await this.FetchDailySlotDtosBetweenAsync(date, date);
+        return await this._dailyService.FetchRoomDetailDtosAsync();
     }
 
-    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosBetweenAsync(DateOnly startDate, DateOnly endDate)
+    public async UnaryResult<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(int year, int month)
     {
-        await using var context = await this._factory.CreateDbContextAsync();
-        var slots = await context.DailySlots
-            .AsNoTracking()
-            .Where(x =>
-                x.StartDate <= endDate
-                && (x.EndDate == null || x.EndDate >= startDate)
-                && x.IsDeleted == false)
-            .Select(x => new ReservationDailySlotDto
-            {
-                ResvDailySlotId = x.ResvDailySlotId,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                DowCode = x.DowCode,
-                FloorId = x.FloorId,
-                Slots = x.Slots,
-            })
-            .OrderBy(x => x.StartDate)
-            .ToListAsync();
-        return slots;
+        return await this._dailyService.FetchDailySlotDtosAsync(year, month);
     }
 
-    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date)
+    public async UnaryResult<List<ReservationDailyNoteDto>> FetchDailyNoteDtosAsync(DateOnly date, int? orFloorId)
     {
-        return await this.FetchDailyBookingDtosBetweenAsync(date, date);
+        return await this._dailyService.FetchDailyNoteDtosAsync(date, orFloorId);
     }
 
-    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosBetweenAsync(DateOnly startDate, DateOnly endDate)
+    public async UnaryResult<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date, int? orFloorId)
     {
-        await using var context = await this._factory.CreateDbContextAsync();
-        var bookings = await context.DailyBookings
-            .AsNoTracking()
-            .Where(x =>
-                startDate <= x.BkgDate
-                && x.BkgDate <= endDate
-                && x.IsDeleted == false)
-            .Select(x => new ReservationDailyBookingDto
-            {
-                ResvDailyBkgId = x.ResvDailyBkgId,
-                FloorId = x.FloorId,
-                Slot = x.Slot,
-                AmPmCode = x.AmPmCode,
-                SexCode = x.SexCode,
-                BkgUserId = x.BkgUserId,
-                BkgAt = x.BkgAt,
-                BkgDate = x.BkgDate,
-                BkgSymbolText = x.BkgSymbolText,
-                BkgRemarkText = x.BkgRemarkText,
-                IsHeld = x.IsTentative,
-                OrgId = x.OrgId,
-                ResvCount = x.ResvCount,
-                PtId = x.PtId,
-                OrderId = x.OrderId,
-                SubOrderId = x.SubOrderId,
-                IsCancelled = x.IsCancelled,
-                NoShowCount = x.NoShowCount,
-            })
-            .ToListAsync();
-        return bookings;
+        return await this._dailyService.FetchDailyBookingDtosAsync(date, orFloorId);
     }
 }

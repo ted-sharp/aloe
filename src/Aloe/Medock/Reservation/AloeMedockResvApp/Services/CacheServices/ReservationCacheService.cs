@@ -1,6 +1,5 @@
 ﻿using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
@@ -11,48 +10,94 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 
-public class ReservationEquipmentCacheService
+public class ReservationCacheService
 {
 
     private readonly ILogger _logger;
     private readonly IMemoryCache _cache;
     private readonly IHolidayGrpcService _holidayGrpcService;
+    private readonly IReservationDailyGrpcService _dailyGrpcService;
     private readonly IReservationEquipmentGrpcService _equipGrpcService;
 
-    public ReservationEquipmentCacheService(
-        ILogger<ReservationEquipmentCacheService> logger,
+    public ReservationCacheService(
+        ILogger<ReservationCacheService> logger,
         IMemoryCache cache,
         IHolidayGrpcService holidayGrpcService,
+        IReservationDailyGrpcService dailyGrpcService,
         IReservationEquipmentGrpcService equipGrpcService)
     {
         this._logger = logger;
         this._cache = cache;
         this._holidayGrpcService = holidayGrpcService;
+        this._dailyGrpcService = dailyGrpcService;
         this._equipGrpcService = equipGrpcService;
     }
 
-    public async Task<List<HolidayDto>> GetOrFetchHolidays(int year, int month, bool useCache = true)
-    {
+    #region Masters
 
-        var key = $"holidays_{year:0000}{month:00}";
-        if (useCache && this._cache.TryGetValue<List<HolidayDto>>(
-                key, out var holidays))
+    public async Task<List<ReservationFloorDto>> GetOrFetchFloors(bool useCache = true)
+    {
+        var key = "floors";
+        if (useCache && this._cache.TryGetValue<List<ReservationFloorDto>>(
+                key, out var floors))
         {
-            return holidays ?? [];
+            return floors ?? [];
         }
 
-        holidays = await this._holidayGrpcService.FetchHolidayDtosAsync(year, month);
+        floors = await this._dailyGrpcService.FetchFloorDtosAsync();
 
-        this._cache.Set(key, holidays, new MemoryCacheEntryOptions
+        this._cache.Set(key, floors, new MemoryCacheEntryOptions
         {
-            // 祝日はめったに変わらないのでしばらく保持しておく
+            // マスター情報はまず変更がないのでしばらく保持しておく
             AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
         });
 
-        return holidays;
+        return floors;
+    }
+
+    public async Task<List<ReservationRoomDto>> GetOrFetchRooms(bool useCache = true)
+    {
+        var key = "rooms";
+        if (useCache && this._cache.TryGetValue<List<ReservationRoomDto>>(
+                key, out var rooms))
+        {
+            return rooms ?? [];
+        }
+
+        rooms = await this._dailyGrpcService.FetchRoomDtosAsync();
+
+        this._cache.Set(key, rooms, new MemoryCacheEntryOptions
+        {
+            // マスター情報はまず変更がないのでしばらく保持しておく
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+        });
+
+        return rooms;
+    }
+
+    public async Task<List<ReservationRoomDetailDto>> GetOrFetchRoomDetails(bool useCache = true)
+    {
+        var key = "rooms";
+        if (useCache && this._cache.TryGetValue<List<ReservationRoomDetailDto>>(
+                key, out var roomDetails))
+        {
+            return roomDetails ?? [];
+        }
+
+        roomDetails = await this._dailyGrpcService.FetchRoomDetailDtosAsync();
+
+        this._cache.Set(key, roomDetails, new MemoryCacheEntryOptions
+        {
+            // マスター情報はまず変更がないのでしばらく保持しておく
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+        });
+
+        return roomDetails;
     }
 
     public async Task<List<ReservationEquipmentDto>> GetOrFetchEquipments(bool useCache = true)
@@ -75,17 +120,154 @@ public class ReservationEquipmentCacheService
         return equipments;
     }
 
-    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchSlots(int year, int month, int? equipId, bool useCache = true)
+    #endregion Masters
+
+    #region Holidays
+
+    public async Task<List<HolidayDto>> GetOrFetchHolidays(int year, int month, bool useCache = true)
+    {
+        // 何年も昔のデータは不要なので、月ごとに保存します。
+        var key = $"holidays_{year:0000}{month:00}";
+        if (useCache && this._cache.TryGetValue<List<HolidayDto>>(
+                key, out var holidays))
+        {
+            return holidays ?? [];
+        }
+
+        holidays = await this._holidayGrpcService.FetchHolidayDtosAsync(year, month);
+
+        this._cache.Set(key, holidays, new MemoryCacheEntryOptions
+        {
+            // 祝日はめったに変わらないのでしばらく保持しておく
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
+        });
+
+        return holidays;
+    }
+
+    #endregion Holidays
+
+    #region Daily
+
+    public async Task<List<ReservationDailySlotDto>> GetOrFetchDailySlots(int year, int month, bool useCache = true)
     {
 
-        var key = $"equipmentSlots_{year:0000}{month:00}_{equipId ?? 0}";
+        var key = $"dailySlots_{year:0000}{month:00}";
+        if (useCache && this._cache.TryGetValue<List<ReservationDailySlotDto>>(
+                key, out var slots))
+        {
+            return slots ?? [];
+        }
+
+        slots = await this._dailyGrpcService.FetchDailySlotDtosAsync(year, month);
+
+        this._cache.Set(key, slots, new MemoryCacheEntryOptions
+        {
+            // スロット情報は毎日変更があるが、リアルタイムの変更もあるので程々とする
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+        });
+
+        return slots;
+    }
+
+    public async Task<List<string>> GetOrFetchDailySlotStrings(DateOnly date, int? floorId, bool useCache = true)
+    {
+
+        var key = $"dailySlotStrings_{date:yyyyMMdd}_{floorId ?? 0}";
+        if (useCache && this._cache.TryGetValue<List<string>>(
+                key, out var slotStrings))
+        {
+            return slotStrings ?? [];
+        }
+
+        var slots = await this.GetOrFetchDailySlots(date.Year, date.Month, useCache);
+        slotStrings = this.CreateDailySlotStrings(slots, date, floorId);
+
+        this._cache.Set(key, slotStrings, new MemoryCacheEntryOptions
+        {
+            // スロット情報は毎日変更があるが、リアルタイムの変更もあるので程々とする
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+        });
+
+        return slotStrings;
+    }
+
+    /// <summary>
+    /// 対象日のスロットのリストを作成します。
+    /// </summary>
+    private List<string> CreateDailySlotStrings(List<ReservationDailySlotDto> definitions, DateOnly date, int? floorId)
+    {
+        var def = definitions
+            // 範囲内にしぼる
+            .Where(x => x.StartDate <= date && date <= x.EndDate)
+            // 全対象(FloorId == 0) と 条件なしあり(floorId == null || x.FloorId == floorId) にしぼる
+            .Where(x => x.FloorId == 0 || (floorId == null || x.FloorId == floorId))
+            // 全対象(DowCode == -1) と 条件あり(x.DowCode == date.DayOfWeek) にしぼる
+            .Where(x => x.DowCode == (int)DowCode.None || x.DowCode == (int)date.DayOfWeek)
+            // 日付の新しいものを優先する
+            .OrderByDescending(x => x.StartDate)
+            .FirstOrDefault();
+
+        // 定義されている最大の slot の一覧を作成する
+        var cols = new HashSet<string>();
+
+        // def 毎の slot 重複数を数える
+        var slotCounts = new Dictionary<string, int>();
+
+        for (var i = 0; i < def.Slots.Length; i++)
+        {
+            var slot = def.Slots[i];
+
+            if (!slotCounts.TryAdd(slot, 1))
+            {
+                slotCounts[slot]++;
+                // 重複したら (n) をつける
+                slot = $"{slot}({slotCounts[slot]})";
+                def.Slots[i] = slot;
+            }
+
+            cols.Add(slot);
+        }
+
+        return cols.OrderBy(x => x).ToList();
+    }
+
+    public async Task<List<ReservationDailyNoteDto>> GetOrFetchDailyNotes(DateOnly date, int? orFloorId, bool useCache = true)
+    {
+
+        var key = $"dailyNotes_{date:yyyyMMdd}_{orFloorId ?? 0}";
+        if (useCache && this._cache.TryGetValue<List<ReservationDailyNoteDto>>(
+                key, out var notes))
+        {
+            return notes ?? [];
+        }
+
+        notes = await this._dailyGrpcService.FetchDailyNoteDtosAsync(date, orFloorId);
+
+        this._cache.Set(key, notes, new MemoryCacheEntryOptions
+        {
+            // スロット情報は毎日変更があるが、リアルタイムの変更もあるので程々とする
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+        });
+
+        return notes;
+    }
+
+    #endregion Daily
+
+    #region Equipments
+
+    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchSlots(int year, int month, int? orEquipId, bool useCache = true)
+    {
+
+        var key = $"equipmentSlots_{year:0000}{month:00}_{orEquipId ?? 0}";
         if (useCache && this._cache.TryGetValue<List<ReservationEquipmentSlotDto>>(
                 key, out var slots))
         {
             return slots ?? [];
         }
 
-        slots = await this._equipGrpcService.FetchEquipmentSlotDtosAsync(year, month, equipId);
+        slots = await this._equipGrpcService.FetchEquipmentSlotDtosAsync(year, month, orEquipId);
 
         this._cache.Set(key, slots, new MemoryCacheEntryOptions
         {
@@ -252,4 +434,6 @@ public class ReservationEquipmentCacheService
 
         return null;
     }
+
+    #endregion Equipments
 }

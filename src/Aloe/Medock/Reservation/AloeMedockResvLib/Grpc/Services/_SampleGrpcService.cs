@@ -1,6 +1,6 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
+﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using MagicOnion;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -15,18 +15,11 @@ public interface ISampleGrpcService : MagicOnion.IService<ISampleGrpcService>
     MagicOnion.UnaryResult<SampleDto> FetchSampleAsync();
 }
 
-// gRPCで使うサービスとして定義しているのでアプリケーション層となります。
-// アプリケーション層ですが、ドメイン層のビジネスロジックを含みます。
-// 共通化が必要な場合にのみドメイン層に分離します。
+// gRPCで使うサービスとして定義しているのでExternal Interface/Gateway層となります。
+// アプリケーション層の同名のサービスを呼び出す薄いラッパーとして作用します。
 //
 // 参照の方向
-// Grpc(App) → Data
-// Grpc(App) → Domain → Data
-// 同プロジェクト内に存在するため、逆転しないよう注意します。
-// 必要であればプロジェクトを分割します。
-// Aloe.Medock.Reservation.AloeMedockResvLib
-// Aloe.Medock.Reservation.AloeMedockResvLib.Domain
-// Aloe.Medock.Reservation.AloeMedockResvLib.Grpc
+// Grpc(Gateway) → App/Domain
 public class SampleGrpcService : MagicOnion.Server.ServiceBase<ISampleGrpcService>, ISampleGrpcService
 {
     private readonly ILogger<SampleGrpcService> _logger;

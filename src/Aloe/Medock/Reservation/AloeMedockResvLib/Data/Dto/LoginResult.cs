@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
 /// ログインを試行した結果を返します。

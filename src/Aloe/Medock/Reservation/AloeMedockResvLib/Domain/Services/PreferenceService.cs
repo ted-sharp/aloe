@@ -1,5 +1,5 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using MagicOnion.Server;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
@@ -13,6 +13,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Concurrent;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Defaults;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
@@ -62,7 +63,7 @@ public class PreferenceService : IPreferenceService
             }
 
             // デフォルトをもとにする
-            prefs = PreferenceService.CreateDefaultPreferences();
+            prefs = DefaultPreference.CreateDefaultPreferences();
 
             // DBにある設定で上書きする
             using var context = this._factory.CreateDbContext();
@@ -120,26 +121,4 @@ public class PreferenceService : IPreferenceService
         return [];
     }
 
-
-    #region CreateDefaultPreferences
-
-    public static Dictionary<string, Preference> CreateDefaultPreferences()
-    {
-        var policies = new Dictionary<string, Preference>
-        {
-            [PreferenceCode.WindowRememberPosition] = new()
-            {
-                PrefCode = PreferenceCode.WindowRememberPosition,
-                PrefName = nameof(PreferenceCode.WindowRememberPosition),
-                PrefDesc = "Window ポジションを記憶します。",
-                DataType = Constants.DataType.String,
-                PrefValue = "",
-                IsActive = true,
-            },
-        };
-
-        return policies;
-    }
-
-    #endregion CreateDefaultPreferences
 }

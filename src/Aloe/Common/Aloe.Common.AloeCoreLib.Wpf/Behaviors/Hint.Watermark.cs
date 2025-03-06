@@ -34,12 +34,12 @@ public static partial class Hint
         if (d is TextBox textBox)
         {
             // Loaded イベントと TextChanged イベントでウォーターマークの表示を更新する
-            textBox.Loaded += TextBox_Loaded;
-            textBox.TextChanged += TextBox_TextChanged;
+            textBox.Loaded += Hint.WatermarkTextBox_Loaded;
+            textBox.TextChanged += Hint.WatermarkTextBox_TextChanged;
         }
     }
 
-    private static void TextBox_Loaded(object sender, RoutedEventArgs e)
+    private static void WatermarkTextBox_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is TextBox textBox)
         {
@@ -47,7 +47,7 @@ public static partial class Hint
         }
     }
 
-    private static void TextBox_TextChanged(object sender, TextChangedEventArgs e)
+    private static void WatermarkTextBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         if (sender is TextBox textBox)
         {

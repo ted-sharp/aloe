@@ -25,19 +25,22 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using CommandLine;
 using System.Windows.Controls;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Microsoft.Extensions.Logging.Abstractions;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
+using System.Runtime;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
 // ここでは汎用的な設定を行うため、CA1859 は抑制します。
-#pragma warning disable IDE0079 // 不要な抑制を削除する (IDE0079)
 #pragma warning disable CA1859 // パフォーマンスの向上のために可能な場合は具象型を使用する
+#pragma warning disable IDE0079 // 不要な抑制を削除する (IDE0079)
 
 internal static class HostExtensions
 {
+    #region Configuration
+
     /// <summary>
     /// 設定から gRPC 用のURLを取得します。
     /// </summary>
@@ -53,6 +56,8 @@ internal static class HostExtensions
 
         return grpcUrl;
     }
+
+    #endregion Configuration
 
     /// <summary>
     /// 構成の追加を行います。
@@ -86,7 +91,7 @@ internal static class HostExtensions
             // 有効期限のチェック間隔
             options.ExpirationScanFrequency = TimeSpan.FromSeconds(5);
         });
-        builder.Services.AddTransient<ReservationEquipmentCacheService>();
+        builder.Services.AddTransient<ReservationCacheService>();
 
         // ViewModel
         builder.Services.AddTransient<NotifyIconViewModel>();
@@ -141,6 +146,7 @@ internal static class HostExtensions
         // MagicOnion クライアントを登録
         AddSingletonGrpcService<IAuthGrpcService>();
         AddSingletonGrpcService<IHolidayGrpcService>();
+        AddSingletonGrpcService<IReservationDailyGrpcService>();
         AddSingletonGrpcService<IReservationEquipmentGrpcService>();
 
         return builder;
@@ -163,11 +169,13 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureStandalone<T>(this T builder, RichTextBox? logTextBox, bool isSqlLoggingEnabled)
+    internal static T ConfigureStandalone<T>(this T builder,
+        RichTextBox? logTextBox,
+        AloeClientSettings settings)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql(isSqlLoggingEnabled)
+            .AddPostgreSql(settings.IsStandaloneSqlLogging, settings.ConnectionStringName)
             .AddDomainServices()
             .AddStandaloneService()
             .AddServices()
@@ -179,13 +187,14 @@ internal static class HostExtensions
     /// <summary>
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
-    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isSqlLoggingEnabled)
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder,
+        bool isSqlLoggingEnabled,
+        string connectionStringName = "DefaultConnection")
     {
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-        // TODO: 引数で DefaultConnection 以外を指定できるようにしたい
-        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        var connStr = builder.Configuration.GetConnectionString(connectionStringName);
 
         // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
         builder.Services.AddDbContextFactory<AppDbContext>((services, options) =>
@@ -214,10 +223,15 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
     {
+        builder.Services.AddTransient<IAuthService, AuthService>();
+        builder.Services.AddTransient<IHolidayService, HolidayService>();
+
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
         builder.Services.AddTransient<IPolicyService, PolicyService>();
         builder.Services.AddTransient<IPreferenceService, PreferenceService>();
-        builder.Services.AddScoped<IPermissionService, PermissionService>();
 
+        builder.Services.AddTransient<IReservationDailyService, ReservationDailyService>();
+        builder.Services.AddTransient<IReservationEquipmentService, ReservationEquipmentService>();
         return builder;
     }
 
@@ -233,6 +247,7 @@ internal static class HostExtensions
 
         builder.Services.AddTransient<IAuthGrpcService, AuthGrpcService>();
         builder.Services.AddTransient<IHolidayGrpcService, HolidayGrpcService>();
+        builder.Services.AddTransient<IReservationDailyGrpcService, ReservationDailyGrpcService>();
         builder.Services.AddTransient<IReservationEquipmentGrpcService, ReservationEquipmentGrpcService>();
 
         #endregion MagicOnion(Direct)

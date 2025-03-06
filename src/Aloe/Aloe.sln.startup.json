@@ -65,7 +65,7 @@
     "App(Standalone login)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone -uadmin -padmin",
+          "CommandLineArguments": "--standalone -u admin -p admin",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -75,7 +75,7 @@
     "App(Standalone login Equip)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone -uadmin -padmin --screen=4 ",
+          "CommandLineArguments": "--standalone --user=admin --pwd=admin --screen=4 ",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -95,7 +95,7 @@
     "App(Standalone login Org)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone -uadmin -padmin --screen=9 ",
+          "CommandLineArguments": "--standalone --user=admin --pwd=admin --screen=9 ",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -105,7 +105,7 @@
     "App(Standalone login Pt)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone -uadmin -padmin --screen=10 ",
+          "CommandLineArguments": "--standalone --user=admin --pwd=admin --screen=10 ",
           "WorkingDirectory": "",
           "StartProject": true
         }
@@ -114,7 +114,10 @@
 
     "Svr + App": {
       "Projects": {
-        "AloeMedockResvServer": {},
+        "AloeMedockResvServer": {
+          "CommandLineArguments": "",
+          "WorkingDirectory": ""
+        },
         "AloeMedockResvApp": {
           "CommandLineArguments": "",
           "WorkingDirectory": "",

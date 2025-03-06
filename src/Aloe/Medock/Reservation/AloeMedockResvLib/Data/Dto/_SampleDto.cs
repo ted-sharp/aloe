@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
 /// 最低限の項目を扱うための DTO(Data Transfer Object) クラスです。

@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows;
+using System.Globalization;
 
 namespace Aloe.Common.AloeCoreLib.Wpf.Adorners;
 
-public class ToolTipAdorner : Adorner
+public class ToolTipMarkAdorner : Adorner
 {
-    public ToolTipAdorner(UIElement adornedElement)
+    public ToolTipMarkAdorner(UIElement adornedElement)
         : base(adornedElement)
     {
     }
@@ -20,14 +21,21 @@ public class ToolTipAdorner : Adorner
     {
         base.OnRender(drawingContext);
 
-        // 例として右上に小さな赤い円を描画する
         var radius = 1;
         var brush = Brushes.Tomato;
         var pen = new Pen(brush, 1);
         if (this.AdornedElement is FrameworkElement adornedElement)
         {
-            var offset = new Point(adornedElement.ActualWidth - radius * 2, 0);
-            drawingContext.DrawEllipse(brush, pen, new Point(offset.X + radius, offset.Y + radius), radius, radius);
+            // 左上
+            var offset = new Point(0, 0);
+            //// 右上
+            //var offset = new Point(adornedElement.ActualWidth - radius * 2, 0);
+            drawingContext.DrawEllipse(
+                brush,
+                pen,
+                new Point(offset.X + radius, offset.Y + radius),
+                radius,
+                radius);
         }
     }
 

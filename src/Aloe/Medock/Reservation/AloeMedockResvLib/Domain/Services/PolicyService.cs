@@ -1,5 +1,5 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using MagicOnion.Server;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
@@ -17,16 +17,15 @@ using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Caching.Memory;
 using static System.Net.Mime.MediaTypeNames;
 using static System.Reflection.Metadata.BlobBuilder;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Defaults;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 
 public interface IPolicyService
 {
-    Task LoadPoliciesAsync();
+    Task<Policy> GetOrFetchPolicyAsync(string policyCode);
 
-    Task<Policy> GetPolicyAsync(string policyCode);
-
-    Task<T> GetValueAsync<T>(string policyCode)
+    Task<T> GetOrFetchValueAsync<T>(string policyCode)
         where T : struct;
 }
 
@@ -34,7 +33,10 @@ public class PolicyService : IPolicyService
 {
     private readonly ILogger _logger;
     private readonly IDbContextFactory<AppDbContext> _factory;
+
     private readonly IMemoryCache _cache;
+    private readonly MemoryCacheEntryOptions _cacheOptions;
+    private readonly string _cacheKeyPrefix = "policy_";
 
     public PolicyService(
         ILogger<PolicyService> logger,
@@ -44,120 +46,60 @@ public class PolicyService : IPolicyService
         this._logger = logger;
         this._factory = factory;
         this._cache = cache;
+
+        this._cacheOptions = new MemoryCacheEntryOptions
+        {
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(5),
+        };
     }
 
-    public async Task LoadPoliciesAsync()
-    {
-        await Task.Run(() => this.FetchPolicies(false));
-    }
-
-    private async Task<Dictionary<string, Policy>> FetchPoliciesAsync()
-    {
-        return await Task.Run(() => this.FetchPolicies(true));
-    }
-
-    private Dictionary<string, Policy> FetchPolicies(bool useCache = true)
+    public async Task<Policy> GetOrFetchPolicyAsync(string policyCode)
     {
         try
         {
-            var key = $"{nameof(PolicyService)}_{nameof(this.FetchPolicies)}";
-            if (useCache && this._cache.TryGetValue<Dictionary<string, Policy>>(
-                    key, out var policies))
+            var cacheKey = this._cacheKeyPrefix + policyCode;
+
+            // キャッシュから取得
+            if (this._cache.TryGetValue<Policy>(cacheKey, out var cachedPolicy) &&
+                cachedPolicy is not null)
             {
-                return policies ?? [];
+                return cachedPolicy;
             }
 
-            // デフォルトをもとにする
-            policies = PolicyService.CreateDefaultPolicies();
-
-            // DBにある設定で上書きする
-            using var context = this._factory.CreateDbContext();
-            var policyList = context.Policies
+            // DBから取得
+            await using var context = await this._factory.CreateDbContextAsync();
+            var policy = await context.Policies
                 .AsNoTracking()
-                .ToList();
-            foreach (var policy in policyList)
+                .FirstOrDefaultAsync(x => x.PolicyCode == policyCode);
+
+            if (policy != null)
             {
-                policies[policy.PolicyCode] = policy;
+                // DBから取得したPolicyをキャッシュに保存
+                this._cache.Set(cacheKey, policy, this._cacheOptions);
+                return policy;
             }
 
-            // キャッシュを更新する
-            this._cache.Set(key, policies, new MemoryCacheEntryOptions
+            // デフォルトを使用
+            var policies = DefaultPolicy.CreateDefaultPolicies();
+            if (policies.TryGetValue(policyCode, out var defaultPolicy))
             {
-                // 朝のログイン時に集中するためしばらく保持しておく
-                AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1),
-            });
-            this._logger.LogDebug("Policy loaded count: {Count}", policies.Count);
-
-            return policies;
+                return defaultPolicy;
+            }
         }
         catch (Exception ex)
         {
             this._logger.LogError(ex, "Error occurred during policy loading.");
+            throw;
         }
 
-        return [];
+        throw new InvalidOperationException($"Policy not found. (PolicyCode: {policyCode})");
     }
 
-    public async Task<Policy> GetPolicyAsync(string policyCode)
-    {
-        var policies = await this.FetchPoliciesAsync();
-        var policy = policies.GetValueOrDefault(policyCode);
-        return policy ?? throw new Exception($"Policy not found. (PolicyCode: {policyCode})");
-    }
-
-    public async Task<T> GetValueAsync<T>(string policyCode)
+    public async Task<T> GetOrFetchValueAsync<T>(string policyCode)
         where T : struct
     {
-        var policy = await this.GetPolicyAsync(policyCode);
+        var policy = await this.GetOrFetchPolicyAsync(policyCode);
         var result =  Constants.DataType.ConvertTo<T>(policy.DataType, policy.PolicyValue);
         return result ?? throw new Exception($"Invalid type {typeof(T).Name} for Policy {policyCode}.");
     }
-
-    #region CreateDefaultPolicies
-
-    public static Dictionary<string, Policy> CreateDefaultPolicies()
-    {
-        var policies = new Dictionary<string, Policy>
-        {
-            [PolicyCode.LoginLockingFailAtempts] = new()
-            {
-                PolicyCode = PolicyCode.LoginLockingFailAtempts,
-                PolicyName = nameof(PolicyCode.LoginLockingFailAtempts),
-                PolicyDesc = "ログイン失敗時にロックするための失敗回数です。",
-                DataType = Constants.DataType.Int32,
-                PolicyValue = "3",
-            },
-
-            [PolicyCode.LoginLockingSeconds] = new()
-            {
-                PolicyCode = PolicyCode.LoginLockingSeconds,
-                PolicyName = nameof(PolicyCode.LoginLockingSeconds),
-                PolicyDesc = "ログイン失敗時にロックする秒数です。",
-                DataType = Constants.DataType.Int32,
-                PolicyValue = "30",
-            },
-
-            [PolicyCode.ResvDefaultFloor1] = new()
-            {
-                PolicyCode = PolicyCode.ResvDefaultFloor1,
-                PolicyName = nameof(PolicyCode.ResvDefaultFloor1),
-                PolicyDesc = "デフォルト呼び出すフロア1のID(FloorId)です。",
-                DataType = Constants.DataType.Int32,
-                PolicyValue = "1",
-            },
-
-            [PolicyCode.ResvDefaultFloor2] = new()
-            {
-                PolicyCode = PolicyCode.ResvDefaultFloor2,
-                PolicyName = nameof(PolicyCode.ResvDefaultFloor2),
-                PolicyDesc = "デフォルト呼び出すフロア2のID(FloorId)です。",
-                DataType = Constants.DataType.Int32,
-                PolicyValue = "2",
-            },
-        };
-
-        return policies;
-    }
-
-    #endregion CreateDefaultPolicies
 }

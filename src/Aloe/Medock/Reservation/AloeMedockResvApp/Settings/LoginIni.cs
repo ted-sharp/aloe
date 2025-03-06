@@ -1,8 +1,10 @@
-﻿
-using System.IO;
+﻿using System.IO;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
+namespace Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
 
+/// <summary>
+/// ログイン画面の情報を記憶しておくためのINIファイルの定義です。
+/// </summary>
 public class LoginIni
 {
     public string? HostUrl { get; set; }

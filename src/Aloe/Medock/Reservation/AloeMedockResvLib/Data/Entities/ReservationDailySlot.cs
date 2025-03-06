@@ -30,7 +30,7 @@ public class ReservationDailySlot : AuditableEntityBase<int>
 
     [Column("dow_code")]
     [Required]
-    public int DowCode { get; set; } = 0;
+    public int DowCode { get; set; } = -1;
 
     [Column("floor_id")]
     [Required]

@@ -34,12 +34,12 @@ public static partial class Hint
         if (d is FrameworkElement element)
         {
             // Loaded時に処理する（VisualTreeが構築されるのを待つ）
-            element.Loaded -= Element_Loaded;
-            element.Loaded += Element_Loaded;
+            element.Loaded -= Hint.ToolTipMarkElement_Loaded;
+            element.Loaded += Hint.ToolTipMarkElement_Loaded;
         }
     }
 
-    private static void Element_Loaded(object sender, RoutedEventArgs e)
+    private static void ToolTipMarkElement_Loaded(object sender, RoutedEventArgs e)
     {
         if (sender is FrameworkElement element)
         {
@@ -56,11 +56,11 @@ public static partial class Hint
         }
 
         var toolTipAdorner = adornerLayer.GetAdorners(element)
-            ?.OfType<ToolTipAdorner>()
+            ?.OfType<ToolTipMarkAdorner>()
             .FirstOrDefault();
         if (toolTipAdorner is null)
         {
-            adornerLayer.Add(new ToolTipAdorner(element));
+            adornerLayer.Add(new ToolTipMarkAdorner(element));
         }
     }
 }

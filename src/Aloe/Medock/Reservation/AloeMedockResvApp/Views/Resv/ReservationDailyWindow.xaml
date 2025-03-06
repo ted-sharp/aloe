@@ -12,6 +12,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationDailyViewModel}"
         bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+        bhv:OnEnter.EnableMoveFocus="True"
         Title="予約(フロア,日別)"
         Width="1920" Height="1080"
         MinWidth="640" MinHeight="480"
@@ -21,6 +22,7 @@
     <Window.Resources>
         <cvt:DateOnlyToStringConverter x:Key="DateOnlyToStringConverter" Format="yyyy.MM.dd"/>
         <cvt:DateOnlyToDateTimeConverter x:Key="DateOnlyToDateTimeConverter" />
+        <cvt:Int32ToPercentConverter x:Key="Int32ToPercentConverter" />
 
         <Style TargetType="ui:PackIcon">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -63,11 +65,11 @@
                         ScaleX="{
                             Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                             RelativeSource={RelativeSource AncestorType=Window},
-                            Converter={StaticResource Int32ValueToScaleConverter}}"
+                            Converter={StaticResource Int32ToPercentConverter}}"
                         ScaleY="{
                             Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
                             RelativeSource={RelativeSource AncestorType=Window},
-                            Converter={StaticResource Int32ValueToScaleConverter}}"
+                            Converter={StaticResource Int32ToPercentConverter}}"
                     />
                 </DockPanel.LayoutTransform>
 
@@ -94,12 +96,12 @@
                             HorizontalContentAlignment="Center"
                             MinWidth="24" MaxWidth="36"
                             IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
-                            Text="{Binding Floor.Value}" />
+                            Text="{Binding FloorCode.Value}" />
                         <TextBlock Text="{Binding FloorName.Value}" />
                     </WrapPanel>
 
                     <Label Grid.Row="1" Grid.Column="0" >予約日</Label>
-                    <WrapPanel Grid.Row="1" Grid.Column="1" Orientation="Horizontal">
+                    <WrapPanel Grid.Row="1" Grid.Column="1">
                         <TextBox
                             bhv:Hint.Watermark="yyyyMMdd"
                             bhv:Hint.EnableToolTipMark="True"
@@ -112,11 +114,15 @@
                                 Converter={StaticResource DateOnlyToStringConverter}}" />
                     </WrapPanel>
 
-                    <Calendar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                              SelectedDate="{Binding
-                                 SelectedDate.Value,
-                                 Converter={StaticResource DateOnlyToDateTimeConverter}}" />
-                    <!--<local:ReservationCalendar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />-->
+                    <WrapPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2">
+                        <Calendar
+                            Focusable="False" IsTabStop="False"
+                            SelectedDate="{Binding
+                                SelectedDate.Value,
+                                Converter={StaticResource DateOnlyToDateTimeConverter}}"
+                            SelectedDatesChanged="Calendar_OnSelectedDatesChanged"/>
+                        <!--<local:ReservationCalendar Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" />-->
+                    </WrapPanel>
 
                     <Label Grid.Row="3" Grid.Column="0">備考</Label>
                     <ListBox
@@ -124,13 +130,22 @@
                         ItemsSource="{Binding ReservationDailyNotes}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
-                                <StackPanel Orientation="Horizontal">
-                                    <TextBlock Text="{Binding NoteText}" />
+                                <StackPanel>
+                                    <TextBlock
+                                        Text="{Binding NoteText}"
+                                        Width="180"
+                                        TextWrapping="Wrap"
+                                        TextAlignment="Left" />
                                     <!-- TODO: 改行右寄せにしたい -->
-                                    <TextBlock Text="{Binding UpdatedAt}" />
+                                    <TextBlock
+                                        Text="{Binding UpdatedAt}"
+                                        TextWrapping="Wrap"
+                                        TextAlignment="Right" />
                                     <!-- TODO: 改行右寄せにしたい -->
-                                    <TextBlock Text=" by " />
-                                    <TextBlock Text="{Binding UpdatedUserName}" />
+                                    <TextBlock
+                                        Text="{Binding UpdatedUserName}"
+                                        TextWrapping="Wrap"
+                                        TextAlignment="Right" />
                                 </StackPanel>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -138,7 +153,10 @@
                 </Grid>
 
                 <TabControl
-                    IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}">
+                    x:Name="DailyTabControl"
+                    IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
+                    SelectedIndex="{Binding SelectedTabIndexInput, Mode=OneWayToSource}"
+                    SelectionChanged="DailyTabControl_OnSelectionChanged">
 
                     <TabItem Header="予約一覧">
                         <local:ReservationDailyList

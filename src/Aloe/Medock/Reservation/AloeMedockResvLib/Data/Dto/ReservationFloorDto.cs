@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
 /// フロア
@@ -19,9 +19,12 @@ public class ReservationFloorDto
     public required int FloorId { get; set; }
 
     [Key(1)]
-    public required string FloorName { get; set; }
+    public required string FloorCode { get; set; }
 
     [Key(2)]
+    public required string FloorName { get; set; }
+
+    [Key(3)]
     public required int Seq { get; set; }
 }
 
@@ -32,6 +35,7 @@ public static class ReservationFloorExtensions
         return new ReservationFloorDto
         {
             FloorId = floor.FloorId,
+            FloorCode = floor.FloorCode,
             FloorName = floor.FloorName,
             Seq = floor.Seq,
         };

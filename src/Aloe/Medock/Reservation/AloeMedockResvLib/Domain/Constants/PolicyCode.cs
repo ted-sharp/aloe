@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 
 /// <summary>
-/// アプリケーション全体に影響する設定コードです。
+/// システム全体に影響する設定コードです。
 /// </summary>
 public static class PolicyCode
 {
     /// <summary>
     /// ログイン失敗時にロックするための失敗回数です。
     /// </summary>
-    public static readonly string LoginLockingFailAtempts = "LOGIN-LockingFailCount";
+    public static readonly string LoginLockingFailAttempts = "LOGIN-LockingFailCount";
 
     /// <summary>
     /// ログイン失敗時にロックする秒数です。

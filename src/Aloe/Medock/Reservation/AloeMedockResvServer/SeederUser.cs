@@ -6,6 +6,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Defaults;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -19,19 +20,19 @@ internal partial class Seeder
 
             if (!context.Policies.AsNoTracking().Any())
             {
-                var policies = PolicyService.CreateDefaultPolicies();
+                var policies = DefaultPolicy.CreateDefaultPolicies();
                 context.Policies.AddRange(policies.Values);
             }
 
             if (!context.Preferences.AsNoTracking().Any())
             {
-                var preferences = PreferenceService.CreateDefaultPreferences();
+                var preferences = DefaultPreference.CreateDefaultPreferences();
                 context.Preferences.AddRange(preferences.Values);
             }
 
             if (!context.Permissions.AsNoTracking().Any())
             {
-                var permissions = PermissionService.CreateDefaultPermissions();
+                var permissions = DefaultPermission.CreateDefaultPermissions();
                 context.Permissions.AddRange(permissions.Values);
             }
 

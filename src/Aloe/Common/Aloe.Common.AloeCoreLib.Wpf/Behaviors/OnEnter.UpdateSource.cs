@@ -6,39 +6,39 @@ namespace Aloe.Common.AloeCoreLib.Wpf.Behaviors;
 
 public static partial class OnEnter
 {
-    public static readonly DependencyProperty UpdateSourceProperty =
+    public static readonly DependencyProperty EnableUpdateSourceProperty =
         DependencyProperty.RegisterAttached(
-            "UpdateSource",
+            "EnableUpdateSource",
             typeof(bool),
             typeof(OnEnter),
-            new PropertyMetadata(false, OnEnter.OnUpdateSourceChanged));
+            new PropertyMetadata(false, OnEnter.OnEnableUpdateSourceChanged));
 
-    public static bool GetUpdateSource(TextBox obj)
+    public static bool GetEnableUpdateSource(TextBox obj)
     {
-        return (bool)obj.GetValue(OnEnter.UpdateSourceProperty);
+        return (bool)obj.GetValue(OnEnter.EnableUpdateSourceProperty);
     }
 
-    public static void SetUpdateSource(TextBox obj, bool value)
+    public static void SetEnableUpdateSource(TextBox obj, bool value)
     {
-        obj.SetValue(OnEnter.UpdateSourceProperty, value);
+        obj.SetValue(OnEnter.EnableUpdateSourceProperty, value);
     }
 
-    private static void OnUpdateSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static void OnEnableUpdateSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         if (d is TextBox element)
         {
             if ((bool)e.NewValue)
             {
-                element.KeyDown += OnEnter.TextBox_KeyDown;
+                element.KeyDown += OnEnter.UpdateSourceTextBox_KeyDown;
             }
             else
             {
-                element.KeyDown -= OnEnter.TextBox_KeyDown;
+                element.KeyDown -= OnEnter.UpdateSourceTextBox_KeyDown;
             }
         }
     }
 
-    private static void TextBox_KeyDown(object sender, KeyEventArgs e)
+    private static void UpdateSourceTextBox_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == System.Windows.Input.Key.Enter)
         {

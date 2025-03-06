@@ -1,5 +1,5 @@
 ﻿using Aloe.Common.AloeCoreLib.Util;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;

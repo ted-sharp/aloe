@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
@@ -31,6 +30,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MaterialDesignThemes.Wpf;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -40,7 +40,9 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public ReactivePropertySlim<string> Floor { get; set; } = new();
+    public ReactivePropertySlim<string> FloorCode { get; set; } = new();
+
+    private int? _floorId = null;
 
     /// <summary>
     /// Floor Code 入力時にフロア名を表示します。
@@ -52,22 +54,37 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// </summary>
     public ReactivePropertySlim<DateOnly> SelectedDate { get; set; } = new (DateOnlyHelper.GetToday());
 
-    public ObservableCollection<ReservationDailyNote> ReservationDailyNotes { get; set; } = new();
+    /// <summary>
+    /// 検索のときに参照します。
+    /// </summary>
+    /// <remarks>
+    /// OneWayToSource なので、通知の仕組みは不要。
+    /// イベントも発火させないので、ReactiveProperty も不要。
+    /// </remarks>
+    public int SelectedTabIndexInput { get; set; } = -1;
+
+    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes { get; set; } = new();
+
+    public ReactiveCollection<ReservationDailyBookingDto> ReservationDailyBookings { get; set; } = new();
+
+    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes2 { get; set; } = new();
+
+    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes3 { get; set; } = new();
 
     public SnackbarMessageQueue SnackbarMessageQueue { get; } = new();
 
     private readonly ILogger _logger;
 
-    //private readonly ReservationDailyCacheService _cache;
+    private readonly ReservationCacheService _cache;
 
     public ReservationDailyViewModel(
         ILogger<ReservationDailyViewModel> logger,
-        //ReservationDailyCacheService cache,
+        ReservationCacheService cache,
         InformationBarViewModel informationBarVm,
         FunctionBarViewModel functionBarVm)
     {
         this._logger = logger;
-        //this._cache = cache;
+        this._cache = cache;
 
         this.InformationBarVm = informationBarVm;
 
@@ -80,18 +97,13 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
         #endregion Function
 
 
-        this.Floor
-            .Subscribe(x =>
-            {
-                this.FloorName.Value = x;
-            })
+        this.FloorCode
+            .Subscribe(this.LoadFloor)
             .AddTo(this.Disposables);
 
-        this.SelectedDate
-            .Subscribe(x =>
-            {
-            })
-            .AddTo(this.Disposables);
+        //this.SelectedDate
+        //    .SubscribeAsync(this.ExecuteSearchCommand, this._logger)
+        //    .AddTo(this.Disposables);
     }
 
     public required InformationBarViewModel InformationBarVm { get; set; }
@@ -122,27 +134,31 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
     #endregion Function
 
     /// <summary>
-    /// 初期化よりあとのタイミングで、あらかじめ必要なデータをロードします。
+    /// フロア情報をロードします。
     /// </summary>
-    /// <remarks>
-    /// 画面から同期的に呼べる ContentRendered イベントで呼びます。
-    /// </remarks>
-    public async Task Preload()
+    public async void LoadFloor(string code)
     {
-        //var equips = await this._cache.GetOrFetchEquipments();
+        try
+        {
+            var floors = await this._cache.GetOrFetchFloors();
+            var floor = floors.FirstOrDefault(x => x.FloorCode == code);
 
-        //// 全部作ると時間がかかるので、入れ物だけ用意する
-        //// バインドされているので、タブが選択されて Refresh が走る
-        //foreach (var equip in equips)
-        //{
-        //    var vm = new ReservationEquipTabItemViewModel(this._logger, this._cache)
-        //    {
-        //        EquipId = equip.EquipId,
-        //        EquipName = equip.EquipName,
-        //    };
-
-        //    this.ReservationEquipTabItems.Add(vm);
-        //}
+            if (floor == null)
+            {
+                this._floorId = null;
+                this.FloorName.Value = "";
+            }
+            else
+            {
+                this._floorId = floor.FloorId;
+                this.FloorName.Value = floor.FloorName;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.SnackbarMessageQueue.ShowMessage($"フロアのロードに失敗しました。({ex.Message})");
+            this._logger.LogError(ex, ex.ToString());
+        }
     }
 
     /// <summary>
@@ -174,23 +190,35 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
     {
         try
         {
-            //var tabIndex = this.SelectedTabIndex;
+            var tabIndex = this.SelectedTabIndexInput;
+            if (tabIndex < 0)
+            {
+                // バインド前は回避
+                return;
+            }
 
-            //if (this.ReservationEquipTabItems == null! ||
-            //    this.ReservationEquipTabItems.Count == 0 ||
-            //    tabIndex < 0)
-            //{
-            //    // Preload 前は回避
-            //    return;
-            //}
+            var date = this.SelectedDate.Value;
+            if (date == DateOnly.MinValue)
+            {
+                // 未入力なら回避
+                return;
+            }
 
-            //var tabItem = this.ReservationEquipTabItems[tabIndex];
-            //if (tabItem.RefreshFuncAsync is null)
-            //{
-            //    return;
-            //}
+            // TODO: Notes
+            // ReservationDailyNotes
 
-            //var startMonth = this.StartMonth.Value;
+            // 0: List
+            // 1: カテゴリ別
+            // 2: ルーム別
+            var orFloorId = this._floorId;
+
+            var notes = await this._cache.GetOrFetchDailyNotes(date, orFloorId);
+            this.ReservationDailyNotes.Clear();
+            this.ReservationDailyNotes.AddRangeOnScheduler(notes);
+
+            // TODO: List
+            // TODO: Cat
+            // TODO: Room
             //var endDate = startMonth.ToMonthEndDateOrCurrentMonth();
             //await tabItem.RefreshFuncAsync.Invoke(endDate, tabItem.EquipId);
         }

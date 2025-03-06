@@ -35,7 +35,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
             .GetMetadata(typeof(DependencyObject)).DefaultValue;
 
     private readonly ILogger _logger;
-    private readonly ReservationEquipmentCacheService _cache;
+    private readonly ReservationCacheService _cache;
     private ReservationEquipTabItemViewModel? _vm;
 
     public ReservationEquipMonthlyGrid()
@@ -51,7 +51,7 @@ public partial class ReservationEquipMonthlyGrid : UserControl
         }
 
         this._logger = App.Resolve<ILogger<ReservationEquipMonthlyGrid>>();
-        this._cache = App.Resolve<ReservationEquipmentCacheService>();
+        this._cache = App.Resolve<ReservationCacheService>();
     }
 
     /// <summary>

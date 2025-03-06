@@ -6,29 +6,31 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
-/// 日次予約枠
+/// 設備予約枠
 /// </summary>
 [MessagePackObject]
-public class ReservationDailySlotDto
+public class ReservationEquipmentSlotDto
 {
+    public static readonly string SlotDelimiter = " ";
+
     [Key(0)]
-    public required int ResvDailySlotId { get; set; }
+    public required int ResvEquipSlotId { get; set; }
 
     [Key(1)]
     public required DateOnly StartDate { get; set; }
 
     [Key(2)]
-    public required DateOnly? EndDate { get; set; }
+    public DateOnly? EndDate { get; set; }
 
     [Key(3)]
     public required int DowCode { get; set; }
 
     [Key(4)]
-    public required int FloorId { get; set; }
+    public required int EquipId { get; set; }
 
     [Key(5)]
-    public required string Slots { get; set; }
+    public required string[] Slots { get; set; }
 }

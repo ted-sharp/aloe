@@ -56,11 +56,13 @@ public partial class ReservationDailyWindow : Window
 
             base.OnContentRendered(e);
 
+            // TODO: ポリシーが有効なとき、SEQの最初のフロアをロードしておく？
+
             // 準備で、設備をロードしておく
-            await this._vm.Preload();
+            //await this._vm.Preload();
 
             // 初回自動実行(検索)
-            await this._vm.SearchAsync();
+            //await this._vm.SearchAsync();
         }
         catch (Exception ex)
         {
@@ -75,7 +77,7 @@ public partial class ReservationDailyWindow : Window
         }
     }
 
-    private async void RoomTabControl_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    private async void DailyTabControl_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
     {
         try
         {
@@ -92,6 +94,7 @@ public partial class ReservationDailyWindow : Window
                 return;
             }
 
+            // 除外が必要なためイベントからコマンドを実行しています。
             await this._vm.ExecuteSearchCommand();
         }
         catch (Exception ex)
@@ -109,6 +112,16 @@ public partial class ReservationDailyWindow : Window
             this._vm.InformationBarVm.ZoomInCommand.Execute(delta);
 
             e.Handled = true;
+        }
+    }
+
+    private void Calendar_OnSelectedDatesChanged(object? sender, SelectionChangedEventArgs e)
+    {
+        // CalendarItem にフォーカスがあると、他のコントロールの操作時に、
+        // フォーカスを移す動作が必要になるので解除する
+        if (Mouse.Captured is System.Windows.Controls.Primitives.CalendarItem)
+        {
+            Mouse.Capture(null);
         }
     }
 }

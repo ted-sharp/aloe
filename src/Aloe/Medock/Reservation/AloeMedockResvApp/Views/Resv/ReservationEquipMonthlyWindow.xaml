@@ -12,6 +12,7 @@
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
         bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+        bhv:OnEnter.EnableMoveFocus="True"
         Title="設備予約(月別)"
         Width="1920" Height="1080"
         MinWidth="640" MinHeight="480"
@@ -20,6 +21,7 @@
 
     <Window.Resources>
         <cvt:DateOnlyToStringConverter x:Key="DateOnlyToStringConverter" Format="yyyy.MM"/>
+        <cvt:Int32ToPercentConverter x:Key="Int32ToPercentConverter" />
 
         <Style TargetType="ui:PackIcon">
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -54,21 +56,17 @@
                 Text="{Binding
                     StartMonth.Value,
                     Converter={StaticResource DateOnlyToStringConverter}}"
-                bhv:OnEnter.UpdateSource="True" />
+                bhv:OnEnter.EnableUpdateSource="True" />
         </StackPanel>
 
         <Grid>
-            <TabControl x:Name="EquipTabControl"
-                    SelectionChanged="EquipTabControl_OnSelectionChanged"
-                    IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
-                    ItemsSource="{Binding ReservationEquipTabItems}"
-                    SelectedIndex="{Binding SelectedTabIndex}"
-                    PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel"
-                    >
-                <!--<TabControl.LayoutTransform >
-                <ScaleTransform ScaleX="{Binding InformationBarVm.SelectedPercentage.Value, Converter={StaticResource Int32ValueToScaleConverter}}"
-                                ScaleY="{Binding InformationBarVm.SelectedPercentage.Value, Converter={StaticResource Int32ValueToScaleConverter}}" />
-            </TabControl.LayoutTransform>-->
+            <TabControl
+                x:Name="EquipTabControl"
+                IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
+                ItemsSource="{Binding ReservationEquipTabItems}"
+                SelectedIndex="{Binding SelectedTabIndexInput, Mode=OneWayToSource}"
+                SelectionChanged="EquipTabControl_OnSelectionChanged"
+                PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel">
 
                 <!-- TabItem ヘッダー部分 -->
                 <TabControl.ItemTemplate>
@@ -83,15 +81,15 @@
                         <local:ReservationEquipMonthlyGrid DataContext="{Binding .}">
                             <local:ReservationEquipMonthlyGrid.LayoutTransform>
                                 <ScaleTransform
-                                ScaleX="{
-                                    Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
-                                    RelativeSource={RelativeSource AncestorType=Window},
-                                    Converter={StaticResource Int32ValueToScaleConverter}}"
-                                ScaleY="{
-                                    Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
-                                    RelativeSource={RelativeSource AncestorType=Window},
-                                    Converter={StaticResource Int32ValueToScaleConverter}}"
-                            />
+                                    ScaleX="{
+                                        Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
+                                        RelativeSource={RelativeSource AncestorType=Window},
+                                        Converter={StaticResource Int32ToPercentConverter}}"
+                                    ScaleY="{
+                                        Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
+                                        RelativeSource={RelativeSource AncestorType=Window},
+                                        Converter={StaticResource Int32ToPercentConverter}}"
+                                />
                             </local:ReservationEquipMonthlyGrid.LayoutTransform>
                         </local:ReservationEquipMonthlyGrid>
                     </DataTemplate>
@@ -102,7 +100,7 @@
             </TabControl>
 
             <ui:Snackbar
-                x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                HorizontalAlignment="Center" VerticalAlignment="Bottom"
                 MessageQueue="{Binding SnackbarMessageQueue}"/>
         </Grid>
 

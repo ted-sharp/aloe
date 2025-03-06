@@ -10,7 +10,7 @@ using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;

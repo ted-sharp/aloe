@@ -73,19 +73,26 @@ public class ReservationDailyBooking : AuditableEntityBase<int>
     [Required]
     public int PtId { get; set; } = 0;
 
-    [Column("order_id")]
+    [Column("rec_id")]
     [Required]
-    public int OrderId { get; set; } = 0;
-
-    [Column("sub_order_id")]
-    [Required]
-    public int SubOrderId { get; set; } = 0;
+    public int RecId { get; set; } = 0;
 
     [Column("is_cancelled")]
     [Required]
     public bool IsCancelled { get; set; } = false;
 
-    [Column("noshow_count")]
+    [Column("is_noshow")]
     [Required]
-    public int NoShowCount { get; set; } = 0;
+    public bool IsNoShow { get; set; } = false;
+
+    public ReservationDailyBooking() { }
+
+    public ReservationDailyBooking(DateOnly bkgDate, int floorId, string slot, string remark, bool isTentative)
+    {
+        this.BkgDate = bkgDate;
+        this.FloorId = floorId;
+        this.Slot = slot;
+        this.BkgRemarkText = remark;
+        this.IsTentative = isTentative;
+    }
 }

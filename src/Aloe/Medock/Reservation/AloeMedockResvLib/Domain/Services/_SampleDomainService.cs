@@ -1,5 +1,5 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using MagicOnion.Server;
 using MagicOnion;
 using Microsoft.Extensions.Logging;

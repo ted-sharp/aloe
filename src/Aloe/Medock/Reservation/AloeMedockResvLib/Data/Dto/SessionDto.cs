@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MessagePack;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 [MessagePackObject]
 public class SessionDto

@@ -6,66 +6,56 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
-/// 日次予約
+/// 設備予約
 /// </summary>
 [MessagePackObject]
-public class ReservationDailyBookingDto
+public class ReservationEquipmentBookingDto
 {
     [Key(0)]
-    public required int ResvDailyBkgId { get; set; }
+    public required int ResvEquipBkgId { get; set; }
 
     [Key(1)]
     public DateOnly? BkgDate { get; set; }
 
-    [Key(3)]
-    public int FloorId { get; set; } = 0;
+    [Key(2)]
+    public required int EquipId { get; set; }
 
-    [Key(4)]
+    [Key(3)]
     public required string Slot { get; set; } = String.Empty;
 
-    [Key(5)]
-    public int AmPmCode { get; set; } = 0;
-
-    [Key(6)]
-    public int SexCode { get; set; } = 0;
-
-    [Key(7)]
+    [Key(4)]
     public required int BkgUserId { get; set; } = 0;
 
-    [Key(8)]
+    [Key(5)]
     public required DateTime BkgAt { get; set; } = DateTime.Now;
 
-    [Key(9)]
+    [Key(6)]
     public required string BkgSymbolText { get; set; } = String.Empty;
 
-    [Key(10)]
+    [Key(7)]
     public required string BkgRemarkText { get; set; } = String.Empty;
 
-    [Key(11)]
+    [Key(8)]
     public required bool IsHeld { get; set; } = false;
 
     // TODO: JOINしたい
-    [Key(12)]
+    [Key(9)]
     public required int OrgId { get; set; } = 0;
 
-    [Key(13)]
-    public int ResvCount { get; set; } = 0;
-
-    [Key(14)]
+    [Key(10)]
     public required int PtId { get; set; } = 0;
 
-    [Key(15)]
+    [Key(11)]
     public required int OrderId { get; set; } = 0;
 
-    [Key(16)]
+    [Key(12)]
     public required int SubOrderId { get; set; } = 0;
 
-    [Key(17)]
-    public bool IsCancelled { get; set; } = false;
-
-    [Key(18)]
-    public int NoShowCount { get; set; } = 0;
+    public string GetDisplayText()
+    {
+        return $"{this.Slot} {this.BkgDate: MM/dd} {this.PtId}";
+    }
 }

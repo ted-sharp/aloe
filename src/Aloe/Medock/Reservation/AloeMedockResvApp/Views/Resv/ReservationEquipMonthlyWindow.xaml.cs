@@ -92,6 +92,7 @@ public partial class ReservationEquipMonthlyWindow : Window
                 return;
             }
 
+            // 除外が必要なためイベントからコマンドを実行しています。
             await this._vm.ExecuteSearchCommand();
         }
         catch (Exception ex)

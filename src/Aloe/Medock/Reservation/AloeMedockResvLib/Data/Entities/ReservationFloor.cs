@@ -19,6 +19,11 @@ public class ReservationFloor : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int FloorId { get; set; }
 
+    [Column("floor_code")]
+    [Required]
+    [MaxLength(Int32.MaxValue)]
+    public string FloorCode { get; set; } = String.Empty;
+
     [Column("floor_name")]
     [Required]
     [MaxLength(Int32.MaxValue)]
@@ -35,8 +40,9 @@ public class ReservationFloor : AuditableEntityBase<int>
 
     public ReservationFloor() { }
 
-    public ReservationFloor(string name, string desc, int seq)
+    public ReservationFloor(string code, string name, string desc, int seq)
     {
+        this.FloorCode = code;
         this.FloorName = name;
         this.FloorDesc = desc;
         this.Seq = seq;

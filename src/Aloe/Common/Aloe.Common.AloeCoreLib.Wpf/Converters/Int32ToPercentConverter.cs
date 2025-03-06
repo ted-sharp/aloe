@@ -3,7 +3,7 @@ using System.Windows.Data;
 
 namespace Aloe.Common.AloeCoreLib.Wpf.Converters;
 
-public class Int32ValueToScaleConverter : IValueConverter
+public class Int32ToPercentConverter : IValueConverter
 {
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {

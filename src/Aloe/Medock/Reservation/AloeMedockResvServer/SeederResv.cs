@@ -41,6 +41,9 @@ internal partial class Seeder
                 "EX", "EX", "EX", "EX",
             };
 
+            var slotMax = slots.Length;
+
+
             if (!context.Equipments.AsNoTracking().Any())
             {
                 context.Equipments.AddRange([
@@ -65,10 +68,10 @@ internal partial class Seeder
             if (!context.Floors.AsNoTracking().Any())
             {
                 context.Floors.AddRange([
-                    new("8階", "メインフロアです。", 1),
-                    new("7階(♀)", "レディースフロアです。", 2),
-                    new("巡回", "バス健診用です。", 3),
-                    new("ダミー", "ダミーです。", 9),
+                    new("1", "8階", "メインフロアです。", 1),
+                    new("2", "7階(♀)", "レディースフロアです。", 2),
+                    new("3", "巡回", "バス健診用です。", 3),
+                    new("9", "ダミー", "ダミーです。", 9),
                 ]);
             }
 
@@ -146,18 +149,72 @@ internal partial class Seeder
                     new(new DateOnly(1900,1,3), DowCode.Saturday, ""),
                 ]);
             }
+            if (!context.DailyCaps.AsNoTracking().Any())
+            {
+                context.DailyCaps.AddRange([
+                    new(new DateOnly(1900,1,1), DowCode.None, 40, 30),
+                    new(new DateOnly(1900,1,2), DowCode.Sunday, 0, 0),
+                    new(new DateOnly(1900,1,3), DowCode.Saturday, 0, 0),
+                ]);
+            }
 
+            if (!context.DailyNotes.AsNoTracking().Any())
+            {
+                // 挿入したデータを使うため保存する
+                count += await context.SaveChangesAsync();
+
+                var floors = context.Floors.AsNoTracking().ToList();
+                var floorMax = floors.Count;
+
+                var firstDate = DateOnlyHelper.GetFirstDate();
+                for (var i = 0; i < 300; i++)
+                {
+                    var date = firstDate.AddDays(rnd.Next(0, 90));
+                    var note = new ReservationDailyNote(date, 0, $"note_{i}", $"user_{i}");
+                    context.DailyNotes.Add(note);
+                }
+
+                for (var i = 300; i < 400; i++)
+                {
+                    var date = firstDate.AddDays(rnd.Next(0, 90));
+                    var floorId = floors.Skip(rnd.Next(0, floorMax)).First().FloorId;
+                    var note = new ReservationDailyNote(date, floorId, $"note_{i}(floorId={floorId})", $"user_{i}");
+                    context.DailyNotes.Add(note);
+                }
+            }
+
+            if (!context.DailyBookings.AsNoTracking().Any())
+            {
+                // 挿入したデータを使うため保存する
+                count += await context.SaveChangesAsync();
+
+                var floors = context.Floors.AsNoTracking().ToList();
+                var floorMax = floors.Count;
+
+
+                var symbols = new[] { "", "鼻", "口", "★" };
+                var symbolMax = symbols.Length;
+
+                var firstDate = DateOnlyHelper.GetFirstDate();
+                for (var i = 0; i < 3000; i++)
+                {
+                    var date = firstDate.AddDays(rnd.Next(0, 60));
+                    var floorId = floors.Skip(rnd.Next(0, floorMax)).First().FloorId;
+                    var slot = slots[rnd.Next(0, slotMax)];
+                    var booking = new ReservationDailyBooking(date, floorId, slot, $"remark_{i}", true);
+                    context.DailyBookings.Add(booking);
+                }
+            }
 
             if (!context.EquipmentBookings.AsNoTracking().Any())
             {
                 // 挿入したデータを使うため保存する
                 count += await context.SaveChangesAsync();
 
-                var equipments = context.Equipments.ToList();
+                var equipments = context.Equipments.AsNoTracking().ToList();
                 var equipmentMax = equipments.Count;
 
-                slots = Seeder.CreateSlotStrings(slots);
-                var slotMax = slots.Length;
+                var slotStrings = Seeder.CreateSlotStrings(slots);
 
                 var symbols = new[] { "", "鼻", "口", "★" };
                 var symbolMax = symbols.Length;
@@ -167,7 +224,7 @@ internal partial class Seeder
                 {
                     var equipId = equipments.Skip(rnd.Next(0, equipmentMax)).First().EquipId;
                     var date = firstDate.AddDays(rnd.Next(0, 60));
-                    var slot = slots[rnd.Next(0, slotMax)];
+                    var slot = slotStrings[rnd.Next(0, slotMax)];
                     var symbol = symbols[rnd.Next(0, symbolMax)];
                     var booking = new ReservationEquipmentBooking(equipId, date, slot, symbol, $"remark_{i}", true);
                     context.EquipmentBookings.Add(booking);

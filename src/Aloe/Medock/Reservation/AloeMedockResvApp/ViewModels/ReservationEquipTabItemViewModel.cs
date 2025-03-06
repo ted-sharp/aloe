@@ -7,7 +7,6 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
@@ -30,6 +29,7 @@ using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using System.Collections.Concurrent;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -100,7 +100,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
     /// </summary>
     public Func<DateOnly /* monthEndDate */, int /* equipId */, Task>? RefreshFuncAsync { get; set; }
 
-    private readonly ReservationEquipmentCacheService _cache;
+    private readonly ReservationCacheService _cache;
     private readonly ILogger _logger;
 
     /// <summary>
@@ -108,7 +108,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
     /// </summary>
     public ReservationEquipTabItemViewModel(
         ILogger logger,
-        ReservationEquipmentCacheService cache)
+        ReservationCacheService cache)
     {
         this._logger = logger;
         this._cache = cache;

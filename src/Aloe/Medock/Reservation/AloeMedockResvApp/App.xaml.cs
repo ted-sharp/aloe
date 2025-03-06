@@ -9,7 +9,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Common.AloeCoreLib.Util;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using CommunityToolkit.Diagnostics;
 using H.NotifyIcon;
@@ -22,15 +22,16 @@ using System.Reflection;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Ini;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using CommandLine;
 using Grpc.Net.Client;
 using MagicOnion;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
+using System.Runtime;
+using Microsoft.VisualBasic;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -42,19 +43,24 @@ public partial class App : Application
 {
     private readonly Timestamper _ts = new("App");
 
-    private readonly Arguments _arguments;
     private ILogger? _logger;
+
+    private readonly IConfigurationRoot _config;
+    private readonly AloeClientSettings _settings;
+
     private IHost? _host;
 
     private LoginWindow? _loginWindow;
     private LogWindow? _logWindow;
     private TaskbarIcon? _notifyIcon;
 
-    public App(Arguments arguments)
+    public App(IConfigurationRoot config, AloeClientSettings settings)
     {
         this._ts.Stamp("Ctor");
 
-        this._arguments = arguments;
+        this._config = config;
+        this._settings = settings;
+
         this.RegisterUnhandledExceptionHandlers();
 
         this._ts.Stamp("Ctor finished");
@@ -94,7 +100,8 @@ public partial class App : Application
 
     private void LogFirstChanceException(Exception ex)
     {
-        if (!this._arguments.IsFirstChanceExceptionLogging)
+        var isEnabled = this._settings?.IsFirstChanceExceptionLogging ?? false;
+        if (!isEnabled)
         {
             return;
         }
@@ -123,7 +130,7 @@ public partial class App : Application
             var ini = LoginIni.Load(App.IniFilePath);
 
             // 常駐するかどうか
-            var isResided = this._arguments.ScreenCode.IsDefault();
+            var isResided = this._settings.ScreenCode.IsDefault();
 
             if (isResided)
             {
@@ -141,19 +148,19 @@ public partial class App : Application
             {
                 try
                 {
-                    this._host = this.InitializeHost(this._arguments, this._logWindow?.LogRichTextBox);
+                    this._host = this.InitializeHost(this._config, this._logWindow?.LogRichTextBox);
                     this._loginWindow?.InvokeCompleteInitHost("Host initialized.");
 
                     App.s_services = this.Host.Services;
                     this._logger = this.Host.Services.GetService<ILogger<App>>(); App.s_services = this.Host.Services;
                     //var confRoot = this.Host.Services.GetService<IConfigurationRoot>();
 
-                    if (this._arguments.IsStandalone)
+                    if (this._settings.IsStandalone)
                     {
                         var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
                         // standalone の場合はDBホスト名を使う
-                        App.HostName = await auth.GetHostAsync();
-                        App.DatabaseName = await auth.GetDatabaseAsync();
+                        App.HostName = await auth.GetDbHostAsync();
+                        App.DatabaseName = await auth.GetDbNameAsync();
 
                         await this.InitializeDatabaseAsync();
                     }
@@ -181,10 +188,13 @@ public partial class App : Application
                 this._loginWindow?.InvokeCompleteInitTask("Startup finished.");
             });
 
-            if (!String.IsNullOrWhiteSpace(this._arguments.User))
+            if (!String.IsNullOrWhiteSpace(this._settings.User))
             {
                 // 引数指定があるとき
-                var isSuccessful = await this.LoginAsync(task, this._arguments.User, this._arguments.Password);
+                var isSuccessful = await this.LoginAsync(task,
+                    this._settings.User,
+                    this._settings.Password,
+                    this._settings.ScreenCode);
                 if (isSuccessful)
                 {
                     return;
@@ -193,7 +203,9 @@ public partial class App : Application
             else if (ini.IsReadyForAutoLogin)
             {
                 // 自動ログインのとき
-                var isSuccessful = await this.LoginAsync(task, ini.User!, ini.Password!);
+                var isSuccessful = await this.LoginAsync(task,
+                    ini.User,
+                    ini.Password);
                 if (isSuccessful)
                 {
                     return;
@@ -241,7 +253,7 @@ public partial class App : Application
     /// App.Run が実行済みのため、IHost.Run はしません。
     /// IHostedService を使いたい場合は、host.StartAsync を呼び出します。
     /// </remarks>
-    private IHost InitializeHost(Arguments arguments, RichTextBox? logTextBox)
+    private IHost InitializeHost(IConfigurationRoot config, RichTextBox? logTextBox)
     {
         this.SetStatus("Host Initializing...");
 
@@ -249,9 +261,11 @@ public partial class App : Application
 
         var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
 
-        if (arguments.IsStandalone)
+        builder.Configuration.AddConfiguration(config);
+
+        if (this._settings.IsStandalone)
         {
-            builder.ConfigureStandalone(logTextBox, arguments.IsStandaloneSqlLogging);
+            builder.ConfigureStandalone(logTextBox, this._settings);
         }
         else
         {
@@ -265,7 +279,7 @@ public partial class App : Application
         return host;
     }
 
-    private async Task<bool> LoginAsync(Task task, string user, string password)
+    private async Task<bool> LoginAsync(Task task, string? user, string? password, ScreenCode screenCode = ScreenCode.None)
     {
         this.SetStatus("Task Waiting...");
         await Task.WhenAll(task);
@@ -274,8 +288,8 @@ public partial class App : Application
         var auth = sp.GetRequiredService<IAuthGrpcService>();
         var request = new LoginRequest()
         {
-            LoginName = user,
-            Password = password,
+            LoginName = user ?? "",
+            Password = password ?? "",
             ClientAppName = App.AppName,
         };
 
@@ -288,7 +302,7 @@ public partial class App : Application
 
             App.Session = result.SessionDto;
 
-            Window window = this._arguments.ScreenCode switch
+            Window window = screenCode switch
             {
                 ScreenCode.ReservationEquip => sp.GetRequiredService<ReservationEquipMonthlyWindow>(),
                 ScreenCode.ReservationDaily => sp.GetRequiredService<ReservationDailyWindow>(),

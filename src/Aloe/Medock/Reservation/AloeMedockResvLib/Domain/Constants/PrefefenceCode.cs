@@ -15,4 +15,5 @@ public static class PreferenceCode
     /// Window位置を記憶する。
     /// </summary>
     public static readonly string WindowRememberPosition = "WINDOW-RememberPosition";
+
 }

@@ -1,55 +1,28 @@
 ﻿
+using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvServer.Settings;
 using CommandLine;
 using Microsoft.Extensions.Hosting;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
-/// <summary>
-/// コマンドライン引数をマッピングします。
-/// </summary>
-internal class Arguments
-{
-    /// <summary>
-    /// サンプルデータの挿入を試行します。
-    /// 空の場合のみ挿入できます。
-    /// </summary>
-    [Option("seed", HelpText = "Try insert sample data.")]
-    public bool IsSeed { get; set; }
-
-    /// <summary>
-    /// DB のログを出力します。
-    /// </summary>
-    [Option("sql", HelpText = "Enable DB Logging.")]
-    public bool IsSqlLoggingEnabled { get; set; }
-
-    /// <summary>
-    /// コマンドライン引数からパースします。
-    /// </summary>
-    public static Arguments Parse(string[] args)
-    {
-        return Parser.Default.ParseArguments<Arguments>(args)
-            .WithNotParsed(x =>
-            {
-                Console.WriteLine($"Arguments Parse Error: {args}");
-            })
-            .Value ?? new();
-    }
-}
-
 public static class Program
 {
     public static async Task Main(string[] args)
     {
-        var arguments = Arguments.Parse(args);
-
+        var isSeed = false;
         try
         {
-            if (arguments.IsSeed)
+            var config = AloeServerSettings.CreateConfiguration(args);
+            var settings = config.GetSettings<AloeServerSettings>();
+            isSeed = settings.IsSeed;
+
+            if (isSeed)
             {
                 // サンプルデータを挿入する
                 //var host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
                 var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
-                    .ConfigureSeeder(arguments.IsSqlLoggingEnabled)
+                    .ConfigureSeeder(settings.IsSqlLogging, settings.ConnectionStringName)
                     .Build();
 
                 var seeder = host.Services.GetRequiredService<Seeder>();
@@ -60,7 +33,7 @@ public static class Program
             {
                 // Kestrel で待ち受ける
                 var host = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder(args)
-                    .ConfigureServer(arguments.IsSqlLoggingEnabled)
+                    .ConfigureServer(settings.IsSqlLogging, settings.ConnectionStringName)
                     .ConfigureKestrel()
                     .Build();
 
@@ -75,7 +48,7 @@ public static class Program
             await Serilog.Log.CloseAndFlushAsync()
                 .ConfigureAwait(false);
 
-            if (arguments.IsSeed)
+            if (isSeed)
             {
                 Console.WriteLine();
                 Console.WriteLine("Press any key to exit...");

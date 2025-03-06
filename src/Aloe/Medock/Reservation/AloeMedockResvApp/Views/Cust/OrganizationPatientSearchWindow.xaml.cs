@@ -83,7 +83,7 @@ public partial class OrganizationPatientSearchWindow : Window
             var index = this.EquipTabControl.SelectedIndex;
             if (index >= 0)
             {
-                this._vm.SelectedTabIndex = index;
+                this._vm.SelectedTabIndexInput = index;
                 await this._vm.SearchAsync();
             }
         }

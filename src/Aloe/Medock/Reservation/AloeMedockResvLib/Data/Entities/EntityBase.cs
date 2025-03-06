@@ -6,8 +6,8 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
 using Microsoft.EntityFrameworkCore;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 

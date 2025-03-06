@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
@@ -25,7 +25,7 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// <example>
     /// How to use:
     /// <code>
-    /// <TextBox Text="{Binding SampleCommand.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}" />
+    /// <TextBox Text="{Binding SampleProperty.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}" />
     /// </code>
     /// </example>
     /// </remarks>
@@ -57,16 +57,43 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
         this._logger = logger;
         this._sampleGrpcService = sampleGrpcService;
 
-        this.SampleCommand
-            // ReSharper disable once AsyncVoidLambda
-            .Subscribe(async () =>
-            {
-                var sampleDto = await this._sampleGrpcService.FetchSampleAsync();
-                // なにかする
-
-                // 最後にウインドウを閉じる
-                this.CloseAction?.Invoke();
-            })
+        this.SampleProperty
+            .Subscribe(this.Method)
             .AddTo(this.Disposables);
+
+        this.SampleCommand
+            .Subscribe(this.CommandMethod)
+            .AddTo(this.Disposables);
+    }
+
+    // async void の場合は、ラムダ式ではなくメソッド化しておくとシンプルになる
+    private async void Method(string propValue)
+    {
+        try
+        {
+            await Task.Delay(1000);
+
+            this._logger.LogInformation(propValue);
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.Message);
+        }
+    }
+
+    private async void CommandMethod()
+    {
+        try
+        {
+            var sampleDto = await this._sampleGrpcService.FetchSampleAsync();
+            // なにかする
+
+            // 最後にウインドウを閉じる
+            this.CloseAction?.Invoke();
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.Message);
+        }
     }
 }

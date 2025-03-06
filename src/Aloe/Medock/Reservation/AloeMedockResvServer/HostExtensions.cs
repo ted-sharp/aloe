@@ -3,6 +3,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -20,11 +21,11 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureSeeder<T>(this T builder, bool isSqlLoggingEnabled)
+    internal static T ConfigureSeeder<T>(this T builder, bool isSqlLoggingEnabled, string connectionStringName)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql(isSqlLoggingEnabled)
+            .AddPostgreSql(isSqlLoggingEnabled, connectionStringName)
             .AddSeederServices()
             .AddSerilog();
 
@@ -34,12 +35,15 @@ internal static class HostExtensions
     /// <summary>
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
-    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder, bool isSqlLoggingEnabled)
+    private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder,
+        bool isSqlLoggingEnabled,
+        string connectionStringName = "DefaultConnection")
     {
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
         AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-        var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+        var connStr = builder.Configuration.GetConnectionString(connectionStringName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(connStr, nameof(connStr));
 
         // EFCore はスレッドセーフではないので、ファクトリから都度生成します。
         builder.Services.AddDbContextFactory<AppDbContext>((services, options) =>
@@ -78,14 +82,31 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureServer<T>(this T builder, bool isSqlLoggingEnabled)
+    internal static T ConfigureServer<T>(this T builder, bool isSqlLoggingEnabled, string connectionStringName)
         where T : IHostApplicationBuilder
     {
         builder
-            .AddPostgreSql(isSqlLoggingEnabled)
+            .AddPostgreSql(isSqlLoggingEnabled, connectionStringName)
+            .AddHealthChecks()
             .AddServerServices()
             .AddDomainServices()
             .AddSerilog();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// 正常性チェックサービスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddHealthChecks(this IHostApplicationBuilder builder)
+    {
+        // API として host.MapHealthChecks の登録が必要です。
+        //builder.Services.AddHealthChecks();
+
+        builder.Services.AddHealthChecks()
+            .AddDbContextCheck<AppDbContext>("db_context_check",
+                failureStatus: HealthStatus.Unhealthy,
+                tags: ["db", "postgres"]);
 
         return builder;
     }
@@ -105,10 +126,15 @@ internal static class HostExtensions
     /// </summary>
     private static IHostApplicationBuilder AddDomainServices(this IHostApplicationBuilder builder)
     {
-        builder.Services.AddScoped<IPolicyService, PolicyService>();
-        builder.Services.AddScoped<IPreferenceService, PreferenceService>();
-        builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddTransient<IAuthService, AuthService>();
+        builder.Services.AddTransient<IHolidayService, HolidayService>();
 
+        builder.Services.AddScoped<IPermissionService, PermissionService>();
+        builder.Services.AddTransient<IPolicyService, PolicyService>();
+        builder.Services.AddTransient<IPreferenceService, PreferenceService>();
+
+        builder.Services.AddTransient<IReservationDailyService, ReservationDailyService>();
+        builder.Services.AddTransient<IReservationEquipmentService, ReservationEquipmentService>();
         return builder;
     }
 
@@ -188,33 +214,9 @@ internal static class HostExtensions
 
     private static WebApplication MapApi(this WebApplication host)
     {
-
-        var summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
-        host.MapGet("/weatherforecast", () =>
-        {
-            var forecast = Enumerable.Range(1, 5).Select(index =>
-                    new WeatherForecast
-                    (
-                        DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                        Random.Shared.Next(-20, 55),
-                        summaries[Random.Shared.Next(summaries.Length)]
-                    ))
-                .ToArray();
-            return forecast;
-        })
-            .WithName("GetWeatherForecast")
-            .WithOpenApi();
+        host.MapHealthChecks("/health");
 
         return host;
-    }
-
-    internal record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-    {
-        //public int TemperatureF => 32 + (int)(this.TemperatureC / 0.5556);
     }
 
     #endregion ConfigureServerApp

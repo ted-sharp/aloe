@@ -1,5 +1,5 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using MagicOnion.Server;
 using MagicOnion;
 using Microsoft.Extensions.Logging;
@@ -13,6 +13,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Concurrent;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Defaults;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
@@ -62,7 +63,7 @@ public class PermissionService : IPermissionService
             }
 
             // デフォルトをもとにする
-            prefs = PermissionService.CreateDefaultPermissions();
+            prefs = DefaultPermission.CreateDefaultPermissions();
 
             // DBにある設定で上書きする
             using var context = this._factory.CreateDbContext();
@@ -119,23 +120,4 @@ public class PermissionService : IPermissionService
         return [];
     }
 
-
-    #region CreateDefaultPermissions
-
-    public static Dictionary<string, Permission> CreateDefaultPermissions()
-    {
-        var policies = new Dictionary<string, Permission>
-        {
-            [PermissionCode.MaintPoliciesR] = new()
-            {
-                PermCode = PermissionCode.MaintPoliciesR,
-                PermName = nameof(PermissionCode.MaintPoliciesR),
-                PermDesc = "ポリシーマスターの表示権限です。",
-            },
-        };
-
-        return policies;
-    }
-
-    #endregion CreateDefaultPermissions
 }

@@ -7,7 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 /// <summary>
 /// ルーム
@@ -27,13 +27,13 @@ public class ReservationRoomDto
 
 public static class ReservationRoomExtensions
 {
-    public static ReservationRoomDto ToReservationRoomDto(this ReservationRoom Room)
+    public static ReservationRoomDto ToReservationRoomDto(this ReservationRoom room)
     {
         return new ReservationRoomDto
         {
-            RoomId = Room.RoomId,
-            RoomName = Room.RoomName,
-            Seq = Room.Seq,
+            RoomId = room.RoomId,
+            RoomName = room.RoomName,
+            Seq = room.Seq,
         };
     }
 }

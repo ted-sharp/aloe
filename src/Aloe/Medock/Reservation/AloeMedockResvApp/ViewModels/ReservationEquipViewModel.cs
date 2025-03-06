@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.Extensions.Logging;
 using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
@@ -46,17 +46,21 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public int SelectedTabIndex { get; set; } = -1;
+    /// <remarks>
+    /// OneWayToSource なので、通知の仕組みは不要。
+    /// イベントも発火させないので、ReactiveProperty も不要。
+    /// </remarks>
+    public int SelectedTabIndexInput { get; set; } = -1;
 
     public SnackbarMessageQueue SnackbarMessageQueue { get; } = new();
 
     private readonly ILogger _logger;
 
-    private readonly ReservationEquipmentCacheService _cache;
+    private readonly ReservationCacheService _cache;
 
     public ReservationEquipViewModel(
         ILogger<ReservationEquipViewModel> logger,
-        ReservationEquipmentCacheService cache,
+        ReservationCacheService cache,
         InformationBarViewModel informationBarVm,
         FunctionBarViewModel functionBarVm)
     {
@@ -150,7 +154,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     {
         try
         {
-            var tabIndex = this.SelectedTabIndex;
+            var tabIndex = this.SelectedTabIndexInput;
 
             if (this.ReservationEquipTabItems == null! ||
                 this.ReservationEquipTabItems.Count == 0 ||
