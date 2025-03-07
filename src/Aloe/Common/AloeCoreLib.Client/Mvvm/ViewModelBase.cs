@@ -18,6 +18,8 @@ public class ViewModelBase : INotifyPropertyChanged, IDisposable
 
     #region IDisposable
 
+    protected IDisposable? Disposable { get; set; }
+
     private bool _disposed = false;
 
     public void Dispose()
@@ -25,14 +27,11 @@ public class ViewModelBase : INotifyPropertyChanged, IDisposable
         if (!this._disposed)
         {
             this.PropertyChanged = null;
-            this.Disposables.Dispose();
+            this.Disposable?.Dispose();
             this._disposed = true;
         }
         GC.SuppressFinalize(this);
     }
 
     #endregion IDisposable
-
-    // 実態は ICollection なので複数形を用います。
-    protected System.Reactive.Disposables.CompositeDisposable Disposables { get; } = [];
 }

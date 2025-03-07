@@ -1,7 +1,4 @@
-﻿using Reactive.Bindings;
-using Reactive.Bindings.Extensions;
-using System;
-using System.Collections.Generic;
+﻿using R3;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
@@ -20,13 +17,13 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
 public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
-    public ReactiveCommandSlim ShowReservationMainWindowCommand { get; } = new();
-    public ReactiveCommandSlim ShowXxxWindowCommand { get; } = new();
-    public ReactiveCommandSlim ShowLogWindowCommand { get; } = new();
-    public ReactiveCommandSlim ShowMaintenanceWindowCommand { get; } = new();
-    public ReactiveCommandSlim LogoutCommand { get; } = new();
-    public ReactiveCommandSlim RestartAppCommand { get; } = new();
-    public ReactiveCommandSlim ExitAppCommand { get; } = new();
+    public ReactiveCommand ShowReservationMainWindowCommand { get; } = new();
+    public ReactiveCommand ShowXxxWindowCommand { get; } = new();
+    public ReactiveCommand ShowLogWindowCommand { get; } = new();
+    public ReactiveCommand ShowMaintenanceWindowCommand { get; } = new();
+    public ReactiveCommand LogoutCommand { get; } = new();
+    public ReactiveCommand RestartAppCommand { get; } = new();
+    public ReactiveCommand ExitAppCommand { get; } = new();
 
     private readonly ILogger _logger;
     private readonly WindowService _windowService;
@@ -38,29 +35,33 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         this._logger = logger;
         this._windowService = windowService;
 
+        var d = R3.Disposable.CreateBuilder();
+
         this.ShowReservationMainWindowCommand
             .Subscribe(this.ShowReservationMainWindow)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.ShowLogWindowCommand
             .Subscribe(this.ShowLogWindow)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.ShowMaintenanceWindowCommand
             .Subscribe(this.ShowMaintenanceWindow)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.LogoutCommand
             .Subscribe(this.Logout)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.RestartAppCommand
             .Subscribe(this.RestartApplication)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.ExitAppCommand
             .Subscribe(this.ExitApplication)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
+
+        this.Disposable = d.Build();
     }
 
     private T? ShowWindow<T>()
@@ -72,7 +73,7 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         return window;
     }
 
-    private void ShowReservationMainWindow()
+    private void ShowReservationMainWindow(Unit _)
     {
         if (App.HasSession)
         {
@@ -80,11 +81,11 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         }
         else
         {
-            this.Logout();
+            this.Logout(_);
         }
     }
 
-    private void ShowLogWindow()
+    private void ShowLogWindow(Unit _)
     {
         if (App.HasSession)
         {
@@ -92,11 +93,11 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         }
         else
         {
-            this.Logout();
+            this.Logout(_);
         }
     }
 
-    private void ShowMaintenanceWindow()
+    private void ShowMaintenanceWindow(Unit _)
     {
         if (App.HasSession)
         {
@@ -104,11 +105,11 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         }
         else
         {
-            this.Logout();
+            this.Logout(_);
         }
     }
 
-    private async void Logout()
+    private async void Logout(Unit _)
     {
         try
         {
@@ -148,14 +149,14 @@ public class NotifyIconViewModel : ViewModelBase, INotifyPropertyChanged, IDispo
         }
     }
 
-    private void RestartApplication()
+    private void RestartApplication(Unit _)
     {
         // TODO: リスタート
         // 引数も同じにしておく必要がありそう
         throw new NotImplementedException();
     }
 
-    private void ExitApplication()
+    private void ExitApplication(Unit _)
     {
         Application.Current.Shutdown();
     }

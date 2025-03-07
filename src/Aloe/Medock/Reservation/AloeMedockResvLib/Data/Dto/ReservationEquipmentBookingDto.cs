@@ -1,4 +1,5 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+using JetBrains.Annotations;
 using MessagePack;
 using System;
 using System.Collections.Generic;
@@ -54,8 +55,7 @@ public class ReservationEquipmentBookingDto
     [Key(12)]
     public required int SubOrderId { get; set; } = 0;
 
-    public string GetDisplayText()
-    {
-        return $"{this.Slot} {this.BkgDate: MM/dd} {this.PtId}";
-    }
+    [UsedImplicitly]
+    [IgnoreMember]
+    public string DisplayText => $"{this.Slot} {this.BkgDate: MM/dd} {this.PtId}";
 }

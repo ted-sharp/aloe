@@ -1,36 +1,15 @@
-﻿using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
+﻿using R3;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 using Microsoft.Extensions.Logging;
-using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using System.Collections.ObjectModel;
-using System.Data;
-using System.Runtime.CompilerServices;
-using System.Globalization;
-using System.Windows.Input;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using Reactive.Bindings.TinyLinq;
-using System.Reactive.Linq;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using Microsoft.Extensions.Caching.Memory;
-using System.Windows.Documents;
-using Microsoft.VisualBasic.CompilerServices;
-using System.DirectoryServices.ActiveDirectory;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MaterialDesignThemes.Wpf;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using ObservableCollections;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -38,38 +17,57 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
     /// <summary>
-    /// 検索のときに参照します。
+    /// 選択中のフロア番号です。
     /// </summary>
-    public ReactivePropertySlim<string> FloorCode { get; set; } = new();
+    /// <remarks>
+    /// OneWayToSource なので、通知の仕組みは不要。
+    /// (R3.ReactiveProperty は INotifyPropertyChanged を実装しません。)
+    /// 変更されたとき、フロアID、フロア名、を更新します。
+    /// </remarks>
+    public ReactiveProperty<string> FloorCode { get; set; } = new();
 
+    /// <summary>
+    /// フロアIDです。
+    /// </summary>
+    /// <remarks>
+    /// 検索のときに参照します。
+    /// </remarks>
     private int? _floorId = null;
 
     /// <summary>
-    /// Floor Code 入力時にフロア名を表示します。
-    /// </summary>
-    public ReactivePropertySlim<string> FloorName { get; set; } = new();
-
-    /// <summary>
-    /// 検索のときに参照します。
-    /// </summary>
-    public ReactivePropertySlim<DateOnly> SelectedDate { get; set; } = new (DateOnlyHelper.GetToday());
-
-    /// <summary>
-    /// 検索のときに参照します。
+    /// 選択中のフロア名です。
     /// </summary>
     /// <remarks>
+    /// View側でバインドして値を表示します。
+    /// (R3.BindableReactiveProperty は INotifyPropertyChanged を実装しています。)
+    /// </remarks>
+    public BindableReactiveProperty<string> FloorName { get; set; } = new();
+
+    /// <summary>
+    /// 選択中の日付です。
+    /// </summary>
+    /// <remarks>
+    /// 検索のときに参照します。
+    /// </remarks>
+    public BindableReactiveProperty<DateOnly> SelectedDate { get; set; } = new (DateOnlyHelper.GetToday());
+
+    /// <summary>
+    /// 現在選択中のタブです。
+    /// </summary>
+    /// <remarks>
+    /// 検索のときに参照します。
     /// OneWayToSource なので、通知の仕組みは不要。
     /// イベントも発火させないので、ReactiveProperty も不要。
     /// </remarks>
     public int SelectedTabIndexInput { get; set; } = -1;
 
-    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes { get; set; } = new();
+    private readonly ObservableList<ReservationDailyNoteDto> _reservationDailyNotes = new();
 
-    public ReactiveCollection<ReservationDailyBookingDto> ReservationDailyBookings { get; set; } = new();
+    public NotifyCollectionChangedSynchronizedViewList<ReservationDailyNoteDto> ReservationDailyNotesView { get; }
 
-    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes2 { get; set; } = new();
+    private readonly ObservableList<ReservationDailyBookingDto> _reservationDailyBookings = new();
 
-    public ReactiveCollection<ReservationDailyNoteDto> ReservationDailyNotes3 { get; set; } = new();
+    public NotifyCollectionChangedSynchronizedViewList<ReservationDailyBookingDto> ReservationDailyBookings { get; }
 
     public SnackbarMessageQueue SnackbarMessageQueue { get; } = new();
 
@@ -96,14 +94,25 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
 
         #endregion Function
 
+        var d = R3.Disposable.CreateBuilder();
 
         this.FloorCode
             .Subscribe(this.LoadFloor)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
-        //this.SelectedDate
-        //    .SubscribeAsync(this.ExecuteSearchCommand, this._logger)
-        //    .AddTo(this.Disposables);
+        this.SelectedDate
+            .Subscribe(this.ExecuteSearchCommandWrapper)
+            .AddTo(ref d);
+
+        this.ReservationDailyNotesView = this._reservationDailyNotes
+            .ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current)
+            .AddTo(ref d);
+
+        this.ReservationDailyBookings = this._reservationDailyBookings
+            .ToNotifyCollectionChanged(SynchronizationContextCollectionEventDispatcher.Current)
+            .AddTo(ref d);
+
+        this.Disposable = d.Build();
     }
 
     public required InformationBarViewModel InformationBarVm { get; set; }
@@ -161,6 +170,18 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
         }
     }
 
+    private async void ExecuteSearchCommandWrapper(DateOnly _)
+    {
+        try
+        {
+            await this.ExecuteSearchCommand();
+        }
+        catch (Exception ex)
+        {
+            this._logger.LogError(ex, ex.ToString());
+        }
+    }
+
     /// <summary>
     /// 検索を実施時、アクティブなタブの内容を更新します。
     /// </summary>
@@ -213,10 +234,14 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
             var orFloorId = this._floorId;
 
             var notes = await this._cache.GetOrFetchDailyNotes(date, orFloorId);
-            this.ReservationDailyNotes.Clear();
-            this.ReservationDailyNotes.AddRangeOnScheduler(notes);
+            this._reservationDailyNotes.Clear();
+            this._reservationDailyNotes.AddRange(notes);
 
             // TODO: List
+            var bookings = await this._cache.GetOrFetchDailyBookings(date, orFloorId);
+            this._reservationDailyBookings.Clear();
+            this._reservationDailyBookings.AddRange(bookings);
+
             // TODO: Cat
             // TODO: Room
             //var endDate = startMonth.ToMonthEndDateOrCurrentMonth();

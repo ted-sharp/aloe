@@ -1,26 +1,14 @@
-﻿using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
+﻿using R3;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 using Microsoft.Extensions.Logging;
-using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using System.Collections.ObjectModel;
 using System.Data;
-using System.Runtime.CompilerServices;
-using System.Globalization;
-using System.Windows.Input;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Microsoft.Extensions.Caching.Memory;
-using Reactive.Bindings.TinyLinq;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -32,20 +20,20 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
     // TODO: バインドしてるからいらないかも
     public Action? RefreshDataAction { get; set; }
 
-    public ReactivePropertySlim<DateOnly> StartDate { get; set; } = new(DateOnlyHelper.GetToday());
+    public ReactiveProperty<DateOnly> StartDate { get; set; } = new(DateOnlyHelper.GetToday());
 
-    public ReactivePropertySlim<int> OffsetDayCount { get; set; } = new(31);
+    public ReactiveProperty<int> OffsetDayCount { get; set; } = new(31);
 
-    public ReactivePropertySlim<string> FloorId1 { get; set; } = new("1");
-    public ReactivePropertySlim<string> FloorName1 { get; set; } = new("Floor1");
-    public ReadOnlyReactivePropertySlim<string> VerticalFloorName1 { get; }
-    public ReactivePropertySlim<string> FloorId2 { get; set; } = new("2");
-    public ReactivePropertySlim<string> FloorName2 { get; set; } = new("Floor2");
-    public ReadOnlyReactivePropertySlim<string> VerticalFloorName2 { get; }
+    public ReactiveProperty<string> FloorId1 { get; set; } = new("1");
+    public ReactiveProperty<string> FloorName1 { get; set; } = new("Floor1");
+    public ReadOnlyReactiveProperty<string> VerticalFloorName1 { get; }
+    public ReactiveProperty<string> FloorId2 { get; set; } = new("2");
+    public ReactiveProperty<string> FloorName2 { get; set; } = new("Floor2");
+    public ReadOnlyReactiveProperty<string> VerticalFloorName2 { get; }
 
-    public ReactivePropertySlim<bool?> IsAutoRefresh { get; set; } = new(true);
+    public ReactiveProperty<bool?> IsAutoRefresh { get; set; } = new(true);
 
-    public ReactivePropertySlim<string> SecondsToRefresh { get; set; } = new("60");
+    public ReactiveProperty<string> SecondsToRefresh { get; set; } = new("60");
 
     public DataTable Schedules0 { get; set; } = new();
     public DataTable Schedules1 { get; set; } = new();
@@ -63,6 +51,8 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         this._logger = logger;
         this._cache = cache;
 
+        var d = R3.Disposable.CreateBuilder();
+
         #region SearchCondition
 
         this.StartDate
@@ -71,7 +61,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
                 this.RefreshAction?.Invoke(x);
                 this.RefreshDataAction?.Invoke();
             })
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.FloorId1
             .Subscribe(x =>
@@ -80,7 +70,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
                 this.FloorName1.Value = $"test {x}";
                 this.RefreshDataAction?.Invoke();
             })
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.FloorId2
             .Subscribe(x =>
@@ -89,17 +79,17 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
                 this.FloorName2.Value = $"test {x}";
                 this.RefreshDataAction?.Invoke();
             })
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.VerticalFloorName1 = this.FloorName1
             .Select(x => String.Join(Environment.NewLine, x.ToCharArray()))
-            .ToReadOnlyReactivePropertySlim<string>()
-            .AddTo(this.Disposables);
+            .ToReadOnlyReactiveProperty<string>()
+            .AddTo(ref d);
 
         this.VerticalFloorName2 = this.FloorName2
             .Select(x => String.Join(Environment.NewLine, x.ToCharArray()))
-            .ToReadOnlyReactivePropertySlim<string>()
-            .AddTo(this.Disposables);
+            .ToReadOnlyReactiveProperty<string>()
+            .AddTo(ref d);
 
         #endregion SearchCondition
 
@@ -120,6 +110,8 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
         this.FunctionBar = functionBar;
 
         #endregion Function
+
+        this.Disposable = d.Build();
     }
 
     #region Function

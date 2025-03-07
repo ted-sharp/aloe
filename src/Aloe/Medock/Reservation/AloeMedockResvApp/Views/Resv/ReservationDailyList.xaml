@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
              mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
+             d:DataContext="{d:DesignInstance Type=vm:ReservationDailyViewModel}"
              d:Background="Azure"
              d:DesignHeight="200" d:DesignWidth="400">
 
@@ -14,9 +14,14 @@
     </UserControl.Resources>
 
     <DockPanel>
+        <!--
+            AutoGenerateColumns="False"
+        -->
         <DataGrid
             x:Name="BookingDataGrid"
-            AutoGenerateColumns="False"
+
+            ItemsSource="{Binding ReservationDailyBookings}"
+
             AlternatingRowBackground="GhostWhite"
 
             CanUserAddRows="False"

@@ -1,15 +1,11 @@
-﻿using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
+﻿using R3;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.Extensions.Logging;
-using Reactive.Bindings.Extensions;
+using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
+using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using ObservableCollections;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -19,17 +15,57 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
     /// <summary>
-    /// バインド用のプロパティです。
+    /// 選択中の項目インデックスです。
     /// </summary>
     /// <remarks>
+    /// 検索のときに参照します。
+    /// 検索のときに使うだけなので OneWayToSource とします。
+    /// イベントを発火させないので ReactiveProperty にはしません。
+    ///
     /// <example>
     /// How to use:
     /// <code>
-    /// <TextBox Text="{Binding SampleProperty.Value, UpdateSourceTrigger=PropertyChanged, Mode=OneWayToSource}" />
+    /// <TextBox Text="{Binding SelectedIndexInput, Mode=OneWayToSource}" />
     /// </code>
     /// </example>
     /// </remarks>
-    public ReactivePropertySlim<string> SampleProperty { get; } = new("any");
+    public int SelectedIndexInput { get; set; } = -1;
+
+    /// <summary>
+    /// 入力されたコードです。
+    /// </summary>
+    /// <remarks>
+    /// 入力をうけてイベントを発火します。
+    /// イベント発火に使うだけなので OneWayToSource とします。
+    /// イベントを発火させるので ReactiveProperty にします。
+    /// 変更されたとき、フロア名、を更新します。
+    ///
+    /// <example>
+    /// How to use:
+    /// <code>
+    /// <TextBox Text="{Binding XxxCode, Mode=OneWayToSource}" />
+    /// TextBox.Text はデフォルトで Mode=TwoWay となります。
+    /// </code>
+    /// </example>
+    /// </remarks>
+    public ReactiveProperty<string> XxxCode { get; set; } = new();
+
+    /// <summary>
+    /// 入力されたコードの名前です。
+    /// </summary>
+    /// <remarks>
+    /// 更新した値を表示するだけなので OneWay とします。
+    /// INotifyPropertyChanged が必要なので BindableReactiveProperty にします。
+    ///
+    /// <example>
+    /// How to use:
+    /// <code>
+    /// <TextBlock Text="{Binding XxxName}" />
+    /// TextBlock.Text はデフォルトで Mode=OneWay となります。
+    /// </code>
+    /// </example>
+    /// </remarks>
+    public BindableReactiveProperty<string> XxxName { get; set; } = new();
 
     /// <summary>
     /// バインド用のコマンドです。
@@ -42,7 +78,9 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// </code>
     /// </example>
     /// </remarks>
-    public ReactiveCommandSlim SampleCommand { get; } = new();
+    public ReactiveCommand SampleCommand { get; } = new();
+
+    //public ObservableList<ReservationDailyNoteDto> ReservationDailyNotes { get; set; } = new();
 
     // View 側で設定する Close アクション
     public Action? CloseAction { get; set; }
@@ -57,13 +95,19 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
         this._logger = logger;
         this._sampleGrpcService = sampleGrpcService;
 
-        this.SampleProperty
+        // Dispose の方法はいくつかある
+        // https://github.com/Cysharp/R3?tab=readme-ov-file#disposable
+        var d = R3.Disposable.CreateBuilder();
+
+        this.XxxCode
             .Subscribe(this.Method)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
 
         this.SampleCommand
             .Subscribe(this.CommandMethod)
-            .AddTo(this.Disposables);
+            .AddTo(ref d);
+
+        this.Disposable = d.Build();
     }
 
     // async void の場合は、ラムダ式ではなくメソッド化しておくとシンプルになる
@@ -73,6 +117,8 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
         {
             await Task.Delay(1000);
 
+            this.XxxName.Value = propValue;
+
             this._logger.LogInformation(propValue);
         }
         catch (Exception ex)
@@ -81,7 +127,7 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
         }
     }
 
-    private async void CommandMethod()
+    private async void CommandMethod(Unit _)
     {
         try
         {

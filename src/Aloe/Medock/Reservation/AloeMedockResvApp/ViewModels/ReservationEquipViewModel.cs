@@ -1,31 +1,10 @@
-﻿using Reactive.Bindings;
-using System;
-using System.Collections.Generic;
+﻿using R3;
 using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.Extensions.Logging;
-using Reactive.Bindings.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using System.Collections.ObjectModel;
-using System.Data;
-using System.Runtime.CompilerServices;
-using System.Globalization;
-using System.Windows.Input;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using Reactive.Bindings.TinyLinq;
-using System.Reactive.Linq;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using Microsoft.Extensions.Caching.Memory;
-using System.Windows.Documents;
-using Microsoft.VisualBasic.CompilerServices;
-using System.DirectoryServices.ActiveDirectory;
 using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
@@ -39,7 +18,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public ReactivePropertySlim<DateOnly> StartMonth { get; set; } = new(DateOnlyHelper.GetToday());
+    public BindableReactiveProperty<DateOnly> StartMonth { get; set; } = new(DateOnlyHelper.GetToday());
 
     public ObservableCollection<ReservationEquipTabItemViewModel> ReservationEquipTabItems { get; set; } = new([]);
 

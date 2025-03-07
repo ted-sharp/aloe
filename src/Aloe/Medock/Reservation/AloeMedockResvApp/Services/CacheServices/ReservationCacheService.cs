@@ -253,6 +253,27 @@ public class ReservationCacheService
         return notes;
     }
 
+    public async Task<List<ReservationDailyBookingDto>> GetOrFetchDailyBookings(DateOnly date, int? orFloorId, bool useCache = true)
+    {
+
+        var key = $"dailyBookings_{date:yyyyMMdd}_{orFloorId ?? 0}";
+        if (useCache && this._cache.TryGetValue<List<ReservationDailyBookingDto>>(
+                key, out var bookings))
+        {
+            return bookings ?? [];
+        }
+
+        bookings = await this._dailyGrpcService.FetchDailyBookingDtosAsync(date, orFloorId);
+
+        this._cache.Set(key, bookings, new MemoryCacheEntryOptions
+        {
+            // スロット情報は毎日変更があるが、リアルタイムの変更もあるので程々とする
+            AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10),
+        });
+
+        return bookings;
+    }
+
     #endregion Daily
 
     #region Equipments

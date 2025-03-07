@@ -127,7 +127,7 @@
                     <Label Grid.Row="3" Grid.Column="0">備考</Label>
                     <ListBox
                         Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2"
-                        ItemsSource="{Binding ReservationDailyNotes}">
+                        ItemsSource="{Binding ReservationDailyNotesView}">
                         <ListBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel>

@@ -1,8 +1,7 @@
-﻿using Reactive.Bindings;
+﻿using R3;
 using System.ComponentModel;
 using System.Windows;
 using Microsoft.Extensions.Logging;
-using Reactive.Bindings.Extensions;
 using System.Windows.Input;
 using System.Reactive.Linq;
 using Aloe.Common.AloeCoreLib.Util;
@@ -26,12 +25,34 @@ public record Function(string Key, string Name, Func<Task> FuncAsync);
 // バインドするだけで、実行の定義などは親側でやる
 public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisposable
 {
+
+    #region IDisposable
+
+    private DisposableBag _disposable;
+
+    private bool _disposed = false;
+
+    public new void Dispose()
+    {
+        if (!this._disposed)
+        {
+            this._disposable.Dispose();
+            this._disposed = true;
+        }
+
+        base.Dispose();
+
+        GC.SuppressFinalize(this);
+    }
+
+    #endregion IDisposable
+
     private Dictionary<string /* key */, Function>? _functions;
 
     /// <summary>
     /// <see cref="Common.AloeCoreLib.Wpf.Behaviors.Key"/> で Window の KeyDown にバインドします。
     /// </summary>
-    public ReactiveCommandSlim<KeyEventArgs> KeyDownCommand { get; } = new();
+    public ReactiveCommand<KeyEventArgs> KeyDownCommand { get; } = new();
 
     /// <summary>
     /// Altキーが押されるたびにトグルします。
@@ -41,26 +62,26 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// キーリピートでイベントが上手く処理できないため、トグルにしています。
     /// ひとまず名前はそのままです。
     /// </remarks>
-    public ReactivePropertySlim<bool> IsAltKeyPressed { get; } = new();
+    public BindableReactiveProperty<bool> IsAltKeyPressed { get; } = new();
 
-    public ReactivePropertySlim<string> EscText { get; } = new();
-    public ReactivePropertySlim<string> F1Text { get; } = new();
-    public ReactivePropertySlim<string> F2Text { get; } = new();
-    public ReactivePropertySlim<string> F3Text { get; } = new();
-    public ReactivePropertySlim<string> F4Text { get; } = new();
-    public ReactivePropertySlim<string> F5Text { get; } = new();
-    public ReactivePropertySlim<string> F6Text { get; } = new();
-    public ReactivePropertySlim<string> F7Text { get; } = new();
-    public ReactivePropertySlim<string> F8Text { get; } = new();
-    public ReactivePropertySlim<string> F9Text { get; } = new();
-    public ReactivePropertySlim<string> F10Text { get; } = new();
-    public ReactivePropertySlim<string> F11Text { get; } = new();
-    public ReactivePropertySlim<string> F12Text { get; } = new();
+    public BindableReactiveProperty<string> EscText { get; } = new();
+    public BindableReactiveProperty<string> F1Text { get; } = new();
+    public BindableReactiveProperty<string> F2Text { get; } = new();
+    public BindableReactiveProperty<string> F3Text { get; } = new();
+    public BindableReactiveProperty<string> F4Text { get; } = new();
+    public BindableReactiveProperty<string> F5Text { get; } = new();
+    public BindableReactiveProperty<string> F6Text { get; } = new();
+    public BindableReactiveProperty<string> F7Text { get; } = new();
+    public BindableReactiveProperty<string> F8Text { get; } = new();
+    public BindableReactiveProperty<string> F9Text { get; } = new();
+    public BindableReactiveProperty<string> F10Text { get; } = new();
+    public BindableReactiveProperty<string> F11Text { get; } = new();
+    public BindableReactiveProperty<string> F12Text { get; } = new();
 
     /// <summary>
     /// ESCコマンドの実行制御プロパティです。
     /// </summary>
-    public ReactivePropertySlim<bool> EscCanExecute { get; } = new(false);
+    public ReactiveProperty<bool> EscCanExecute { get; } = new(false);
 
     /// <summary>
     /// 共通コマンドの実行制御プロパティです。
@@ -69,21 +90,21 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// コマンドをバインドしているボタンの IsEnabled プロパティに影響します。
     /// CanExecute が false のときは、コマンドを実行しようとしても無視されます。
     /// </remarks>
-    public ReactivePropertySlim<bool> SharedCanExecute { get; } = new(true);
+    public ReactiveProperty<bool> SharedCanExecute { get; } = new(true);
 
-    public ReactiveCommandSlim EscCommand { get; }
-    public ReactiveCommandSlim F1Command { get; }
-    public ReactiveCommandSlim F2Command { get; }
-    public ReactiveCommandSlim F3Command { get; }
-    public ReactiveCommandSlim F4Command { get; }
-    public ReactiveCommandSlim F5Command { get; }
-    public ReactiveCommandSlim F6Command { get; }
-    public ReactiveCommandSlim F7Command { get; }
-    public ReactiveCommandSlim F8Command { get; }
-    public ReactiveCommandSlim F9Command { get; }
-    public ReactiveCommandSlim F10Command { get; }
-    public ReactiveCommandSlim F11Command { get; }
-    public ReactiveCommandSlim F12Command { get; }
+    public ReactiveCommand EscCommand { get; }
+    public ReactiveCommand F1Command { get; }
+    public ReactiveCommand F2Command { get; }
+    public ReactiveCommand F3Command { get; }
+    public ReactiveCommand F4Command { get; }
+    public ReactiveCommand F5Command { get; }
+    public ReactiveCommand F6Command { get; }
+    public ReactiveCommand F7Command { get; }
+    public ReactiveCommand F8Command { get; }
+    public ReactiveCommand F9Command { get; }
+    public ReactiveCommand F10Command { get; }
+    public ReactiveCommand F11Command { get; }
+    public ReactiveCommand F12Command { get; }
 
     private readonly ILogger _logger;
     private readonly WindowService _windowService;
@@ -97,11 +118,11 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
 
         this.KeyDownCommand
             .Subscribe(this.OnKeyDown)
-            .AddTo(this.Disposables);
+            .AddTo(ref this._disposable);
 
         this.IsAltKeyPressed
             .Subscribe(this.RefreshFunctionText)
-            .AddTo(this.Disposables);
+            .AddTo(ref this._disposable);
 
         this.EscCommand = InitializeCommand(this.EscCanExecute, this.EscText);
         this.F1Command = InitializeCommand(this.SharedCanExecute, this.F1Text);
@@ -120,9 +141,9 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
         return;
 
         // local function
-        ReactiveCommandSlim InitializeCommand(
-            ReactivePropertySlim<bool> sharedCanExecute,
-            ReactivePropertySlim<string> functionTextProp)
+        ReactiveCommand InitializeCommand(
+            ReactiveProperty<bool> sharedCanExecute,
+            ReactiveProperty<string> functionTextProp)
         {
             // sharedCanExecute で他のコマンドを実行時に、実行できないようにします
             return sharedCanExecute
@@ -130,9 +151,9 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
                     // ボタンのテキストが空であれば、実行できないようにします
                     functionTextProp.Select(text => !String.IsNullOrWhiteSpace(text)),
                     (canExecute, isNotEmpty) => canExecute && isNotEmpty)
-                .Catch(Observable.Return(false))
-                .ToReactiveCommandSlim()
-                .AddTo(this.Disposables);
+                //.Catch(Observable.Return(false))
+                .ToReactiveCommand()
+                .AddTo(ref this._disposable);
         }
     }
 
@@ -181,25 +202,25 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
         return;
 
         // local function
-        //void SubscribeFunction(string key, ReactiveCommandSlim command)
+        //void SubscribeFunction(string key, ReactiveCommand command)
         //{
         //    if (this._functions?.TryGetValue(key, out var function) ?? false)
         //    {
         //        command.Subscribe(function.Action).AddTo(this.Disposables);
         //    }
         //}
-        void SubscribeFunction(string key, ReactiveCommandSlim command)
+        void SubscribeFunction(string key, ReactiveCommand command)
         {
             if (this._functions?.TryGetValue(key, out var function) ?? false)
             {
-                command.Subscribe(async void () =>
+                command.SubscribeAwait(async (_, cancellationToken) =>
                 {
                     try
                     {
                         this.SharedCanExecute.Value = false;
 
                         // ある程度のディレイを入れないと Button.IsEnabled の切り替えが遅くなる
-                        await Task.Delay(200);
+                        await Task.Delay(200, cancellationToken);
 
                         await function.FuncAsync.Invoke();
                     }
@@ -211,7 +232,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
                     {
                         this.SharedCanExecute.Value = true;
                     }
-                }).AddTo(this.Disposables);
+                }).AddTo(ref this._disposable);
             }
         }
     }
@@ -387,7 +408,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
     /// <summary>
     /// 特定のプロパティに日付文字列を設定するコマンドです。
     /// </summary>
-    public Task ExecuteSetDateCommand(ReactivePropertySlim<DateOnly> dateProp, DateOnly date, bool isAltCond = false)
+    public Task ExecuteSetDateCommand(ReactiveProperty<DateOnly> dateProp, DateOnly date, bool isAltCond = false)
     {
         try
         {
@@ -406,48 +427,48 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
         }
     }
 
-    public Task ExecuteSetTodayCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecuteSetTodayCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         return this.ExecuteSetDateCommand(dateProp, DateOnlyHelper.GetToday(), isAltCond);
     }
 
-    public Task ExecuteSetCurrentMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecuteSetCurrentMonthCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         var date = DateOnlyHelper.GetToday();
         var newDate = date.AddDays(1 - date.Day);
         return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecuteAddDaysCommand(ReactivePropertySlim<DateOnly> dateProp, int days, bool isAltCond = false)
+    public Task ExecuteAddDaysCommand(ReactiveProperty<DateOnly> dateProp, int days, bool isAltCond = false)
     {
         var date = dateProp.Value;
         var newDate = date.AddDays(days);
         return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecutePrevDateCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecutePrevDateCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         return this.ExecuteAddDaysCommand(dateProp, -1, isAltCond);
     }
 
-    public Task ExecuteNextDateCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecuteNextDateCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         return this.ExecuteAddDaysCommand(dateProp, 1, isAltCond);
     }
 
-    public Task ExecuteAddMonthsCommand(ReactivePropertySlim<DateOnly> dateProp, int months, bool isAltCond = false)
+    public Task ExecuteAddMonthsCommand(ReactiveProperty<DateOnly> dateProp, int months, bool isAltCond = false)
     {
         var date = dateProp.Value;
         var newDate = date.AddMonths(months);
         return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
 
-    public Task ExecutePrevMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecutePrevMonthCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         return this.ExecuteAddMonthsCommand(dateProp, -1, isAltCond);
     }
 
-    public Task ExecuteNextMonthCommand(ReactivePropertySlim<DateOnly> dateProp, bool isAltCond = false)
+    public Task ExecuteNextMonthCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
         return this.ExecuteAddMonthsCommand(dateProp, 1, isAltCond);
     }

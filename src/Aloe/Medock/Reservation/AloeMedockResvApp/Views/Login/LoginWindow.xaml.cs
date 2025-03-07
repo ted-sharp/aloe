@@ -128,7 +128,6 @@ public partial class LoginWindow
     private void LoginWindow_OnClosing(object? sender, CancelEventArgs e)
     {
         // 閉じるときに設定を保存します。
-        // 閉じる関連のイベントで await にはしません。
         this.SaveIniFile();
 
         // 強制閉じるだとキャンセルしません。
