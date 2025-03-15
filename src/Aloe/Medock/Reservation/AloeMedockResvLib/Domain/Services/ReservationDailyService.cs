@@ -134,7 +134,7 @@ public class ReservationDailyService : IReservationDailyService
                 BkgDate = x.BkgDate,
                 BkgSymbolText = x.BkgSymbolText,
                 BkgRemarkText = x.BkgRemarkText,
-                IsHeld = x.IsTentative,
+                IsTentative = x.IsTentative,
                 OrgId = x.OrgId,
                 ResvCount = x.ResvCount,
                 PtId = x.PtId,

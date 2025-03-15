@@ -1,7 +1,7 @@
-﻿# A5:ER FORMAT:18
+﻿# A5:ER FORMAT:19
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.19.1 Copyright © 1997 - 2024 m.matsubara
+# A5:SQL Mk-2 Version 2.20.1 Copyright © 1997 - 2025 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -94,7 +94,7 @@ TableInnerOption=
 TableOption=
 Page=AUDIT
 Left=100
-Top=1100
+Top=1000
 Field="session_id","session_id","UUID","NOT NULL",0,"\q00000000-0000-0000-0000-000000000000\q","",$000000FF,""
 Field="user_id","user_id","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="user_display_name","user_display_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -107,7 +107,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20250122115711
-Position="AUDIT",100,1100
+Position="AUDIT",100,1000
 ZOrder=17
 
 [Entity]

@@ -3,6 +3,7 @@ using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvServer.Settings;
 using CommandLine;
 using Microsoft.Extensions.Hosting;
+using System.Diagnostics.Tracing;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 

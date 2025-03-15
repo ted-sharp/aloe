@@ -6,16 +6,20 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
 internal partial class Seeder
 {
+    private readonly ILogger _logger;
     private readonly IDbContextFactory<AppDbContext> _factory;
 
     public Seeder(
+        ILogger<Seeder> logger,
         IDbContextFactory<AppDbContext> factory)
     {
+        this._logger = logger;
         this._factory = factory;
     }
 
@@ -27,26 +31,39 @@ internal partial class Seeder
     {
         AppDbContext? context = null;
         IDbContextTransaction? trans = null;
-        var count = 0;
 
         try
         {
-            Console.WriteLine("Seeding...");
+            this._logger.LogInformation("Seeding...");
 
             context = await this._factory.CreateDbContextAsync();
             trans = await context.Database.BeginTransactionAsync();
 
-            count += await Seeder.SeedUserAsync(context);
-            count += await Seeder.SeedOrgPtAsync(context);
-            count += await Seeder.SeedPlanAsync(context);
-            count += await Seeder.SeedContractAsync(context);
-            count += await Seeder.SeedResvAsync(context);
+            var totalCount = 0;
 
-            count += await context.SaveChangesAsync();
+            var userCount = await this.SeedUserAsync(context);
+            this._logger.LogInformation($"{nameof(this.SeedUserAsync)}() Inserted: {userCount}");
+            totalCount += userCount;
+
+            var orgPtCount = await this.SeedOrgPtAsync(context);
+            this._logger.LogInformation($"{nameof(this.SeedOrgPtAsync)}() Inserted: {orgPtCount}");
+            totalCount += orgPtCount;
+
+            var planCount = await this.SeedPlanAsync(context);
+            this._logger.LogInformation($"{nameof(this.SeedPlanAsync)}() Inserted: {planCount}");
+            totalCount += planCount;
+
+            var contractCount = await this.SeedContractAsync(context);
+            this._logger.LogInformation($"{nameof(this.SeedContractAsync)}() Inserted: {contractCount}");
+            totalCount += contractCount;
+
+            var resvCount = await this.SeedResvAsync(context);
+            this._logger.LogInformation($"{nameof(this.SeedResvAsync)}() Inserted: {resvCount}");
+            totalCount += resvCount;
 
             await trans.CommitAsync();
 
-            Console.WriteLine($"{nameof(Seeder)}.{nameof(this.InsertDataAsync)}() Inserted: {count}");
+            this._logger.LogInformation($"{nameof(Seeder)}.{nameof(this.InsertDataAsync)}() Inserted in total: {totalCount}");
         }
         catch (Exception ex)
         {
@@ -55,8 +72,7 @@ internal partial class Seeder
                 await trans.RollbackAsync();
             }
 
-            Console.WriteLine($"{nameof(Seeder)}.{nameof(this.InsertDataAsync)}() Error: {ex.Message}");
-            Console.WriteLine(ex.ToString());
+            this._logger.LogError(ex, ex.Message);
         }
         finally
         {

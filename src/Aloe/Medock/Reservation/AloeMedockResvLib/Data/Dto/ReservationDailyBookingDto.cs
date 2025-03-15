@@ -45,7 +45,7 @@ public class ReservationDailyBookingDto
     public required string BkgRemarkText { get; set; } = String.Empty;
 
     [Key(11)]
-    public required bool IsHeld { get; set; } = false;
+    public required bool IsTentative { get; set; } = false;
 
     // TODO: JOINしたい
     [Key(12)]

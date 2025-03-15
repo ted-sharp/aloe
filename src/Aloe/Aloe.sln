@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aloe.Common.AloeCoreLib.Cli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aloe.Common.AloeCoreLib.Wpf", "Common\Aloe.Common.AloeCoreLib.Wpf\Aloe.Common.AloeCoreLib.Wpf.csproj", "{EF5FB5C9-4D27-449D-91ED-6421C113BD88}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tools", "Tools", "{F7A540A1-1300-417F-AEF0-78A0F0CE7B66}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AloeExtImporter", "Tools\AloeExtImporter\AloeExtImporter.csproj", "{E7E4EF03-A947-49C7-9563-84A4A304F664}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +61,10 @@ Global
 		{EF5FB5C9-4D27-449D-91ED-6421C113BD88}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EF5FB5C9-4D27-449D-91ED-6421C113BD88}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EF5FB5C9-4D27-449D-91ED-6421C113BD88}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E7E4EF03-A947-49C7-9563-84A4A304F664}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E7E4EF03-A947-49C7-9563-84A4A304F664}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E7E4EF03-A947-49C7-9563-84A4A304F664}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E7E4EF03-A947-49C7-9563-84A4A304F664}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -70,6 +78,7 @@ Global
 		{85FAD3A9-DA87-4D1F-B477-194F31237570} = {7EFB5B4E-36B9-4045-A1AC-1EAF6AB41EC4}
 		{83E10FB7-B83B-4D50-9673-852834B94FED} = {DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}
 		{EF5FB5C9-4D27-449D-91ED-6421C113BD88} = {DDB4EF12-CC4E-5E88-E6FC-71A802F4DE97}
+		{E7E4EF03-A947-49C7-9563-84A4A304F664} = {F7A540A1-1300-417F-AEF0-78A0F0CE7B66}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5CEE469A-1278-4C52-B005-14F989696611}

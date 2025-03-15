@@ -108,11 +108,12 @@ public class ReservationEquipmentService : IReservationEquipmentService
                 BkgDate = x.BkgDate,
                 BkgSymbolText = x.BkgSymbolText,
                 BkgRemarkText = x.BkgRemarkText,
-                IsHeld = x.IsTentative,
+                IsTentative = x.IsTentative,
                 OrgId = x.OrgId,
                 PtId = x.PtId,
-                OrderId = x.OrderId,
-                SubOrderId = x.SubOrderId,
+                RecId = x.RecId,
+                IsCancelled = x.IsCancelled,
+                IsNoShow = x.IsNoShow,
             })
             .ToListAsync();
         return bookings;

@@ -7,7 +7,6 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 
@@ -173,5 +172,63 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         }
 
         return "Host information not found";
+    }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // DateOnly 型の指定は BulkExtensions で必要
+        // (EFCore のみであれば Entities の Attributes の指定のみでよい)
+
+        modelBuilder.Entity<Patient>()
+            .Property(x => x.BirthDate)
+            .HasConversion(
+                // DateOnly -> DateTime に変換
+                d => d.ToDateTime(TimeOnly.MinValue),
+                // DateTime -> DateOnly に変換
+                d => DateOnly.FromDateTime(d))
+            // PostgreSQL 側は小文字の "date"
+            .HasColumnType("date");
+
+        modelBuilder.Entity<Holiday>()
+            .Property(x => x.HolidayDate)
+            .HasConversion(
+                // DateOnly -> DateTime に変換
+                d => d.ToDateTime(TimeOnly.MinValue),
+                // DateTime -> DateOnly に変換
+                d => DateOnly.FromDateTime(d))
+            // PostgreSQL 側は小文字の "date"
+            .HasColumnType("date");
+
+        modelBuilder.Entity<ReservationDailyNote>()
+            .Property(x => x.BkgDate)
+            .HasConversion(
+                // DateOnly -> DateTime に変換
+                d => d.ToDateTime(TimeOnly.MinValue),
+                // DateTime -> DateOnly に変換
+                d => DateOnly.FromDateTime(d))
+            // PostgreSQL 側は小文字の "date"
+            .HasColumnType("date");
+
+        modelBuilder.Entity<ReservationDailyBooking>()
+            .Property(x => x.BkgDate)
+            .HasConversion(
+                // DateOnly? → DateTime?
+                d => d.HasValue ? d.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+                // DateTime? → DateOnly?
+                d => d.HasValue ? DateOnly.FromDateTime(d.Value) : (DateOnly?)null)
+            // PostgreSQL 側は小文字の "date"
+            .HasColumnType("date");
+
+        modelBuilder.Entity<ReservationEquipmentBooking>()
+            .Property(x => x.BkgDate)
+            .HasConversion(
+                // DateOnly? → DateTime?
+                d => d.HasValue ? d.Value.ToDateTime(TimeOnly.MinValue) : (DateTime?)null,
+                // DateTime? → DateOnly?
+                d => d.HasValue ? DateOnly.FromDateTime(d.Value) : (DateOnly?)null)
+            // PostgreSQL 側は小文字の "date"
+            .HasColumnType("date");
     }
 }

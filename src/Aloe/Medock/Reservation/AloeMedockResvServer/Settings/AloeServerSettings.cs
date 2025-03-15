@@ -16,8 +16,10 @@ public class AloeServerSettings
     /// フラグ用のコマンドライン引数の一覧です。
     /// </summary>
     public static readonly List<string> FlagArgs = [
+        "--seed",
         "--sql",
         "--conn",
+        "--firstchance",
     ];
 
     /// <summary>
@@ -30,8 +32,10 @@ public class AloeServerSettings
     /// </summary>
     public static readonly Dictionary<string, string> Aliases = new()
     {
-        { "--sql", "AloeClientSettings:IsStandaloneSqlLogging" },
-        { "--conn", "AloeClientSettings:ConnectionStringName" },
+        { "--seed", "AloeServerSettings:IsSeed" },
+        { "--sql", "AloeServerSettings:IsSqlLogging" },
+        { "--conn", "AloeServerSettings:ConnectionStringName" },
+        { "--firstchance", "AloeServerSettings:IsFirstChanceExceptionLogging" },
     };
 
     public static IConfigurationRoot CreateConfiguration(string[] args, string fileName = "appsettings.json")
@@ -72,4 +76,10 @@ public class AloeServerSettings
     /// 使用する接続文字列のキー名を指定します。
     /// </summary>
     public string ConnectionStringName { get; set; } = "DefaultConnection";
+
+    /// <summary>
+    /// 例外が発生したときにTraceレベルでログ出力します。
+    /// 内部で握りつぶしている場合や、例外を制御に使っている場合でも捕捉します。
+    /// </summary>
+    public bool IsFirstChanceExceptionLogging { get; set; }
 }

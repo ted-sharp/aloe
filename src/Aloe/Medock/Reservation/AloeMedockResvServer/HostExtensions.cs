@@ -3,6 +3,7 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -50,15 +51,20 @@ internal static class HostExtensions
         {
             options.UseNpgsql(connStr);
 
-            if (builder.Environment.IsDevelopment())
+            if (isSqlLoggingEnabled)
             {
-                options.EnableSensitiveDataLogging();
+                if (builder.Environment.IsDevelopment())
+                {
+                    options.EnableDetailedErrors();
+                    options.EnableSensitiveDataLogging();
+                }
             }
-
-            if (!isSqlLoggingEnabled)
+            else
             {
                 // ログを出力しない
                 options.UseLoggerFactory(NullLoggerFactory.Instance);
+                //// 警告を無効にする
+                //options.ConfigureWarnings(x => x.Ignore());
             }
         });
 

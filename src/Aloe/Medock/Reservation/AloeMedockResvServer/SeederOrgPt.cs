@@ -1,17 +1,21 @@
-﻿using Aloe.Common.AloeCoreLib.Util;
+﻿using System.Collections.Immutable;
+using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Diagnostics;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
+using System.Xml.Linq;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
 internal partial class Seeder
 {
-    private static async Task<int> SeedOrgPtAsync(AppDbContext context)
+    private async Task<int> SeedOrgPtAsync(AppDbContext context)
     {
         try
         {
@@ -19,9 +23,12 @@ internal partial class Seeder
 
             var rnd = new Random();
 
-            if (!context.InsuranceProviders.AsNoTracking().Any())
+            if (!context.InsuranceProviders.Any())
             {
-                context.InsuranceProviders.AddRange([
+                this._logger.LogInformation("InsuranceProviders creating...");
+
+                var providers = new InsuranceProvider[]
+                {
                     // 協会けんぽ
                     new((int)InsuranceProviderType.KyokaiKenpo, "7010005013337", "協会けんぽ", ""),
                     // 代行機関
@@ -43,95 +50,153 @@ internal partial class Seeder
                     new((int)InsuranceProviderType.HealthInsuranceSociety, "4700150031927", "北海道医療健康保険組合", ""),
                     // 国保
                     new((int)InsuranceProviderType.NationalHealthInsurance, "90199027", "北海道国民健康保険団体連合会", ""),
-                ]);
+                };
+
+                await context.BulkInsertAsync(providers);
+                count += providers.Length;
             }
 
-            if (!context.Organizations.AsNoTracking().Any())
+            if (!context.Organizations.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
+                this._logger.LogInformation("Organizations creating...");
 
-                var insurances = context.InsuranceProviders.ToList();
+                var insurances = context.InsuranceProviders.AsNoTracking().ToList();
                 var insuranceMax = insurances.Count;
 
-                for (var i = 0; i < 1000; i++)
+                var len = 1000;
+                var orgs = new List<Organization>(len);
+                for (var i = 0; i < len; i++)
                 {
                     var insurance = insurances.Skip(rnd.Next(0, insuranceMax)).First();
                     var insurProvType = insurance.InsurProvTypeCode;
                     var insurProvId = insurance.InsurProvId;
                     var insurProvName = insurance.InsurProvName;
-                    var org = new Organization(insurProvType, insurProvId, $"団体{i} ({insurProvName} 使用)", $"ダンタイ{i}", $"団体{i}(表示)", $"団体{i} 御中");
-                    context.Organizations.Add(org);
+                    var org = new Organization(
+                        insurProvType,
+                        insurProvId,
+                        $"団体{i} ({insurProvName} 使用)",
+                        $"ダンタイ{i}",
+                        $"団体{i}(表示)",
+                        $"団体{i} 御中");
+                    orgs.Add(org);
                 }
+
+                await context.BulkInsertAsync(orgs);
+                count += orgs.Count;
             }
 
-            if (!context.CustomerLocations.AsNoTracking().Any())
+            if (!context.CustomerLocations.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
+                this._logger.LogInformation("CustomerLocations(Organizations) creating...");
 
-                var orgs = context.Organizations.ToList();
-                foreach (var org in orgs)
-                {
-                    var ctc = new CustomerLocation(org.OrgId, 0, "本社", "000-0000", "北海道札幌市中央区", "(代表) 011-000-0000", "");
-                    context.CustomerLocations.Add(ctc);
-                }
+                var locations = await context.Organizations
+                    .AsNoTracking()
+                    .Select(x => new CustomerLocation(
+                        x.OrgId,
+                        0,
+                        "本社",
+                        "000-0000",
+                        "北海道札幌市中央区",
+                        "(代表) 011-000-0000",
+                        ""))
+                    .ToArrayAsync();
+
+                await context.BulkInsertAsync(locations);
+                count += locations.Length;
             }
 
-            if (!context.Patients.AsNoTracking().Any())
+            if (!context.Patients.Any())
             {
+                this._logger.LogInformation("Patients creating...");
+
                 var sexes = Enum.GetValues<SexCode>();
                 var sexMax = sexes.Length;
+                var today = DateOnlyHelper.GetToday();
 
-                var ptMax = 1000;
-                var names = GenerateSampleNames(ptMax);
-
-                for (var i = 0; i < ptMax; i++)
-                {
-                    var karteNumber = rnd.Next(1, Int32.MaxValue).ToString("000000000");
-                    var birthDate = DateOnlyHelper.GetToday().AddDays(-rnd.Next(3650, 365000));
-                    var sex = sexes.Skip(rnd.Next(0, sexMax)).First();
-                    var pt = new Patient(karteNumber, names[i].Kanji, names[i].Kana, birthDate, (int)sex);
-                    context.Patients.AddRange(pt);
-                }
-            }
-
-            if (!context.CustomerLocations.AsNoTracking().Any())
-            {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
-
-                var pts = context.Patients.ToList();
-                foreach (var pt in pts)
-                {
-                    var location = new CustomerLocation(0, pt.PtId, "自宅", "000-0000", "北海道札幌市中央区", "(携帯) 090-000-0000", "");
-                    context.CustomerLocations.Add(location);
-                }
-            }
-
-            if (!context.OrganizationMembers.AsNoTracking().Any())
-            {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
-
-                var orgs = context.Organizations.ToList();
-                var pts = context.Patients.ToList();
-                var ptMax = pts.Count;
-
-                foreach (var org in orgs)
-                {
-                    for (var i = 0; i < 20; i++)
+                var pts = GenerateSampleNames(3000)
+                    .Select(x =>
                     {
-                        var pt = pts.Skip(rnd.Next(0, ptMax)).First();
-                        var mbr = new OrganizationMember(org.OrgId, pt.PtId, i.ToString(), "{部署}", true);
-                        context.OrganizationMembers.AddRange(mbr);
-                    }
-                }
+                        var karteNumber = rnd.Next(1, Int32.MaxValue).ToString("000000000");
+                        var birthDate = today.AddDays(-rnd.Next(3650, 365000));
+                        var sex = sexes.Skip(rnd.Next(0, sexMax)).First();
+                        var pt = new Patient(
+                            karteNumber,
+                            x.Kanji,
+                            x.Kana,
+                            birthDate,
+                            (int)sex);
+                        return pt;
+                    })
+                    .ToArray();
+
+                await context.BulkInsertAsync(pts);
+                count += pts.Length;
+            }
+
+            if (!context.CustomerLocations.Any())
+            {
+                this._logger.LogInformation("CustomerLocations(Patients) creating...");
+
+                var locations = await context.Patients
+                    .AsNoTracking()
+                    .Select(x => new CustomerLocation(
+                        0,
+                        x.PtId,
+                        "本社",
+                        "000-0000",
+                        "北海道札幌市中央区",
+                        "(代表) 011-000-0000",
+                        ""))
+                    .ToArrayAsync();
+
+                await context.BulkInsertAsync(locations);
+                count += locations.Length;
+            }
+
+            if (!context.OrganizationMembers.Any())
+            {
+                this._logger.LogInformation("OrganizationMembers creating...");
+
+                var ptIds = context.Patients
+                    .AsNoTracking()
+                    .Select(x => x.PtId)
+                    .ToArray();
+                var ptMax = ptIds.Length;
+
+                var orgIds = context.Organizations
+                    .AsNoTracking()
+                    .Select(x => x.OrgId)
+                    .ToArray();
+
+                var members = orgIds
+                    .Select(orgId =>
+                    {
+                        var ptId = ptIds.Skip(rnd.Next(0, ptMax)).First();
+                        var personalNumber = rnd.Next(0, ptMax).ToString();
+                        var mbr = new OrganizationMember(
+                            orgId,
+                            ptId,
+                            personalNumber,
+                            "{部署}",
+                            true);
+                        return mbr;
+                    })
+                    .ToArray();
+
+                var bulkConfig = new BulkConfig
+                {
+                    // DateOnly 型は除外
+                    PropertiesToExclude = [
+                        nameof(OrganizationMember.StartDate),
+                        nameof(OrganizationMember.EndDate),
+                    ],
+                };
+
+                await context.BulkInsertAsync(members, bulkConfig);
+                count += members.Length;
             }
 
             // TODO: remarks, insurance_cards もいれたい
-
-            count += await context.SaveChangesAsync();
 
             return count;
         }
@@ -170,6 +235,7 @@ internal partial class Seeder
         ("鵺姫 繭夜", "ヌエキ マユヤ"),
         ("音無 想夢", "オトナシ ソウム"),
         ("囁砂 掌心", "ササヤサ テノヒラ"),
+        ("平平 平平臍下珍内春寒衛門", "ヒラタイラ ヘイベイヘソシタチンナイシュンカンエモン"), // 昭和初期に実在
 
         ("夏目 漱石", "ナツメ ソウセキ"),
         ("太宰 治", "ダザイ オサム"),
@@ -231,6 +297,7 @@ internal partial class Seeder
         ("竈門 炭治郎", "カマド タンジロウ"),     // 『鬼滅の刃』
         ("我妻 善逸", "アガツマ ゼンイツ"),       // 『鬼滅の刃』
         ("嘴平 伊之助", "ハシビラ イノスケ"),     // 『鬼滅の刃』
+        ("栗花落 カナヲ", "ツユリ カナヲ"),       // 『鬼滅の刃』
         ("菜月 昴", "ナツキ スバル"),             // 『Re:ゼロから始める異世界生活』
 
         ("สมชาย พิมพ์ทอง", "ソムチャイ ピムトン"),         // タイ語表記
@@ -299,117 +366,218 @@ internal partial class Seeder
     // 姓とフリガナ
     private static readonly List<(string Kanji, string Kana)> s_familyNames =
     [
-        ("健診",   "ケンシン"),   // 「鳥が遊ばない」→「鷹がいるから」→「タカナシ」
-        ("小鳥遊",   "タカナシ"),   // 「鳥が遊ばない」→「鷹がいるから」→「タカナシ」
-        ("四月一日", "ワタヌキ"),   // 衣替えで「綿を抜く」時期→「ワタヌキ」
-        ("五月七日", "ツユリ"),     // 諸説あり・地域により異なる読み
-        ("鬼束",     "オニツカ"),
-        ("勘解由小路", "カデノコウジ"),
-        ("百目鬼",   "ドウメキ"),
-        ("七五三掛", "シメカケ"),   // 「しめかけ」「しめがけ」など諸説
-        ("無量塔",   "ムヤタ"),     // 「むりょうとう」「むやた」など諸説
-        ("道祖土",   "サイド"),     // 「どうそど」「さいど」など地域によって異なる
-        ("夜神",     "ヤガミ"),
-        ("一尺八寸",   "カマツカ"),
-        ("四十物谷",   "アイモノヤ"),
-        ("蕨",         "ワラビ"),
-        ("春夏冬",     "アキナイ"), // 「春・夏・冬」があって「秋」がない→「あきない」
-        ("八月一日",   "ホヅミ"),   // 「はちがつついたち」ではなく「ほづみ」と読むことがある
-        ("猫屋敷",     "ネコヤシキ"),
-        ("集道",       "アダリ"),
-        ("七種",       "ナナクサ"), // 地域により「サイシュ」「ななくさ」など多様
-        ("我孫子",     "アビコ"),   // 「がそんし」「あまこ」など地域差あり
-        ("上官",       "ジョウカン"),
-        ("鰐渕",       "ワニブチ"),
-        ("燕",         "ツバメ"),
-        ("杁",         "エブリ"),   // 漢字1文字でありながら珍しい苗字
-        ("錦",         "ニシキ"),   // 一見シンプルだが、実は世帯数が少ないケース
-        ("鴨志田",     "カモシダ"),
-        ("石動",       "イスルギ"),
-        ("薬袋",       "ミナイ"),   // 地域により「やくたい」「やたい」「みない」等の読みがある
-        ("出利葉",     "イヅリハ"),
-        ("下間",       "シモツマ"), // 「げま」「しもま」など他の読みもある
-        ("四十九院",   "シジュウクイン"),
-        ("九十九",     "ツクモ"),
-        ("百々",       "ドド"),
-        ("黒葛原",     "ツヅラハラ"),
-        ("古波蔵",     "コハグラ"),  // 沖縄に多い苗字とされる
-        ("左衛門尉",   "サエモンノジョウ"),
-        ("万年",       "マンネン"),
-        ("皆実",       "ミナミ"),
-        ("散布",       "チルシ"),
-        ("右近",       "ウコン"),
-        ("恵良",       "エラ"),
-        ("小豆沢",     "アズサワ"),
-        ("百々瀬",     "ドドセ"),
-        ("土師",       "ハジ"),
-        ("壹岐",       "イキ"),
-        ("於保",       "オホ"),
-        ("源五郎丸",   "ゲンゴロウマル"),
-        ("小槻",       "オヅキ"),
-        ("金生",       "キンジョウ"),   // 「カナオ」など、他の読みも存在
-        ("魚返",       "オガエリ"),
-        ("羽後",       "ウゴ"),
-        ("烏丸",       "カラスマ"),     // 京都の地名としても有名だが、苗字としては珍しい部類
-        ("庵原",       "イハラ"),       // 「あんばら」「いはら」など地域差あり
-        ("空閑",       "クガ"),         // 「くうかん」ではなく「くが」と読む
+        ("健診", "ケンシン"),
+
+        // とんちが効いている難読名字
+        ("小鳥遊", "タカナシ"), // 「鳥が遊ばない」→「鷹がいるから」→「タカナシ」
+        ("春夏冬", "アキナシ"), // 「春・夏・冬」があって「秋」がない→「アキナシ」
+        ("月見里", "ヤマナシ"), // 山がなくてつきが見える→「ヤマナシ」
+        ("臥龍岡", "ナガオカ"), // 龍が伏せていて長い丘に見える→「ナガオカ」
+
+        // 季節を使った難読名字(日付順)
+        ("四月一日", "ワタヌキ"), // 衣替えで「綿を抜く」時期→「ワタヌキ」
+        ("五月七日", "ツユリ"),   // 梅雨入りする時期
+        ("栗花落", "ツユリ"),     // 栗の花が落ちる頃に梅雨入りする
+        ("八月一日", "ホヅミ"),   // 穂を摘んで奉納する時期
+        ("八月朔日", "ハッサク"), // 「八月一日」と同じ意味、「ホヅミ」とも
+
+        // 数字が使われている難読名字(数字順)
+        ("一", "ニノマエ"), // ニの前は一なので
+        ("ニ", "シタナガ"), // ニは下線が長いので
+        ("四", "アズマ"), // 東屋(あずまや)→四阿(あずまや)→四(あずま)
+        ("九", "イチジク"), // 一文字の九なので
+        ("十", "モギキ"), // 木の枝がもがれたので
+        ("十", "ツナシ"), // 数の数え方で十だけ「つ」がないから
         ("十六",       "ジュウロク"),   // 数字だけに見えるが、苗字としても存在
-        ("生居",       "ナマイ"),       // 「いきょ」「しょうご」などの異読も
-        ("土生",       "ハブ"),         // 「どしょう」「つちう」「はぶ」等の地域差あり
-        ("大豆生田",   "オオマメウダ"), // 「だいずうだ」「おおまめだ」など多数の読みが存在
-        ("栴檀",       "センダン"),     // 難字で、仏教用語の「栴檀(せんだん)」に通じる
-        ("一尺屋",     "イッシャクヤ"), // 由来は諸説あるが画数が多く珍しい
-        ("伯耆",       "ホウキ"),       // 地名由来で鳥取県方面に見られる
-        ("彌永",       "ヤナガ"),       // 「いやなが」「やえい」などの読み違いあり
-        ("外間",       "ホカマ"),       // 沖縄独特の苗字の一つ
-        ("木幡",       "コハタ"),       // 「きばた」「こばた」などの読み方も存在
-        ("冷泉",       "レイゼイ"),     // 古くは貴族の家系名だったとも
-        ("桃生",       "モノウ"),       // 宮城県の地名が起源とされる
-        ("長柄",       "ナガラ"),       // 「ながえ」「ながら」など地名に由来する説
-        ("日置",       "ヘキ"),         // 「ひおき」「へき」など、地域によって大きく異なる
-        ("鹿糠",       "カヌカ"),       // 「しかぬか」「かぬか」などの読みがある
+        ("五六",       "フノボリ"),   // 将棋の歩が五六の位置から上がるとと金に成るため
+        ("白",       "ツクモ"),   // 百から一を引いて九十九なので
+        ("九十九",     "ツクモ"),
+        ("一口",   "イモアライ"),
+        ("一寸木",   "チョッキ"),
+        ("一尺八寸",   "カマツカ"),
         ("四方",       "ヨモ"),         // 「しかた」「しほう」「よも」など多様な読み
-        ("鴾",         "トキ"),         // 鳥の「朱鷺」とも関係あるかもしれない難字
-        ("五百旗頭",   "イオキベ"),     // 「いおきとう」と読まれることもあるが一般的には「いおきべ」
-        ("東雲",       "シノノメ"),     // 「とううん」ではなく「しののめ」
-        ("正親町",     "オオギマチ"),   // 古くは公家由来の難読苗字
-        ("御手洗",     "ミタライ"),     // 「おてあらい」ではなく「みたらい」
+        ("七種",       "サイクサ"), // 地域により「サエグサ」「サイシュ」「ななくさ」など多様
+        ("十七夜月",     "カノウ"),
         ("廿楽",       "ツヅラ"),       // 「にじゅうらく」ではなく「つづら」
+        ("四十物谷",   "アイモノヤ"),
+        ("四十九院",   "ツルシイン"),
         ("五十公野",   "イジミノ"),     // 数字や公の字が含まれ紛らわしい
+        ("七五三田", "シメタ"),
+        ("七五三掛", "シメカケ"),   // 「しめかけ」「しめがけ」など諸説
         ("百足",       "ムカデ"),       // そのまま虫の名だが「むかで」と読む苗字
-        ("舎人",       "トネリ"),       // 「しゃにん」ではなく「とねり」
-        ("屋慶名",     "ヤケナ"),       // 沖縄系独特の読みによる難読
-        ("読谷山",     "ヨミタンザン"), // 地名由来の苗字だが「よみたんざん」
-        ("瑞慶覧",     "ズケラン"),     // 沖縄では比較的見かけるが、本土では難読
-        ("上與那原",   "カミヨナバル"), // 「かみよなばる」「うえよなはら」など複数の読み方がある
-        ("城間",       "グスクマ"),     // 「しろま」ではなく「ぐすくま」と読むケース
-        ("饒平名",     "ヨヘナ"),       // 「にょうへいな」ではなく「よへな」
-        ("豊見城",     "トミグスク"),   // 沖縄の地名由来で「とみぐすく」
-        ("加加美",     "カカミ"),       // 画数が多めで読みが想像しづらい
-        ("御厨",       "ミクリヤ"),     // 「みくり」「おくりや」などと誤読されがち
-        ("我那覇",     "ガナハ"),       // 沖縄特有の難読苗字
-        ("摩文仁",     "マブニ"),       // こちらも沖縄系で「まぶに」
-        ("倶利伽羅",   "クリカラ"),     // 天台宗の「福永」が浄土真宗に改宗したときに「倶利伽羅」に改名
-        ("刀儀",       "ツルギ"),       // 大阪で見られる難読名字
-        ("花篤",       "ケイトク"),     // 大阪や広島で見られる難読名字
-        ("莅戸",       "ノゾキド"),     // 新潟や山形で見られる難読名字
+        ("百目鬼",   "ドウメキ"),
+        ("百々瀬",     "ドドセ"),
+        ("五百旗頭",   "イオキベ"),     // 「いおきとう」と読まれることもあるが一般的には「いおきべ」
+        ("万年",       "マンネン"),
+
+
+        // 地名が使われている難読名字(アイウエオ順)
+        ("江戸",     "エド"),
+        ("地名",     "チナ"), // 全国で10人ほど 「ちな」「じめい」「ちめい」
+        ("東京",     "トウキョウ"), // 全国で10人ほど
+        ("京都",     "ミヤコ"),
+        ("北京",     "ペキン"), // 明治に発生
+        ("東江", "アガリエ"),
+        ("西風館",   "ナライダテ"),
+
+        ("右近", "ウコン"),
+        ("左近", "サコン"),
+        ("左巴", "サワ"),
+
+        // 珍しい漢字が使われている難読名字
+        ("亞厂", "アガン"), // アカリ, アガン
+        ("厂原", "ガンバラ"),
+        ("見ル野", "ミルノ"), // 名字にカタカナが使われている
+        ("卍山下", "マンザンカ"), // 全国に10人ほど
+        ("凸守", "デコモリ"), // 全国に10人ほど
+        ("水卜", "ミウラ"), // 全国に10人ほど
+        ("\ud84c\udf72坂", "ソウトメザカ"), // 五月女坂
+
+
+
+        // 一文字の難読名字(アイウエオ順)
+        ("堆", "アクツ"),
+        ("杁", "エブリ"), // 漢字1文字でありながら珍しい苗字
+        ("樵", "キコリ"), // 全国で40人ほど きこりの職から起こったとされる名字
+        ("目", "サッカ"),
+        ("燕", "ツバメ"),
+        ("鴾", "トキ"),         // 鳥の「朱鷺」とも関係あるかもしれない難字
+        ("缶", "ホトギ"),
+        ("錦", "ニシキ"),   // 一見シンプルだが、実は世帯数が少ないケース
+        ("蕨", "ワラビ"),
+
+        // 二文字の難読名字(アイウエオ順)
+        ("搦手", "カラメテ"), // 全国で3軒しかない 城の裏門を指し、門番をしていた人が将軍から与えられた名字
+        ("鴨脚", "イチヨウ"), // 全国でも珍しい苗字 いちよう、いちょう
+        ("兄父", "アチチ"), // 全国でも珍しい苗字 あじち、あちち、けいふ、あぢち
+        ("林檎", "リンゴ"), // 全国で20人ほど 東北4県の太平洋側である陸奥発祥とされる伝統的な名字
+        ("鬼束", "オニツカ"),
+        ("夜神", "ヤガミ"),
+        ("集道", "アダリ"),
+        ("上官", "ジョウカン"),
+        ("鰐渕", "ワニブチ"),
+        ("石動", "イスルギ"),
+        ("薬袋", "ミナイ"),   // 地域により「やくたい」「やたい」「みない」等の読みがある
+        ("下間", "シモツマ"), // 「げま」「しもま」など他の読みもある
+        ("皆実", "ミナミ"),
+        ("散布", "チルシ"),
+        ("恵良", "エラ"),
+        ("土師", "ハジ"),
+        ("壹岐", "イキ"),
+        ("於保", "オホ"),
+        ("小槻", "オヅキ"),
+        ("金生", "キンジョウ"),   // 「カナオ」など、他の読みも存在
+        ("魚返", "オガエリ"),
+        ("羽後", "ウゴ"),
+        ("烏丸", "カラスマ"),     // 京都の地名としても有名だが、苗字としては珍しい部類
+        ("庵原", "イハラ"),       // 「あんばら」「いはら」など地域差あり
+        ("空閑", "クガ"),         // 「くうかん」ではなく「くが」と読む
+        ("生居", "ナマイ"),       // 「いきょ」「しょうご」などの異読も
+        ("土生", "ハブ"),         // 「どしょう」「つちう」「はぶ」等の地域差あり
+        ("栴檀", "センダン"),     // 難字で、仏教用語の「栴檀(せんだん)」に通じる
+        ("伯耆", "ホウキ"),       // 地名由来で鳥取県方面に見られる
+        ("彌永", "ヤナガ"),       // 「いやなが」「やえい」などの読み違いあり
+        ("外間", "ホカマ"),       // 沖縄独特の苗字の一つ
+        ("木幡", "コハタ"),       // 「きばた」「こばた」などの読み方も存在
+        ("冷泉", "レイゼイ"),     // 古くは貴族の家系名だったとも
+        ("桃生", "モノウ"),       // 宮城県の地名が起源とされる
+        ("長柄", "ナガラ"),       // 「ながえ」「ながら」など地名に由来する説
+        ("日置", "ヘキ"),         // 「ひおき」「へき」など、地域によって大きく異なる
+        ("鹿糠", "カヌカ"),       // 「しかぬか」「かぬか」などの読みがある
+        ("東雲", "シノノメ"),     // 「とううん」ではなく「しののめ」
+        ("舎人", "トネリ"),       // 「しゃにん」ではなく「とねり」
+        ("城間", "グスクマ"),     // 「しろま」ではなく「ぐすくま」と読むケース
+        ("御厨", "ミクリヤ"),     // 「みくり」「おくりや」などと誤読されがち
+        ("刀儀", "ツルギ"),       // 大阪で見られる難読名字
+        ("花篤", "ケイトク"),     // 大阪や広島で見られる難読名字
+        ("莅戸", "ノゾキド"),     // 新潟や山形で見られる難読名字
+        ("天前", "テンデ"),       // 奈良や兵庫で見られる難読名字
+        ("新子", "アタラシ"),     // 奈良で見られる難読名字
+        ("委文", "シトリ"),
+        ("都木", "タカギ"),
+        ("過足", "ヨギアシ"),
+        ("雲母", "キララ"),
+
+
+
+
+
+        // 三文字の難読名字(アイウエオ順)
+        ("灰玉平", "ハイタマタイラ"), // 日本陸上で呼び間違えられて話題となった
+        ("不死川", "シナズガワ"), // 東除川（ひがしよけがわ）を由来とする
+        ("天空城", "ウグシロ"), // 日本で一軒しかない名字
+        ("爾牟田", "ジムタ"), // 日本で一軒しかない名字
+        ("祖月輪", "ソガワ"), // 日本で一軒しかない名字
+        ("我孫子", "アビコ"),   // 「がそんし」「あまこ」など地域差あり
+        ("猫屋敷", "ネコヤシキ"),
+        ("無量塔", "ムヤタ"),     // 「むりょうとう」「むやた」など諸説
+        ("道祖土", "サイド"),     // 「どうそど」「さいど」など地域によって異なる
+        ("鶏冠井", "カエデ"),
+        ("鴨志田", "カモシダ"),
+        ("東海林", "ショウジ"),
+        ("阿比留", "アビル"),
+        ("出利葉", "イヅリハ"),
+        ("黒葛原", "ツヅラハラ"),
+        ("小豆沢", "アズサワ"),
+        ("正親町", "オオギマチ"),   // 古くは公家由来の難読苗字
+        ("御手洗", "ミタライ"),     // 「おてあらい」ではなく「みたらい」
+        ("屋慶名", "ヤケナ"),       // 沖縄系独特の読みによる難読
+        ("読谷山", "ヨミタンザン"), // 地名由来の苗字だが「よみたんざん」
+        ("瑞慶覧", "ズケラン"),     // 沖縄では比較的見かけるが、本土では難読
+        ("饒平名", "ヨヘナ"),       // 「にょうへいな」ではなく「よへな」
+        ("豊見城", "トミグスク"),   // 沖縄の地名由来で「とみぐすく」
+        ("加加美", "カカミ"),       // 画数が多めで読みが想像しづらい
+        ("我那覇", "ガナハ"),       // 沖縄特有の難読苗字
+        ("摩文仁", "マブニ"),       // こちらも沖縄系で「まぶに」
+        ("田中丸", "タナカマル"),   // 九州北部で見られる名字
+        ("古波蔵", "コハグラ"), // 沖縄に多い苗字とされる
+        ("喜屋武", "キャン"), // 沖縄に多い苗字とされる
+        ("御手洗", "ミタライ"),
+        ("法華津", "ホケツ"), // オリンピック馬術の選手が有名
+        ("治部袋", "ジンバ"),
+        ("寿松木", "スズキ"),
+        ("神来社", "カライト"),
+
+        // 四文字の難読名字(アイウエオ順)
+        ("阿留多伎", "アルタキ"),
+        ("一番ケ瀬", "イチバンガセ"),
+        ("大豆生田", "オオマメウダ"), // 「だいずうだ」「おおまめだ」など多数の読みが存在
+        ("上與那原", "カミヨナバル"), // 「かみよなばる」「うえよなはら」など複数の読み方がある
+        ("熊埜御堂", "クマノミドウ"),
+        ("倶利伽羅", "クリカラ"),     // 天台宗の「福永」が浄土真宗に改宗したときに「倶利伽羅」に改名
+        ("小四郎丸", "コシロウマル"),
+        ("小比類巻", "コヒルイマキ"),
+        ("左衛門尉", "サエモンノジョウ"),
+        ("勅使河原", "テシガワラ"),
+        ("万里小路", "マデノコウジ"),
+        ("武者小路", "ムシャノコウジ"),
+        ("文殊四郎", "モンジュシロウ"),
+        ("源五郎丸", "ゲンゴロウマル"),
+
+        // 五文字の難読名字(アイウエオ順)
+        ("正親町三條", "オオギマチサンジョウ"), // 鎌倉時代前期の公卿
+        ("勘解由小路", "カデノコウジ"), // 日本で一番長い名字として有名
+        ("左衛門三郎", "サエモンサブロウ"), // 日本で一番長い名字 其の二
+
+        // 六文字の難読名字(アイウエオ順)
+        ("曼嘎勒扎拉布", "マンガラジャラブ"), // 元横綱鶴竜力三郎の中国語表記
 
         // 1. 一般的によく見るもの
-        ("渡辺",  "ワタナベ"), // U+6E21 U+8FBA
-        ("渡邊",  "ワタナベ"), // U+6E21 U+908A
-        ("渡邉",  "ワタナベ"), // U+6E21 U+9089
+        ("渡辺", "ワタナベ"), // U+6E21 U+8FBA
+        ("渡邊", "ワタナベ"), // U+6E21 U+908A
+        ("渡邉", "ワタナベ"), // U+6E21 U+9089
 
         // 2. 簡体字系
-        ("渡边",  "ワタナベ"), // U+6E21 U+8FB9 (中国簡体字)
+        ("渡边", "ワタナベ"), // U+6E21 U+8FB9 (中国簡体字)
 
         // 3. 旧字体・異体など
-        ("渡邊",  "ワタナベ"), // U+6E21 U+908A (重複で書いていますがあえて例示)
-        ("渡邉",  "ワタナベ"), // U+6E21 U+9089 (これも上と同字ですが、フォント差による形状の違いがしばしば)
+        ("渡邊", "ワタナベ"), // U+6E21 U+908A (重複で書いていますがあえて例示)
+        ("渡邉", "ワタナベ"), // U+6E21 U+9089 (これも上と同字ですが、フォント差による形状の違いがしばしば)
 
         // 邉(やや別の異体字)
-        ("渡邉",  "ワタナベ"), // （再掲）U+9089
+        ("渡邉", "ワタナベ"), // （再掲）U+9089
         // 邊(旁の中が更に細かく異なるケース)
-        ("渡邊",  "ワタナベ"), // （再掲）U+908A
+        ("渡邊", "ワタナベ"), // （再掲）U+908A
 
         // ここから下は「辺」の部分がさらに微妙に異なるとされる字形を想定
         // (下記コードポイントは実在例を一部引用していますが、完全一致でない可能性も)
@@ -424,15 +592,15 @@ internal partial class Seeder
         ("渡\u2A097", "ワタナベ"), // 参考: 𪂗 など (こちらは別の部首かもしれませんが例示)
 
         // 一般によく使われる代表的な4種
-        ("斉藤",  "サイトウ"), // U+6589 + U+85E4
-        ("斊藤",  "サイトウ"), // U+658A「斉」の異体字の一つ
-        ("斋藤",  "サイトウ"), // U+658B 中国の簡体字「斋」(本来は「齋」の簡体字)
-        ("斎藤",  "サイトウ"), // U+658E + U+85E4
-        ("齊藤",  "サイトウ"), // U+9F4A + U+85E4
-        ("齋藤",  "サイトウ"), // U+9F4B + U+85E4
+        ("斉藤", "サイトウ"), // U+6589 + U+85E4
+        ("斊藤", "サイトウ"), // U+658A「斉」の異体字の一つ
+        ("斋藤", "サイトウ"), // U+658B 中国の簡体字「斋」(本来は「齋」の簡体字)
+        ("斎藤", "サイトウ"), // U+658E + U+85E4
+        ("齊藤", "サイトウ"), // U+9F4A + U+85E4
+        ("齋藤", "サイトウ"), // U+9F4B + U+85E4
 
         // 亯（上が「享」に似た形）などと結合したもの
-        ("亯藤",  "サイトウ"), // 本来「亯」に「齒」的な部首が合わさった字形がある
+        ("亯藤", "サイトウ"), // 本来「亯」に「齒」的な部首が合わさった字形がある
         // 斉(異字体) 上部の「文」の形が違うもの
         ("斉\uFE00藤", "サイトウ"), // Variation Selectorで無理やり例示（実際に表示されるか不明）
         // 斉(異字体) 上部の「ヽ」が別形

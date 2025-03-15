@@ -45,7 +45,8 @@ public class Contract : AuditableEntityBase<int>
 
     [Column("ct_rev")]
     [Required]
-    public int CtRev { get; set; }
+    [MaxLength(Int32.MaxValue)]
+    public string CtRev { get; set; } = String.Empty;
 
     [Column("ct_name")]
     [Required]
@@ -63,6 +64,8 @@ public class Contract : AuditableEntityBase<int>
 
     [Column("end_date", TypeName = "Date")]
     public DateOnly? EndDate { get; set; }
+
+    // TODO: 消費税
 
     [Column("is_tax_including")]
     [Required]

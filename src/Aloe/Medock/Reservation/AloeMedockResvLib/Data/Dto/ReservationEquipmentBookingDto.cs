@@ -40,7 +40,7 @@ public class ReservationEquipmentBookingDto
     public required string BkgRemarkText { get; set; } = String.Empty;
 
     [Key(8)]
-    public required bool IsHeld { get; set; } = false;
+    public required bool IsTentative { get; set; } = false;
 
     // TODO: JOINしたい
     [Key(9)]
@@ -50,10 +50,13 @@ public class ReservationEquipmentBookingDto
     public required int PtId { get; set; } = 0;
 
     [Key(11)]
-    public required int OrderId { get; set; } = 0;
+    public required int RecId { get; set; } = 0;
 
     [Key(12)]
-    public required int SubOrderId { get; set; } = 0;
+    public bool IsCancelled { get; set; } = false;
+
+    [Key(13)]
+    public bool IsNoShow { get; set; } = false;
 
     [UsedImplicitly]
     [IgnoreMember]

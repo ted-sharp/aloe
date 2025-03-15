@@ -7,38 +7,48 @@ using Microsoft.EntityFrameworkCore.Storage;
 using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Defaults;
+using EFCore.BulkExtensions;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
 internal partial class Seeder
 {
-    private static async Task<int> SeedUserAsync(AppDbContext context)
+    private async Task<int> SeedUserAsync(AppDbContext context)
     {
         try
         {
             var count = 0;
 
-            if (!context.Policies.AsNoTracking().Any())
+            if (!context.Policies.Any())
             {
+                this._logger.LogInformation("Policies creating...");
                 var policies = DefaultPolicy.CreateDefaultPolicies();
-                context.Policies.AddRange(policies.Values);
+                await context.BulkInsertAsync(policies.Values);
+                count += policies.Count;
             }
 
-            if (!context.Preferences.AsNoTracking().Any())
+            if (!context.Preferences.Any())
             {
+                this._logger.LogInformation("Preferences creating...");
                 var preferences = DefaultPreference.CreateDefaultPreferences();
-                context.Preferences.AddRange(preferences.Values);
+                await context.BulkInsertAsync(preferences.Values);
+                count += preferences.Count;
             }
 
-            if (!context.Permissions.AsNoTracking().Any())
+            if (!context.Permissions.Any())
             {
+                this._logger.LogInformation("Permissions creating...");
                 var permissions = DefaultPermission.CreateDefaultPermissions();
-                context.Permissions.AddRange(permissions.Values);
+                await context.BulkInsertAsync(permissions.Values);
+                count += permissions.Count;
             }
 
-            if (!context.Users.AsNoTracking().Any())
+            if (!context.Users.Any())
             {
-                context.Users.AddRange([
+                this._logger.LogInformation("Users creating...");
+
+                var users = new User[]
+                {
                     new("Administrator", "admin", "admin@example.com", "admin"),
                     new("Manager", "mgr", "mgr@example.com", "mgr"),
                     new("User", "usr", "user@example.com", "usr"),
@@ -52,35 +62,52 @@ internal partial class Seeder
                     new("User 8", "8", "user@example.com", "8"),
                     new("User 9", "9", "user@example.com", "9"),
                     new("Guest", "guest", "user@example.com", "guest"),
-                ]);
+                };
+
+                var bulkConfig = new BulkConfig
+                {
+                    // DateOnly 型は除外
+                    PropertiesToExclude = [nameof(User.ExpireDate),],
+                };
+
+                await context.BulkInsertAsync(users, bulkConfig);
+                count += users.Length;
             }
 
-            if (!context.Roles.AsNoTracking().Any())
+            if (!context.Roles.Any())
             {
-                context.Roles.AddRange([
+                this._logger.LogInformation("Roles creating...");
+
+                var roles = new Role[]
+                {
                     new("Administrator", "管理者です。"),
                     new("Manager", "マネージャーです。(ポリシーを除く)"),
                     new("User", "ユーザーです。(閲覧登録)"),
                     new("Guest", "ゲストです。(閲覧のみ)"),
-                ]);
+                };
+
+                await context.BulkInsertAsync(roles);
+                count += roles.Length;
             }
 
-            if (!context.UserPreferences.AsNoTracking().Any())
+            if (!context.UserPreferences.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
+                this._logger.LogInformation("UserPreferences creating...");
 
                 var adminUser = context.Users.First(x => x.LoginName == "admin");
 
-                context.UserPreferences.AddRange([
+                var prefs = new UserPreference[]
+                {
                     new (adminUser.UserId, PreferenceCode.WindowRememberPosition, "", true),
-                ]);
+                };
+
+                await context.BulkInsertAsync(prefs);
+                count += prefs.Length;
             }
 
-            if (!context.UserRoles.AsNoTracking().Any())
+            if (!context.UserRoles.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
+                this._logger.LogInformation("UserRoles creating...");
 
                 var adminUser = context.Users.First(x => x.LoginName == "admin");
                 var adminRole = context.Roles.First(x => x.RoleName == "Administrator");
@@ -90,15 +117,20 @@ internal partial class Seeder
                 var usrRole = context.Roles.First(x => x.RoleName == "User");
                 var guestUser = context.Users.First(x => x.LoginName == "guest");
                 var guestRole = context.Roles.First(x => x.RoleName == "Guest");
-                context.UserRoles.AddRange([
+
+                var roles = new UserRole[]
+                {
                     new(adminUser.UserId, adminRole.RoleId),
                     new(mgrUser.UserId, mgrRole.RoleId),
                     new(usrUser.UserId, usrRole.RoleId),
                     new(guestUser.UserId, guestRole.RoleId),
-                ]);
+                };
+
+                await context.BulkInsertAsync(roles);
+                count += roles.Length;
             }
 
-            if (!context.RolePermissions.AsNoTracking().Any())
+            if (!context.RolePermissions.Any())
             {
                 //var adminRoll = context.Rolls.First(x => x.RollName == "Administrator");
                 //var mgrRoll = context.Rolls.First(x => x.RollName == "Manager");
@@ -110,9 +142,9 @@ internal partial class Seeder
                 //    new(usrUser.UserId, usrRoll.RollId),
                 //    new(guestUser.UserId, guestRoll.RollId),
                 //]);
-            }
 
-            count += await context.SaveChangesAsync();
+                //count += await context.SaveChangesAsync();
+            }
 
             return count;
         }

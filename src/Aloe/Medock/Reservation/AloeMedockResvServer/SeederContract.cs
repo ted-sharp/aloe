@@ -5,24 +5,24 @@ using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Microsoft.EntityFrameworkCore.Storage;
 using System.Diagnostics;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
 internal partial class Seeder
 {
-    private static async Task<int> SeedContractAsync(AppDbContext context)
+    private async Task<int> SeedContractAsync(AppDbContext context)
     {
         try
         {
             var count = 0;
 
-            if (!context.Contracts.AsNoTracking().Any())
+            if (!context.Contracts.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
-
                 var kk = context.InsuranceProviders
+                    .AsNoTracking()
                     .FirstOrDefault(x => x.InsurProvNumber == "7010005013337");
 
                 var kkCt = new Contract(
@@ -38,10 +38,16 @@ internal partial class Seeder
                 count += await context.SaveChangesAsync();
 
                 // IDが更新されたので再取得
-                kkCt = context.Contracts.FirstOrDefault(x => x.InsurProvId == kk.InsurProvId);
+                kkCt = context.Contracts
+                    .AsNoTracking()
+                    .FirstOrDefault(x => x.InsurProvId == kk.InsurProvId);
 
-                var orgs = context.Organizations.Take(100).ToList();
+                var orgs = await context.Organizations
+                    .AsNoTracking()
+                    .Take(100)
+                    .ToArrayAsync();
 
+                var cts = new List<Contract>(orgs.Length);
                 foreach (var org in orgs)
                 {
                     if (org.InsurProvId == kk.InsurProvId)
@@ -54,7 +60,7 @@ internal partial class Seeder
                             org.OrgId.ToString(),
                             org.OrgName + "向け契約",
                             "協会けんぽ共通契約を使用");
-                        context.Contracts.Add(ct);
+                        cts.Add(ct);
                     }
                     else
                     {
@@ -65,17 +71,19 @@ internal partial class Seeder
                             org.OrgId.ToString(),
                             org.OrgName + "向け契約",
                             "{desc}");
-                        context.Contracts.Add(ct);
+                        cts.Add(ct);
                     }
                 }
+
+                await context.BulkInsertAsync(orgs);
+                count += orgs.Length;
             }
 
-            if (!context.ContractPlans.AsNoTracking().Any())
+            if (!context.ContractPlans.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
-
-                var cts = context.Contracts.ToList();
+                var cts = await context.Contracts
+                    .AsNoTracking()
+                    .ToArrayAsync();
 
                 foreach (var ct in cts)
                 {
@@ -85,29 +93,27 @@ internal partial class Seeder
                         continue;
                     }
 
-                    var plans = context.CheckupPlans
+                    var plans = await context.CheckupPlans
                         .Where(x => x.InsurProvId == ct.InsurProvId && x.OrgId == ct.OrgId)
                         .AsNoTracking()
-                        .ToList();
-                    if (plans.Count == 0)
+                        .Select(x => new ContractPlan(ct.CtId, x))
+                        .ToArrayAsync();
+                    if (plans.Length == 0)
                     {
                         // 基になるプランがないならスキップ
                         continue;
                     }
 
-                    foreach (var plan in plans)
-                    {
-                        context.ContractPlans.Add(new(ct.CtId, plan));
-                    }
+                    await context.BulkInsertAsync(plans);
+                    count += plans.Length;
                 }
             }
 
-            if (!context.ContractOptions.AsNoTracking().Any())
+            if (!context.ContractOptions.Any())
             {
-                // 挿入したデータを使うため保存する
-                count += await context.SaveChangesAsync();
-
-                var cts = context.Contracts.ToList();
+                var cts = await context.Contracts
+                    .AsNoTracking()
+                    .ToArrayAsync();
 
                 foreach (var ct in cts)
                 {
@@ -117,26 +123,23 @@ internal partial class Seeder
                         continue;
                     }
 
-                    var plans = context.CheckupOptions
+                    var options = await context.CheckupOptions
                         .Where(x => x.InsurProvId == ct.InsurProvId && x.OrgId == ct.OrgId)
                         .AsNoTracking()
-                        .ToList();
-                    if (plans.Count == 0)
+                        .Select(x => new ContractOption(ct.CtId, x))
+                        .ToArrayAsync();
+                    if (options.Length == 0)
                     {
                         // 基になるプランがないならスキップ
                         continue;
                     }
 
-                    foreach (var plan in plans)
-                    {
-                        context.ContractOptions.Add(new(ct.CtId, plan));
-                    }
+                    await context.BulkInsertAsync(options);
+                    count += options.Length;
                 }
             }
 
             // TODO: prices, caps, cap_details
-
-            count += await context.SaveChangesAsync();
 
             return count;
         }

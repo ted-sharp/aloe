@@ -61,13 +61,18 @@ public class ReservationEquipmentBooking : AuditableEntityBase<int>
     [Required]
     public int PtId { get; set; } = 0;
 
-    [Column("order_id")]
+    [Column("rec_id")]
     [Required]
-    public int OrderId { get; set; } = 0;
+    public int RecId { get; set; } = 0;
 
-    [Column("sub_order_id")]
+    [Column("is_cancelled")]
     [Required]
-    public int SubOrderId { get; set; } = 0;
+    public bool IsCancelled { get; set; } = false;
+
+    [Column("is_noshow")]
+    [Required]
+    public bool IsNoShow { get; set; } = false;
+
 
     public ReservationEquipmentBooking() { }
 
