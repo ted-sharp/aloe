@@ -37,7 +37,7 @@ internal static class HostExtensions
     /// PostgreSQL(EFCore) と関連クラスを追加します。
     /// </summary>
     private static IHostApplicationBuilder AddPostgreSql(this IHostApplicationBuilder builder,
-        bool isSqlLoggingEnabled,
+        bool isSqlLoggingEnabled = false,
         string connectionStringName = "DefaultConnection")
     {
         // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。

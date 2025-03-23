@@ -2,18 +2,47 @@
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <ImplicitUsings>enable</ImplicitUsings>
+    <ImplicitUsings>disable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UserSecretsId>380a6149-f673-4fc9-aa64-7228b3e0bb37</UserSecretsId>
+    <SupportedOSPlatformVersion>10.0.20348.0</SupportedOSPlatformVersion>
+    <UseWindowsForms>True</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Dragablz" Version="0.0.3.234" />
+    <PackageReference Include="EFCore.BulkExtensions" Version="9.0.1" />
     <PackageReference Include="MahApps.Metro" Version="2.4.10" />
     <PackageReference Include="MahApps.Metro.IconPacks" Version="5.1.0" />
     <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
     <PackageReference Include="MaterialDesignThemes.MahApps" Version="5.2.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.3" />
+    <PackageReference Include="MiniExcel" Version="1.39.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
+    <ProjectReference Include="..\..\Medock\Reservation\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />
+    <ProjectReference Include="..\..\Medock\Reservation\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="HoujinImporter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
 
 </Project>

@@ -134,6 +134,16 @@
           "StartProject": true
         }
       }
+    },
+
+    "Ext": {
+      "Projects": {
+        "AloeExtImporter": {
+          "CommandLineArguments": "",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
     }
 
   }

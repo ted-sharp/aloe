@@ -1,7 +1,7 @@
 ﻿# A5:ER FORMAT:19
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.20.1 Copyright © 1997 - 2025 m.matsubara
+# A5:SQL Mk-2 Version 2.20.2 Copyright © 1997 - 2025 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -74,8 +74,8 @@ Position="EXT",100,100
 ZOrder=190
 
 [Entity]
-PName=ext.raw_jis_degrade_maps
-LName=ext.raw_jis_degrade_maps
+PName=ext.raw_jis_compat_maps
+LName=ext.raw_jis_compat_maps
 Comment=
 TableInnerOption=
 TableOption=
@@ -85,6 +85,7 @@ Top=100
 Field="1. 面区点コード","source_menkuten_code","TEXT","NOT NULL",,"","",$FFFFFFFF,""
 Field="2. Unicode","source_unicode","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="3. 字形","source_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="4. JIS区分","source_jis_kubun","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="5. 面区点コード","mapped_menkuten_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="6. Unicode","mapped_unicode","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="7. 字形","mapped_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -101,7 +102,7 @@ Field="17. 備考","remarks","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20250314143400
+ModifiedDateTime=20250321234859
 Position="EXT",2200,100
 ZOrder=192
 
@@ -114,8 +115,7 @@ TableOption=
 Page=EXT
 Left=100
 Top=1000
-Field="local_government_code","local_government_code","TEXT","NOT NULL",0,"","",$000000FF,""
-Field="zip_code","zip_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="zip_code","zip_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="prefecture_katakana","prefecture_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="city_katakana","city_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="town_katakana","town_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -125,7 +125,7 @@ Field="town","town","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20250314134502
+ModifiedDateTime=20250319115617
 Position="EXT",100,1000
 ZOrder=194
 
@@ -145,33 +145,33 @@ Field="10. 訂正区分","correct","TEXT","NOT NULL",,"\q\q","0: 訂正以外, 1
 Field="11. 更新年月日","update_date","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="12. 変更年月日","change_date","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="13. 商号又は名称(150文字)","name","TEXT","NOT NULL",,"\q\q","150文字までを格納",$FFFFFFFF,""
-Field="14. 商号又は名称イメージID","name_image_id","TEXT","NOT NULL",,"\q\q","151文字以降は画像で確認",$FFFFFFFF,""
+Field="14. 商号又は名称イメージID","name_image_id","TEXT",,,"","151文字以降は画像で確認",$FFFFFFFF,""
 Field="15. 法人種別","kind","TEXT","NOT NULL",,"\q\q","101: 国の機関, 201: 地方公共団体, 301: 株式会社, etc...",$FFFFFFFF,""
-Field="16. 国内所在地(都道府県)","prefecture_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="17. 国内所在地(市区町村)","city_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="18. 国内所在地(丁目番地等)","street_number","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="19. 国内所在地イメージID","address_image_id","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="20. 都道府県コード","prefecture_code","TEXT","NOT NULL",,"\q\q","JIS X 0401",$FFFFFFFF,""
-Field="21. 市区町村コード","city_code","TEXT","NOT NULL",,"\q\q","JIS X 0402",$FFFFFFFF,""
-Field="22. 郵便番号","post_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="23. 国外所在地","address_outside","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="24. 国外所在地イメージID","address_outside_image_id","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="25. 登記記録の閉鎖等年月日","close_date","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="26. 登記記録の閉鎖等の事由","close_cause","TEXT","NOT NULL",,"\q\q","01: 清算の結了\n等\n, 11: 合併による\n解散等\n, 21: 登記官によ\nる閉鎖\n, 31: その他の清\n算の結了等\n",$FFFFFFFF,""
-Field="27. 承継先法人番号","successor_corporate_number","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="28. 変更事由の詳細","change_cause","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="29. 法人番号指定年月日","assignment_date","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="30. 最新履歴","latest","TEXT","NOT NULL",,"\q\q","0: 過去情報, 1: 最新情報",$FFFFFFFF,""
-Field="31. 商号又は名称(en)","en_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="32. 国内所在地(都道府県)(en)","en_prefecture_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="33. 国内所在地(市区町村丁目番地等)(en)","en_city_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="34. 国外所在地(en)","en_address_outside","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="35. フリガナ","furigana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="16. 国内所在地(都道府県)","prefecture_name","TEXT",,,"","",$FFFFFFFF,""
+Field="17. 国内所在地(市区町村)","city_name","TEXT",,,"","",$FFFFFFFF,""
+Field="18. 国内所在地(丁目番地等)","street_number","TEXT",,,"","",$FFFFFFFF,""
+Field="19. 国内所在地イメージID","address_image_id","TEXT",,,"","",$FFFFFFFF,""
+Field="20. 都道府県コード","prefecture_code","TEXT",,,"","JIS X 0401",$FFFFFFFF,""
+Field="21. 市区町村コード","city_code","TEXT",,,"","JIS X 0402",$FFFFFFFF,""
+Field="22. 郵便番号","post_code","TEXT",,,"","",$FFFFFFFF,""
+Field="23. 国外所在地","address_outside","TEXT",,,"","",$FFFFFFFF,""
+Field="24. 国外所在地イメージID","address_outside_image_id","TEXT",,,"","",$FFFFFFFF,""
+Field="25. 登記記録の閉鎖等年月日","close_date","TEXT",,,"","",$FFFFFFFF,""
+Field="26. 登記記録の閉鎖等の事由","close_cause","TEXT",,,"","01: 清算の結了\n等\n, 11: 合併による\n解散等\n, 21: 登記官によ\nる閉鎖\n, 31: その他の清\n算の結了等\n",$FFFFFFFF,""
+Field="27. 承継先法人番号","successor_corporate_number","TEXT",,,"","",$FFFFFFFF,""
+Field="28. 変更事由の詳細","change_cause","TEXT",,,"","",$FFFFFFFF,""
+Field="29. 法人番号指定年月日","assignment_date","TEXT",,,"","",$FFFFFFFF,""
+Field="30. 最新履歴","latest","TEXT",,,"","0: 過去情報, 1: 最新情報",$FFFFFFFF,""
+Field="31. 商号又は名称(en)","en_name","TEXT",,,"","",$FFFFFFFF,""
+Field="32. 国内所在地(都道府県)(en)","en_prefecture_name","TEXT",,,"","",$FFFFFFFF,""
+Field="33. 国内所在地(市区町村丁目番地等)(en)","en_city_name","TEXT",,,"","",$FFFFFFFF,""
+Field="34. 国外所在地(en)","en_address_outside","TEXT",,,"","",$FFFFFFFF,""
+Field="35. フリガナ","furigana","TEXT",,,"","",$FFFFFFFF,""
 Field="36. 検索対象除外","hihyoji","TEXT","NOT NULL",,"\q\q","0: 検索対象, 1: 除外",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20250314143427
+ModifiedDateTime=20250321161616
 Position="EXT",1000,100
 ZOrder=195
 
@@ -184,35 +184,33 @@ TableOption=
 Page=EXT
 Left=1000
 Top=1800
-Field="7. sequence_number","sequence_number","TEXT","NOT NULL",0,"","",$000000FF,""
-Field="8. corporate_number","corporate_number","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="8. corporate_number","corporate_number","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="13. name","name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="35. name_katakana","name_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="22. zip_code","zip_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="16. prefecture_name","prefecture_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="17. city_name","city_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="18. street_number","street_number","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="22. zip_code","zip_code","TEXT",,,"","",$FFFFFFFF,""
+Field="16. prefecture_name","prefecture_name","TEXT",,,"","",$FFFFFFFF,""
+Field="17. city_name","city_name","TEXT",,,"","",$FFFFFFFF,""
+Field="18. street_number","street_number","TEXT",,,"","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20250314134530
+ModifiedDateTime=20250321232230
 Position="EXT",1000,1800
 ZOrder=196
 
 [Entity]
-PName=ext.jis_degrade_maps
-LName=ext.jis_degrade_maps
+PName=ext.jis_compat_maps
+LName=ext.jis_compat_maps
 Comment=
 TableInnerOption=
 TableOption=
 Page=EXT
 Left=2200
 Top=1100
-Field="3. source_text","source_text","TEXT","NOT NULL",0,"\q\q","",$000000FF,""
+Field="3. source_text","source_text","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="7. mapped_text","mapped_text","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20250314134550
+ModifiedDateTime=20250321233943
 Position="EXT",2200,1100
 ZOrder=197

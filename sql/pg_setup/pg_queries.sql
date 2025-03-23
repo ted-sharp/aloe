@@ -10,6 +10,9 @@ SELECT name, setting, unit, context
 FROM pg_settings
 ORDER BY name;
 
+-- 不要データベースのDROP文作成
+SELECT 'DROP DATABASE ' || datname || ';' as command FROM pg_database WHERE datname LIKE 'aloe%';
+
 --==============================================
 -- データベースおよびテーブルサイズ関連
 --==============================================

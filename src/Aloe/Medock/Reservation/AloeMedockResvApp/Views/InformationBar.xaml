@@ -1,16 +1,17 @@
-﻿<UserControl x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.InformationBar"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:viewModels="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-             xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-             xmlns:ext="http://schemas.aloe/wpf/extension"
-             mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=viewModels:InformationBarViewModel}"
-             d:Background="PaleGreen"
-             d:DesignHeight="24"
-             d:DesignWidth="800">
+﻿<UserControl
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.InformationBar"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:ext="http://schemas.aloe/wpf/extension"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:viewModels="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    d:Background="PaleGreen"
+    d:DataContext="{d:DesignInstance Type=viewModels:InformationBarViewModel}"
+    d:DesignHeight="24"
+    d:DesignWidth="800"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
         <Style TargetType="StatusBar">
@@ -36,13 +37,14 @@
     </UserControl.Resources>
 
     <StatusBar>
-        <!-- コーナーを丸める -->
+        <!--  コーナーを丸める  -->
         <StatusBar.Template>
             <ControlTemplate>
-                <Border CornerRadius="0,0,10,10"
-                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                        BorderThickness="1">
+                <Border
+                    Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                    BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    BorderThickness="1"
+                    CornerRadius="0,0,10,10">
                     <ItemsPresenter />
                 </Border>
             </ControlTemplate>
@@ -52,8 +54,8 @@
             <TextBlock Text="{Binding Status.Value}" />
         </StatusBarItem>
 
-        <StatusBarItem DockPanel.Dock="Right" Width="20">
-            <!-- Space -->
+        <StatusBarItem Width="20" DockPanel.Dock="Right">
+            <!--  Space  -->
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right" Visibility="Collapsed">
@@ -65,8 +67,8 @@
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <Button>
-                    <!-- TODO: キャッシュを強制開放 -->
-                    <ui:PackIcon Kind="HeadSnowflake"/>
+                    <!--  TODO: キャッシュを強制開放  -->
+                    <ui:PackIcon Kind="HeadSnowflake" />
                 </Button>
             </StackPanel>
         </StatusBarItem>
@@ -74,7 +76,7 @@
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding ZoomOutCommand}" CommandParameter="{ext:Int32 -10}">
-                    <!-- コーナーを丸める -->
+                    <!--  コーナーを丸める  -->
                     <!--<Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}"
@@ -86,15 +88,16 @@
                         </ControlTemplate>
                     </Button.Template>-->
 
-                    <ui:PackIcon Kind="Minus"/>
+                    <ui:PackIcon Kind="Minus" />
                 </Button>
-                <ComboBox ItemsSource="{Binding ScaleOptions}"
-                          SelectedItem="{Binding SelectedScalePercentage.Value}"
-                          IsEditable="True"
-                          Text="{Binding SelectedScalePercentageText.Value, UpdateSourceTrigger=PropertyChanged}"
-                          ItemStringFormat="{}{0} %"/>
+                <ComboBox
+                    IsEditable="True"
+                    ItemStringFormat="{}{0} %"
+                    ItemsSource="{Binding ScaleOptions}"
+                    SelectedItem="{Binding SelectedScalePercentage.Value}"
+                    Text="{Binding SelectedScalePercentageText.Value, UpdateSourceTrigger=PropertyChanged}" />
                 <Button Command="{Binding ZoomInCommand}" CommandParameter="{ext:Int32 10}">
-                    <!-- コーナーを丸める -->
+                    <!--  コーナーを丸める  -->
                     <!--<Button.Template>
                         <ControlTemplate TargetType="Button">
                             <Border Background="{TemplateBinding Background}"
@@ -106,37 +109,37 @@
                         </ControlTemplate>
                     </Button.Template>-->
 
-                    <ui:PackIcon Kind="Plus"/>
+                    <ui:PackIcon Kind="Plus" />
                 </Button>
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
-                <ui:PackIcon Kind="Account"/>
+                <ui:PackIcon Kind="Account" />
                 <TextBlock Text="{Binding User.Value}" />
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal" Visibility="{Binding DatabaseNameVisibility.Value}">
-                <ui:PackIcon Kind="Database"/>
+                <ui:PackIcon Kind="Database" />
                 <TextBlock Text="{Binding DatabaseName.Value}" />
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
-                <ui:PackIcon Kind="Lan"/>
+                <ui:PackIcon Kind="Lan" />
                 <TextBlock Text="{Binding HostName.Value}" />
             </StackPanel>
         </StatusBarItem>
 
         <StatusBarItem HorizontalContentAlignment="Stretch">
             <ProgressBar
+                Margin="5,0"
                 IsIndeterminate="True"
-                Visibility="{Binding ProgressBarVisibility.Value}"
-                Margin="5,0" />
+                Visibility="{Binding ProgressBarVisibility.Value}" />
         </StatusBarItem>
     </StatusBar>
 

@@ -1,8 +1,10 @@
-# Alo External Importer
+# Aloe External Importer
 
 郵便番号、企業情報、MJ縮退マップ などのデータをダウンロードし、取り込むためのプロジェクトです。
 
-対象のシステムのDBの別スキーマに設定しておくことでバックアップしない選択が取れます。
+対象のシステムの DB の ext スキーマ上に取り込み用テーブルと実テーブルを用意しておきます。
+スキーマを分けておくとでバックアップしない選択が取れます。
+取り込み用テーブルを用意しておくことで、CSV をそのまま取り込むことができます。
 
 ## 住所
 
@@ -16,6 +18,7 @@ https://www.post.japanpost.jp/zipcode/download.html
 住所の郵便番号（1レコード1行、UTF-8形式）（CSV形式）
 https://www.post.japanpost.jp/zipcode/dl/utf-zip.html
 https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip
+utf_ken_all.zip 2MB程度
 
 ## 法人
 

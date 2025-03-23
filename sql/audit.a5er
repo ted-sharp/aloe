@@ -1,7 +1,7 @@
 ﻿# A5:ER FORMAT:19
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.20.1 Copyright © 1997 - 2025 m.matsubara
+# A5:SQL Mk-2 Version 2.20.2 Copyright © 1997 - 2025 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -74,8 +74,8 @@ ZOrder=13
 
 [Shape]
 Page=AUDIT
-Left=1101
-Top=1968
+Left=1098
+Top=1992
 ZOrder=15
 Width=1503
 Height=302

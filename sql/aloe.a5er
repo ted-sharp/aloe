@@ -1,7 +1,7 @@
 ﻿# A5:ER FORMAT:19
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.20.1 Copyright © 1997 - 2025 m.matsubara
+# A5:SQL Mk-2 Version 2.20.2 Copyright © 1997 - 2025 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -1326,13 +1326,13 @@ Fields1=
 Fields2=
 Cardinarity1=
 Cardinarity2=
-Position="ORG_PT",10,6061,6070,5471,R,L,""
+Position="ORG_PT",10,5628,6070,5471,R,L,""
 Dependence=0
 Caption=
 PName=
 ModifiedDateTime=20250122114808
 LineMode=10
-Bar1=606
+Bar1=563
 Bar2=607
 Bar3=547
 TermPos1=R
@@ -1526,6 +1526,7 @@ Field="current_org_id","current_org_id","@INT","NOT NULL",,"0","",$000099FF,""
 Field="pt_number","pt_number","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="karte_number","karte_number","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="pt_full_name","pt_full_name","TEXT","NOT NULL",,"\q\q","",$000099FF,""
+Field="pt_full_name_compat_jislv2","pt_full_name_compat_jislv2","TEXT","NOT NULL",,"\q\q","JIS縮退で第二水準までにしたもの",$FFFFFFFF,""
 Field="pt_full_name_katakana","pt_full_name_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="pt_full_name_katakana_normalized","pt_full_name_katakana_normalized","TEXT","NOT NULL",,"\q\q","トリガで更新、全角化、区切り文字の統一、unaccent",$000099FF,""
 Field="pt_given_name","pt_given_name","TEXT","NOT NULL",,"\q\q","結婚後の名寄せなどで使用",$000099FF,""
@@ -1537,7 +1538,7 @@ Field="memo","memo","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20250311090303
+ModifiedDateTime=20250321084124
 Position="ORG_PT",1000,1600
 ZOrder=28
 

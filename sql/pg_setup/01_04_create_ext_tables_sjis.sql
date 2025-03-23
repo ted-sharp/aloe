@@ -1,5 +1,5 @@
 -- Project Name : aloe_reservation_grid
--- Date/Time    : 2025/03/14 13:46:03
+-- Date/Time    : 2025/03/21 23:49:14
 -- Author       : user
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -12,21 +12,15 @@
   この機能は A5:SQL Mk-2でのみ有効であることに注意してください。
 */
 
--- ext.jis_degrade_maps
+-- ext.jis_compat_maps
 -- * BackupToTempTable
-DROP TABLE if exists ext.jis_degrade_maps CASCADE;
+DROP TABLE if exists ext.jis_compat_maps CASCADE;
 
 -- * RestoreFromTempTable
-CREATE TABLE ext.jis_degrade_maps (
+CREATE TABLE ext.jis_compat_maps (
   source_text TEXT DEFAULT '' NOT NULL
   , mapped_text TEXT DEFAULT '' NOT NULL
 ) ;
-
-CREATE UNIQUE INDEX jis_degrade_maps_PKI
-  ON ext.jis_degrade_maps(source_text);
-
-ALTER TABLE ext.jis_degrade_maps
-  ADD CONSTRAINT jis_degrade_maps_PKC PRIMARY KEY (source_text);
 
 -- ext.houjin_numbers
 -- * BackupToTempTable
@@ -34,21 +28,13 @@ DROP TABLE if exists ext.houjin_numbers CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE ext.houjin_numbers (
-  sequence_number TEXT NOT NULL
-  , corporate_number TEXT DEFAULT '' NOT NULL
+  corporate_number TEXT DEFAULT '' NOT NULL
   , name TEXT DEFAULT '' NOT NULL
-  , name_katakana TEXT DEFAULT '' NOT NULL
-  , zip_code TEXT DEFAULT '' NOT NULL
-  , prefecture_name TEXT DEFAULT '' NOT NULL
-  , city_name TEXT DEFAULT '' NOT NULL
-  , street_number TEXT DEFAULT '' NOT NULL
+  , zip_code TEXT
+  , prefecture_name TEXT
+  , city_name TEXT
+  , street_number TEXT
 ) ;
-
-CREATE UNIQUE INDEX houjin_numbers_PKI
-  ON ext.houjin_numbers(sequence_number);
-
-ALTER TABLE ext.houjin_numbers
-  ADD CONSTRAINT houjin_numbers_PKC PRIMARY KEY (sequence_number);
 
 -- ext.raw_houjin_numbers
 -- * BackupToTempTable
@@ -63,36 +49,30 @@ CREATE TABLE ext.raw_houjin_numbers (
   , update_date TEXT DEFAULT '' NOT NULL
   , change_date TEXT DEFAULT '' NOT NULL
   , name TEXT DEFAULT '' NOT NULL
-  , name_image_id TEXT DEFAULT '' NOT NULL
+  , name_image_id TEXT
   , kind TEXT DEFAULT '' NOT NULL
-  , prefecture_name TEXT DEFAULT '' NOT NULL
-  , city_name TEXT DEFAULT '' NOT NULL
-  , street_number TEXT DEFAULT '' NOT NULL
-  , address_image_id TEXT DEFAULT '' NOT NULL
-  , prefecture_code TEXT DEFAULT '' NOT NULL
-  , city_code TEXT DEFAULT '' NOT NULL
-  , post_code TEXT DEFAULT '' NOT NULL
-  , address_outside TEXT DEFAULT '' NOT NULL
-  , address_outside_image_id TEXT DEFAULT '' NOT NULL
-  , close_date TEXT DEFAULT '' NOT NULL
-  , close_cause TEXT DEFAULT '' NOT NULL
-  , successor_corporate_number TEXT DEFAULT '' NOT NULL
-  , change_cause TEXT DEFAULT '' NOT NULL
-  , assignment_date TEXT DEFAULT '' NOT NULL
-  , latest TEXT DEFAULT '' NOT NULL
-  , en_name TEXT DEFAULT '' NOT NULL
-  , en_prefecture_name TEXT DEFAULT '' NOT NULL
-  , en_city_name TEXT DEFAULT '' NOT NULL
-  , en_address_outside TEXT DEFAULT '' NOT NULL
-  , furigana TEXT DEFAULT '' NOT NULL
+  , prefecture_name TEXT
+  , city_name TEXT
+  , street_number TEXT
+  , address_image_id TEXT
+  , prefecture_code TEXT
+  , city_code TEXT
+  , post_code TEXT
+  , address_outside TEXT
+  , address_outside_image_id TEXT
+  , close_date TEXT
+  , close_cause TEXT
+  , successor_corporate_number TEXT
+  , change_cause TEXT
+  , assignment_date TEXT
+  , latest TEXT
+  , en_name TEXT
+  , en_prefecture_name TEXT
+  , en_city_name TEXT
+  , en_address_outside TEXT
+  , furigana TEXT
   , hihyoji TEXT DEFAULT '' NOT NULL
 ) ;
-
-CREATE UNIQUE INDEX raw_houjin_numbers_PKI
-  ON ext.raw_houjin_numbers(sequence_number);
-
-ALTER TABLE ext.raw_houjin_numbers
-  ADD CONSTRAINT raw_houjin_numbers_PKC PRIMARY KEY (sequence_number);
 
 -- ext.zip_codes
 -- * BackupToTempTable
@@ -100,8 +80,7 @@ DROP TABLE if exists ext.zip_codes CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE ext.zip_codes (
-  local_government_code TEXT NOT NULL
-  , zip_code TEXT DEFAULT '' NOT NULL
+  zip_code TEXT DEFAULT '' NOT NULL
   , prefecture_katakana TEXT DEFAULT '' NOT NULL
   , city_katakana TEXT DEFAULT '' NOT NULL
   , town_katakana TEXT DEFAULT '' NOT NULL
@@ -110,21 +89,16 @@ CREATE TABLE ext.zip_codes (
   , town TEXT DEFAULT '' NOT NULL
 ) ;
 
-CREATE UNIQUE INDEX zip_codes_PKI
-  ON ext.zip_codes(local_government_code);
-
-ALTER TABLE ext.zip_codes
-  ADD CONSTRAINT zip_codes_PKC PRIMARY KEY (local_government_code);
-
--- ext.raw_jis_degrade_maps
+-- ext.raw_jis_compat_maps
 -- * BackupToTempTable
-DROP TABLE if exists ext.raw_jis_degrade_maps CASCADE;
+DROP TABLE if exists ext.raw_jis_compat_maps CASCADE;
 
 -- * RestoreFromTempTable
-CREATE TABLE ext.raw_jis_degrade_maps (
+CREATE TABLE ext.raw_jis_compat_maps (
   source_menkuten_code TEXT NOT NULL
   , source_unicode TEXT DEFAULT '' NOT NULL
   , source_text TEXT DEFAULT '' NOT NULL
+  , source_jis_kubun TEXT DEFAULT '' NOT NULL
   , mapped_menkuten_code TEXT DEFAULT '' NOT NULL
   , mapped_unicode TEXT DEFAULT '' NOT NULL
   , mapped_text TEXT DEFAULT '' NOT NULL
@@ -139,12 +113,6 @@ CREATE TABLE ext.raw_jis_degrade_maps (
   , multi_text TEXT DEFAULT '' NOT NULL
   , remarks TEXT DEFAULT '' NOT NULL
 ) ;
-
-CREATE UNIQUE INDEX raw_jis_degrade_maps_PKI
-  ON ext.raw_jis_degrade_maps(source_menkuten_code);
-
-ALTER TABLE ext.raw_jis_degrade_maps
-  ADD CONSTRAINT raw_jis_degrade_maps_PKC PRIMARY KEY (source_menkuten_code);
 
 -- ext.raw_zip_codes
 -- * BackupToTempTable
@@ -169,21 +137,13 @@ CREATE TABLE ext.raw_zip_codes (
   , update_reason TEXT DEFAULT '' NOT NULL
 ) ;
 
-CREATE UNIQUE INDEX raw_zip_codes_PKI
-  ON ext.raw_zip_codes(local_government_code);
-
-ALTER TABLE ext.raw_zip_codes
-  ADD CONSTRAINT raw_zip_codes_PKC PRIMARY KEY (local_government_code);
-
-COMMENT ON TABLE ext.jis_degrade_maps IS 'ext.jis_degrade_maps';
-COMMENT ON COLUMN ext.jis_degrade_maps.source_text IS '3. source_text';
-COMMENT ON COLUMN ext.jis_degrade_maps.mapped_text IS '7. mapped_text';
+COMMENT ON TABLE ext.jis_compat_maps IS 'ext.jis_compat_maps';
+COMMENT ON COLUMN ext.jis_compat_maps.source_text IS '3. source_text';
+COMMENT ON COLUMN ext.jis_compat_maps.mapped_text IS '7. mapped_text';
 
 COMMENT ON TABLE ext.houjin_numbers IS 'ext.houjin_numbers';
-COMMENT ON COLUMN ext.houjin_numbers.sequence_number IS '7. sequence_number';
 COMMENT ON COLUMN ext.houjin_numbers.corporate_number IS '8. corporate_number';
 COMMENT ON COLUMN ext.houjin_numbers.name IS '13. name';
-COMMENT ON COLUMN ext.houjin_numbers.name_katakana IS '35. name_katakana';
 COMMENT ON COLUMN ext.houjin_numbers.zip_code IS '22. zip_code';
 COMMENT ON COLUMN ext.houjin_numbers.prefecture_name IS '16. prefecture_name';
 COMMENT ON COLUMN ext.houjin_numbers.city_name IS '17. city_name';
@@ -229,7 +189,6 @@ COMMENT ON COLUMN ext.raw_houjin_numbers.furigana IS '35. フリガナ';
 COMMENT ON COLUMN ext.raw_houjin_numbers.hihyoji IS '36. 検索対象除外:0: 検索対象, 1: 除外';
 
 COMMENT ON TABLE ext.zip_codes IS 'ext.zip_codes';
-COMMENT ON COLUMN ext.zip_codes.local_government_code IS 'local_government_code';
 COMMENT ON COLUMN ext.zip_codes.zip_code IS 'zip_code';
 COMMENT ON COLUMN ext.zip_codes.prefecture_katakana IS 'prefecture_katakana';
 COMMENT ON COLUMN ext.zip_codes.city_katakana IS 'city_katakana';
@@ -238,23 +197,24 @@ COMMENT ON COLUMN ext.zip_codes.prefecture IS 'prefecture';
 COMMENT ON COLUMN ext.zip_codes.city IS 'city';
 COMMENT ON COLUMN ext.zip_codes.town IS 'town';
 
-COMMENT ON TABLE ext.raw_jis_degrade_maps IS 'ext.raw_jis_degrade_maps';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.source_menkuten_code IS '1. 面区点コード';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.source_unicode IS '2. Unicode';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.source_text IS '3. 字形';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.mapped_menkuten_code IS '5. 面区点コード';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.mapped_unicode IS '6. Unicode';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.mapped_text IS '7. 字形';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_menkuten_code_1 IS '8. 面区点コード①';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_menkuten_code_2 IS '9. 面区点コード②';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_menkuten_code_3 IS '10. 面区点コード③';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_menkuten_code_4 IS '11. 面区点コード④';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_unicode_1 IS '12. Unicode①';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_unicode_2 IS '13. Unicode②';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_unicode_3 IS '14. Unicode③';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_unicode_4 IS '15. Unicode④';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.multi_text IS '16. 字形';
-COMMENT ON COLUMN ext.raw_jis_degrade_maps.remarks IS '17. 備考';
+COMMENT ON TABLE ext.raw_jis_compat_maps IS 'ext.raw_jis_compat_maps';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.source_menkuten_code IS '1. 面区点コード';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.source_unicode IS '2. Unicode';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.source_text IS '3. 字形';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.source_jis_kubun IS '4. JIS区分';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.mapped_menkuten_code IS '5. 面区点コード';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.mapped_unicode IS '6. Unicode';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.mapped_text IS '7. 字形';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_menkuten_code_1 IS '8. 面区点コード①';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_menkuten_code_2 IS '9. 面区点コード②';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_menkuten_code_3 IS '10. 面区点コード③';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_menkuten_code_4 IS '11. 面区点コード④';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_unicode_1 IS '12. Unicode①';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_unicode_2 IS '13. Unicode②';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_unicode_3 IS '14. Unicode③';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_unicode_4 IS '15. Unicode④';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.multi_text IS '16. 字形';
+COMMENT ON COLUMN ext.raw_jis_compat_maps.remarks IS '17. 備考';
 
 COMMENT ON TABLE ext.raw_zip_codes IS 'ext.raw_zip_codes';
 COMMENT ON COLUMN ext.raw_zip_codes.local_government_code IS '全国地方公共団体コード:JIS X0401、X0402';
