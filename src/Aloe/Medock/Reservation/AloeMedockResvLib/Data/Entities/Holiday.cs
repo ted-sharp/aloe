@@ -19,9 +19,9 @@ public class Holiday : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int HolidayId { get; set; }
 
-    [Column("holiday_date", TypeName = "Date")]
+    [Column("holiday_date")]
     [Required]
-    public DateOnly HolidayDate { get; set; } = DateOnly.MinValue;
+    public DateTime HolidayDate { get; set; } = DateTime.MinValue;
 
     [Column("holiday_name")]
     [Required]
@@ -30,7 +30,7 @@ public class Holiday : AuditableEntityBase<int>
 
     public Holiday() { }
 
-    public Holiday(DateOnly date, string name)
+    public Holiday(DateTime date, string name)
     {
         this.HolidayDate = date;
         this.HolidayName = name;

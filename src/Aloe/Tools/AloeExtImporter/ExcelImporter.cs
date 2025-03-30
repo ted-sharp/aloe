@@ -35,7 +35,7 @@ public class ExcelImporter
         }
 
         // 取り込む前に前のデータを消す
-        this._dbContext.Database.ExecuteSqlRaw("TRUNCATE ext.raw_zip_codes;");
+        await this._dbContext.Database.ExecuteSqlRawAsync("TRUNCATE ext.raw_jis_compat_maps;");
 
         // EFCore の接続を利用して BinaryImport を実行
         var connection = this._dbContext.Database.GetDbConnection();
@@ -47,9 +47,8 @@ public class ExcelImporter
         // EFCore で取得した接続は NpgsqlConnection としてキャスト可能
         var npgsqlConnection = (NpgsqlConnection)connection;
 
-
         // 事前に your_table が存在し、name (text) と age (integer) のカラムがあることを確認してください
-        await using var writer = npgsqlConnection.BeginBinaryImport(
+        await using var writer = await npgsqlConnection.BeginBinaryImportAsync(
             """
             COPY ext.raw_jis_compat_maps (
                 source_menkuten_code
@@ -72,7 +71,7 @@ public class ExcelImporter
             ) FROM STDIN (FORMAT BINARY)
             """);
 
-        var rows = MiniExcel.Query(fullPath, startCell: "A3");
+        var rows = await MiniExcel.QueryAsync(fullPath, startCell: "A3");
 
         foreach (var row in rows)
         {
@@ -111,7 +110,6 @@ public class ExcelImporter
         await connection.CloseAsync();
         await connection.OpenAsync();
 
-
         var sqlCommands = new List<string>
         {
             // 取り込む前に前のデータを消す
@@ -130,7 +128,10 @@ public class ExcelImporter
             SELECT
                 source_text
               , mapped_text
-            FROM ext.raw_jis_compat_maps;
+            FROM ext.raw_jis_compat_maps
+            WHERE mapped_text <> source_text
+              AND mapped_text <> ''
+            ;
             """,
 
             // インデックスを作成する
@@ -142,7 +143,48 @@ public class ExcelImporter
 
         foreach (var sql in sqlCommands)
         {
-            this._dbContext.Database.ExecuteSqlRaw(sql);
+            await this._dbContext.Database.ExecuteSqlRawAsync(sql);
+        }
+    }
+
+    /// <summary>
+    /// IBM拡張漢字を挿入する。
+    /// 髙, 閒 は JIS X 0213:2024 には収録されていない。
+    /// 塚, 德, 﨑 は JIS X 0213:2024 から収録済みなので含めない。
+    /// </summary>
+    /// <seealso href="https://ja.wikipedia.org/wiki/IBM%E6%8B%A1%E5%BC%B5%E6%96%87%E5%AD%97">IBM拡張文字</seealso>
+    public async Task InsertIbmKanji()
+    {
+
+        var sqlCommands = new List<string>
+        {
+            """
+            INSERT INTO ext.jis_compat_maps
+            (
+                source_text
+              , mapped_text
+            )
+            VALUES
+                ('髙', '高')
+              , ('閒', '聞')
+              , ('晴', '晴')
+              , ('益', '益')
+              , ('礼', '礼')
+              , ('靖', '靖')
+              , ('精', '精')
+              , ('羽', '羽')
+              , ('逸', '逸')
+              , ('飯', '飯')
+              , ('飼', '飼')
+              , ('館', '館')
+              , ('鶴', '鶴')
+            ;
+            """,
+        };
+
+        foreach (var sql in sqlCommands)
+        {
+            await this._dbContext.Database.ExecuteSqlRawAsync(sql);
         }
     }
 }

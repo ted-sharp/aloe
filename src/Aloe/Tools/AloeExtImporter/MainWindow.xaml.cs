@@ -13,8 +13,6 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
-using Windows.Storage.Pickers;
-using WinRT.Interop;
 using System.IO.Compression;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Microsoft.EntityFrameworkCore;

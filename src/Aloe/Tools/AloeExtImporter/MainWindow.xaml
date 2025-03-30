@@ -12,8 +12,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:system="clr-namespace:System;assembly=System.Runtime"
     Title="郵便番号インポーター"
-    Width="640"
-    Height="480"
+    Width="800"
+    Height="560"
     MinWidth="640"
     MinHeight="480"
     BorderBrush="{DynamicResource MahApps.Brushes.Accent}"
@@ -24,6 +24,17 @@
     ShowTitleBar="True"
     TitleCharacterCasing="Normal"
     mc:Ignorable="d">
+    <!--  MetroWindow 内でリソースをまとめて定義  -->
+    <mah:MetroWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <!--  MahApps.Metro  -->
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Controls.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Fonts.xaml" />
+                <ResourceDictionary Source="pack://application:,,,/MahApps.Metro;component/Styles/Themes/Dark.Blue.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </mah:MetroWindow.Resources>
 
     <mah:MetroWindow.IconTemplate>
         <DataTemplate>

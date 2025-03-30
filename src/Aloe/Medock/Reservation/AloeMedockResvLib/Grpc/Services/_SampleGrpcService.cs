@@ -9,7 +9,6 @@ namespace Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 
 // サンプルなので使わないフィールドも残します。
 // ReSharper disable NotAccessedField.Local
-
 public interface ISampleGrpcService : MagicOnion.IService<ISampleGrpcService>
 {
     MagicOnion.UnaryResult<SampleDto> FetchSampleAsync();

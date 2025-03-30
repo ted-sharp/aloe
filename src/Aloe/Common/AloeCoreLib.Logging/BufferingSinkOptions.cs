@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+namespace Aloe.Common.AloeCoreLib.Logging;
 
 public class BufferingSinkOptions
 {

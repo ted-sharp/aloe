@@ -19,8 +19,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Logging\Aloe.Common.AloeCoreLib.Logging.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
-    <ProjectReference Include="..\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />
   </ItemGroup>
 

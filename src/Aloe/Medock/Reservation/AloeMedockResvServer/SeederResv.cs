@@ -68,9 +68,9 @@ internal partial class Seeder
 
                 var equipmentSlots = new ReservationEquipmentSlot[]
                 {
-                    new(new DateOnly(1900, 1, 1), DowCode.None, slots),
-                    new(new DateOnly(1900, 1, 2), DowCode.Sunday, ""),
-                    new(new DateOnly(1900, 1, 3), DowCode.Saturday, ""),
+                    new(new DateTime(1900, 1, 1), DowCode.None, slots),
+                    new(new DateTime(1900, 1, 2), DowCode.Sunday, ""),
+                    new(new DateTime(1900, 1, 3), DowCode.Saturday, ""),
                 };
 
                 var bulkConfig = new BulkConfig
@@ -135,44 +135,44 @@ internal partial class Seeder
 
                 var holidays = new Holiday[]
                 {
-                    new(new DateOnly(2025,1,1), "元旦"),
-                    new(new DateOnly(2025,1,13), "成人の日"),
-                    new(new DateOnly(2025,2,11), "建国記念日"),
-                    new(new DateOnly(2025,2,23), "天皇誕生日"),
-                    new(new DateOnly(2025,2,24), "振替休日"),
-                    new(new DateOnly(2025,3,20), "春分の日"),
-                    new(new DateOnly(2025,4,29), "昭和の日"),
-                    new(new DateOnly(2025,5,3), "憲法記念日"),
-                    new(new DateOnly(2025,5,4), "みどりの日"),
-                    new(new DateOnly(2025,5,5), "こどもの日"),
-                    new(new DateOnly(2025,5,6), "振替休日"),
-                    new(new DateOnly(2025,7,21), "海の日"),
-                    new(new DateOnly(2025,8,11), "山の日"),
-                    new(new DateOnly(2025,9,15), "敬老の日"),
-                    new(new DateOnly(2025,9,23), "秋分の日"),
-                    new(new DateOnly(2025,10,13), "スポーツの日"),
-                    new(new DateOnly(2025,11,3), "文化の日"),
-                    new(new DateOnly(2025,11,23), "勤労感謝の日"),
-                    new(new DateOnly(2025,11,14), "振替休日"),
+                    new(new DateTime(2025,1,1), "元旦"),
+                    new(new DateTime(2025,1,13), "成人の日"),
+                    new(new DateTime(2025,2,11), "建国記念日"),
+                    new(new DateTime(2025,2,23), "天皇誕生日"),
+                    new(new DateTime(2025,2,24), "振替休日"),
+                    new(new DateTime(2025,3,20), "春分の日"),
+                    new(new DateTime(2025,4,29), "昭和の日"),
+                    new(new DateTime(2025,5,3), "憲法記念日"),
+                    new(new DateTime(2025,5,4), "みどりの日"),
+                    new(new DateTime(2025,5,5), "こどもの日"),
+                    new(new DateTime(2025,5,6), "振替休日"),
+                    new(new DateTime(2025,7,21), "海の日"),
+                    new(new DateTime(2025,8,11), "山の日"),
+                    new(new DateTime(2025,9,15), "敬老の日"),
+                    new(new DateTime(2025,9,23), "秋分の日"),
+                    new(new DateTime(2025,10,13), "スポーツの日"),
+                    new(new DateTime(2025,11,3), "文化の日"),
+                    new(new DateTime(2025,11,23), "勤労感謝の日"),
+                    new(new DateTime(2025,11,14), "振替休日"),
 
-                    new(new DateOnly(2026,1,1), "元旦"),
-                    new(new DateOnly(2026,1,12), "成人の日"),
-                    new(new DateOnly(2026,2,11), "建国記念日"),
-                    new(new DateOnly(2026,2,23), "天皇誕生日"),
-                    new(new DateOnly(2026,3,20), "春分の日"),
-                    new(new DateOnly(2026,4,29), "昭和の日"),
-                    new(new DateOnly(2026,5,3), "憲法記念日"),
-                    new(new DateOnly(2026,5,4), "みどりの日"),
-                    new(new DateOnly(2026,5,5), "こどもの日"),
-                    new(new DateOnly(2026,5,6), "振替休日"),
-                    new(new DateOnly(2026,7,20), "海の日"),
-                    new(new DateOnly(2026,8,11), "山の日"),
-                    new(new DateOnly(2026,9,21), "敬老の日"),
-                    new(new DateOnly(2026,9,22), "振替休日"),
-                    new(new DateOnly(2026,9,23), "秋分の日"),
-                    new(new DateOnly(2026,10,12), "スポーツの日"),
-                    new(new DateOnly(2026,11,3), "文化の日"),
-                    new(new DateOnly(2026,11,23), "勤労感謝の日"),
+                    new(new DateTime(2026,1,1), "元旦"),
+                    new(new DateTime(2026,1,12), "成人の日"),
+                    new(new DateTime(2026,2,11), "建国記念日"),
+                    new(new DateTime(2026,2,23), "天皇誕生日"),
+                    new(new DateTime(2026,3,20), "春分の日"),
+                    new(new DateTime(2026,4,29), "昭和の日"),
+                    new(new DateTime(2026,5,3), "憲法記念日"),
+                    new(new DateTime(2026,5,4), "みどりの日"),
+                    new(new DateTime(2026,5,5), "こどもの日"),
+                    new(new DateTime(2026,5,6), "振替休日"),
+                    new(new DateTime(2026,7,20), "海の日"),
+                    new(new DateTime(2026,8,11), "山の日"),
+                    new(new DateTime(2026,9,21), "敬老の日"),
+                    new(new DateTime(2026,9,22), "振替休日"),
+                    new(new DateTime(2026,9,23), "秋分の日"),
+                    new(new DateTime(2026,10,12), "スポーツの日"),
+                    new(new DateTime(2026,11,3), "文化の日"),
+                    new(new DateTime(2026,11,23), "勤労感謝の日"),
                 };
 
                 await context.BulkInsertAsync(holidays);
@@ -185,9 +185,9 @@ internal partial class Seeder
 
                 var dailySlots = new ReservationDailySlot[]
                 {
-                    new(new DateOnly(1900,1,1), DowCode.None, "09:00 09:30 10:00 10:30 11:00 11:30 13:00 13:30 14:00 14:30 15:00 15:30"),
-                    new(new DateOnly(1900,1,2), DowCode.Sunday, ""),
-                    new(new DateOnly(1900,1,3), DowCode.Saturday, ""),
+                    new(new DateTime(1900,1,1), DowCode.None, "09:00 09:30 10:00 10:30 11:00 11:30 13:00 13:30 14:00 14:30 15:00 15:30"),
+                    new(new DateTime(1900,1,2), DowCode.Sunday, ""),
+                    new(new DateTime(1900,1,3), DowCode.Saturday, ""),
                 };
 
                 var bulkConfig = new BulkConfig
@@ -209,9 +209,9 @@ internal partial class Seeder
 
                 var caps = new ReservationDailyCap[]
                 {
-                    new(new DateOnly(1900,1,1), DowCode.None, 40, 30),
-                    new(new DateOnly(1900,1,2), DowCode.Sunday, 0, 0),
-                    new(new DateOnly(1900,1,3), DowCode.Saturday, 0, 0),
+                    new(new DateTime(1900,1,1), DowCode.None, 40, 30),
+                    new(new DateTime(1900,1,2), DowCode.Sunday, 0, 0),
+                    new(new DateTime(1900,1,3), DowCode.Saturday, 0, 0),
                 };
 
                 var bulkConfig = new BulkConfig
@@ -231,7 +231,7 @@ internal partial class Seeder
             {
                 this._logger.LogInformation("DailyNotes creating...");
 
-                var firstDate = DateOnlyHelper.GetFirstDate();
+                var firstDate = DateOnlyHelper.GetFirstDateTime();
 
                 var floors = await context.Floors
                     .AsNoTracking()
@@ -268,7 +268,7 @@ internal partial class Seeder
             {
                 this._logger.LogInformation("DailyBookings creating...");
 
-                var firstDate = DateOnlyHelper.GetFirstDate();
+                var firstDate = DateOnlyHelper.GetFirstDateTime();
 
                 var floors = context.Floors
                     .AsNoTracking()
@@ -308,7 +308,7 @@ internal partial class Seeder
                 var symbols = new[] { "", "鼻", "口", "★" };
                 var symbolMax = symbols.Length;
 
-                var firstDate = DateOnlyHelper.GetFirstDate();
+                var firstDate = DateOnlyHelper.GetFirstDateTime();
 
                 var max = 3000;
                 var bookings = new List<ReservationEquipmentBooking>(max);

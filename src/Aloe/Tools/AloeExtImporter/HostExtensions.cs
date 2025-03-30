@@ -1,7 +1,7 @@
 ﻿using System;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+using Aloe.Common.AloeCoreLib.Logging;
 using MagicOnion.Server;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;

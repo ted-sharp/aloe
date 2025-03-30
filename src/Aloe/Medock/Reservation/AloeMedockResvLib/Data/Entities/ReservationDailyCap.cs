@@ -23,10 +23,10 @@ public class ReservationDailyCap : AuditableEntityBase<int>
 
     [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
+    public DateTime StartDate { get; set; } = DateTime.Today;
 
     [Column("end_date", TypeName = "Date")]
-    public DateOnly? EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     [Column("dow_code")]
     [Required]
@@ -55,7 +55,7 @@ public class ReservationDailyCap : AuditableEntityBase<int>
     public ReservationDailyCap() { }
 
     public ReservationDailyCap(
-        DateOnly start,
+        DateTime start,
         DowCode dowCode,
         int ampCap,
         int pmCap)

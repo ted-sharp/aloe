@@ -6,9 +6,10 @@
     xmlns:local="clr-namespace:AloeExtImporter"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:Background="DarkTurquoise"
+    d:Background="DarkOliveGreen"
     d:DesignHeight="480"
     d:DesignWidth="640"
+    Loaded="PostImporter_OnLoaded"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -26,7 +27,7 @@
         <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="日本郵便 郵便番号データ" />
 
         <StackPanel Margin="0,20">
-            <TextBlock Margin="0,0,0,5" Text="13万件 20MB" />
+            <TextBlock Margin="0,0,0,5" Text="13万件 20MB ▶ 取り込み 13万件" />
             <TextBlock Margin="0,0,0,5" Text="ダウンロードページ" />
             <TextBlock>
                 <Hyperlink NavigateUri="https://www.post.japanpost.jp/zipcode/dl/utf-zip.html" RequestNavigate="Hyperlink_RequestNavigate">
@@ -37,71 +38,115 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <TextBlock
+            <Label
                 Grid.Column="0"
-                Width="100"
-                Text="作業ディレクトリ" />
+                HorizontalAlignment="Right"
+                Content="作業ディレクトリ" />
             <TextBox
                 x:Name="WorkTextBox"
                 Grid.Column="1"
-                materialDesign:HintAssist.Hint="作業用フォルダ"
+                materialDesign:HintAssist.Hint="./tmp/"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="Folder"
+                Style="{StaticResource MaterialDesignTextBox}"
                 Text="./tmp/" />
             <Button
                 Grid.Column="2"
                 Width="100"
                 Margin="10,0"
-                Click="OpenWorkButton_OnClick"
+                Click="BrowseWorkButton_OnClick"
                 Content="選択..."
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+            <Button
+                Grid.Column="3"
+                Width="100"
+                Margin="10,0"
+                Click="OpenWorkButton_OnClick"
+                Content="開く..."
                 Style="{StaticResource MaterialDesignRaisedButton}" />
         </Grid>
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <TextBlock
+            <Label
                 Grid.Column="0"
-                Width="100"
-                Text="ダウンロードURL" />
+                HorizontalAlignment="Right"
+                Content="ダウンロードURL" />
             <TextBox
                 x:Name="DownloadUrlTextBox"
                 Grid.Column="1"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="DownloadBox"
+                Style="{StaticResource MaterialDesignTextBox}"
                 Text="https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_ken_all.zip" />
             <Button
                 Grid.Column="2"
                 Width="100"
                 Margin="10,0"
-                Click="DownloadPostButton_OnClick"
-                Content="ダウンロード"
+                Click="ImportPostButton_OnClick"
+                Content="インポート"
                 Style="{StaticResource MaterialDesignRaisedButton}" />
         </Grid>
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <ProgressBar
-                x:Name="ProgressBar"
+            <Label
                 Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="ダウンロード" />
+            <ProgressBar
+                x:Name="DownloadProgressBar"
+                Grid.Column="1"
                 Height="20"
                 IsIndeterminate="False"
                 Maximum="100"
                 Minimum="0"
                 Value="0" />
-            <Button
-                Grid.Column="1"
+            <TextBlock
+                x:Name="DownloadStatusTextBlock"
+                Grid.Column="2"
                 Width="100"
-                Margin="10,0"
-                Click="ImportPostButton_OnClick"
-                Content="インポート"
-                Style="{StaticResource MaterialDesignRaisedButton}" />
+                Text="未処理" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="インポート" />
+            <ProgressBar
+                x:Name="ImportProgressBar"
+                Grid.Column="1"
+                Height="20"
+                IsIndeterminate="False"
+                Maximum="100"
+                Minimum="0"
+                Value="0" />
+            <TextBlock
+                x:Name="ImportStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
         </Grid>
 
     </StackPanel>

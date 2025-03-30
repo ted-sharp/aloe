@@ -1,5 +1,9 @@
-# Aloe Medock Resvation Library Logging
+# AloeCoreLib.Logging
 
 ロギングライブラリとして Serilog を使用している。
 通常のロガーを内部ロガーを設定し、外側でバッファリングを行いパフォーマンスを上げている。
 様々な出力先(Sink)を使用しているので、それらを個別またはまとめてバッファリングする必要があった。
+
+実際にバッファリング後に出力するものは、各アプリケーション側で定義する必要がある。
+
+IHostApplicationBuilder に Serilog を DI して使う。

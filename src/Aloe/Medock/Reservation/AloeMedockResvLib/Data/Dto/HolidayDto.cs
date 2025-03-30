@@ -19,7 +19,8 @@ public static class HolidayExtensions
     {
         return new HolidayDto
         {
-            HolidayDate = holiday.HolidayDate,
+            // EFCore の関係でエンティティに DateOnly 型は使わないものとする。
+            HolidayDate = DateOnly.FromDateTime(holiday.HolidayDate),
             HolidayName = holiday.HolidayName,
         };
     }

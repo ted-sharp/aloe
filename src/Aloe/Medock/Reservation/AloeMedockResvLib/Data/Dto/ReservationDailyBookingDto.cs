@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MessagePack;
 using System;
 using System.Collections.Generic;
@@ -65,4 +66,28 @@ public class ReservationDailyBookingDto
 
     [Key(17)]
     public bool IsNoShow { get; set; } = false;
+}
+
+public static class ReservationDailyBookingExtensions
+{
+    public static ReservationDailyBookingDto ToReservationDailyBookingDto(this ReservationDailyBooking booking)
+    {
+        return new ReservationDailyBookingDto
+        {
+            ResvDailyBkgId = booking.ResvDailyBkgId,
+            BkgDate = booking.BkgDate.ToDateOnly(),
+            FloorId = booking.FloorId,
+            Slot = booking.Slot,
+            BkgUserId = booking.BkgUserId,
+            BkgAt = booking.BkgAt,
+            BkgSymbolText = booking.BkgSymbolText,
+            BkgRemarkText = booking.BkgRemarkText,
+            IsTentative = booking.IsTentative,
+            OrgId = booking.OrgId,
+            PtId = booking.PtId,
+            RecId = booking.RecId,
+            IsCancelled = booking.IsCancelled,
+            IsNoShow = booking.IsNoShow,
+        };
+    }
 }

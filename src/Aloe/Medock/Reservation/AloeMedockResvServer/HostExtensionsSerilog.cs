@@ -1,4 +1,4 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+﻿using Aloe.Common.AloeCoreLib.Logging;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;

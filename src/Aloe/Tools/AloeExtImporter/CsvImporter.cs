@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +22,7 @@ public class CsvImporter
     /// CSVファイルをPostgreSQLに取り込む
     /// </summary>
     /// <param name="csvPath">取り込むCSVファイルのパス</param>
-    public void ImportPostCsvToDatabase(string csvPath)
+    public async Task ImportPostCsvToDatabase(string csvPath)
     {
         var fullPath = Path.GetFullPath(csvPath);
         if (!File.Exists(fullPath))
@@ -75,7 +76,7 @@ public class CsvImporter
 
         foreach (var sql in sqlCommands)
         {
-            this._dbContext.Database.ExecuteSqlRaw(sql);
+            await this._dbContext.Database.ExecuteSqlRawAsync(sql);
         }
     }
 
@@ -83,7 +84,7 @@ public class CsvImporter
     /// CSVファイルをPostgreSQLに取り込む
     /// </summary>
     /// <param name="csvPath">取り込むCSVファイルのパス</param>
-    public void ImportHoujinCsvToDatabase(string csvPath)
+    public async Task ImportHoujinCsvToDatabase(string csvPath)
     {
         var fullPath = Path.GetFullPath(csvPath);
         if (!File.Exists(fullPath))
@@ -140,7 +141,7 @@ public class CsvImporter
 
         foreach (var sql in sqlCommands)
         {
-            this._dbContext.Database.ExecuteSqlRaw(sql);
+            await this._dbContext.Database.ExecuteSqlRawAsync(sql);
         }
     }
 }

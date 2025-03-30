@@ -35,21 +35,29 @@ public partial class HoujinImporter : UserControl
 
     private void HoujinImporter_OnLoaded(object sender, RoutedEventArgs e)
     {
-
-        // TODO: 特定のファイル名を探してTextBoxに設定しておく
+        this.RefreshHoujinDownloadStatus();
+        this.RefreshJisDownloadStatus();
     }
 
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
     {
-        FileHelper.OpenLink(e.Uri.AbsoluteUri);
-        e.Handled = true;
+        try
+        {
+            FileHelper.OpenLink(e.Uri.AbsoluteUri);
+            e.Handled = true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+        }
     }
 
-    private void OpenWorkButton_OnClick(object sender, RoutedEventArgs e)
+    private void BrowseWorkButton_OnClick(object sender, RoutedEventArgs e)
     {
         try
         {
-            var folderPath = FileHelper.PickFolder(this.WorkTextBox.Text);
+            var work = this.GetWorkDirectory();
+            var folderPath = FileHelper.PickFolder(work);
             if (!String.IsNullOrWhiteSpace(folderPath)
                 && Directory.Exists(folderPath))
             {
@@ -62,11 +70,26 @@ public partial class HoujinImporter : UserControl
         }
     }
 
+    private void OpenWorkButton_OnClick(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            var work = this.GetWorkDirectory();
+            FileHelper.OpenExplorer(work);
+            e.Handled = true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+        }
+    }
+
     private void OpenHoujinButton_OnClick(object sender, RoutedEventArgs e)
     {
         try
         {
-            var filePath = FileHelper.PickFile(this.WorkTextBox.Text);
+            var work = this.GetWorkDirectory();
+            var filePath = FileHelper.PickFile(work);
             if (!String.IsNullOrWhiteSpace(filePath)
                 && File.Exists(filePath))
             {
@@ -79,88 +102,281 @@ public partial class HoujinImporter : UserControl
         }
     }
 
-    private async void DownloadJisButton_OnClick(object sender, RoutedEventArgs e)
+    private async void ImportButton_OnClick(object sender, RoutedEventArgs e)
     {
         try
         {
-            var url = this.JisDownloadUrlTextBox.Text ?? "";
-            var localFileDir = this.WorkTextBox.Text ?? "";
-            var downloadFilePath = FileHelper.GetDownloadFilePath(url, localFileDir);
+            this.SetJisDownloadStatus(State.None);
+            this.SetJisImportStatus(State.None);
+            this.SetHoujinImportStatus(State.None);
 
-            if (!Directory.Exists(localFileDir))
+            await this.DownloadJis();
+            await this.ImportJis();
+            await this.ImportHoujin();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+        }
+    }
+
+    private string GetWorkDirectory()
+    {
+        var work = this.WorkTextBox.Text;
+        return String.IsNullOrWhiteSpace(work) ? "./tmp/" : work;
+    }
+
+    private void RefreshHoujinDownloadStatus()
+    {
+        var csvFilePath = this.GetHoujinCsvFilePath();
+
+        var isFileExists = File.Exists(csvFilePath);
+        if (isFileExists)
+        {
+            this.HoujinTextBox.Text = csvFilePath;
+        }
+
+        this.SetHoujinDownloadStatus(isFileExists ? State.Completed : State.None);
+    }
+
+    private string GetHoujinCsvFilePath()
+    {
+        // 1. 今日の日付から先月末を算
+        var today = DateTime.Today;
+        var lastDayOfPrevMonth = new DateTime(today.Year, today.Month, 1).AddDays(-1);
+
+        // 2. yyyyMMdd 形式の文字列を作る
+        var dateString = lastDayOfPrevMonth.ToString("yyyyMMdd");
+
+        // 3. ファイル名を組み立てる (例: zenkou_all_20230228.zip)
+        var work = this.GetWorkDirectory();
+        var fileName = "00_zenkoku_all_" + dateString + ".zip";
+        var filePath = System.IO.Path.Combine(work, fileName);
+
+        return filePath;
+    }
+
+    private void SetHoujinDownloadStatus(State state)
+    {
+        switch (state)
+        {
+            case State.None:
+                this.HoujinDownloadStatusTextBlock.Text = "未処理";
+                break;
+            case State.InProgress:
+                this.HoujinDownloadStatusTextBlock.Text = "処理中";
+                break;
+            case State.Completed:
+                this.HoujinDownloadStatusTextBlock.Text = "完了";
+                break;
+            case State.Error:
+                this.HoujinDownloadStatusTextBlock.Text = "エラー";
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
+    }
+
+    private void RefreshJisDownloadStatus()
+    {
+        var url = this.JisDownloadUrlTextBox.Text ?? "";
+        var work = this.GetWorkDirectory();
+        var downloadFilePath = FileHelper.GetDownloadFilePath(url, work);
+        var isFileExists = File.Exists(downloadFilePath);
+
+        this.SetJisDownloadStatus(isFileExists ? State.Completed : State.None);
+    }
+
+    private async Task<bool> DownloadJis()
+    {
+        try
+        {
+            this.SetJisDownloadStatus(State.InProgress);
+
+            var url = this.JisDownloadUrlTextBox.Text ?? "";
+            var work = this.GetWorkDirectory();
+            var downloadFilePath = FileHelper.GetDownloadFilePath(url, work);
+
+            if (File.Exists(downloadFilePath))
             {
-                Directory.CreateDirectory(localFileDir);
+                this.SetJisDownloadStatus(State.Completed);
+                return true;
+            }
+
+            if (!Directory.Exists(work))
+            {
+                Directory.CreateDirectory(work);
             }
 
             var progress = new Progress<int>(percent =>
             {
-                this.ProgressBar.Value = percent;
-                this.ProgressBar.IsEnabled = true;
+                this.JisDownloadProgressBar.Value = percent;
+                this.JisDownloadProgressBar.IsEnabled = true;
             });
 
             var factory = App.Host.Services.GetRequiredService<IHttpClientFactory>();
             var downloader = new FileDownloader(factory.CreateClient());
             await downloader.DownloadFileAsync(url, downloadFilePath, progress);
+
+            this.SetJisDownloadStatus(State.Completed);
+            return true;
         }
         catch (Exception ex)
         {
             MessageBox.Show("Error: " + ex.Message);
-        }
-        finally
-        {
-            this.ProgressBar.IsEnabled = false;
+            this.SetJisDownloadStatus(State.Error);
+            return false;
         }
     }
 
-    private async void ImportHoujinButton_OnClick(object sender, RoutedEventArgs e)
+    private void SetJisDownloadStatus(State state)
+    {
+        switch (state)
+        {
+            case State.None:
+                this.JisDownloadStatusTextBlock.Text = "未処理";
+                this.JisDownloadProgressBar.Value = 0;
+                break;
+            case State.InProgress:
+                this.JisDownloadStatusTextBlock.Text = "処理中";
+                break;
+            case State.Completed:
+                this.JisDownloadStatusTextBlock.Text = "完了";
+                this.JisDownloadProgressBar.Value = this.JisDownloadProgressBar.Maximum;
+                break;
+            case State.Error:
+                this.JisDownloadStatusTextBlock.Text = "エラー";
+                this.JisDownloadProgressBar.Value = 0;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
+    }
+
+    private async Task<bool> ImportJis()
     {
         try
         {
-            // 進捗バーをインジケーター表示に設定
-            this.ProgressBar.IsIndeterminate = true;
-
-            var localFileDir = this.WorkTextBox.Text ?? "";
-
-            #region Houjin
-
-            var houjinFilePath = this.HoujinTextBox.Text ?? "";
-
-            if (File.Exists(houjinFilePath))
-            {
-                // ZIPファイルからCSVファイルパスを取得
-                var extractedCsvPath = ZipExtractor.ExtractFirstCsv(houjinFilePath, localFileDir);
-
-                // CSVインポート処理
-                var importer = new CsvImporter();
-                await Task.Run(() => importer.ImportHoujinCsvToDatabase(extractedCsvPath));
-
-                // ファイル削除
-                FileHelper.DeleteFileIfExists(extractedCsvPath);
-            }
-
-            #endregion Houjin
-
-            #region Jis
+            this.SetJisImportStatus(State.InProgress);
 
             var url = this.JisDownloadUrlTextBox.Text ?? "";
-            var jisFilePath = FileHelper.GetDownloadFilePath(url, localFileDir);
+            var work = this.GetWorkDirectory();
+            var jisFilePath = FileHelper.GetDownloadFilePath(url, work);
 
-            if (File.Exists(jisFilePath))
+            if (!File.Exists(jisFilePath))
             {
-                var importer2 = new ExcelImporter();
-                await Task.Run(() => importer2.ImportJisExelToDatabase(jisFilePath));
+                this.SetJisImportStatus(State.Error);
+                return false;
             }
 
-            #endregion Jis
+            var importer2 = new ExcelImporter();
+            await Task.Run(() => importer2.ImportJisExelToDatabase(jisFilePath));
+            await Task.Run(() => importer2.InsertIbmKanji());
+
+            this.SetJisImportStatus(State.Completed);
+            return true;
         }
         catch (Exception ex)
         {
             MessageBox.Show("Error: " + ex.Message);
-        }
-        finally
-        {
-            this.ProgressBar.Value = this.ProgressBar.Maximum;
-            this.ProgressBar.IsIndeterminate = false;
+            this.SetJisImportStatus(State.Error);
+            return false;
         }
     }
+
+    private void SetJisImportStatus(State state)
+    {
+        switch (state)
+        {
+            case State.None:
+                this.JisImportStatusTextBlock.Text = "未処理";
+                this.JisImportProgressBar.IsIndeterminate = false;
+                this.JisImportProgressBar.Value = 0;
+                break;
+            case State.InProgress:
+                this.JisImportStatusTextBlock.Text = "処理中";
+                this.JisImportProgressBar.IsIndeterminate = true;
+                this.JisImportProgressBar.Value = 0;
+                break;
+            case State.Completed:
+                this.JisImportStatusTextBlock.Text = "完了";
+                this.JisImportProgressBar.IsIndeterminate = false;
+                this.JisImportProgressBar.Value = this.JisImportProgressBar.Maximum;
+                break;
+            case State.Error:
+                this.JisImportStatusTextBlock.Text = "エラー";
+                this.JisImportProgressBar.IsIndeterminate = false;
+                this.JisImportProgressBar.Value = 0;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
+    }
+
+    private async Task<bool> ImportHoujin()
+    {
+        try
+        {
+            this.SetHoujinImportStatus(State.InProgress);
+
+            var houjinFilePath = this.HoujinTextBox.Text ?? "";
+
+            if (!File.Exists(houjinFilePath))
+            {
+                this.SetHoujinImportStatus(State.Error);
+                return false;
+            }
+
+            var work = this.GetWorkDirectory();
+
+            // ZIPファイルからCSVファイルパスを取得
+            var extractedCsvPath = await Task.Run(() => ZipExtractor.ExtractFirstCsv(houjinFilePath, work));
+
+            // CSVインポート処理
+            var importer = new CsvImporter();
+            await Task.Run(() => importer.ImportHoujinCsvToDatabase(extractedCsvPath));
+
+            // ファイル削除
+            FileHelper.DeleteFileIfExists(extractedCsvPath);
+
+            this.SetHoujinImportStatus(State.Completed);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+            this.SetHoujinImportStatus(State.Error);
+            return false;
+        }
+    }
+
+    private void SetHoujinImportStatus(State state)
+    {
+        switch (state)
+        {
+            case State.None:
+                this.HoujinImportStatusTextBlock.Text = "未処理";
+                this.HoujinImportProgressBar.IsIndeterminate = false;
+                this.HoujinImportProgressBar.Value = 0;
+                break;
+            case State.InProgress:
+                this.HoujinImportStatusTextBlock.Text = "処理中";
+                this.HoujinImportProgressBar.IsIndeterminate = true;
+                this.HoujinImportProgressBar.Value = 0;
+                break;
+            case State.Completed:
+                this.HoujinImportStatusTextBlock.Text = "完了";
+                this.HoujinImportProgressBar.IsIndeterminate = false;
+                this.HoujinImportProgressBar.Value = this.HoujinImportProgressBar.Maximum;
+                break;
+            case State.Error:
+                this.HoujinImportStatusTextBlock.Text = "エラー";
+                this.HoujinImportProgressBar.IsIndeterminate = false;
+                this.HoujinImportProgressBar.Value = 0;
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(state), state, null);
+        }
+    }
+
 }

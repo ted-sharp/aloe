@@ -1,5 +1,5 @@
 ﻿using System;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+using Aloe.Common.AloeCoreLib.Logging;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;

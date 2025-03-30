@@ -1,11 +1,11 @@
 ﻿using R3;
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using ObservableCollections;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
@@ -21,14 +21,13 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// 検索のときに参照します。
     /// 検索のときに使うだけなので OneWayToSource とします。
     /// イベントを発火させないので ReactiveProperty にはしません。
-    ///
+    /// </remarks>
     /// <example>
     /// How to use:
     /// <code>
     /// <TextBox Text="{Binding SelectedIndexInput, Mode=OneWayToSource}" />
     /// </code>
     /// </example>
-    /// </remarks>
     public int SelectedIndexInput { get; set; } = -1;
 
     /// <summary>
@@ -39,7 +38,7 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// イベント発火に使うだけなので OneWayToSource とします。
     /// イベントを発火させるので ReactiveProperty にします。
     /// 変更されたとき、フロア名、を更新します。
-    ///
+    /// </remarks>
     /// <example>
     /// How to use:
     /// <code>
@@ -47,7 +46,6 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// TextBox.Text はデフォルトで Mode=TwoWay となります。
     /// </code>
     /// </example>
-    /// </remarks>
     public ReactiveProperty<string> XxxCode { get; set; } = new();
 
     /// <summary>
@@ -56,7 +54,7 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// <remarks>
     /// 更新した値を表示するだけなので OneWay とします。
     /// INotifyPropertyChanged が必要なので BindableReactiveProperty にします。
-    ///
+    /// </remarks>
     /// <example>
     /// How to use:
     /// <code>
@@ -64,20 +62,17 @@ public class SampleViewModel : ViewModelBase, INotifyPropertyChanged, IDisposabl
     /// TextBlock.Text はデフォルトで Mode=OneWay となります。
     /// </code>
     /// </example>
-    /// </remarks>
     public BindableReactiveProperty<string> XxxName { get; set; } = new();
 
     /// <summary>
     /// バインド用のコマンドです。
     /// </summary>
-    /// <remarks>
     /// <example>
     /// How to use:
     /// <code>
     /// <Button Content= "Execute Sample" Command= "{Binding SampleCommand}" />
     /// </code>
     /// </example>
-    /// </remarks>
     public ReactiveCommand SampleCommand { get; } = new();
 
     //public ObservableList<ReservationDailyNoteDto> ReservationDailyNotes { get; set; } = new();

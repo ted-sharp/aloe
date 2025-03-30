@@ -22,9 +22,5 @@ public partial class App : Application
         App.Host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
             .ConfigureAloeExtImporter()
             .Build();
-
-
     }
-
 }
-

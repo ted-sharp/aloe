@@ -40,7 +40,7 @@ public static class ReservationDailyNoteExtensions
         return new ReservationDailyNoteDto
         {
             ResvDailyNoteId = note.ResvDailyNoteId,
-            BkgDate = note.BkgDate,
+            BkgDate = DateOnly.FromDateTime(note.BkgDate),
             FloorId = note.FloorId,
             NoteText = note.NoteText,
             UpdatedAt = note.UpdatedAt,

@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MessagePack;
 using System;
 using System.Collections.Generic;
@@ -31,4 +32,20 @@ public class ReservationDailySlotDto
 
     [Key(5)]
     public required string[] Slots { get; set; }
+}
+
+public static class ReservationDailySlotExtensions
+{
+    public static ReservationDailySlotDto ToReservationDailyBookingDto(this ReservationDailySlot dailySlot)
+    {
+        return new ReservationDailySlotDto
+        {
+            ResvDailySlotId = dailySlot.ResvDailySlotId,
+            StartDate = dailySlot.StartDate.ToDateOnly(),
+            EndDate = dailySlot.EndDate.ToDateOnly(),
+            DowCode = dailySlot.DowCode,
+            FloorId = dailySlot.FloorId,
+            Slots = dailySlot.SplitSlots(),
+        };
+    }
 }

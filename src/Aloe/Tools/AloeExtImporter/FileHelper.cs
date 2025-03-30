@@ -17,11 +17,41 @@ public static class FileHelper
     {
         try
         {
-            Process.Start(new ProcessStartInfo(url) { UseShellExecute = true });
+            Process.Start(new ProcessStartInfo(url)
+            {
+                UseShellExecute = true,
+            });
         }
         catch (Exception ex)
         {
-            MessageBox.Show($"リンクを開くことができませんでした: {ex.Message}", "エラー", MessageBoxButton.OK, MessageBoxImage.Error);
+            throw new Exception($"リンクを開くことができませんでした: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 指定されたフォルダをエクスプローラーで開く
+    /// </summary>
+    /// <param name="folderPath">開きたいフォルダのパス</param>
+    public static void OpenExplorer(string folderPath)
+    {
+        try
+        {
+            var fullPath = Path.GetFullPath(folderPath);
+            if (Directory.Exists(fullPath))
+            {
+                Process.Start(new ProcessStartInfo(fullPath)
+                {
+                    UseShellExecute = true,
+                });
+            }
+            else
+            {
+                throw new Exception($"指定されたディレクトリが存在しません: {folderPath}");
+            }
+        }
+        catch (Exception ex)
+        {
+            throw new Exception($"フォルダを開くことができませんでした: {ex.Message}");
         }
     }
 

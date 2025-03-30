@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
@@ -12,6 +11,7 @@ using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Microsoft.Extensions.Logging;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 

@@ -6,11 +6,11 @@
     xmlns:local="clr-namespace:AloeExtImporter"
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    d:Background="DarkTurquoise"
+    d:Background="DarkOliveGreen"
     d:DesignHeight="480"
     d:DesignWidth="640"
-    mc:Ignorable="d"
-    Loaded="HoujinImporter_OnLoaded">
+    Loaded="HoujinImporter_OnLoaded"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
         <Style TargetType="TextBlock">
@@ -27,8 +27,8 @@
         <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="国税庁 法人番号 基本３情報/JIS縮退マップ" />
 
         <StackPanel Margin="0,20">
-            <TextBlock Margin="0,0,0,5" Text="法人番号: 600万件 1GB程度" />
-            <TextBlock Margin="0,0,0,5" Text="JIS縮退マップ: 12万件 1MB程度" />
+            <TextBlock Margin="0,0,0,5" Text="法人番号: 600万件 1GB ▶ 取り込み 50万件" />
+            <TextBlock Margin="0,0,0,5" Text="JIS縮退マップ: 12万件 1MB ▶ 取り込み 1000件" />
             <TextBlock Margin="0,0,0,5" Text="ダウンロードページ" />
             <TextBlock>
                 <Hyperlink NavigateUri="https://www.houjin-bangou.nta.go.jp/download/" RequestNavigate="Hyperlink_RequestNavigate">
@@ -39,42 +39,59 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <TextBlock
+            <Label
                 Grid.Column="0"
-                Width="100"
-                Text="作業ディレクトリ" />
+                HorizontalAlignment="Right"
+                Content="作業ディレクトリ" />
             <TextBox
                 x:Name="WorkTextBox"
                 Grid.Column="1"
-                materialDesign:HintAssist.Hint="作業用フォルダ"
+                materialDesign:HintAssist.Hint="./tmp/"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="Folder"
+                Style="{StaticResource MaterialDesignTextBox}"
                 Text="./tmp/" />
             <Button
                 Grid.Column="2"
                 Width="100"
                 Margin="10,0"
-                Click="OpenWorkButton_OnClick"
+                Click="BrowseWorkButton_OnClick"
                 Content="選択..."
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+            <Button
+                Grid.Column="3"
+                Width="100"
+                Margin="10,0"
+                Click="OpenWorkButton_OnClick"
+                Content="開く..."
                 Style="{StaticResource MaterialDesignRaisedButton}" />
         </Grid>
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <TextBlock
+            <Label
                 Grid.Column="0"
-                Width="100"
-                Text="法人CSVファイル" />
+                HorizontalAlignment="Right"
+                Content="法人CSVファイル" />
             <TextBox
                 x:Name="HoujinTextBox"
                 Grid.Column="1"
-                materialDesign:HintAssist.Hint="作業用フォルダ"
+                materialDesign:HintAssist.Hint="00_zenkoku_all_yyyyMMdd.zip"
+                materialDesign:TextFieldAssist.HasClearButton="True"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="FileDelimited"
+                Style="{StaticResource MaterialDesignTextBox}"
                 Text="./tmp/00_zenkoku_all_yyyyMMdd.zip" />
             <Button
                 Grid.Column="2"
@@ -87,47 +104,118 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <TextBlock
+            <Label
                 Grid.Column="0"
-                Width="100"
-                Text="JIS縮退マップ" />
+                HorizontalAlignment="Right"
+                Content="JIS縮退マップ" />
             <TextBox
                 x:Name="JisDownloadUrlTextBox"
                 Grid.Column="1"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="DownloadBox"
+                Style="{StaticResource MaterialDesignTextBox}"
                 Text="https://www.houjin-bangou.nta.go.jp/pc/download/images/jissyukutaimap1_0_0.xlsx" />
             <Button
                 Grid.Column="2"
                 Width="100"
                 Margin="10,0"
-                Click="DownloadJisButton_OnClick"
-                Content="ダウンロード"
+                Click="ImportButton_OnClick"
+                Content="インポート"
                 Style="{StaticResource MaterialDesignRaisedButton}" />
         </Grid>
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="140" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <ProgressBar
-                x:Name="ProgressBar"
+            <Label Grid.Column="1" Content="法人CSVは別途ダウンロードして作業ディレクトリにおいてください。" />
+            <TextBlock
+                x:Name="HoujinDownloadStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
                 Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="JIS縮退マップ ダウンロード" />
+            <ProgressBar
+                x:Name="JisDownloadProgressBar"
+                Grid.Column="1"
                 Height="20"
                 IsIndeterminate="False"
                 Maximum="100"
                 Minimum="0"
                 Value="0" />
-            <Button
-                Grid.Column="1"
+            <TextBlock
+                x:Name="JisDownloadStatusTextBlock"
+                Grid.Column="2"
                 Width="100"
-                Margin="10,0"
-                Click="ImportHoujinButton_OnClick"
-                Content="インポート"
-                Style="{StaticResource MaterialDesignRaisedButton}" />
+                Text="未処理" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="JIS縮退マップ インポート" />
+            <ProgressBar
+                x:Name="JisImportProgressBar"
+                Grid.Column="1"
+                Height="20"
+                IsIndeterminate="False"
+                Maximum="100"
+                Minimum="0"
+                Value="0" />
+            <TextBlock
+                x:Name="JisImportStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="法人CSV インポート" />
+            <ProgressBar
+                x:Name="HoujinImportProgressBar"
+                Grid.Column="1"
+                Height="20"
+                IsIndeterminate="False"
+                Maximum="100"
+                Minimum="0"
+                Value="0" />
+            <TextBlock
+                x:Name="HoujinImportStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
         </Grid>
 
     </StackPanel>

@@ -1,9 +1,9 @@
 ﻿using R3;
 using System.ComponentModel;
 using Microsoft.Extensions.Logging;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 

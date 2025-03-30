@@ -1,0 +1,477 @@
+﻿<UserControl
+    x:Class="AloeSoapSample.MainBody"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:AloeSoapSample"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:Background="Azure"
+    d:DesignHeight="800"
+    d:DesignWidth="1024"
+    mc:Ignorable="d">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="4" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ScrollViewer Grid.Column="0">
+            <StackPanel>
+                <StackPanel Orientation="Horizontal">
+                    <Button
+                        Margin="2"
+                        Padding="4,1"
+                        Click="ClearSoapButton_OnClick">
+                        CLEAR
+                    </Button>
+                    <Button
+                        Margin="2"
+                        Padding="4,1"
+                        Click="SetSoapSample1Button_OnClick">
+                        SAMPLE 1
+                    </Button>
+                </StackPanel>
+
+                <Border
+                    Margin="4"
+                    Padding="1"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                        </Grid.RowDefinitions>
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#FFFBEB"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#7A4F01"
+                            ToolTip="S (Subjective)： 患者が訴える自覚症状や主観的な情報">
+                            [S]
+                        </Label>
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#EBF5FF"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#034694"
+                            ToolTip="O (Objective)： 診察や検査などで得た客観的な所見・データ">
+                            [O]
+                        </Label>
+                        <Label
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#F0FDF4"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#036925"
+                            ToolTip="A (Assessment)： 主観的・客観的情報をもとにした医師の評価や診断">
+                            [A]
+                        </Label>
+                        <Label
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#FEF2F2"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#991B1B"
+                            ToolTip="P (Plan)： 治療計画、処方、検査など今後の対応方針">
+                            [P]
+                        </Label>
+
+                        <TextBox
+                            x:Name="SubjectiveTextBox"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#FFFBEB"
+                            BorderThickness="0"
+                            Foreground="#7A4F01"
+                            TextWrapping="Wrap">
+患者は50歳男性。
+主訴は約1週間前から持続する胸やけ感と食後の胃痛。「特に夕食後がひどく、夜間就寝時に胃酸が上がってくるような感じで眠りにくい」と訴える。時折喉の奥まで酸っぱい感じがあり、不快感が強いとのこと。
+既往歴に高血圧（現在降圧剤服用中）があり、1か月前の健診で胃部異常なし。ストレスが多く仕事が忙しいと述べる。
+                    </TextBox>
+                        <TextBox
+                            x:Name="ObjectiveTextBox"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#EBF5FF"
+                            BorderThickness="0"
+                            Foreground="#034694"
+                            TextWrapping="Wrap">
+バイタルサインは安定。体温 36.7℃、血圧 132/78 mmHg、脈拍 72回/分、呼吸数16回/分。
+腹部診察において心窩部（みぞおち）に軽度の圧痛あり。腸蠕動音は正常。
+胸部および心臓・肺に異常所見なし。口腔内診察で咽頭後壁に軽度の発赤を認めるが扁桃腫大なし。
+                    </TextBox>
+                        <TextBox
+                            x:Name="AssessmentTextBox"
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#F0FDF4"
+                            BorderThickness="0"
+                            Foreground="#036925"
+                            TextWrapping="Wrap">
+患者の訴える症状および所見より、逆流性食道炎（GERD）の疑いが強い。
+食後および就寝時に症状が増悪している点、胃酸逆流による喉の刺激症状（酸っぱい感じ）が特徴的。
+咽頭の軽度発赤は胃酸による二次的な刺激性炎症と推測される。ストレスの増加も病態を助長している可能性がある。
+                    </TextBox>
+                        <TextBox
+                            x:Name="PlanTextBox"
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#FEF2F2"
+                            BorderThickness="0"
+                            Foreground="#991B1B"
+                            TextWrapping="Wrap">
+① プロトンポンプ阻害薬（PPI）を1日1回、朝食後に2週間処方。症状の経過を観察する。
+② 食事指導として、夜間の飲食を控えるよう助言。脂肪分や刺激物の多い食事を避けるよう説明。
+③ 就寝時は頭を高くする（枕を高くする）工夫を指導。
+④ ストレス対策として適度な休息を促し、症状改善がみられない場合は上部消化管内視鏡検査を考慮。
+                    </TextBox>
+
+                    </Grid>
+                </Border>
+
+                <StackPanel Orientation="Horizontal">
+                    <Label>差分</Label>
+                    <Button
+                        Margin="2"
+                        Padding="4,1"
+                        Click="ClearDiffButton_OnClick">
+                        CLEAR
+                    </Button>
+                    <Button
+                        Margin="2"
+                        Padding="4,1"
+                        Click="AcceptDiffButton_OnClick">
+                        確定
+                    </Button>
+                </StackPanel>
+                <Border
+                    Margin="4"
+                    Padding="1"
+                    BorderBrush="Gray"
+                    BorderThickness="1"
+                    CornerRadius="4">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                            <RowDefinition Height="Auto" MinHeight="40" />
+                        </Grid.RowDefinitions>
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#FFFBEB"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#7A4F01"
+                            ToolTip="S (Subjective)： 患者が訴える自覚症状や主観的な情報">
+                            [S]
+                        </Label>
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#EBF5FF"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#034694"
+                            ToolTip="O (Objective)： 診察や検査などで得た客観的な所見・データ">
+                            [O]
+                        </Label>
+                        <Label
+                            Grid.Row="2"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#F0FDF4"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#036925"
+                            ToolTip="A (Assessment)： 主観的・客観的情報をもとにした医師の評価や診断">
+                            [A]
+                        </Label>
+                        <Label
+                            Grid.Row="3"
+                            Grid.Column="0"
+                            Margin="1,2,0,2"
+                            Padding="1"
+                            Background="#FEF2F2"
+                            FontSize="8"
+                            FontWeight="Bold"
+                            Foreground="#991B1B"
+                            ToolTip="P (Plan)： 治療計画、処方、検査など今後の対応方針">
+                            [P]
+                        </Label>
+
+                        <RichTextBox
+                            x:Name="SubjectiveRichTextBox"
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#FFFBEB"
+                            BorderThickness="0"
+                            Foreground="#7A4F01" />
+
+                        <RichTextBox
+                            x:Name="ObjectiveRichTextBox"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#EBF5FF"
+                            BorderThickness="0"
+                            Foreground="#034694" />
+                        <RichTextBox
+                            x:Name="AssessmentRichTextBox"
+                            Grid.Row="2"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#F0FDF4"
+                            BorderThickness="0"
+                            Foreground="#036925" />
+                        <RichTextBox
+                            x:Name="PlanRichTextBox"
+                            Grid.Row="3"
+                            Grid.Column="1"
+                            Margin="2"
+                            Padding="4"
+                            xml:space="preserve"
+                            AcceptsReturn="True"
+                            Background="#FEF2F2"
+                            BorderThickness="0"
+                            Foreground="#991B1B" />
+                    </Grid>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <GridSplitter
+            Grid.Column="1"
+            Width="4"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Stretch"
+            Background="LightGray"
+            ShowsPreview="True" />
+
+        <DockPanel Grid.Column="2">
+            <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
+                <Button
+                    Margin="2"
+                    Padding="4,1"
+                    Click="ClearTalkButton_OnClick">
+                    CLEAR
+                </Button>
+                <Button
+                    Margin="2"
+                    Padding="4,1"
+                    Click="SetTalkSample1Button_OnClick">
+                    SAMPLE 1
+                </Button>
+                <Button
+                    Margin="2"
+                    Padding="4,1"
+                    Click="SetTalkSample2Button_OnClick">
+                    SAMPLE 2
+                </Button>
+            </StackPanel>
+
+            <Grid DockPanel.Dock="Bottom">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Button
+                    x:Name="BuildSoapButton"
+                    Grid.Column="0"
+                    Click="BuildSoapButton_OnClick"
+                    ToolTip="音声入力された内容をSOAPに反映します。">
+                    反映
+                </Button>
+
+                <Button
+                    x:Name="StartRecognitionButton"
+                    Grid.Column="1"
+                    Click="StartRecognitionButton_OnClick">
+                    開始
+                </Button>
+
+                <ProgressBar
+                    x:Name="AudioLevelBar"
+                    Grid.Column="2"
+                    Maximum="100" />
+            </Grid>
+            <Grid DockPanel.Dock="Bottom">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <TextBox x:Name="RecognizingTextBox" Grid.Column="0">
+                    # ここには認識中の文字を表示します。
+                </TextBox>
+            </Grid>
+
+            <TextBox
+                x:Name="RecognizedTextBox"
+                xml:space="preserve"
+                AcceptsReturn="True"
+                TextWrapping="Wrap"
+                VerticalScrollBarVisibility="Visible">
+[Guest-1] こんばんは。
+[Guest-2] こんばんは。お仕事帰りですか？
+
+[Guest-1] はいち。
+[Guest-1] ょっとだけ。早く。上がれたので。
+[Guest-2] そうなんですね。では今日はどうされましたか？
+
+[Guest-1] あの。最近ちょっと胃の調子が悪くて。食後に無感化する感じがあるのと、特に夜、寝る前とかに気持ち悪くなるんです。
+[Guest-2] いつ頃からですか？
+
+[Guest-1] 先週の多分火曜？ 月曜だったかな。
+[Guest-1] はっきり覚えてないんですけど、そのあたりからです。
+[Guest-2] 横になったときに症状が強くなる感じですか？
+
+[Guest-1] はい。寝ようとすると、喉の辺りが下がってもちょっと気持ち悪いというか、なんか戻ってくるような感じがあります。
+[Guest-2] 他にはリップや胸は？ 胸やけはありますか？
+
+[Guest-1] でっぱが出るんですよね。日によってムカムカが強くなったり、胸焼きがあったり。昨日は少しきつかったです。
+[Guest-2] わかりました。ストレスや睡眠不足はどうですか？
+
+[Guest-1] 仕事が忙しくて、夜遅くに食事をすることも多いんで、寝る直前までバタバタしてます。
+[Guest-2] なるほど。では、谷を測りましょう。これを右の脇に挟んでください。
+
+[Guest-1] はい。
+[Unknown]
+[Guest-2] 36.6度、低熱ですね。次は血圧を測ります。腕をこちらへ。
+
+[Guest-1] はい。
+[Guest-1] すぅ。
+[Guest-2] 寡婦を巻きますね。少し圧迫されますので。
+
+[Guest-1] ふぅ。
+[Unknown]
+[Guest-1] うわっ。
+[Guest-2] あ、ちょっと緩かったかもしれませんね。
+[Guest-1] ボンっていきましたけど、大丈夫ですか？
+[Guest-2] 大丈夫です。たまにカフが外れることがあるんですよ。もう一度巻き直しますね。
+
+[Guest-1] はい、お願いします。
+[Unknown]
+
+[Guest-2] 142の88。ちょっと高めですが、普段の血圧はどのくらいでしょう？
+[Guest-1] 普段はもう少し低いんですけど、病院だと緊張するみたいで…。
+
+[Guest-2] じゃあもう一度深呼吸してみましょう。鼻から吸って、口から吐いて。
+[Guest-1] はい。
+[Guest-1] すぅ。
+
+[Guest-2] 132の78。下がりましたね。これなら普段通りかもしれません。
+[Guest-1] ありがとうございます。少し安心しました。
+
+[Guest-2] では次、脈を測りますね。腕を出してください。
+[Guest-1] はい。
+[Guest-2] 70、70？
+[Guest-2] 二ですね。脈は問題ありません。
+[Guest-1] よかったです。
+
+[Guest-2] 呼吸を飲みますので、普段通り呼吸をしてください。
+[Guest-1] IT失敗？
+
+[Guest-2] はい、落ち着いてますね。ではお腹を見ます。後ろのベッドへ行きましょう。靴を脱いで頭をこちら側にして横になってください。
+[Guest-1] わかりました。
+
+[Unknown]
+
+[Guest-2] シャツをまくっていただいて、軽く触っていきます。痛いところや気持ち悪いところがあれば教えてください。
+[Guest-1] あそこ。ちょっと重たい感じがします。
+
+[Guest-2] 輸送機のあたりですね。昨日もここが気になりましたか？
+[Guest-1] 昨日はそこまででもなかったんですけど、一昨日は結構無感化が強かったです。
+
+[Guest-2] なるほど。では起き上がって大丈夫ですよ。
+[Guest-1] はい。
+
+[Guest-2] 責任と逆流性食道炎の可能性が高いですね。潰瘍のような深い所見は見当たりません。
+[Guest-1] じゃあ海洋ってわけではないんですか？
+
+[Guest-2] 潰瘍ほどではないと思われます。胃酸の逆流が原因でしょう。
+[Guest-1] やっぱりそうですか。
+
+[Guest-2] 遺産を去る釣りを出しておきますので、朝食後に一日一回服用してください。
+[Guest-1] はい。飲み方はわかりました。
+
+[Guest-2] あと、コーヒーや辛いもの、アルコールなどはなるべく控えてください。寝る直前の食事も避けましょう。
+[Guest-1] コーヒーは正直毎日飲んでるんですが、少し減らしてみます。
+
+[Guest-2] 無理のない範囲で大丈夫です。一～二週間様子を見て、改善しなければ検査を考えましょう。
+[Guest-1] そうですね。胃カメラとか苦手ですけど、治らないなら仕方ないですね。
+
+[Guest-2] 血圧の薬との併用は問題ないですが、時間帯を少しずらすと吸収が安定する場合もあります。
+[Guest-1] わかりました。そうしてみます。
+
+[Guest-2] 何か異変があれば早めに来院してください。今日はこれで終わりです。
+[Guest-1] ありがとうございます。助かりました。
+
+[Guest-2] お大事に。
+[Guest-1] はい。失礼します。
+
+[Unknown]
+            </TextBox>
+        </DockPanel>
+
+    </Grid>
+</UserControl>

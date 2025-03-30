@@ -74,8 +74,8 @@ public class ReservationDailyService : IReservationDailyService
 
     public async Task<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(int year, int month)
     {
-        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
-        var endDate = DateOnlyHelper.GetEndDate(firstDate);
+        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
+        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
 
         await using var context = await this._factory.CreateDbContextAsync();
         var slots = await context.DailySlots
@@ -84,24 +84,17 @@ public class ReservationDailyService : IReservationDailyService
                 x.StartDate <= endDate
                 && (x.EndDate == null || x.EndDate >= firstDate)
                 && x.IsDeleted == false)
-            .Select(x => new ReservationDailySlotDto
-            {
-                ResvDailySlotId = x.ResvDailySlotId,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                DowCode = x.DowCode,
-                FloorId = x.FloorId,
-                Slots = x.SplitSlots(),
-            })
+            .Select(x => x.ToReservationDailyBookingDto())
             .OrderBy(x => x.StartDate)
             .ToListAsync();
         return slots;
     }
 
-    public async Task<List<ReservationDailyNoteDto>> FetchDailyNoteDtosAsync(DateOnly date, int? orFloorId)
+    public async Task<List<ReservationDailyNoteDto>> FetchDailyNoteDtosAsync(DateOnly bkgDate, int? orFloorId)
     {
         await using var context = await this._factory.CreateDbContextAsync();
         var floorId = orFloorId ?? 0;
+        var date = bkgDate.ToDateTime();
 
         var notes = await context.DailyNotes
             .AsNoTracking()
@@ -114,34 +107,17 @@ public class ReservationDailyService : IReservationDailyService
         return notes;
     }
 
-    public async Task<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly date, int? orFloorId)
+    public async Task<List<ReservationDailyBookingDto>> FetchDailyBookingDtosAsync(DateOnly bkgDate, int? orFloorId)
     {
         await using var context = await this._factory.CreateDbContextAsync();
+        var date = bkgDate.ToDateTime();
+
         var bookings = await context.DailyBookings
             .AsNoTracking()
             .Where(x =>
                 x.BkgDate == date
                 && x.IsDeleted == false)
-            .Select(x => new ReservationDailyBookingDto
-            {
-                ResvDailyBkgId = x.ResvDailyBkgId,
-                FloorId = x.FloorId,
-                Slot = x.Slot,
-                AmPmCode = x.AmPmCode,
-                SexCode = x.SexCode,
-                BkgUserId = x.BkgUserId,
-                BkgAt = x.BkgAt,
-                BkgDate = x.BkgDate,
-                BkgSymbolText = x.BkgSymbolText,
-                BkgRemarkText = x.BkgRemarkText,
-                IsTentative = x.IsTentative,
-                OrgId = x.OrgId,
-                ResvCount = x.ResvCount,
-                PtId = x.PtId,
-                RecId = x.RecId,
-                IsCancelled = x.IsCancelled,
-                IsNoShow = x.IsNoShow,
-            })
+            .Select(x => x.ToReservationDailyBookingDto())
             .ToListAsync();
         return bookings;
     }

@@ -189,9 +189,26 @@ public static class DateOnlyHelper
     /// <summary>
     /// 月初(1日)を返します。
     /// </summary>
+    public static DateTime GetFirstDateTime()
+    {
+        var today = DateTime.Today;
+        return new DateTime(today.Year, today.Month, 1);
+    }
+
+    /// <summary>
+    /// 月初(1日)を返します。
+    /// </summary>
     public static DateOnly GetFirstDate(int year, int month)
     {
         return new DateOnly(year, month, 1);
+    }
+
+    /// <summary>
+    /// 月初(1日)を返します。
+    /// </summary>
+    public static DateTime GetFirstDateTime(int year, int month)
+    {
+        return new DateTime(year, month, 1);
     }
 
     /// <summary>
@@ -200,5 +217,13 @@ public static class DateOnlyHelper
     public static DateOnly GetEndDate(DateOnly date)
     {
         return new DateOnly(date.Year, date.Month, 1).AddMonths(1).AddDays(-1);
+    }
+
+    /// <summary>
+    /// 月末(31日など)を返します。
+    /// </summary>
+    public static DateTime GetEndDateTime(DateTime date)
+    {
+        return new DateTime(date.Year, date.Month, 1).AddMonths(1).AddDays(-1);
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel;
 
-namespace Aloe.Common.AloeCoreLib.Client.Mvvm;
+namespace Aloe.Common.AloeCoreLib.Mvvm;
 
 // フィールド 'PropertyChanged' が割り当てられていますが、値は使用されていません
 #pragma warning disable CS0414

@@ -23,10 +23,10 @@ public class ReservationDailySlot : AuditableEntityBase<int>
 
     [Column("start_date", TypeName = "Date")]
     [Required]
-    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
+    public DateTime StartDate { get; set; } = DateTime.Today;
 
     [Column("end_date", TypeName = "Date")]
-    public DateOnly? EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     [Column("dow_code")]
     [Required]
@@ -44,7 +44,7 @@ public class ReservationDailySlot : AuditableEntityBase<int>
     public ReservationDailySlot() { }
 
     public ReservationDailySlot(
-        DateOnly start,
+        DateTime start,
         DowCode dowCode,
         string slots)
     {

@@ -19,8 +19,8 @@ public class ReservationDailyBooking : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvDailyBkgId { get; set; }
 
-    [Column("bkg_date", TypeName = "Date")]
-    public DateOnly? BkgDate { get; set; }
+    [Column("bkg_date")]
+    public DateTime? BkgDate { get; set; }
 
     [Column("floor_id")]
     [Required]
@@ -87,7 +87,7 @@ public class ReservationDailyBooking : AuditableEntityBase<int>
 
     public ReservationDailyBooking() { }
 
-    public ReservationDailyBooking(DateOnly bkgDate, int floorId, string slot, string remark, bool isTentative)
+    public ReservationDailyBooking(DateTime bkgDate, int floorId, string slot, string remark, bool isTentative)
     {
         this.BkgDate = bkgDate;
         this.FloorId = floorId;

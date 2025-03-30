@@ -3,12 +3,12 @@ using System.ComponentModel;
 using Microsoft.Extensions.Logging;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using System.Data;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Microsoft.Extensions.Caching.Memory;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 

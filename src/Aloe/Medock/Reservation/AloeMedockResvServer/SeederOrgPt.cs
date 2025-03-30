@@ -111,7 +111,7 @@ internal partial class Seeder
 
                 var sexes = Enum.GetValues<SexCode>();
                 var sexMax = sexes.Length;
-                var today = DateOnlyHelper.GetToday();
+                var today = DateTime.Today;
 
                 var pts = GenerateSampleNames(3000)
                     .Select(x =>
@@ -555,12 +555,13 @@ internal partial class Seeder
         ("源五郎丸", "ゲンゴロウマル"),
 
         // 五文字の難読名字(アイウエオ順)
-        ("正親町三條", "オオギマチサンジョウ"), // 鎌倉時代前期の公卿
+        ("正親町三條", "オオギマチサンジョウ"), // 鎌倉時代前期の公卿、三條本家と区別するため
         ("勘解由小路", "カデノコウジ"), // 日本で一番長い名字として有名
         ("左衛門三郎", "サエモンサブロウ"), // 日本で一番長い名字 其の二
 
         // 六文字の難読名字(アイウエオ順)
         ("曼嘎勒扎拉布", "マンガラジャラブ"), // 元横綱鶴竜力三郎の中国語表記
+
 
         // 1. 一般的によく見るもの
         ("渡辺", "ワタナベ"), // U+6E21 U+8FBA

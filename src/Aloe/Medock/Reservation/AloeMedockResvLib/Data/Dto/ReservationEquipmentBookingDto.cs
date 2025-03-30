@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
@@ -61,4 +62,28 @@ public class ReservationEquipmentBookingDto
     [UsedImplicitly]
     [IgnoreMember]
     public string DisplayText => $"{this.Slot} {this.BkgDate: MM/dd} {this.PtId}";
+}
+
+public static class ReservationEquipmentBookingExtensions
+{
+    public static ReservationEquipmentBookingDto ToReservationEquipmentBookingDto(this ReservationEquipmentBooking booking)
+    {
+        return new ReservationEquipmentBookingDto
+        {
+            ResvEquipBkgId = booking.ResvEquipBkgId,
+            BkgDate = booking.BkgDate.ToDateOnly(),
+            EquipId = booking.EquipId,
+            Slot = booking.Slot,
+            BkgUserId = booking.BkgUserId,
+            BkgAt = booking.BkgAt,
+            BkgSymbolText = booking.BkgSymbolText,
+            BkgRemarkText = booking.BkgRemarkText,
+            IsTentative = booking.IsTentative,
+            OrgId = booking.OrgId,
+            PtId = booking.PtId,
+            RecId = booking.RecId,
+            IsCancelled = booking.IsCancelled,
+            IsNoShow = booking.IsNoShow,
+        };
+    }
 }

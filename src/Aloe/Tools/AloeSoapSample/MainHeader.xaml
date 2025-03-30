@@ -1,0 +1,518 @@
+﻿<UserControl
+    x:Class="AloeSoapSample.MainHeader"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:AloeSoapSample"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
+    d:DesignHeight="80"
+    d:DesignWidth="1080"
+    Background="LavenderBlush"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="LightGray" />
+            <Setter Property="BorderBrush" Value="Gray" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border
+                            x:Name="border"
+                            Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="LightBlue" />
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="border" Property="Background" Value="SkyBlue" />
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="border" Property="Background" Value="DarkGray" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel Orientation="Horizontal">
+        <StackPanel.Effect>
+            <DropShadowEffect
+                BlurRadius="2"
+                Opacity="0.3"
+                ShadowDepth="2"
+                Color="DarkGray" />
+        </StackPanel.Effect>
+
+        <!--  閉じる  -->
+        <Button Margin="4,2,1,2">
+            <Label Content="閉じる" />
+        </Button>
+
+        <!--  ステータス操作  -->
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <Button Grid.Row="0" Margin="1,2,2,1">
+                <Label>診察完了</Label>
+            </Button>
+            <Button Grid.Row="1" Margin="1,1,2,2">
+                <Label>一時停止</Label>
+            </Button>
+        </Grid>
+
+        <!--  ステータス  -->
+        <Grid>
+            <Label
+                Margin="1"
+                VerticalContentAlignment="Center"
+                Background="Coral"
+                FontSize="24"
+                Foreground="DarkGreen">
+                <Label.Effect>
+                    <DropShadowEffect
+                        BlurRadius="5"
+                        Opacity="0.5"
+                        ShadowDepth="1"
+                        Color="DarkGreen" />
+                </Label.Effect>
+                診察中
+            </Label>
+            <Button
+                x:Name="ReloadButton"
+                Margin="4"
+                HorizontalAlignment="Right"
+                VerticalAlignment="Top"
+                Background="Transparent"
+                BorderThickness="0">
+                <TextBlock
+                    FontFamily="Segoe MDL2 Assets"
+                    Foreground="DarkSlateGray"
+                    Text="&#xE72C;" />
+            </Button>
+        </Grid>
+
+        <!--  ID、氏名  -->
+        <StackPanel>
+            <Grid>
+                <TextBox
+                    Margin="4,4,1,4"
+                    Padding="4,0,1,0"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    FontSize="13"
+                    Foreground="#001B1E"
+                    IsReadOnly="True">
+                    ID 12345678901234567890
+                </TextBox>
+                <Button
+                    Margin="0,2,5,0"
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0">
+                    <TextBlock
+                        FontFamily="Segoe MDL2 Assets"
+                        FontSize="15"
+                        Foreground="Gray"
+                        Text="&#xE8C8;" />
+                </Button>
+            </Grid>
+            <TextBox
+                MaxWidth="200"
+                Margin="4,4,1,0"
+                Padding="4,0,1,0"
+                Background="Transparent"
+                BorderThickness="0"
+                FontSize="14"
+                Foreground="#001B1E"
+                IsReadOnly="True"
+                ToolTip="ジャン ピエール ルフェーヴル ドルメッソン">
+                ジャン ピエール ルフェーヴル ドルメッソン
+            </TextBox>
+            <TextBox
+                MaxWidth="200"
+                Margin="4,0,1,0"
+                Padding="4,0,1,0"
+                Background="Transparent"
+                BorderThickness="0"
+                FontSize="28"
+                Foreground="#001B1E"
+                IsReadOnly="True"
+                ToolTip="Jean-Pierre Lefèvre d'Ormesson">
+                Jean-Pierre Lefèvre d'Ormesson
+            </TextBox>
+        </StackPanel>
+
+        <!--  生年月日、身長、受付、診療科  -->
+        <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="2,0"
+                    Padding="2,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="10">
+                    平成元年12月31日
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="2,0"
+                    Padding="2,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">(</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">99</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">歳</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">12</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">ヶ月)</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Margin="2,0"
+                    Padding="2,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock
+                            VerticalAlignment="Center"
+                            FontSize="10"
+                            ToolTip="4/1が含まれる年度の年齢です。">
+                            (年度内
+                        </TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">99</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">歳)</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="3"
+                    Margin="4,0"
+                    Padding="4,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="16"
+                    Foreground="DarkRed">
+                    女
+                </Label>
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="2,0"
+                    Padding="2,0"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">身長</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">999.9</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">cm</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="4,0"
+                    Padding="4,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">体重</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">999.9</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">kg</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="2"
+                    Margin="4,0"
+                    Padding="4,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">血液型</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="IndianRed">AB Rh-</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="0"
+                    Margin="2,0"
+                    Padding="2,0"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">受付</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DarkGreen">23:59</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Margin="4,0"
+                    Padding="4,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">(経過</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DarkGreen">999</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">分)</TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="2"
+                    Margin="4,0"
+                    Padding="4,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="14">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">体温</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DodgerBlue">99.9</TextBlock>
+                        <TextBlock VerticalAlignment="Center" FontSize="10">℃</TextBlock>
+                    </StackPanel>
+                </Label>
+            </Grid>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="0"
+                    Margin="2,0"
+                    Padding="2,0"
+                    FontSize="16">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">診療科</TextBlock>
+                        <TextBlock
+                            MaxWidth="140"
+                            Padding="4,0"
+                            Foreground="DarkGreen"
+                            ToolTip="全国在宅および入院対応型多臓器慢性疾患包括的診療・緩和医療・地域連携型統合内科（呼吸器・循環器・消化器・神経・内分泌・糖尿病・高血圧・高脂血症・痛風・骨粗鬆症・甲状腺・悪性腫瘍・難病・感染症対応）">
+                            全国在宅および入院対応型多臓器慢性疾患包括的診療・緩和医療・地域連携型統合内科（呼吸器・循環器・消化器・神経・内分泌・糖尿病・高血圧・高脂血症・痛風・骨粗鬆症・甲状腺・悪性腫瘍・難病・感染症対応）
+                        </TextBlock>
+                    </StackPanel>
+                </Label>
+                <Label
+                    Grid.Row="0"
+                    Grid.Column="1"
+                    Margin="2,0"
+                    Padding="2,0"
+                    VerticalContentAlignment="Center"
+                    FontSize="16">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" FontSize="10">担当医</TextBlock>
+                        <TextBlock Padding="4,0" Foreground="DarkGreen">Dr. John Smith</TextBlock>
+                    </StackPanel>
+                </Label>
+            </Grid>
+        </StackPanel>
+
+        <!--  禁忌、アレルギーなどのアイコン  -->
+        <Grid Margin="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="0"
+                Width="36"
+                Height="36"
+                Source="Assets/alert-triangle.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="36"
+                Height="36"
+                Source="Assets/allergies-24px.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="2"
+                Width="36"
+                Height="36"
+                Source="Assets/ribbon-24px.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="3"
+                Width="36"
+                Height="36"
+                Source="Assets/wheelchair-24px.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="4"
+                Width="36"
+                Height="36"
+                Source="Assets/cochlear-implant.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="5"
+                Width="36"
+                Height="36"
+                Source="Assets/hearing-aid.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="0"
+                Width="36"
+                Height="36"
+                Source="Assets/deaf-24px.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="1"
+                Width="36"
+                Height="36"
+                Source="Assets/star-large.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="2"
+                Width="36"
+                Height="36"
+                Source="Assets/asthma.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="3"
+                Width="36"
+                Height="36"
+                Source="Assets/low-vision-24px.svg" />
+
+        </Grid>
+
+        <!--  現病歴のある診療科  -->
+        <Grid Margin="4">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="0"
+                Width="36"
+                Height="36"
+                Source="Assets/cardiology.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="1"
+                Width="36"
+                Height="36"
+                Source="Assets/ears-nose_and_throat.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="2"
+                Width="36"
+                Height="36"
+                Source="Assets/gastroenterology.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="3"
+                Width="36"
+                Height="36"
+                Source="Assets/urology.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="4"
+                Width="36"
+                Height="36"
+                Source="Assets/respirology.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="0"
+                Grid.Column="5"
+                Width="36"
+                Height="36"
+                Source="Assets/physical-therapy.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="0"
+                Width="36"
+                Height="36"
+                Source="Assets/outpatient-department.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="1"
+                Width="36"
+                Height="36"
+                Source="Assets/orthopaedics.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="2"
+                Width="36"
+                Height="36"
+                Source="Assets/opthalmology.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="3"
+                Width="36"
+                Height="36"
+                Source="Assets/pediatrics.svg" />
+            <svgc:SvgViewbox
+                Grid.Row="1"
+                Grid.Column="4"
+                Width="36"
+                Height="36"
+                Source="Assets/gynecology.svg" />
+        </Grid>
+
+        <!--  現病歴 -->
+
+        <!--<ListView ItemsSource="{Binding DataList}">
+            <ListView.View>
+                <GridView>
+                    <GridViewColumn
+                        Width="80"
+                        DisplayMemberBinding="{Binding MachineName}"
+                        Header="機体" />
+                    <GridViewColumn
+                        Width="80"
+                        DisplayMemberBinding="{Binding PilotName}"
+                        Header="パイロット" />
+                </GridView>
+            </ListView.View>
+        </ListView>-->
+    </StackPanel>
+</UserControl>

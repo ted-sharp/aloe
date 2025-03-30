@@ -10,6 +10,7 @@
     <StartupObject></StartupObject>
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <UserSecretsId>6d08ce26-9950-4a19-9f4c-94746eb476d6</UserSecretsId>
+    <GenerateDocumentationFile>False</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -50,10 +51,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Common\Aloe.Common.AloeCoreLib.Wpf\Aloe.Common.AloeCoreLib.Wpf.csproj" />
-    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Client\Aloe.Common.AloeCoreLib.Client.csproj" />
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Logging\Aloe.Common.AloeCoreLib.Logging.csproj" />
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Mvvm\Aloe.Common.AloeCoreLib.Mvvm.csproj" />
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Wpf\Aloe.Common.AloeCoreLib.Wpf.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
-    <ProjectReference Include="..\AloeMedockResvLib.Logging\Aloe.Medock.Reservation.AloeMedockResvLib.Logging.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />
   </ItemGroup>
 

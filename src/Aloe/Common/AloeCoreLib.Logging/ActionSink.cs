@@ -1,7 +1,7 @@
 ﻿using Serilog.Core;
 using Serilog.Events;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+namespace Aloe.Common.AloeCoreLib.Logging;
 
 public class ActionSink : ILogEventSink
 {

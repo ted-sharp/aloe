@@ -1,5 +1,4 @@
-﻿using Aloe.Common.AloeCoreLib.Client.Mvvm;
-using MaterialDesignThemes.Wpf;
+﻿using MaterialDesignThemes.Wpf;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -7,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 

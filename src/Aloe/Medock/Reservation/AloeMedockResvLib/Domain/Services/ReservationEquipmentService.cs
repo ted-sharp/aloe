@@ -54,8 +54,8 @@ public class ReservationEquipmentService : IReservationEquipmentService
 
     public async Task<List<ReservationEquipmentSlotDto>> FetchEquipmentSlotDtosAsync(int year, int month, int? orEquipId)
     {
-        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
-        var endDate = DateOnlyHelper.GetEndDate(firstDate);
+        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
+        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
         var equipId = orEquipId ?? 0;
 
         await using var context = await this._factory.CreateDbContextAsync();
@@ -67,15 +67,7 @@ public class ReservationEquipmentService : IReservationEquipmentService
                 && (x.EquipId == 0 || x.EquipId == equipId)
                 && x.IsDeleted == false
             )
-            .Select(x => new ReservationEquipmentSlotDto
-            {
-                ResvEquipSlotId = x.ResvEquipSlotId,
-                StartDate = x.StartDate,
-                EndDate = x.EndDate,
-                DowCode = x.DowCode,
-                EquipId = x.EquipId,
-                Slots = x.SplitSlots(),
-            })
+            .Select(x => x.ToReservationEquipmentBookingDto())
             .OrderBy(x => x.StartDate);
 
         this._logger.LogDebug(query.ToQueryString());
@@ -85,8 +77,8 @@ public class ReservationEquipmentService : IReservationEquipmentService
 
     public async Task<List<ReservationEquipmentBookingDto>> FetchEquipmentBookingDtosAsync(int year, int month, int? orEquipId)
     {
-        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
-        var endDate = DateOnlyHelper.GetEndDate(firstDate);
+        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
+        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
         var zeroOrEquipId = orEquipId ?? 0;
 
         await using var context = await this._factory.CreateDbContextAsync();
@@ -98,23 +90,7 @@ public class ReservationEquipmentService : IReservationEquipmentService
                 && x.IsDeleted == false
                 && (x.EquipId == 0 || x.EquipId == zeroOrEquipId)
             )
-            .Select(x => new ReservationEquipmentBookingDto
-            {
-                ResvEquipBkgId = x.ResvEquipBkgId,
-                EquipId = x.EquipId,
-                Slot = x.Slot,
-                BkgUserId = x.BkgUserId,
-                BkgAt = x.BkgAt,
-                BkgDate = x.BkgDate,
-                BkgSymbolText = x.BkgSymbolText,
-                BkgRemarkText = x.BkgRemarkText,
-                IsTentative = x.IsTentative,
-                OrgId = x.OrgId,
-                PtId = x.PtId,
-                RecId = x.RecId,
-                IsCancelled = x.IsCancelled,
-                IsNoShow = x.IsNoShow,
-            })
+            .Select(x => x.ToReservationEquipmentBookingDto())
             .ToListAsync();
         return bookings;
     }

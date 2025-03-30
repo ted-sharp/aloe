@@ -23,7 +23,7 @@ public class ReservationDailyNote : AuditableEntityBase<int>
 
     [Column("bkg_date", TypeName = "Date")]
     [Required]
-    public DateOnly BkgDate { get; set; } = DateOnlyHelper.GetToday();
+    public DateTime BkgDate { get; set; } = DateTime.Today;
 
     [Column("floor_id")]
     [Required]
@@ -42,7 +42,7 @@ public class ReservationDailyNote : AuditableEntityBase<int>
     public ReservationDailyNote() { }
 
     public ReservationDailyNote(
-        DateOnly date,
+        DateTime date,
         int floorId,
         string text,
         string userName)

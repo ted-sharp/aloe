@@ -50,8 +50,8 @@ public class HolidayService : IHolidayService
 
     public async Task<List<HolidayDto>> GetOrFetchHolidayDtosAsync(int year, int month)
     {
-        var firstDate = DateOnlyHelper.GetFirstDate(year, month);
-        var endDate = DateOnlyHelper.GetEndDate(firstDate);
+        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
+        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
 
         var cacheKey = this._cacheKeyPrefix + $"{year:0000}{month:00}";
 

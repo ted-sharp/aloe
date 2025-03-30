@@ -18,7 +18,7 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Logging;
+using Aloe.Common.AloeCoreLib.Logging;
 using Grpc.Net.Client;
 using MagicOnion.Client;
 using Microsoft.EntityFrameworkCore;

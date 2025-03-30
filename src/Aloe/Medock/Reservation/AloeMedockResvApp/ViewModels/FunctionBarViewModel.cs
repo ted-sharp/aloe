@@ -6,11 +6,11 @@ using System.Windows.Input;
 using System.Reactive.Linq;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Common.AloeCoreLib.Wpf.Behaviors;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Key = System.Windows.Input.Key;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 

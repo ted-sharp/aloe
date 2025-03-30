@@ -144,6 +144,16 @@
           "StartProject": true
         }
       }
+    },
+
+    "SOAP": {
+      "Projects": {
+        "AloeSoapSample": {
+          "CommandLineArguments": "",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
     }
 
   }

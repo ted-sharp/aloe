@@ -7,8 +7,8 @@ using Microsoft.Extensions.Logging;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
-using Aloe.Common.AloeCoreLib.Client.Mvvm;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
+using Aloe.Common.AloeCoreLib.Mvvm;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
 
