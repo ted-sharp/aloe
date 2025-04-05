@@ -18,7 +18,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <summary>
     /// 検索のときに参照します。
     /// </summary>
-    public BindableReactiveProperty<DateOnly> StartMonth { get; set; } = new(DateOnlyHelper.GetToday());
+    public BindableReactiveProperty<DateOnly> StartMonth { get; set; } = new(DateHelper.GetToday());
 
     public ObservableCollection<ReservationEquipTabItemViewModel> ReservationEquipTabItems { get; set; } = new([]);
 
@@ -150,7 +150,7 @@ public class ReservationEquipViewModel : ViewModelBase, INotifyPropertyChanged, 
             }
 
             var startMonth = this.StartMonth.Value;
-            var endDate = DateOnlyHelper.GetEndDate(startMonth);
+            var endDate = DateHelper.GetEndDate(startMonth);
             await tabItem.RefreshFuncAsync.Invoke(endDate, tabItem.EquipId);
         }
         catch (Exception ex)

@@ -58,12 +58,12 @@ public class Contract : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string CtDesc { get; set; } = String.Empty;
 
-    [Column("start_date", TypeName = "Date")]
+    [Column("start_date")]
     [Required]
-    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
+    public DateTime StartDate { get; set; } = DateTime.Today;
 
-    [Column("end_date", TypeName = "Date")]
-    public DateOnly? EndDate { get; set; }
+    [Column("end_date")]
+    public DateTime? EndDate { get; set; }
 
     // TODO: 消費税
 

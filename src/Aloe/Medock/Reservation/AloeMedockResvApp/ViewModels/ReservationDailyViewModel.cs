@@ -49,7 +49,7 @@ public class ReservationDailyViewModel : ViewModelBase, INotifyPropertyChanged, 
     /// <remarks>
     /// 検索のときに参照します。
     /// </remarks>
-    public BindableReactiveProperty<DateOnly> SelectedDate { get; set; } = new (DateOnlyHelper.GetToday());
+    public BindableReactiveProperty<DateOnly> SelectedDate { get; set; } = new (DateHelper.GetToday());
 
     /// <summary>
     /// 現在選択中のタブです。

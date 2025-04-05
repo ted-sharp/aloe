@@ -1,5 +1,5 @@
 -- Project Name : aloe_reservation_grid
--- Date/Time    : 2025/03/21 23:49:14
+-- Date/Time    : 2025/04/01 10:45:52
 -- Author       : user
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -11,6 +11,92 @@
   この機能は一時的に $$TableName のような一時テーブルを作成します。
   この機能は A5:SQL Mk-2でのみ有効であることに注意してください。
 */
+
+-- ext.raw_fhir_observation_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_fhir_observation_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_fhir_observation_codes (
+  concept_code TEXT DEFAULT '' NOT NULL
+  , jurisdiction_coding_system TEXT DEFAULT '' NOT NULL
+  , concept_display TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_mhlw_xml_tokutei_kenshin_items
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_mhlw_xml_tokutei_kenshin_items CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_mhlw_xml_tokutei_kenshin_items (
+  category_code TEXT DEFAULT '' NOT NULL
+  , category_name TEXT
+  , sort_no TEXT
+  , jlac10_code TEXT
+  , item_name TEXT
+  , item_data_type TEXT
+  , xml_data_type TEXT
+  , xml_data_length TEXT
+  , xml_data_format TEXT
+  , item_data_unit TEXT
+  , xml_data_unit TEXT
+  , xml_analyte_code TEXT
+  , xml_analyte_name TEXT
+  , xml_methodology_code TEXT
+  , xml_methodology_name TEXT
+  , result_code_oid TEXT
+  , item_code_oid TEXT
+  , xml_remarks TEXT
+  , remarks TEXT
+) ;
+
+-- ext.jlac10_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.jlac10_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.jlac10_codes (
+  jlac10_code TEXT DEFAULT '' NOT NULL
+  , analyte_code TEXT
+  , analyte_name TEXT
+  , identification_code TEXT
+  , identification_name TEXT
+  , specimen_code TEXT
+  , specimen_name TEXT
+  , methodology_code TEXT
+  , methodology_name TEXT
+  , result_identifying_general_code TEXT
+  , result_identifying_general_name TEXT
+  , result_identifying_specific_code TEXT
+  , result_identifying_specific_name TEXT
+) ;
+
+-- ext.raw_jlac10_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_jlac10_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_jlac10_codes (
+  jlac10_code_17 TEXT DEFAULT '' NOT NULL
+  , analyte_flag TEXT
+  , analyte_code TEXT
+  , analyte_name TEXT
+  , identification_flag TEXT
+  , identification_code TEXT
+  , identification_name TEXT
+  , specimen_flag TEXT
+  , specimen_code TEXT
+  , specimen_name TEXT
+  , methodology_flag TEXT
+  , methodology_code TEXT
+  , methodology_name TEXT
+  , result_identifying_general_flag TEXT
+  , result_identifying_general_code TEXT
+  , result_identifying_general_name TEXT
+  , result_identifying_specific_flag TEXT
+  , result_identifying_specific_name TEXT
+  , result_identifying_specific_code TEXT
+) ;
 
 -- ext.jis_compat_maps
 -- * BackupToTempTable
@@ -136,6 +222,68 @@ CREATE TABLE ext.raw_zip_codes (
   , update_status TEXT DEFAULT '' NOT NULL
   , update_reason TEXT DEFAULT '' NOT NULL
 ) ;
+
+COMMENT ON TABLE ext.raw_fhir_observation_codes IS 'ext.raw_fhir_observation_codes';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_code IS 'JLAC10コード';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.jurisdiction_coding_system IS 'システム';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_display IS '表示名';
+
+COMMENT ON TABLE ext.raw_mhlw_xml_tokutei_kenshin_items IS 'ext.raw_mhlw_xml_tokutei_kenshin_items';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_code IS '区分番号';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_name IS '区分名称';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.sort_no IS '順番合';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.jlac10_code IS '項目コード(17桁)';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_name IS '項目名';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_type IS 'データタイプ';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_type IS 'XMLデータ型';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_length IS '最大バイト長';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_format IS '数値フォーマット';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_unit IS '表示用単位';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_unit IS 'XML用単位';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_code IS '同一性項目コード';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_name IS '同一性項目名称';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_code IS 'XML検査方法コード';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_name IS 'XML検査方法';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.result_code_oid IS '結果コードOID';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_code_oid IS '項目コードOID';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_remarks IS 'XML向け備考';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.remarks IS '備考';
+
+COMMENT ON TABLE ext.jlac10_codes IS 'ext.jlac10_codes';
+COMMENT ON COLUMN ext.jlac10_codes.jlac10_code IS 'JLAC10コード';
+COMMENT ON COLUMN ext.jlac10_codes.analyte_code IS '分析物_コード';
+COMMENT ON COLUMN ext.jlac10_codes.analyte_name IS '分析物_名称';
+COMMENT ON COLUMN ext.jlac10_codes.identification_code IS '識別_コード';
+COMMENT ON COLUMN ext.jlac10_codes.identification_name IS '識別_名称';
+COMMENT ON COLUMN ext.jlac10_codes.specimen_code IS '材料_コード';
+COMMENT ON COLUMN ext.jlac10_codes.specimen_name IS '材料_名称';
+COMMENT ON COLUMN ext.jlac10_codes.methodology_code IS '測定法_コード';
+COMMENT ON COLUMN ext.jlac10_codes.methodology_name IS '測定法_名称';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_code IS '結果識別(共通)_コード';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_name IS '結果識別(共通)_名称';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_code IS '結果識別(固有)_コード';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_name IS '結果識別(固有)_名称';
+
+COMMENT ON TABLE ext.raw_jlac10_codes IS 'ext.raw_jlac10_codes';
+COMMENT ON COLUMN ext.raw_jlac10_codes.jlac10_code_17 IS 'JLAC10コード(17桁)';
+COMMENT ON COLUMN ext.raw_jlac10_codes.analyte_flag IS '分析物_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.analyte_code IS '分析物_コード';
+COMMENT ON COLUMN ext.raw_jlac10_codes.analyte_name IS '分析物_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.identification_flag IS '識別_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.identification_code IS '識別_コード';
+COMMENT ON COLUMN ext.raw_jlac10_codes.identification_name IS '識別_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.specimen_flag IS '材料_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.specimen_code IS '材料_コード';
+COMMENT ON COLUMN ext.raw_jlac10_codes.specimen_name IS '材料_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.methodology_flag IS '測定法_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.methodology_code IS '測定法_コード';
+COMMENT ON COLUMN ext.raw_jlac10_codes.methodology_name IS '測定法_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_general_flag IS '結果識別(共通)_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_general_code IS '結果識別(共通)_コード';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_general_name IS '結果識別(共通)_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_specific_flag IS '結果識別(固有)_拡張フラグ';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_specific_name IS '結果識別(固有)_名称';
+COMMENT ON COLUMN ext.raw_jlac10_codes.result_identifying_specific_code IS '結果識別(固有)_コード';
 
 COMMENT ON TABLE ext.jis_compat_maps IS 'ext.jis_compat_maps';
 COMMENT ON COLUMN ext.jis_compat_maps.source_text IS '3. source_text';

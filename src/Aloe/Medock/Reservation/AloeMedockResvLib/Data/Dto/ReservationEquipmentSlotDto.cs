@@ -38,13 +38,13 @@ public class ReservationEquipmentSlotDto
 
 public static class ReservationEquipmentSlotExtensions
 {
-    public static ReservationEquipmentSlotDto ToReservationEquipmentBookingDto(this ReservationEquipmentSlot equipSlot)
+    public static ReservationEquipmentSlotDto ToReservationEquipmentSlotDto(this ReservationEquipmentSlot equipSlot)
     {
         return new ReservationEquipmentSlotDto
         {
             ResvEquipSlotId = equipSlot.ResvEquipSlotId,
             StartDate = equipSlot.StartDate.ToDateOnly(),
-            EndDate = equipSlot.EndDate.ToDateOnly(),
+            EndDate = equipSlot.EndDate?.ToDateOnly(),
             DowCode = equipSlot.DowCode,
             EquipId = equipSlot.EquipId,
             Slots = equipSlot.SplitSlots(),

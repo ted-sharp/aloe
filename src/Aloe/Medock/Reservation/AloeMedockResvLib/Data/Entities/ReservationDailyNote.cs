@@ -21,7 +21,7 @@ public class ReservationDailyNote : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvDailyNoteId { get; set; }
 
-    [Column("bkg_date", TypeName = "Date")]
+    [Column("bkg_date")]
     [Required]
     public DateTime BkgDate { get; set; } = DateTime.Today;
 

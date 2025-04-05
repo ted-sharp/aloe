@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="AloeExtImporter.HoujinImporter"
+    x:Class="AloeExtImporter.MedisImporter"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,7 +9,6 @@
     d:Background="DarkOliveGreen"
     d:DesignHeight="480"
     d:DesignWidth="640"
-    Loaded="HoujinImporter_OnLoaded"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -24,15 +23,14 @@
     </UserControl.Resources>
 
     <StackPanel d:Margin="4">
-        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="国税庁 法人番号 基本３情報/JIS縮退マップ" />
+        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="MEDIS 臨床検査マスター" />
 
         <StackPanel Margin="0,20">
-            <TextBlock Margin="0,0,0,5" Text="法人番号: 600万件 1GB ▶ 取り込み 50万件" />
-            <TextBlock Margin="0,0,0,5" Text="JIS縮退マップ: 12万件 1MB ▶ 取り込み 1000件" />
-            <TextBlock Margin="0,0,0,0" Text="ダウンロードページ - 全件データのダウンロード" />
-            <TextBlock>
-                <Hyperlink NavigateUri="https://www.houjin-bangou.nta.go.jp/download/" RequestNavigate="Hyperlink_RequestNavigate">
-                    https://www.houjin-bangou.nta.go.jp/download/
+            <TextBlock Margin="0,0,0,5" Text="臨床検査マスター: 1万件" />
+            <TextBlock Margin="0,0,0,0" Text="ダウンロードページ - 最新版のダウンロード　まとめ表" />
+            <TextBlock Margin="0,0,0,5">
+                <Hyperlink NavigateUri="https://www2.medis.or.jp/master/kensa/index.html" RequestNavigate="Hyperlink_RequestNavigate">
+                    https://www2.medis.or.jp/master/kensa/index.html
                 </Hyperlink>
             </TextBlock>
         </StackPanel>
@@ -78,50 +76,31 @@
                 <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
-            </Grid.ColumnDefinitions>
-            <Label
-                Grid.Column="0"
-                HorizontalAlignment="Right"
-                Content="法人CSV" />
-            <TextBox
-                x:Name="HoujinTextBox"
-                Grid.Column="1"
-                materialDesign:HintAssist.Hint="00_zenkoku_all_yyyyMMdd.zip"
-                materialDesign:TextFieldAssist.HasClearButton="True"
-                materialDesign:TextFieldAssist.HasFilledTextField="True"
-                materialDesign:TextFieldAssist.HasLeadingIcon="True"
-                materialDesign:TextFieldAssist.LeadingIcon="FileDelimited"
-                Style="{StaticResource MaterialDesignTextBox}"
-                Text="./tmp/00_zenkoku_all_yyyyMMdd.zip" />
-            <Button
-                Grid.Column="2"
-                Width="100"
-                Margin="10,0"
-                Click="OpenHoujinButton_OnClick"
-                Content="選択..."
-                Style="{StaticResource MaterialDesignRaisedButton}" />
-        </Grid>
-
-        <Grid Margin="0,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
-                <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
             <Label
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                Content="JIS縮退マップ URL" />
+                Content="臨床検査マスター" />
             <TextBox
-                x:Name="JisDownloadUrlTextBox"
+                x:Name="MedisTextBox"
                 Grid.Column="1"
+                materialDesign:HintAssist.Hint="例: まとめ表V3.25(20250321)R2.xlsx"
+                materialDesign:TextFieldAssist.HasClearButton="True"
                 materialDesign:TextFieldAssist.HasFilledTextField="True"
                 materialDesign:TextFieldAssist.HasLeadingIcon="True"
-                materialDesign:TextFieldAssist.LeadingIcon="DownloadBox"
+                materialDesign:TextFieldAssist.LeadingIcon="FileDelimited"
                 Style="{StaticResource MaterialDesignTextBox}"
-                Text="https://www.houjin-bangou.nta.go.jp/pc/download/images/jissyukutaimap1_0_0.xlsx" />
+                Text="./tmp/まとめ表Vx.xx(yyyyMMdd)Rn.xlsx" />
             <Button
                 Grid.Column="2"
+                Width="100"
+                Margin="10,0"
+                Click="OpenMedisButton_OnClick"
+                Content="選択..."
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+            <Button
+                Grid.Column="3"
                 Width="100"
                 Margin="10,0"
                 Click="ImportButton_OnClick"
@@ -135,9 +114,9 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
-            <Label Grid.Column="1" Content="法人CSVは別途ダウンロードして作業ディレクトリにおいてください。" />
+            <Label Grid.Column="1" Content="別途ダウンロードして作業ディレクトリにおいてください。" />
             <TextBlock
-                x:Name="HoujinDownloadStatusTextBlock"
+                x:Name="MedisDownloadStatusTextBlock"
                 Grid.Column="2"
                 Width="100"
                 Text="未処理" />
@@ -145,16 +124,16 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="Auto" MinWidth="100" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
             <Label
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                Content="JIS縮退マップ ダウンロード" />
+                Content="インポート" />
             <ProgressBar
-                x:Name="JisDownloadProgressBar"
+                x:Name="MedisImportProgressBar"
                 Grid.Column="1"
                 Height="20"
                 IsIndeterminate="False"
@@ -162,57 +141,7 @@
                 Minimum="0"
                 Value="0" />
             <TextBlock
-                x:Name="JisDownloadStatusTextBlock"
-                Grid.Column="2"
-                Width="100"
-                Text="未処理" />
-        </Grid>
-
-        <Grid Margin="0,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="140" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" MinWidth="120" />
-            </Grid.ColumnDefinitions>
-            <Label
-                Grid.Column="0"
-                HorizontalAlignment="Right"
-                Content="JIS縮退マップ インポート" />
-            <ProgressBar
-                x:Name="JisImportProgressBar"
-                Grid.Column="1"
-                Height="20"
-                IsIndeterminate="False"
-                Maximum="100"
-                Minimum="0"
-                Value="0" />
-            <TextBlock
-                x:Name="JisImportStatusTextBlock"
-                Grid.Column="2"
-                Width="100"
-                Text="未処理" />
-        </Grid>
-
-        <Grid Margin="0,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="140" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" MinWidth="120" />
-            </Grid.ColumnDefinitions>
-            <Label
-                Grid.Column="0"
-                HorizontalAlignment="Right"
-                Content="法人CSV インポート" />
-            <ProgressBar
-                x:Name="HoujinImportProgressBar"
-                Grid.Column="1"
-                Height="20"
-                IsIndeterminate="False"
-                Maximum="100"
-                Minimum="0"
-                Value="0" />
-            <TextBlock
-                x:Name="HoujinImportStatusTextBlock"
+                x:Name="MedisImportStatusTextBlock"
                 Grid.Column="2"
                 Width="100"
                 Text="未処理" />

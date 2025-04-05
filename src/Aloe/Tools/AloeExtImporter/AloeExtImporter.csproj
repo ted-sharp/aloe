@@ -39,6 +39,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="FhirImporter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="MhlwImporter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Update="MedisImporter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="HoujinImporter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

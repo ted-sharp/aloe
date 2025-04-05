@@ -37,76 +37,100 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="Assets\alert-triangle.svg">
+    <None Update="Assets\HealthIcons\alert-triangle.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\allergies-24px.svg">
+    <None Update="Assets\HealthIcons\allergies-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\asthma.svg">
+    <None Update="Assets\HealthIcons\asthma.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\blood-rh_n-24px.svg">
+    <None Update="Assets\HealthIcons\blood-pressure.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\cardiology.svg">
+    <None Update="Assets\HealthIcons\blood-rh_n-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\cochlear-implant.svg">
+    <None Update="Assets\HealthIcons\cardiology.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\deaf-24px.svg">
+    <None Update="Assets\HealthIcons\cochlear-implant.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\ears-nose_and_throat.svg">
+    <None Update="Assets\HealthIcons\deaf-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\gastroenterology.svg">
+    <None Update="Assets\HealthIcons\defibrillator-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\gynecology.svg">
+    <None Update="Assets\HealthIcons\diabetes.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\hearing-aid.svg">
+    <None Update="Assets\HealthIcons\ears-nose_and_throat.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\low-vision-24px.svg">
+    <None Update="Assets\HealthIcons\gastroenterology.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\opthalmology.svg">
+    <None Update="Assets\HealthIcons\gynecology.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\orthopaedics.svg">
+    <None Update="Assets\HealthIcons\hearing-aid.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\outpatient-department.svg">
+    <None Update="Assets\HealthIcons\loss-smell.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\pediatrics.svg">
+    <None Update="Assets\HealthIcons\low-vision-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\physical-therapy.svg">
+    <None Update="Assets\HealthIcons\opthalmology.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\pregnant-0812w.svg">
+    <None Update="Assets\HealthIcons\orthopaedics.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\respirology.svg">
+    <None Update="Assets\HealthIcons\outpatient-department.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\ribbon-24px.svg">
+    <None Update="Assets\HealthIcons\pain-managment.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\ribbon.svg">
+    <None Update="Assets\HealthIcons\pediatrics.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\star-large.svg">
+    <None Update="Assets\HealthIcons\physical-therapy.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\urology.svg">
+    <None Update="Assets\HealthIcons\pregnant-0812w.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Update="Assets\wheelchair-24px.svg">
+    <None Update="Assets\HealthIcons\question-circle-24px.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\respirology.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\rheumatology.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\ribbon-24px.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\ribbon.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\star-large.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\star-small.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\urology.svg">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Assets\HealthIcons\wheelchair-24px.svg">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

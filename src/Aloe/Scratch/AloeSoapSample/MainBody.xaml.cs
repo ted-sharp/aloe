@@ -541,7 +541,17 @@ namespace AloeSoapSample
                 // TODO: 前の履歴を何処かに残しておきたい
                 this.RecognizedTextBox.Clear();
 
-                await this.StartSemanticKernel(text);
+                var soap = new SoapMessage()
+                {
+                    Subjective = this.SubjectiveTextBox.Text.Trim(),
+                    Objective = this.ObjectiveTextBox.Text.Trim(),
+                    Assessment = this.AssessmentTextBox.Text.Trim(),
+                    Plan = this.PlanTextBox.Text.Trim(),
+                };
+
+                var newSoap = await this.StartSemanticKernel(soap, text);
+
+                this.SetSoapAll(newSoap);
             }
             catch (Exception ex)
             {
@@ -557,9 +567,10 @@ namespace AloeSoapSample
             }
         }
 
-        private async Task StartSemanticKernel(string input)
+        private async Task<SoapMessage> StartSemanticKernel(SoapMessage soap,string input)
         {
-            this._kernel ??= this.CreateSemanticKernel();
+            //this._kernel ??= this.CreateKernelWithLlStudio();
+            this._kernel ??= this.CreateKernelWithOpenAi();
 
             var responseFormat = OpenAI.Chat.ChatResponseFormat.CreateJsonSchemaFormat(
                 jsonSchemaFormatName: "soap_result",
@@ -587,13 +598,6 @@ namespace AloeSoapSample
             };
 #pragma warning restore SKEXP0010
 
-            var soap = new SoapMessage()
-            {
-                Subjective = this.SubjectiveTextBox.Text.Trim(),
-                Objective = this.ObjectiveTextBox.Text.Trim(),
-                Assessment = this.AssessmentTextBox.Text.Trim(),
-                Plan = this.PlanTextBox.Text.Trim(),
-            };
             var json = JsonSerializer.Serialize(soap, new JsonSerializerOptions { WriteIndented = true });
 
             // メッセージ全体を生文字列リテラルで組み立てる
@@ -615,12 +619,11 @@ namespace AloeSoapSample
 
             // Send a request and pass prompt execution settings with desired response format.
             var result = await this._kernel.InvokePromptAsync(message, new(settings));
+            Console.WriteLine(result);
 
             var newSoap = JsonSerializer.Deserialize<SoapMessage>(result.ToString());
 
-            this.SetSoapAll(newSoap);
-
-            Console.WriteLine(result);
+            return newSoap;
         }
 
         private void SetSoapAll(SoapMessage newSoap)
@@ -736,7 +739,7 @@ namespace AloeSoapSample
             target.Document.Blocks.Add(body);
         }
 
-        private Kernel CreateSemanticKernel()
+        private Kernel CreateKernelWithOpenAi()
         {
             var config = App.Host.Services.GetRequiredService<IConfiguration>();
 
@@ -752,6 +755,25 @@ namespace AloeSoapSample
                 apiKey: azureApiKey,
                 modelId: modelId
             );
+            return builder.Build();
+        }
+
+        private Kernel CreateKernelWithLlStudio()
+        {
+            var config = App.Host.Services.GetRequiredService<IConfiguration>();
+
+            var modelId = config["LMStudio:ModelId"];
+            var endpoint = new Uri(config["LMStudio:Endpoint"]);
+
+            var builder = Kernel.CreateBuilder();
+
+#pragma warning disable SKEXP0010
+            builder.Services.AddOpenAIChatCompletion(
+                modelId: modelId,
+                endpoint: endpoint
+            );
+#pragma warning restore SKEXP0010
+
             return builder.Build();
         }
 

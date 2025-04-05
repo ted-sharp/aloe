@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
@@ -40,7 +41,7 @@ public static class ReservationDailyNoteExtensions
         return new ReservationDailyNoteDto
         {
             ResvDailyNoteId = note.ResvDailyNoteId,
-            BkgDate = DateOnly.FromDateTime(note.BkgDate),
+            BkgDate = note.BkgDate.ToDateOnly(),
             FloorId = note.FloorId,
             NoteText = note.NoteText,
             UpdatedAt = note.UpdatedAt,

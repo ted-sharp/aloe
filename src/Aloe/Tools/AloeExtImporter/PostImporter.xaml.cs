@@ -194,7 +194,7 @@ public partial class PostImporter : UserControl
             var extractedCsvPath = await Task.Run(() => ZipExtractor.ExtractFirstCsv(downloadFilePath, work));
 
             // CSVインポート処理
-            var importer = new CsvImporter();
+            var importer = new PostCsvImporter();
             await Task.Run(() => importer.ImportPostCsvToDatabase(extractedCsvPath));
 
             // ファイル削除

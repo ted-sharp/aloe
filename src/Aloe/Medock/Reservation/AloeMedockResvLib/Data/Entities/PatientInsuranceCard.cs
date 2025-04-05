@@ -67,11 +67,11 @@ public class PatientInsuranceCard : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string? ContinuationCode { get; set; }
 
-    [Column("start_date", TypeName = "Date")]
-    public DateOnly? StartDate { get; set; }
+    [Column("start_date")]
+    public DateTime? StartDate { get; set; }
 
-    [Column("end_date", TypeName = "Date")]
-    public DateOnly? EndDate { get; set; }
+    [Column("end_date")]
+    public DateTime? EndDate { get; set; }
 
     [Column("memo")]
     [MaxLength(Int32.MaxValue)]

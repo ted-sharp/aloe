@@ -46,9 +46,9 @@ public class User : AuditableEntityBase<int>
     [MaxLength(Int32.MaxValue)]
     public string PasswordSalt { get; set; } = String.Empty;
 
-    [Column("expire_date", TypeName = "Date")]
+    [Column("expire_date")]
     [Required]
-    public DateOnly ExpireDate { get; set; } = DateOnly.MaxValue;
+    public DateTime ExpireDate { get; set; } = DateTime.MaxValue.Date;
 
     [Column("failed_attempt_count")]
     [Required]
@@ -112,7 +112,7 @@ public class User : AuditableEntityBase<int>
         return this.LockedUntilAt > currentTime;
     }
 
-    public bool IsExpired(DateOnly currentDate)
+    public bool IsExpired(DateTime currentDate)
     {
         return this.ExpireDate < currentDate;
     }

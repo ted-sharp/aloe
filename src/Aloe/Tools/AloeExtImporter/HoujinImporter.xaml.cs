@@ -94,6 +94,7 @@ public partial class HoujinImporter : UserControl
                 && File.Exists(filePath))
             {
                 this.HoujinTextBox.Text = filePath;
+                this.SetHoujinDownloadStatus(State.Completed);
             }
         }
         catch (Exception ex)
@@ -269,9 +270,9 @@ public partial class HoujinImporter : UserControl
                 return false;
             }
 
-            var importer2 = new ExcelImporter();
-            await Task.Run(() => importer2.ImportJisExelToDatabase(jisFilePath));
-            await Task.Run(() => importer2.InsertIbmKanji());
+            var importer = new JisCompatMapExcelImporter();
+            await Task.Run(() => importer.ImportExelToDatabase(jisFilePath));
+            await Task.Run(() => importer.InsertIbmKanji());
 
             this.SetJisImportStatus(State.Completed);
             return true;
@@ -333,7 +334,7 @@ public partial class HoujinImporter : UserControl
             var extractedCsvPath = await Task.Run(() => ZipExtractor.ExtractFirstCsv(houjinFilePath, work));
 
             // CSVインポート処理
-            var importer = new CsvImporter();
+            var importer = new PostCsvImporter();
             await Task.Run(() => importer.ImportHoujinCsvToDatabase(extractedCsvPath));
 
             // ファイル削除

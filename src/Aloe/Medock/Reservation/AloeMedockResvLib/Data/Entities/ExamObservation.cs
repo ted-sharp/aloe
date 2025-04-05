@@ -48,12 +48,12 @@ public class ExamObservation
     [Required]
     public bool IsActive { get; set; }
 
-    [Column("start_date", TypeName = "Date")]
+    [Column("start_date")]
     [Required]
-    public DateOnly StartDate { get; set; } = DateOnlyHelper.GetToday();
+    public DateTime StartDate { get; set; } = DateTime.Today;
 
-    [Column("end_date", TypeName = "Date")]
-    public DateOnly? EndDate { get; set; }
+    [Column("end_date")]
+    public DateTime? EndDate { get; set; }
 
     public ExamObservation() { }
 

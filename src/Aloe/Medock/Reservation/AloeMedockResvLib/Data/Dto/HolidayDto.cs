@@ -1,4 +1,5 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
+﻿using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 using MessagePack;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
@@ -20,7 +21,7 @@ public static class HolidayExtensions
         return new HolidayDto
         {
             // EFCore の関係でエンティティに DateOnly 型は使わないものとする。
-            HolidayDate = DateOnly.FromDateTime(holiday.HolidayDate),
+            HolidayDate = holiday.HolidayDate.ToDateOnly(),
             HolidayName = holiday.HolidayName,
         };
     }

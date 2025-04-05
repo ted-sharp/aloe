@@ -50,8 +50,8 @@ public class HolidayService : IHolidayService
 
     public async Task<List<HolidayDto>> GetOrFetchHolidayDtosAsync(int year, int month)
     {
-        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
-        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
+        var firstDate = DateHelper.GetFirstDateTime(year, month);
+        var endDate = DateHelper.GetEndDateTime(firstDate);
 
         var cacheKey = this._cacheKeyPrefix + $"{year:0000}{month:00}";
 
@@ -71,7 +71,11 @@ public class HolidayService : IHolidayService
                 && x.HolidayDate <= endDate
                 && x.IsDeleted == false
             )
-            .Select(x => x.ToHolidayDto())
+            .Select(x => new HolidayDto
+            {
+                HolidayDate = x.HolidayDate.ToDateOnly(),
+                HolidayName = x.HolidayName,
+            })
             .ToListAsync() ?? [];
 
         // DBから取得したPolicyをキャッシュに保存

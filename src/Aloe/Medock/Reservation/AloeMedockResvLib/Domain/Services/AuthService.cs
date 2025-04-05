@@ -154,8 +154,7 @@ public class AuthService : IAuthService
                 return result;
             }
 
-            var today = DateOnly.FromDateTime(now);
-            if (user.IsExpired(today))
+            if (user.IsExpired(now.Date))
             {
                 result.ErrorMessage = "有効期限を過ぎています。";
                 return result;

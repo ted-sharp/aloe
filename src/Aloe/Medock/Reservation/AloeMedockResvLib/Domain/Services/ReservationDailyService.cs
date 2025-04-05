@@ -5,6 +5,7 @@ using MagicOnion;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Drawing;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 
@@ -45,7 +46,13 @@ public class ReservationDailyService : IReservationDailyService
         var floors = await context.Floors
             .AsNoTracking()
             .Where(x => x.IsDeleted == false)
-            .Select(x => x.ToReservationFloorDto())
+            .Select(x => new ReservationFloorDto
+            {
+                FloorId = x.FloorId,
+                FloorCode = x.FloorCode,
+                FloorName = x.FloorName,
+                Seq = x.Seq,
+            })
             .ToListAsync();
         return floors;
     }
@@ -56,7 +63,12 @@ public class ReservationDailyService : IReservationDailyService
         var rooms = await context.Rooms
             .AsNoTracking()
             .Where(x => x.IsDeleted == false)
-            .Select(x => x.ToReservationRoomDto())
+            .Select(x => new ReservationRoomDto
+            {
+                RoomId = x.RoomId,
+                RoomName = x.RoomName,
+                Seq = x.Seq,
+            })
             .ToListAsync();
         return rooms;
     }
@@ -67,15 +79,19 @@ public class ReservationDailyService : IReservationDailyService
         var rooms = await context.RoomDetails
             .AsNoTracking()
             .Where(x => x.IsDeleted == false)
-            .Select(x => x.ToReservationRoomDto())
+            .Select(x => new ReservationRoomDetailDto
+            {
+                RoomId = x.RoomId,
+                ExamId = x.ExamId,
+            })
             .ToListAsync();
         return rooms;
     }
 
     public async Task<List<ReservationDailySlotDto>> FetchDailySlotDtosAsync(int year, int month)
     {
-        var firstDate = DateOnlyHelper.GetFirstDateTime(year, month);
-        var endDate = DateOnlyHelper.GetEndDateTime(firstDate);
+        var firstDate = DateHelper.GetFirstDateTime(year, month);
+        var endDate = DateHelper.GetEndDateTime(firstDate);
 
         await using var context = await this._factory.CreateDbContextAsync();
         var slots = await context.DailySlots
@@ -84,8 +100,16 @@ public class ReservationDailyService : IReservationDailyService
                 x.StartDate <= endDate
                 && (x.EndDate == null || x.EndDate >= firstDate)
                 && x.IsDeleted == false)
-            .Select(x => x.ToReservationDailyBookingDto())
             .OrderBy(x => x.StartDate)
+            .Select(x => new ReservationDailySlotDto
+            {
+                ResvDailySlotId = x.ResvDailySlotId,
+                StartDate = x.StartDate.ToDateOnly(),
+                EndDate = x.EndDate.ToDateOnly(),
+                DowCode = x.DowCode,
+                FloorId = x.FloorId,
+                Slots = x.SplitSlots(),
+            })
             .ToListAsync();
         return slots;
     }
@@ -102,7 +126,15 @@ public class ReservationDailyService : IReservationDailyService
                 x.BkgDate == date
                 && (x.FloorId == 0 || x.FloorId == floorId)
                 && x.IsDeleted == false)
-            .Select(x => x.ToReservationDailyNoteDto())
+            .Select(x => new ReservationDailyNoteDto
+            {
+                ResvDailyNoteId = x.ResvDailyNoteId,
+                BkgDate = x.BkgDate.ToDateOnly(),
+                FloorId = x.FloorId,
+                NoteText = x.NoteText,
+                UpdatedAt = x.UpdatedAt,
+                UpdatedUserName = x.UpdatedUserName,
+            })
             .ToListAsync();
         return notes;
     }
@@ -117,7 +149,23 @@ public class ReservationDailyService : IReservationDailyService
             .Where(x =>
                 x.BkgDate == date
                 && x.IsDeleted == false)
-            .Select(x => x.ToReservationDailyBookingDto())
+            .Select(x => new ReservationDailyBookingDto
+            {
+                ResvDailyBkgId = x.ResvDailyBkgId,
+                BkgDate = x.BkgDate.ToDateOnly(),
+                FloorId = x.FloorId,
+                Slot = x.Slot,
+                BkgUserId = x.BkgUserId,
+                BkgAt = x.BkgAt,
+                BkgSymbolText = x.BkgSymbolText,
+                BkgRemarkText = x.BkgRemarkText,
+                IsTentative = x.IsTentative,
+                OrgId = x.OrgId,
+                PtId = x.PtId,
+                RecId = x.RecId,
+                IsCancelled = x.IsCancelled,
+                IsNoShow = x.IsNoShow,
+            })
             .ToListAsync();
         return bookings;
     }

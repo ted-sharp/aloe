@@ -28,7 +28,7 @@
 
         <StackPanel Margin="0,20">
             <TextBlock Margin="0,0,0,5" Text="13万件 20MB ▶ 取り込み 13万件" />
-            <TextBlock Margin="0,0,0,5" Text="ダウンロードページ" />
+            <TextBlock Margin="0,0,0,0" Text="ダウンロードページ - 最新データのダウンロード" />
             <TextBlock>
                 <Hyperlink NavigateUri="https://www.post.japanpost.jp/zipcode/dl/utf-zip.html" RequestNavigate="Hyperlink_RequestNavigate">
                     https://www.post.japanpost.jp/zipcode/dl/utf-zip.html

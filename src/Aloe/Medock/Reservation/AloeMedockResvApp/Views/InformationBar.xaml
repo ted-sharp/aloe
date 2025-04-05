@@ -115,10 +115,19 @@
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">
-            <StackPanel Orientation="Horizontal">
-                <ui:PackIcon Kind="Account" />
-                <TextBlock Text="{Binding User.Value}" />
-            </StackPanel>
+            <ui:PopupBox PlacementMode="TopAndAlignCentres">
+                <ui:PopupBox.ToggleContent>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:PackIcon Kind="Account" />
+                        <TextBlock Text="{Binding User.Value}" />
+                    </StackPanel>
+                </ui:PopupBox.ToggleContent>
+                <StackPanel Margin="10">
+                    <CheckBox Content="Item1" />
+                    <CheckBox Content="Item2" />
+                    <CheckBox Content="Item3" />
+                </StackPanel>
+            </ui:PopupBox>
         </StatusBarItem>
 
         <StatusBarItem DockPanel.Dock="Right">

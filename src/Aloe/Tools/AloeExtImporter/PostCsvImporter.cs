@@ -9,11 +9,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace AloeExtImporter;
 
-public class CsvImporter
+public class PostCsvImporter
 {
     private readonly AppDbContext _dbContext;
 
-    public CsvImporter()
+    public PostCsvImporter()
     {
         this._dbContext = App.Host.Services.GetRequiredService<AppDbContext>();
     }

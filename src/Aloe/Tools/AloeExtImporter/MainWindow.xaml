@@ -11,7 +11,7 @@
     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:system="clr-namespace:System;assembly=System.Runtime"
-    Title="郵便番号インポーター"
+    Title="外部データ インポーター"
     Width="800"
     Height="560"
     MinWidth="640"
@@ -79,6 +79,24 @@
                 <TabItem Header="法人番号/JIS縮退マップ">
                     <materialDesign:Card Padding="20">
                         <local:HoujinImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
+                <TabItem Header="MEDIS">
+                    <materialDesign:Card Padding="20">
+                        <local:MedisImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
+                <TabItem Header="厚生労働省">
+                    <materialDesign:Card Padding="20">
+                        <local:MhlwImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
+                <TabItem Header="FHIR">
+                    <materialDesign:Card Padding="20">
+                        <local:FhirImporter />
                     </materialDesign:Card>
                 </TabItem>
             </dragablz:TabablzControl>

@@ -55,7 +55,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#FFFBEB"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#7A4F01"
                             ToolTip="S (Subjective)： 患者が訴える自覚症状や主観的な情報">
@@ -67,7 +67,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#EBF5FF"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#034694"
                             ToolTip="O (Objective)： 診察や検査などで得た客観的な所見・データ">
@@ -79,7 +79,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#F0FDF4"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#036925"
                             ToolTip="A (Assessment)： 主観的・客観的情報をもとにした医師の評価や診断">
@@ -91,7 +91,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#FEF2F2"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#991B1B"
                             ToolTip="P (Plan)： 治療計画、処方、検査など今後の対応方針">
@@ -205,7 +205,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#FFFBEB"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#7A4F01"
                             ToolTip="S (Subjective)： 患者が訴える自覚症状や主観的な情報">
@@ -217,7 +217,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#EBF5FF"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#034694"
                             ToolTip="O (Objective)： 診察や検査などで得た客観的な所見・データ">
@@ -229,7 +229,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#F0FDF4"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#036925"
                             ToolTip="A (Assessment)： 主観的・客観的情報をもとにした医師の評価や診断">
@@ -241,7 +241,7 @@
                             Margin="1,2,0,2"
                             Padding="1"
                             Background="#FEF2F2"
-                            FontSize="8"
+                            FontSize="14"
                             FontWeight="Bold"
                             Foreground="#991B1B"
                             ToolTip="P (Plan)： 治療計画、処方、検査など今後の対応方針">

@@ -21,11 +21,11 @@ public class ReservationEquipmentSlot : AuditableEntityBase<int>
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
     public int ResvEquipSlotId { get; set; }
 
-    [Column("start_date", TypeName = "Date")]
+    [Column("start_date")]
     [Required]
     public DateTime StartDate { get; set; } = DateTime.Today;
 
-    [Column("end_date", TypeName = "Date")]
+    [Column("end_date")]
     public DateTime? EndDate { get; set; }
 
     [Column("dow_code")]

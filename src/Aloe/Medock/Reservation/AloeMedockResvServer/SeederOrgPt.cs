@@ -117,7 +117,7 @@ internal partial class Seeder
                     .Select(x =>
                     {
                         var karteNumber = rnd.Next(1, Int32.MaxValue).ToString("000000000");
-                        var birthDate = today.AddDays(-rnd.Next(3650, 365000));
+                        var birthDate = today.AddDays(-rnd.Next(3650, 36500));
                         var sex = sexes.Skip(rnd.Next(0, sexMax)).First();
                         var pt = new Patient(
                             karteNumber,

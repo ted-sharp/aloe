@@ -13,16 +13,22 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
-namespace AloeSoapSample
+namespace AloeSoapSample;
+
+/// <summary>
+/// MainHeader.xaml の相互作用ロジック
+/// </summary>
+public partial class MainHeader : UserControl
 {
-    /// <summary>
-    /// MainHeader.xaml の相互作用ロジック
-    /// </summary>
-    public partial class MainHeader : UserControl
+    public MainHeader()
     {
-        public MainHeader()
-        {
-            this.InitializeComponent();
-        }
+        this.InitializeComponent();
     }
+}
+
+public class DiseaseInfo
+{
+    public string StartDate { get; set; }
+    public string DiseaseName { get; set; }
+    public string Outcome { get; set; }
 }

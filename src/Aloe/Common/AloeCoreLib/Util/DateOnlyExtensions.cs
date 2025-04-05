@@ -15,14 +15,14 @@ public static class DateOnlyExtensions
     {
         if (String.IsNullOrWhiteSpace(dateString))
         {
-            return DateOnlyHelper.GetToday();
+            return DateHelper.GetToday();
         }
 
-        if (DateOnlyHelper.TryParseEx(dateString, out var date))
+        if (DateHelper.TryParseEx(dateString, out var date))
         {
             return date;
         }
 
-        return DateOnlyHelper.GetToday();
+        return DateHelper.GetToday();
     }
 }

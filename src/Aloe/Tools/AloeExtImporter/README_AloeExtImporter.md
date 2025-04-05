@@ -37,7 +37,7 @@ https://www.houjin-bangou.nta.go.jp/download/
 基本３情報ダウンロード &gt; 全件データのダウンロード &gt; CSV形式・Unicode
 https://www.houjin-bangou.nta.go.jp/download/zenken/#csv-unicode
 
-##  MJ縮退マップ
+## MJ縮退マップ
 
 MJ縮退マップのJSONをダウンロードできます。
 
@@ -47,6 +47,45 @@ MJ縮退マップのJSONをダウンロードできます。
 文字情報技術促進協議会 MJ縮退マップ
 https://moji.or.jp/mojikiban/map/
 
+※国税庁のJIS縮退マップを使用すれば、JIS第2水準までに変換できます。
+それ以上が必要な場合に使用を検討します。
+
+## 臨床検査マスター
+
+臨床検査マスター(JLAC10)のEXCELをダウンロードできます。
+約1万件 10MB程度
+
+MEDIS 臨床検査マスター(EXCEL形式)
+https://www2.medis.or.jp/master/kensa/index.html
+
+※例えば、白血球数について、特定健診で要求される「2A010 白血球数」は個別項目であり、
+臨床検査マスターでは「2A990 末梢血液一般検査」のセット項目に白血球数が含まれるため個別項目としては含まれていません。
+また、特定健診の問診項目も含まれていません。
+
+## XML用特定健診検査項目情報
+
+XML用特定健診検査項目情報のEXCELをダウンロードできます。
+約300件 100KB程度
+
+厚生労働省 電子的な標準様式 第４期（2024年度～2029年度分）
+https://www.mhlw.go.jp/stf/seisakunitsuite/bunya/xml_30799.html
+
+※一部の個別項目は臨床検査マスターには記載されていません。
+
+## FHIR 健康診断結果報告書
+
+検診結果報告用の健診項目のJSONをダウンロードできます。
+
+健康診断結果報告書のFHIR実装ガイド
+https://jpfhir.jp/fhir/eCheckup/
+
+健診結果　健診項目コード ValueSet
+https://jpfhir.jp/fhir/eCheckup/igv1/ValueSet-jp-observationcode-vs.html
+
+※一部の個別項目は臨床検査マスターには記載されていません。
+
+※厚労省のXML用特定健診検査項目情報と同じ項目です。
+JLAC10コードの一覧のみ欲しい場合に利用できます。
 
 ## 郵便番号CSVレイアウト
 
@@ -71,7 +110,6 @@ https://www.post.japanpost.jp/zipcode/dl/readme.html
 ## 法人番号CSVレイアウト
 
 https://www.houjin-bangou.nta.go.jp/pc/download/images/k-resource-dl.pdf
-
 
 ## JIS縮退マップのレイアウト
 
@@ -102,5 +140,13 @@ https://www.houjin-bangou.nta.go.jp/pc/download/images/jissyukutaimap1_0_0.xlsx
 16. 字形
 17. 備考
 
+## 臨床検査マスター(17桁コード表)のレイアウト
 
+新規登録分が最下部に途中にヘッダーありで挿入されている可能性があります。
+取り込む際には途中のヘッダーを削除してから取り込んでください。
 
+## XML用特定健診検査項目情報のレイアウト
+
+最後に空白行が含まれることがあります。
+取り込む際には除外してください。
+また、一部の列は取り込んでいません。

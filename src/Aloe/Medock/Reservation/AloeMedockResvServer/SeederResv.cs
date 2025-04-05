@@ -94,7 +94,8 @@ internal partial class Seeder
                 {
                     new("1", "8階", "メインフロアです。", 1),
                     new("2", "7階(♀)", "レディースフロアです。", 2),
-                    new("3", "巡回", "バス健診用です。", 3),
+                    new("3", "巡回1", "バス健診用(1号車)です。", 3),
+                    new("4", "巡回2", "バス健診用(2号車)です。", 4),
                     new("9", "ダミー", "ダミーです。", 9),
                 };
 
@@ -231,7 +232,7 @@ internal partial class Seeder
             {
                 this._logger.LogInformation("DailyNotes creating...");
 
-                var firstDate = DateOnlyHelper.GetFirstDateTime();
+                var firstDate = DateHelper.GetFirstDateTime();
 
                 var floors = await context.Floors
                     .AsNoTracking()
@@ -268,7 +269,7 @@ internal partial class Seeder
             {
                 this._logger.LogInformation("DailyBookings creating...");
 
-                var firstDate = DateOnlyHelper.GetFirstDateTime();
+                var firstDate = DateHelper.GetFirstDateTime();
 
                 var floors = context.Floors
                     .AsNoTracking()
@@ -308,7 +309,7 @@ internal partial class Seeder
                 var symbols = new[] { "", "鼻", "口", "★" };
                 var symbolMax = symbols.Length;
 
-                var firstDate = DateOnlyHelper.GetFirstDateTime();
+                var firstDate = DateHelper.GetFirstDateTime();
 
                 var max = 3000;
                 var bookings = new List<ReservationEquipmentBooking>(max);

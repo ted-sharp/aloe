@@ -34,7 +34,7 @@ public class DateOnlyToStringConverter : IValueConverter
     /// </summary>
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        if (value is string s && DateOnlyHelper.TryParseEx(s, out var date))
+        if (value is string s && DateHelper.TryParseEx(s, out var date))
         {
             return date;
         }

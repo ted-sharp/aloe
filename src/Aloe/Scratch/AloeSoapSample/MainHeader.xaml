@@ -7,7 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:svgc="http://sharpvectors.codeplex.com/svgc/"
     d:DesignHeight="80"
-    d:DesignWidth="1080"
+    d:DesignWidth="1920"
     Background="LavenderBlush"
     mc:Ignorable="d">
 
@@ -49,7 +49,7 @@
             <DropShadowEffect
                 BlurRadius="2"
                 Opacity="0.3"
-                ShadowDepth="2"
+                ShadowDepth="1"
                 Color="DarkGray" />
         </StackPanel.Effect>
 
@@ -340,179 +340,190 @@
         </StackPanel>
 
         <!--  禁忌、アレルギーなどのアイコン  -->
-        <Grid Margin="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="0"
-                Width="36"
-                Height="36"
-                Source="Assets/alert-triangle.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="1"
-                Width="36"
-                Height="36"
-                Source="Assets/allergies-24px.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="2"
-                Width="36"
-                Height="36"
-                Source="Assets/ribbon-24px.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="3"
-                Width="36"
-                Height="36"
-                Source="Assets/wheelchair-24px.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="4"
-                Width="36"
-                Height="36"
-                Source="Assets/cochlear-implant.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="5"
-                Width="36"
-                Height="36"
-                Source="Assets/hearing-aid.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="0"
-                Width="36"
-                Height="36"
-                Source="Assets/deaf-24px.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="1"
-                Width="36"
-                Height="36"
-                Source="Assets/star-large.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="2"
-                Width="36"
-                Height="36"
-                Source="Assets/asthma.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="3"
-                Width="36"
-                Height="36"
-                Source="Assets/low-vision-24px.svg" />
+        <StackPanel>
+            <StackPanel Margin="4,4,4,2" Orientation="Horizontal">
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/question-circle-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/alert-triangle.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/ribbon-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/allergies-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/asthma.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/defibrillator-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/pregnant-0812w.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/wheelchair-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/star-small.svg" />
+            </StackPanel>
+            <StackPanel Margin="4,0,4,0" Orientation="Horizontal">
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/low-vision-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/hearing-aid.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/cochlear-implant.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/deaf-24px.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/loss-smell.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/blood-pressure.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/diabetes.svg" />
+            </StackPanel>
+        </StackPanel>
 
-        </Grid>
 
         <!--  現病歴のある診療科  -->
-        <Grid Margin="4">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="0"
-                Width="36"
-                Height="36"
-                Source="Assets/cardiology.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="1"
-                Width="36"
-                Height="36"
-                Source="Assets/ears-nose_and_throat.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="2"
-                Width="36"
-                Height="36"
-                Source="Assets/gastroenterology.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="3"
-                Width="36"
-                Height="36"
-                Source="Assets/urology.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="4"
-                Width="36"
-                Height="36"
-                Source="Assets/respirology.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="0"
-                Grid.Column="5"
-                Width="36"
-                Height="36"
-                Source="Assets/physical-therapy.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="0"
-                Width="36"
-                Height="36"
-                Source="Assets/outpatient-department.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="1"
-                Width="36"
-                Height="36"
-                Source="Assets/orthopaedics.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="2"
-                Width="36"
-                Height="36"
-                Source="Assets/opthalmology.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="3"
-                Width="36"
-                Height="36"
-                Source="Assets/pediatrics.svg" />
-            <svgc:SvgViewbox
-                Grid.Row="1"
-                Grid.Column="4"
-                Width="36"
-                Height="36"
-                Source="Assets/gynecology.svg" />
-        </Grid>
+        <StackPanel>
+            <StackPanel Margin="4,4,4,2" Orientation="Horizontal">
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/cardiology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/ears-nose_and_throat.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/gastroenterology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/urology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/respirology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/physical-therapy.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/pain-managment.svg" />
+            </StackPanel>
+            <StackPanel Margin="4,0,4,0" Orientation="Horizontal">
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/outpatient-department.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/orthopaedics.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/opthalmology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/pediatrics.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/gynecology.svg" />
+                <svgc:SvgViewbox
+                    Width="36"
+                    Height="36"
+                    Source="Assets/HealthIcons/rheumatology.svg" />
+            </StackPanel>
+        </StackPanel>
 
-        <!--  現病歴 -->
+        <!--  現病歴  -->
+        <ListView
+            MaxHeight="80"
+            Margin="4,1"
+            VerticalAlignment="Stretch">
+            <ListView.Resources>
+                <Style TargetType="GridViewColumnHeader">
+                    <Setter Property="FontSize" Value="11" />
+                    <Setter Property="Height" Value="16" />
+                </Style>
+            </ListView.Resources>
 
-        <!--<ListView ItemsSource="{Binding DataList}">
             <ListView.View>
                 <GridView>
                     <GridViewColumn
                         Width="80"
-                        DisplayMemberBinding="{Binding MachineName}"
-                        Header="機体" />
+                        DisplayMemberBinding="{Binding StartDate}"
+                        Header="開始日" />
                     <GridViewColumn
-                        Width="80"
-                        DisplayMemberBinding="{Binding PilotName}"
-                        Header="パイロット" />
+                        Width="120"
+                        DisplayMemberBinding="{Binding DiseaseName}"
+                        Header="病名" />
+                    <GridViewColumn
+                        Width="40"
+                        DisplayMemberBinding="{Binding Outcome}"
+                        Header="転帰" />
                 </GridView>
             </ListView.View>
-        </ListView>-->
+
+            <ListView.Items>
+                <local:DiseaseInfo
+                    DiseaseName="高血圧症"
+                    Outcome="継続"
+                    StartDate="2024/01/10" />
+                <local:DiseaseInfo
+                    DiseaseName="糖尿病"
+                    Outcome="継続"
+                    StartDate="2023/12/05" />
+                <local:DiseaseInfo
+                    DiseaseName="感冒"
+                    Outcome="治癒"
+                    StartDate="2024/02/20" />
+                <local:DiseaseInfo
+                    DiseaseName="骨折（左橈骨）"
+                    Outcome="治癒"
+                    StartDate="2023/11/15" />
+                <local:DiseaseInfo
+                    DiseaseName="逆流性食道炎"
+                    Outcome="軽快"
+                    StartDate="2024/03/01" />
+            </ListView.Items>
+        </ListView>
+
     </StackPanel>
 </UserControl>

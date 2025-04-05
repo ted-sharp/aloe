@@ -20,7 +20,7 @@ public class ReservationMainViewModel : ViewModelBase, INotifyPropertyChanged, I
     // TODO: バインドしてるからいらないかも
     public Action? RefreshDataAction { get; set; }
 
-    public ReactiveProperty<DateOnly> StartDate { get; set; } = new(DateOnlyHelper.GetToday());
+    public ReactiveProperty<DateOnly> StartDate { get; set; } = new(DateHelper.GetToday());
 
     public ReactiveProperty<int> OffsetDayCount { get; set; } = new(31);
 

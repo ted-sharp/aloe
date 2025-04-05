@@ -13,11 +13,11 @@ using System.Linq;
 
 namespace AloeExtImporter;
 
-public class ExcelImporter
+public class JisCompatMapExcelImporter
 {
     private readonly AppDbContext _dbContext;
 
-    public ExcelImporter()
+    public JisCompatMapExcelImporter()
     {
         this._dbContext = App.Host.Services.GetRequiredService<AppDbContext>();
     }
@@ -25,8 +25,8 @@ public class ExcelImporter
     /// <summary>
     /// EXCELファイルをPostgreSQLに取り込む
     /// </summary>
-    /// <param name="xlsxPath">取り込むCSVファイルのパス</param>
-    public async Task ImportJisExelToDatabase(string xlsxPath)
+    /// <param name="xlsxPath">取り込むEXCELファイルのパス</param>
+    public async Task ImportExelToDatabase(string xlsxPath)
     {
         var fullPath = Path.GetFullPath(xlsxPath);
         if (!File.Exists(fullPath))
@@ -86,23 +86,23 @@ public class ExcelImporter
             await writer.StartRowAsync();
 
             // Excel の各セル（インデックス 0～15）を COPY 対象の各カラムへ書き込む
-            await writer.WriteAsync(Convert.ToString(data[0]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[1]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[2]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[3]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[4]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[5]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[6]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[7]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[8]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[9]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[10]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[11]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[12]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[13]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[14]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[15]), NpgsqlDbType.Text);
-            await writer.WriteAsync(Convert.ToString(data[16]), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[0])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[1])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[2])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[3])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[4])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[5])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[6])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[7])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[8])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[9])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[10])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[11])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[12])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[13])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[14])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[15])?.Trim(), NpgsqlDbType.Text);
+            await writer.WriteAsync(Convert.ToString(data[16])?.Trim(), NpgsqlDbType.Text);
         }
         await writer.CompleteAsync();
 

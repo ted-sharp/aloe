@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Aloe.Common.AloeCoreLib.Util;
 
-public static class DateOnlyHelper
+public static class DateHelper
 {
     // 特殊パターン
     private static readonly string[] s_formats =
@@ -100,13 +100,13 @@ public static class DateOnlyHelper
 
 
 
-    static DateOnlyHelper()
+    static DateHelper()
     {
         if (CultureInfo.CurrentCulture.Clone() is CultureInfo culture)
         {
             // 和暦をパースできるようにしておく
             culture.DateTimeFormat.Calendar = new JapaneseCalendar();
-            DateOnlyHelper.s_jaCulture = culture;
+            DateHelper.s_jaCulture = culture;
         }
     }
 
@@ -153,7 +153,7 @@ public static class DateOnlyHelper
         }
 
         // 1-2桁の数字なら今年とみなす
-        if (DateOnlyHelper.TryParseFiscalMonth(dateString, out date))
+        if (DateHelper.TryParseFiscalMonth(dateString, out date))
         {
             return true;
         }

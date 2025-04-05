@@ -429,12 +429,12 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
 
     public Task ExecuteSetTodayCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
-        return this.ExecuteSetDateCommand(dateProp, DateOnlyHelper.GetToday(), isAltCond);
+        return this.ExecuteSetDateCommand(dateProp, DateHelper.GetToday(), isAltCond);
     }
 
     public Task ExecuteSetCurrentMonthCommand(ReactiveProperty<DateOnly> dateProp, bool isAltCond = false)
     {
-        var date = DateOnlyHelper.GetToday();
+        var date = DateHelper.GetToday();
         var newDate = date.AddDays(1 - date.Day);
         return this.ExecuteSetDateCommand(dateProp, newDate, isAltCond);
     }
