@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,5 +20,17 @@ public static class ConfigurationExtensions
         var settings = configuration.GetSection(typeof(T).Name)
             .Get<T>();
         return settings ?? new();
+    }
+
+    /// <summary>
+    /// DIに設定用のクラスを登録します。
+    /// </summary>
+    public static IHostApplicationBuilder AddSettings<T>(this IHostApplicationBuilder builder)
+        where T : class
+    {
+        builder.Services.Configure<T>(options => builder.Configuration.GetSection(typeof(T).Name)
+            .Bind(options));
+
+        return builder;
     }
 }

@@ -1,32 +1,33 @@
-﻿<UserControl x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationEquipMonthlyGrid"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-             xmlns:cvt="http://schemas.aloe/wpf/converters"
-             mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
-             d:Background="Azure"
-             d:DesignHeight="200" d:DesignWidth="400"
-             DataContextChanged="ReservationEquipTabItem_OnDataContextChanged">
+﻿<UserControl
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationEquipMonthlyGrid"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:cvt="http://schemas.aloe/wpf/converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    d:Background="Azure"
+    d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
+    d:DesignHeight="200"
+    d:DesignWidth="400"
+    DataContextChanged="ReservationEquipTabItem_OnDataContextChanged"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
-        <cvt:StringContainsConverter x:Key="Contains土" Substring="土"/>
-        <cvt:StringContainsConverter x:Key="Contains日" Substring="日"/>
-        <cvt:StringContainsConverter x:Key="Contains祝" Substring="祝"/>
+        <cvt:StringContainsConverter x:Key="Contains土" Characters="土" />
+        <cvt:StringContainsConverter x:Key="Contains日祝" Characters="日祝" />
 
-        <!-- ローヘッダー: スロットを表示 -->
+        <!--  ローヘッダー: スロットを表示  -->
         <Style TargetType="DataGridRowHeader">
-            <Setter Property="Content" Value="{Binding}"/>
+            <Setter Property="Content" Value="{Binding}" />
             <Setter Property="ContentTemplate">
                 <Setter.Value>
                     <DataTemplate>
                         <TextBlock
-                            d:DataContext="{d:DesignInstance Type=vm:BookingRow}"
                             Width="48"
-                            TextAlignment="Center"
-                            Text="{Binding SlotDisplay, Mode=OneTime}" />
+                            d:DataContext="{d:DesignInstance Type=vm:BookingRow}"
+                            Text="{Binding SlotDisplay, Mode=OneTime}"
+                            TextAlignment="Center" />
                     </DataTemplate>
                 </Setter.Value>
             </Setter>
@@ -34,38 +35,23 @@
 
         <Style TargetType="DataGridCell">
             <Style.Triggers>
-                <!-- "土" を含む場合だけ背景色 = LightBlue -->
-                <DataTrigger Value="True">
-                    <DataTrigger.Binding>
-                        <Binding Path="Column.Header"
-                                 RelativeSource="{RelativeSource Self}"
-                                 Converter="{StaticResource Contains土}" />
-                    </DataTrigger.Binding>
+                <!--  "土" を含む場合だけ背景色 = LightBlue  -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=Column.Header, RelativeSource={RelativeSource Self}, Converter={StaticResource Contains土}}" Value="True" />
+                        <Condition Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource Self}}" Value="False" />
+                    </MultiDataTrigger.Conditions>
                     <Setter Property="Background" Value="#2080C0FF" />
-                    <Setter Property="Foreground" Value="Black" />
-                </DataTrigger>
+                </MultiDataTrigger>
 
-                <!-- "日" を含む場合だけ背景色 = LightPink -->
-                <DataTrigger Value="True">
-                    <DataTrigger.Binding>
-                        <Binding Path="Column.Header"
-                                 RelativeSource="{RelativeSource Self}"
-                                 Converter="{StaticResource Contains日}" />
-                    </DataTrigger.Binding>
-                    <Setter Property="Background" Value="#20FF8080" />
-                    <Setter Property="Foreground" Value="Black" />
-                </DataTrigger>
-
-                <!-- "祝" を含む場合だけ背景色 = LightPink -->
-                <DataTrigger Value="True">
-                    <DataTrigger.Binding>
-                        <Binding Path="Column.Header"
-                                 RelativeSource="{RelativeSource Self}"
-                                 Converter="{StaticResource Contains祝}" />
-                    </DataTrigger.Binding>
-                    <Setter Property="Background" Value="#20FF8080" />
-                    <Setter Property="Foreground" Value="Black" />
-                </DataTrigger>
+                <!--  "日" または "祝" を含む場合だけ背景色 = LightPink  -->
+                <MultiDataTrigger>
+                    <MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding Path=Column.Header, RelativeSource={RelativeSource Self}, Converter={StaticResource Contains日祝}}" Value="True" />
+                        <Condition Binding="{Binding Path=IsSelected, RelativeSource={RelativeSource Self}}" Value="False" />
+                    </MultiDataTrigger.Conditions>
+                    <Setter Property="Background" Value="#10FF8080" />
+                </MultiDataTrigger>
             </Style.Triggers>
         </Style>
 
@@ -77,9 +63,13 @@
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="ListViewItem">
-                        --><!-- 枠線と背景のためのBorder --><!--
+        -->
+        <!--  枠線と背景のためのBorder  -->
+        <!--
                         <Border BorderBrush="Transparent" BorderThickness="0" Background="Transparent">
-                            --><!-- ItemsControlを使ってデータを表示 --><!--
+        -->
+        <!--  ItemsControlを使ってデータを表示  -->
+        <!--
                             <ItemsControl ItemsSource="{TemplateBinding Content}"
                                           HorizontalAlignment="Stretch"
                                           VerticalAlignment="Stretch" />
@@ -91,12 +81,11 @@
     </UserControl.Resources>
 
     <DockPanel>
-        <!-- TODO: キャプションがほしい -->
+        <!--  TODO: キャプションがほしい  -->
         <ListBox
-            DockPanel.Dock="Right"
             x:Name="BookingOverflowListBox"
             DisplayMemberPath="DisplayText"
-        />
+            DockPanel.Dock="Right" />
 
         <!--<ListView x:Name="BookingListView"
                   VirtualizingPanel.IsVirtualizing="True"
@@ -112,47 +101,36 @@
             </ListView.View>
         </ListView>-->
 
+        <!--  AlternatingRowBackground="{DynamicResource SystemControlBackgroundAltHighBrush}"  -->
         <DataGrid
             x:Name="BookingDataGrid"
+            AlternatingRowBackground="#10FFFFFF"
             AutoGenerateColumns="False"
-            AlternatingRowBackground="GhostWhite"
-
             CanUserAddRows="False"
             CanUserDeleteRows="False"
-            CanUserResizeRows="False"
             CanUserResizeColumns="False"
+            CanUserResizeRows="False"
             CanUserSortColumns="False"
-
-            EnableRowVirtualization="True"
-            EnableColumnVirtualization="True"
-            VirtualizingPanel.IsVirtualizing="True"
-            VirtualizingPanel.VirtualizationMode="Recycling"
-            VirtualizingPanel.ScrollUnit="Pixel"
-            ScrollViewer.CanContentScroll="True"
-            ScrollViewer.IsDeferredScrollingEnabled="False"
-
-            HorizontalScrollBarVisibility="Visible"
-            VerticalScrollBarVisibility="Visible"
-
-            HeadersVisibility="All"
-            RowHeaderWidth="48"
-            MinRowHeight="24"
-            RowHeight="24"
-
             ColumnHeaderHeight="24"
+            ColumnWidth="160"
+            Effect="{x:Null}"
+            EnableColumnVirtualization="True"
+            EnableRowVirtualization="True"
+            HeadersVisibility="All"
+            HorizontalScrollBarVisibility="Visible"
             MaxColumnWidth="160"
             MinColumnWidth="160"
-            ColumnWidth="160"
-
-
-
-            Effect="{x:Null}"
-
+            MinRowHeight="24"
+            RowHeaderWidth="48"
+            RowHeight="24"
+            ScrollViewer.CanContentScroll="True"
+            ScrollViewer.IsDeferredScrollingEnabled="False"
+            SelectionMode="Extended"
             SelectionUnit="Cell"
-            SelectionMode="Extended">
-
-        </DataGrid>
-
+            VerticalScrollBarVisibility="Visible"
+            VirtualizingPanel.IsVirtualizing="True"
+            VirtualizingPanel.ScrollUnit="Pixel"
+            VirtualizingPanel.VirtualizationMode="Recycling" />
 
     </DockPanel>
 </UserControl>

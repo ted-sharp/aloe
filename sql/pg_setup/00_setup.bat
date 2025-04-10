@@ -1,5 +1,7 @@
 CHCP 932
 
+cd /d %~dp0
+
 @ECHO OFF
 
 ECHO PostgreSQL

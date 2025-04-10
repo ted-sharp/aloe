@@ -126,6 +126,16 @@
       }
     },
 
+    "Monitor": {
+      "Projects": {
+        "AloeMedockResvServerMonitor": {
+          "CommandLineArguments": "",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
     "Seed": {
       "Projects": {
         "AloeMedockResvServer": {

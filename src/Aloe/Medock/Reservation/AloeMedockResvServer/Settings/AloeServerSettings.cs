@@ -46,6 +46,8 @@ public class AloeServerSettings
             AloeServerSettings.ShortArgs);
 
         var config = new ConfigurationBuilder()
+            // サービスとして登録する場合でも読めるように exe を基準とする
+            .SetBasePath(AppContext.BaseDirectory)
             // 設定ファイル
             .AddJsonFile(fileName, optional: true, reloadOnChange: true)
             // シークレット(開発環境用)

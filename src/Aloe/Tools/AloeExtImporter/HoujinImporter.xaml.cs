@@ -334,7 +334,7 @@ public partial class HoujinImporter : UserControl
             var extractedCsvPath = await Task.Run(() => ZipExtractor.ExtractFirstCsv(houjinFilePath, work));
 
             // CSVインポート処理
-            var importer = new PostCsvImporter();
+            var importer = new HoujinCsvImporter();
             await Task.Run(() => importer.ImportHoujinCsvToDatabase(extractedCsvPath));
 
             // ファイル削除

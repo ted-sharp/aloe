@@ -21,7 +21,7 @@ public class FileDownloader
     /// <param name="url">ダウンロードするファイルのURL</param>
     /// <param name="localFilePath">保存するローカルファイルのパス</param>
     /// <param name="progress">進捗通知用 IProgress (0-100%)</param>
-    public async Task DownloadFileAsync(string url, string localFilePath, IProgress<int> progress = null)
+    public async Task DownloadFileAsync(string url, string localFilePath, IProgress<int>? progress = null)
     {
         if (String.IsNullOrWhiteSpace(url))
         {

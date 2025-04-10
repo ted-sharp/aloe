@@ -43,6 +43,16 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
 
     public ReactiveCommand<int> ZoomInCommand { get; } = new();
 
+    //public ObservableCollection<string> Themes { get; } =
+    //[
+    //    "None",
+    //    "System",
+    //    "Light",
+    //    "Dark",
+    //];
+
+    //public BindableReactiveProperty<string> SelectedTheme { get; } = new("System");
+
     public ReactiveCommand ShowLogWindowCommand { get; } = new();
 
     private readonly ILogger _logger;
@@ -103,8 +113,23 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
             this._isUpdating = false;
         }).AddTo(ref d);
 
+        //this.SelectedTheme.Subscribe(this.SetTheme).AddTo(ref d);
+
         this.Disposable = d.Build();
     }
+
+    //public void SetTheme(string userChoice)
+    //{
+    //    #pragma warning disable WPF0001
+    //    Application.Current.ThemeMode = userChoice switch
+    //    {
+    //        "Light" => ThemeMode.Light,
+    //        "Dark" => ThemeMode.Dark,
+    //        "System" => ThemeMode.System,
+    //        _ => ThemeMode.None,
+    //    };
+    //    #pragma warning restore WPF0001
+    //}
 
     public void SetStatus(string status)
     {

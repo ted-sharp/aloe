@@ -27,6 +27,10 @@
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
+        <Style TargetType="ComboBoxItem">
+            <!--  ダークテーマを適用するとここだけ適用されて文字色が読めなくなるため指定  -->
+            <Setter Property="Foreground" Value="Black" />
+        </Style>
         <Style TargetType="Button">
             <Setter Property="Margin" Value="0" />
             <Setter Property="HorizontalContentAlignment" Value="Center" />
@@ -50,20 +54,23 @@
             </ControlTemplate>
         </StatusBar.Template>
 
+        <!--  進捗ステータス  -->
         <StatusBarItem DockPanel.Dock="Left">
             <TextBlock Text="{Binding Status.Value}" />
         </StatusBarItem>
 
-        <StatusBarItem Width="20" DockPanel.Dock="Right">
-            <!--  Space  -->
-        </StatusBarItem>
+        <!--  Space  -->
+        <StatusBarItem Width="20" DockPanel.Dock="Right" />
 
+
+        <!--  ログ  -->
         <StatusBarItem DockPanel.Dock="Right" Visibility="Collapsed">
             <Button Command="{Binding ShowLogWindowCommand}">
                 <ui:PackIcon Kind="Console" />
             </Button>
         </StatusBarItem>
 
+        <!--  キャッシュクリア  -->
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <Button>
@@ -73,6 +80,14 @@
             </StackPanel>
         </StatusBarItem>
 
+        <!--  テーマ  -->
+        <!--<StatusBarItem DockPanel.Dock="Right">
+            <StackPanel Orientation="Horizontal">
+                <ComboBox ItemsSource="{Binding Themes}" SelectedItem="{Binding SelectedTheme.Value}" />
+            </StackPanel>
+        </StatusBarItem>-->
+
+        <!--  拡大率  -->
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <Button Command="{Binding ZoomOutCommand}" CommandParameter="{ext:Int32 -10}">
@@ -114,6 +129,7 @@
             </StackPanel>
         </StatusBarItem>
 
+        <!--  ログインユーザー名  -->
         <StatusBarItem DockPanel.Dock="Right">
             <ui:PopupBox PlacementMode="TopAndAlignCentres">
                 <ui:PopupBox.ToggleContent>
@@ -130,6 +146,7 @@
             </ui:PopupBox>
         </StatusBarItem>
 
+        <!--  DB名  -->
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal" Visibility="{Binding DatabaseNameVisibility.Value}">
                 <ui:PackIcon Kind="Database" />
@@ -137,6 +154,7 @@
             </StackPanel>
         </StatusBarItem>
 
+        <!--  ホスト名  -->
         <StatusBarItem DockPanel.Dock="Right">
             <StackPanel Orientation="Horizontal">
                 <ui:PackIcon Kind="Lan" />
@@ -144,6 +162,7 @@
             </StackPanel>
         </StatusBarItem>
 
+        <!--  進捗  -->
         <StatusBarItem HorizontalContentAlignment="Stretch">
             <ProgressBar
                 Margin="5,0"

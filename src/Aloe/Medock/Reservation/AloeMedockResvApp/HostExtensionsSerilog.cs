@@ -7,7 +7,7 @@ using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
 using System.Windows.Controls;
 using Serilog.Sinks.RichTextBox.Themes;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -42,7 +42,7 @@ public static class HostExtensionsSerilog
 
         return new LoggerConfiguration()
             .MinimumLevel.Information()
-            //.ReadFrom.Configuration()
+            // 画面から反映(優先)
             .MinimumLevel.ControlledBy(SerilogLogLevelService.Switch)
             .Enrich.WithProcessId()
             .Enrich.WithThreadId()
@@ -53,27 +53,44 @@ public static class HostExtensionsSerilog
 
     private static Serilog.Core.Logger CreateOutputLogger(RichTextBox? logTextBox)
     {
-        //var template = "{SourceContext} [{Timestamp:HH:mm:ss} {Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
-        var template = "[{Timestamp:HH:mm:ss}][{Level:u3}] {Message:lj} (TID: {ThreadId}){NewLine}{Exception}";
+        var configuration = new ConfigurationBuilder()
+            // 優先の serilog 設定(あれば)
+            .AddJsonFile("appsettings.serilog.json", optional: true, reloadOnChange: true)
+            // フォールバックの設定(あれば)
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+            .Build();
 
         var serilogConfiguration = new LoggerConfiguration()
+            .ReadFrom.Configuration(configuration);
+
+        // 設定がなかったときのフォールバック
+        serilogConfiguration
             .MinimumLevel.Verbose()
-            //.MinimumLevel.ControlledBy(logLevelSwitch)
             .WriteTo.Debug(
                 restrictedToMinimumLevel: LogEventLevel.Debug,
-                outputTemplate: template)
-            //.WriteTo.Console(
-            //    theme: AnsiConsoleTheme.Literate,
-            //    outputTemplate: template)
+                outputTemplate: SerilogDefault.Template)
             .WriteTo.File(
                 path: "logs/log-.txt",
                 rollingInterval: RollingInterval.Day,
                 retainedFileCountLimit: 31,
-                outputTemplate: template,
+                outputTemplate: SerilogDefault.Template,
                 shared: true);
+
+        if (!Console.IsOutputRedirected)
+        {
+            // Consoleアプリの場合のみ
+            serilogConfiguration.WriteTo.Console(
+                theme: AnsiConsoleTheme.Literate,
+                outputTemplate: SerilogDefault.Template);
+        }
+
+        // TODO: クリティカルのときは Email を送りたい
+
+        // TODO: 必要であればDBにも出力できるようにする？
 
         if (logTextBox is not null)
         {
+            // json 設定には未対応
             serilogConfiguration.WriteTo.RichTextBox(
                 logTextBox,
                 theme: RichTextBoxConsoleTheme.Literate);

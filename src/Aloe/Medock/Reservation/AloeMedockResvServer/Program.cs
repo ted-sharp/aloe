@@ -14,6 +14,9 @@ public static class Program
         var isSeed = false;
         try
         {
+            // サービスで起動した場合に exe の位置に変更する必要がある
+            Directory.SetCurrentDirectory(AppContext.BaseDirectory);
+
             var config = AloeServerSettings.CreateConfiguration(args);
             var settings = config.GetSettings<AloeServerSettings>();
             isSeed = settings.IsSeed;

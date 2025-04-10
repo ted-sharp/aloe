@@ -406,8 +406,12 @@ public partial class App : Application
             .GetResult();
 
         // アイコンのクリーンアップ
-        this._notifyIcon?.Dispose();
-        this._notifyIcon = null;
+        if (this._notifyIcon is not null)
+        {
+            this._notifyIcon.Visibility = Visibility.Hidden;
+            this._notifyIcon.Dispose();
+            this._notifyIcon = null;
+        }
 
         this.UnregisterUnhandledExceptionHandlers();
 

@@ -5,6 +5,7 @@ using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
@@ -91,6 +92,12 @@ internal static class HostExtensions
     internal static T ConfigureServer<T>(this T builder, bool isSqlLoggingEnabled, string connectionStringName)
         where T : IHostApplicationBuilder
     {
+        if (OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService())
+        {
+            // Windows サービスへの登録に必要
+            builder.Services.AddSingleton<IHostLifetime, WindowsServiceLifetime>();
+        }
+
         builder
             .AddPostgreSql(isSqlLoggingEnabled, connectionStringName)
             .AddHealthChecks()

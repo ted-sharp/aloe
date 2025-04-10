@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+namespace Aloe.Common.AloeCoreLib.Logging;
 
 public interface ILogLevelService
 {
@@ -16,11 +16,11 @@ public interface ILogLevelService
 
 public class SerilogLogLevelService : ILogLevelService
 {
-    public static Serilog.Core.LoggingLevelSwitch Switch { get; } = new();
+    public static LoggingLevelSwitch Switch { get; } = new();
 
     public void SetLogLevel(LogLevel logLevel)
     {
-        SerilogLogLevelService.Switch.MinimumLevel = logLevel switch
+        Switch.MinimumLevel = logLevel switch
         {
             LogLevel.Trace => LogEventLevel.Verbose,
             LogLevel.Debug => LogEventLevel.Debug,

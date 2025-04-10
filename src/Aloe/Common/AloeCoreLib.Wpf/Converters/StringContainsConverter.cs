@@ -13,7 +13,7 @@ namespace Aloe.Common.AloeCoreLib.Wpf.Converters;
 
 public sealed class StringContainsConverter : IValueConverter
 {
-    public required string Substring { get; set; }
+    public required string Characters { get; set; }
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
@@ -23,7 +23,8 @@ public sealed class StringContainsConverter : IValueConverter
             return false;
         }
 
-        return headerText.Contains(this.Substring, StringComparison.CurrentCulture);
+        return this.Characters.Any(ch =>
+            headerText.Contains(ch.ToString(), StringComparison.CurrentCulture));
     }
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)

@@ -67,21 +67,10 @@ internal static class HostExtensions
         {
             options.UseNpgsql(connStr);
 
-            if (false)
-            {
-                if (builder.Environment.IsDevelopment())
-                {
-                    options.EnableDetailedErrors();
-                    options.EnableSensitiveDataLogging();
-                }
-            }
-            else
-            {
-                // ログを出力しない
-                options.UseLoggerFactory(NullLoggerFactory.Instance);
-                //// 警告を無効にする
-                //options.ConfigureWarnings(x => x.Ignore());
-            }
+            // ログを出力しない
+            options.UseLoggerFactory(NullLoggerFactory.Instance);
+            //// 警告を無効にする
+            //options.ConfigureWarnings(x => x.Ignore());
         });
 
         return builder;

@@ -11,6 +11,7 @@
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
     <UserSecretsId>6d08ce26-9950-4a19-9f4c-94746eb476d6</UserSecretsId>
     <GenerateDocumentationFile>False</GenerateDocumentationFile>
+    <RollForward>LatestMinor</RollForward>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,6 +20,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="appsettings.serilog.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>

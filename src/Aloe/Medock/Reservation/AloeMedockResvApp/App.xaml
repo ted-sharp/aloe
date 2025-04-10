@@ -9,6 +9,10 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+
+                <!--  .NET9 で、Fluent Design(Windows11風) テーマが使用可能だが、実験的も多く安定しないため非推奨  -->
+                <!--<ResourceDictionary Source="pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml" />-->
+
                 <!--  全体へスタイルを適用すると、変化が大きすぎるので、必要なコントロールのみ使うのがよい(スタイルを適用しないと機能しない場合もある)  -->
                 <!--<ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/MaterialDesign3.Defaults.xaml" />-->
 
