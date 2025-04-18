@@ -45,6 +45,7 @@
         -->
 
         <local:MainHeader DockPanel.Dock="Top" />
+        <!--<local:MainHeaderSimple DockPanel.Dock="Top" />-->
         <local:MainBody />
     </DockPanel>
 </Window>

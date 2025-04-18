@@ -13,8 +13,10 @@
 
   <ItemGroup>
     <None Remove="Assets\MaterialIcons\add_16dp_75FB4C.png" />
+    <None Remove="Assets\MaterialIcons\cancel_16dp_8C1AF6.png" />
     <None Remove="Assets\MaterialIcons\check_circle_16dp_75FB4C.ico" />
     <None Remove="Assets\MaterialIcons\check_circle_16dp_75FB4C.png" />
+    <None Remove="Assets\MaterialIcons\circle_16dp_8C1AF6.png" />
     <None Remove="Assets\MaterialIcons\close_16dp_EA3323.ico" />
     <None Remove="Assets\MaterialIcons\close_16dp_EA3323.png" />
     <None Remove="Assets\MaterialIcons\do_not_disturb_16dp_EA3323.ico" />
@@ -25,18 +27,27 @@
     <None Remove="Assets\MaterialIcons\logout_16dp_8C1AF6.png" />
     <None Remove="Assets\MaterialIcons\pause_16dp_EA3323.ico" />
     <None Remove="Assets\MaterialIcons\pause_16dp_EA3323.png" />
+    <None Remove="Assets\MaterialIcons\pause_circle_16dp_F19E39.png" />
     <None Remove="Assets\MaterialIcons\play_arrow_16dp_75FB4C.png" />
+    <None Remove="Assets\MaterialIcons\play_circle_16dp_75FB4C.png" />
     <None Remove="Assets\MaterialIcons\remove_16dp_EA3323.png" />
     <None Remove="Assets\MaterialIcons\restart_alt_16dp_8C1AF6.png" />
     <None Remove="Assets\MaterialIcons\settings_16dp_75FBFD.png" />
     <None Remove="Assets\MaterialIcons\stop_16dp_EA3323.png" />
+    <None Remove="Assets\MaterialIcons\stop_circle_16dp_EA3323.png" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\MaterialIcons\add_16dp_75FB4C.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\MaterialIcons\cancel_16dp_8C1AF6.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\MaterialIcons\check_circle_16dp_75FB4C.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\MaterialIcons\circle_16dp_8C1AF6.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\MaterialIcons\close_16dp_EA3323.png">
@@ -57,7 +68,13 @@
     <Content Include="Assets\MaterialIcons\pause_16dp_EA3323.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Assets\MaterialIcons\pause_circle_16dp_F19E39.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Assets\MaterialIcons\play_arrow_16dp_75FB4C.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\MaterialIcons\play_circle_16dp_75FB4C.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\MaterialIcons\remove_16dp_EA3323.png">
@@ -70,6 +87,9 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="Assets\MaterialIcons\stop_16dp_EA3323.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Assets\MaterialIcons\stop_circle_16dp_EA3323.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

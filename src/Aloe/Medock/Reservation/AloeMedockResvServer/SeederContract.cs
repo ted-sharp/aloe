@@ -25,6 +25,11 @@ internal partial class Seeder
                     .AsNoTracking()
                     .FirstOrDefault(x => x.InsurProvNumber == "7010005013337");
 
+                if (kk is null)
+                {
+                    return 0;
+                }
+
                 var kkCt = new Contract(
                     kk.InsurProvId,
                     0,
@@ -41,6 +46,11 @@ internal partial class Seeder
                 kkCt = context.Contracts
                     .AsNoTracking()
                     .FirstOrDefault(x => x.InsurProvId == kk.InsurProvId);
+
+                if (kkCt is null)
+                {
+                    return 0;
+                }
 
                 var orgs = await context.Organizations
                     .AsNoTracking()

@@ -1,7 +1,4 @@
-﻿using DiffPlex.DiffBuilder.Model;
-using DiffPlex.DiffBuilder;
-using DiffPlex;
-using Microsoft.CognitiveServices.Speech;
+﻿using Microsoft.CognitiveServices.Speech;
 using Microsoft.CognitiveServices.Speech.Audio;
 using Microsoft.CognitiveServices.Speech.Transcription;
 using Microsoft.Extensions.AI;
@@ -31,8 +28,6 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-using DiffPlex.Chunkers;
-using static AloeSoapSample.MainBody;
 
 namespace AloeSoapSample
 {
@@ -87,40 +82,49 @@ namespace AloeSoapSample
                 """;
         }
 
+        private void ClearFocusButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            this.RecognizingTextBox.Text = "# FOCUS(FDAR)をクリアしました。";
+
+            this.FocusTextBox.Clear();
+            this.DataTextBox.Clear();
+            this.ActionTextBox.Clear();
+            this.ResponseTextBox.Clear();
+        }
+
+        private void SetFocusSample1Button_OnClick(object sender, RoutedEventArgs e)
+        {
+            this.RecognizingTextBox.Text = "# FOCUSサンプル1を表示します。";
+
+            this.FocusTextBox.Text =
+                """
+                排便が3日間なく腹部の張りと不快感を訴える。
+                """;
+            this.DataTextBox.Text =
+                """
+                80歳女性。今朝「お腹が張って気持ち悪い」と訴える。前回の排便は3日前。
+                食事と水分摂取は普段通り。バイタルは安定。腹部膨満感あり、圧痛なし。
+                表情はやや不快感を示しているが、会話は明瞭。
+                """;
+            this.ActionTextBox.Text =
+                """
+                腹部マッサージと温罨法を実施。水分摂取を促し、軽い下肢体操を一緒に行った。
+                トイレ誘導を行い、排便のタイミングを確認。
+                看護師に報告し、経過観察を指示。
+                """;
+            this.ResponseTextBox.Text =
+                """
+                「少し楽になった気がする」と発言。表情も穏やかになる。
+                「夜に出るかも」と本人より意欲的な言葉が聞かれた。
+                排便の有無を夜勤者に引き継ぎ。
+                """;
+        }
+
         private void ClearTalkButton_OnClick(object sender, RoutedEventArgs e)
         {
             this.RecognizingTextBox.Text = "# TALKをクリアしました。";
 
             this.RecognizedTextBox.Clear();
-        }
-
-        private SoapMessage? _soapMessage;
-
-        private void ClearDiffButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            this.RecognizingTextBox.Text = "# 差分をクリアしました。";
-
-            this._soapMessage = null;
-            this.SubjectiveRichTextBox.Document.Blocks.Clear();
-            this.ObjectiveRichTextBox.Document.Blocks.Clear();
-            this.AssessmentRichTextBox.Document.Blocks.Clear();
-            this.PlanRichTextBox.Document.Blocks.Clear();
-        }
-
-        private void AcceptDiffButton_OnClick(object sender, RoutedEventArgs e)
-        {
-            this.RecognizingTextBox.Text = "# SOAPを確定しました。";
-
-            this.SubjectiveTextBox.Text = this._soapMessage?.Subjective ?? "";
-            this.ObjectiveTextBox.Text = this._soapMessage?.Objective ?? "";
-            this.AssessmentTextBox.Text = this._soapMessage?.Assessment ?? "";
-            this.PlanTextBox.Text = this._soapMessage?.Plan ?? "";
-
-            this._soapMessage = null;
-            this.SubjectiveRichTextBox.Document.Blocks.Clear();
-            this.ObjectiveRichTextBox.Document.Blocks.Clear();
-            this.AssessmentRichTextBox.Document.Blocks.Clear();
-            this.PlanRichTextBox.Document.Blocks.Clear();
         }
 
         private void SetTalkSample1Button_OnClick(object sender, RoutedEventArgs e)
@@ -352,17 +356,77 @@ namespace AloeSoapSample
 
         }
 
+        private void SetTalkSample3Button_OnClick(object sender, RoutedEventArgs e)
+        {
+            this.RecognizingTextBox.Text = "# TALKサンプル3を表示します。";
+
+            this.RecognizedTextBox.Text =
+                """
+                [Guest-1] おはようございます。
+                [Guest-2] おはようございます、〇〇さん。今朝はお加減いかがですか？
+
+                [Guest-1] うーん、なんか…お腹が張って気持ち悪いのよ。
+                [Guest-2] そうなんですね。いつ頃からその感じがありますか？
+
+                [Guest-1] 昨日もそうだったけど、今朝は特にね。なんか重たいっていうか…。
+                [Guest-2] 便は最近出ていますか？
+
+                [Guest-1] 出てないのよ…。もう3日くらいになるかも。
+                [Guest-2] それはつらいですね。食事や水分は普段通り摂れていますか？
+
+                [Guest-1] ご飯は食べてるし、お茶も飲んでるけど、出ないのよねぇ…。
+                [Guest-2] お腹触ってもいいですか？ 失礼しますね。
+
+                [Guest-1] はい、どうぞ。
+                [Guest-2] 張ってますね。でも押しても痛みはなさそうですね。
+
+                [Guest-1] うん、痛くはないけど、ずっとモヤモヤしてる感じ。
+                [Guest-2] では少しお腹をマッサージして、温かいタオルも使いましょうか。
+
+                [Guest-1] あら、ありがたいわね。
+                [Guest-2] その後、水分をもう少し摂ってもらって、足を動かす体操も一緒にしましょう。
+
+                [Guest-1] そうね、少しでも動いた方が出るかもしれないしね。
+                [Guest-2] あとでトイレもご一緒しますね。行きたくなったら遠慮なく声をかけてください。
+
+                [Guest-1] はい、わかった。ちょっと楽になった気がするわ。
+                [Guest-2] よかったです。夜に出るかもしれませんね。夜勤のスタッフにも伝えておきます。
+
+                [Guest-1] お願いね。出るといいけど…。
+                [Guest-2] はい、しっかり見守っていきますので、ご安心ください。
+                """;
+        }
+
         private async void StartRecognitionButton_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
                 this.RecognizingTextBox.Text = "# 音声認識を開始しました。";
 
-                //await this.StartSpeechRecognizer();
+                await this.StopConversationTranscriber();
                 await this.StartConversationTranscriber();
 
                 this.StartRecognitionButton.Content = "認識中";
                 this.StartRecognitionButton.IsEnabled = false;
+                this.StopRecognitionButton.IsEnabled = true;
+            }
+            catch (Exception ex)
+            {
+                this.UpdateRecognizedText("Error: " + ex.Message);
+            }
+        }
+
+        private async void StopRecognitionButton_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                this.RecognizingTextBox.Text = "# 音声認識を停止しました。";
+
+                await this.StopConversationTranscriber();
+
+                this.StartRecognitionButton.Content = "開始";
+                this.StartRecognitionButton.IsEnabled = true;
+                this.StopRecognitionButton.IsEnabled = false;
             }
             catch (Exception ex)
             {
@@ -481,6 +545,19 @@ namespace AloeSoapSample
             await this._transcriber.StartTranscribingAsync();
         }
 
+        private async Task StopConversationTranscriber()
+        {
+            // 既存のrecognizerを停止して破棄
+            if (this._transcriber != null)
+            {
+                await this._transcriber.StopTranscribingAsync();
+                this._transcriber.Transcribing -= this.Transcriber_Transcribing;
+                this._transcriber.Transcribed -= this.Transcriber_Transcribed;
+                this._transcriber.Dispose();
+                this._transcriber = null;
+            }
+        }
+
         private ConversationTranscriber CreateConversationTranscriber()
         {
             var config = App.Host.Services.GetRequiredService<IConfiguration>();
@@ -511,27 +588,25 @@ namespace AloeSoapSample
 
         #endregion ConversationTranscriber
 
+        #region SemanticKernel
+
         private Kernel? _kernel;
 
         private record struct SoapMessage(
             string Subjective,
             string Objective,
             string Assessment,
-            string Plan);
-
-        public enum SoapType
-        {
-            Subjective,
-            Objective,
-            Assessment,
-            Plan,
-        }
+            string Plan,
+            string Focus,
+            string Data,
+            string Action,
+            string Response);
 
         private async void BuildSoapButton_OnClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                this.RecognizingTextBox.Text = "# TALKの内容をSOAPに反映しています……";
+                this.RecognizingTextBox.Text = "# TALKの内容をSOAP/FDARに反映しています……";
 
                 this.BuildSoapButton.Content = "解析中";
                 this.BuildSoapButton.IsEnabled = false;
@@ -559,7 +634,7 @@ namespace AloeSoapSample
             }
             finally
             {
-                this.RecognizingTextBox.Text = "# TALKの内容をSOAPに反映しました。";
+                this.RecognizingTextBox.Text = "# TALKの内容をSOAP/FDARに反映しました。";
 
                 this.BuildSoapButton.Content = "反映";
                 this.BuildSoapButton.IsEnabled = true;
@@ -582,9 +657,13 @@ namespace AloeSoapSample
                             "Subjective": { "type": "string" },
                             "Objective": { "type": "string" },
                             "Assessment": { "type": "string" },
-                            "Plan": { "type": "string" }
+                            "Plan": { "type": "string" },
+                            "Focus": { "type": "string" },
+                            "Data": { "type": "string" },
+                            "Action": { "type": "string" },
+                            "Response": { "type": "string" }
                         },
-                        "required": ["Subjective", "Objective", "Assessment", "Plan"],
+                        "required": ["Subjective", "Objective", "Assessment", "Plan", "Focus", "Data", "Action", "Response"],
                         "additionalProperties": false
                     }
                     """),
@@ -603,18 +682,14 @@ namespace AloeSoapSample
             // メッセージ全体を生文字列リテラルで組み立てる
             var message =
                 $"""
-                ステップバイステップで考えて、電カルのSOAPメッセージを変更します。
-                既存のSOAPメッセージがある場合は、不必要に変更しないよう注意します。(重要)
-                特に入力の内容が少ない場合や指示が書かれている場合は、関係ない箇所のもとのメッセージは1文字も変えてはいけません。
+                ステップバイステップで考えて、電カルのSOAP/FDARメッセージを作成してください。
                 入力内容は音声認識を行ったものなので、誤認識がある場合は正しく修正します。
                 人間が読みやすいよう適度に改行します。
-                電カルのSOAPとしてそのまま使えるクオリティを目指し、間違いがないように注意します。
+                電カルのSOAP/FDARとして使えるクオリティを目指します。
+                出来上がった内容は見直しをしてください。
 
                 # 今回入力があった文字列
                 {input}
-
-                # 既存のSOAPメッセージ
-                {json}
                 """;
 
             // Send a request and pass prompt execution settings with desired response format.
@@ -628,125 +703,25 @@ namespace AloeSoapSample
 
         private void SetSoapAll(SoapMessage newSoap)
         {
-            if (String.IsNullOrWhiteSpace(
-                    this.SubjectiveTextBox.Text
-                    + this.ObjectiveTextBox.Text
-                    + this.AssessmentTextBox.Text
-                    + this.PlanTextBox.Text))
-            {
-                this.SubjectiveTextBox.Text = newSoap.Subjective;
-                this.ObjectiveTextBox.Text = newSoap.Objective;
-                this.AssessmentTextBox.Text = newSoap.Assessment;
-                this.PlanTextBox.Text = newSoap.Plan;
-            }
-            else
-            {
-                this._soapMessage = newSoap;
+            this.SubjectiveTextBox.Text = newSoap.Subjective;
+            this.ObjectiveTextBox.Text = newSoap.Objective;
+            this.AssessmentTextBox.Text = newSoap.Assessment;
+            this.PlanTextBox.Text = newSoap.Plan;
 
-                this.SetDiff_old(
-                    ref this.SubjectiveRichTextBox,
-                    this.SubjectiveTextBox.Text,
-                    newSoap.Subjective);
-
-                this.SetDiff_old(
-                    ref this.ObjectiveRichTextBox,
-                    this.ObjectiveTextBox.Text,
-                    newSoap.Objective);
-
-                this.SetDiff_old(
-                    ref this.AssessmentRichTextBox,
-                    this.AssessmentTextBox.Text,
-                    newSoap.Assessment);
-
-                this.SetDiff_old(
-                    ref this.PlanRichTextBox,
-                    this.PlanTextBox.Text,
-                    newSoap.Plan);
-
-                //DiffRenderer.SetDiff(
-                //    SoapType.Subjective,
-                //    ref this.SubjectiveRichTextBox,
-                //    this.SubjectiveTextBox.Text,
-                //    newSoap.Subjective);
-
-                //DiffRenderer.SetDiff(
-                //    SoapType.Objective,
-                //    ref this.ObjectiveRichTextBox,
-                //    this.ObjectiveTextBox.Text,
-                //    newSoap.Objective);
-
-                //DiffRenderer.SetDiff(
-                //    SoapType.Assessment,
-                //    ref this.AssessmentRichTextBox,
-                //    this.AssessmentTextBox.Text,
-                //    newSoap.Assessment);
-
-                //DiffRenderer.SetDiff(
-                //    SoapType.Plan,
-                //    ref this.PlanRichTextBox,
-                //    this.PlanTextBox.Text,
-                //    newSoap.Plan);
-            }
-        }
-
-        private void SetDiff_old(ref RichTextBox target, string oldText, string newText)
-        {
-            // InlineDiffBuilderを使って差分モデルを作成
-            var differ = new Differ();
-            var diffBuilder = new InlineDiffBuilder(differ);
-            var diffModel = diffBuilder.BuildDiffModel(oldText, newText);
-
-            // RichTextBoxをクリア
-            target.Document.Blocks.Clear();
-            var body = new Paragraph { Margin = new System.Windows.Thickness(0) };
-
-
-            // 差分の各行を解析し、色分けしてRichTextBoxに追加
-            foreach (DiffPiece line in diffModel.Lines)
-            {
-                // 表示用のRunを作成
-                var run = new Run(line.Text);
-
-                switch (line.Type)
-                {
-                    case ChangeType.Inserted:
-                        // 挿入された行 -> 例として緑系の色で表示
-                        run.Foreground = System.Windows.Media.Brushes.Green;
-                        run.Text = "+ " + run.Text;
-                        break;
-
-                    case ChangeType.Deleted:
-                        // 削除された行 -> 例として赤系の色で表示
-                        run.Foreground = System.Windows.Media.Brushes.Red;
-                        run.Text = "- " + run.Text;
-                        break;
-
-                    case ChangeType.Unchanged:
-                        // 変更なし -> 通常のまま
-                        run.Foreground = System.Windows.Media.Brushes.Black;
-                        break;
-
-                    case ChangeType.Imaginary:
-                        // 対応する行が空の場合もあるので、このときは薄い灰色など
-                        run.Foreground = System.Windows.Media.Brushes.Gray;
-                        break;
-                }
-
-                body.Inlines.Add(run);
-                body.Inlines.Add(new LineBreak());
-            }
-
-            target.Document.Blocks.Add(body);
+            this.FocusTextBox.Text = newSoap.Focus;
+            this.DataTextBox.Text = newSoap.Data;
+            this.ActionTextBox.Text = newSoap.Action;
+            this.ResponseTextBox.Text = newSoap.Response;
         }
 
         private Kernel CreateKernelWithOpenAi()
         {
             var config = App.Host.Services.GetRequiredService<IConfiguration>();
 
-            var deploymentName = config["AzureOpenAI:DeploymentName"];
-            var azureEndpoint = config["AzureOpenAI:Endpoint"];
-            var azureApiKey = config["AzureOpenAI:ApiKey"];
-            var modelId = config["AzureOpenAI:ModelId"];
+            var deploymentName = config["AzureOpenAI:DeploymentName"]!;
+            var azureEndpoint = config["AzureOpenAI:Endpoint"]!;
+            var azureApiKey = config["AzureOpenAI:ApiKey"]!;
+            var modelId = config["AzureOpenAI:ModelId"]!;
 
             var builder = Kernel.CreateBuilder();
             builder.Services.AddAzureOpenAIChatCompletion(
@@ -758,12 +733,12 @@ namespace AloeSoapSample
             return builder.Build();
         }
 
-        private Kernel CreateKernelWithLlStudio()
+        private Kernel CreateKernelWithLmStudio()
         {
             var config = App.Host.Services.GetRequiredService<IConfiguration>();
 
-            var modelId = config["LMStudio:ModelId"];
-            var endpoint = new Uri(config["LMStudio:Endpoint"]);
+            var modelId = config["LMStudio:ModelId"]!;
+            var endpoint = new Uri(config["LMStudio:Endpoint"]!);
 
             var builder = Kernel.CreateBuilder();
 
@@ -777,152 +752,6 @@ namespace AloeSoapSample
             return builder.Build();
         }
 
-    }
-}
-
-public class DiffColorTheme
-{
-    public Brush LineDeletedBackground { get; init; }
-    public Brush LineInsertedBackground { get; init; }
-    public Brush WordDeletedBackground { get; init; }
-    public Brush WordInsertedBackground { get; init; }
-}
-
-public static class DiffRenderer
-{
-    private static readonly Dictionary<SoapType, Brush> SoapForegrounds = new()
-    {
-        { SoapType.Subjective, new SolidColorBrush((Color)ColorConverter.ConvertFromString("#a0522d")) },
-        { SoapType.Objective,   new SolidColorBrush((Color)ColorConverter.ConvertFromString("#1e90ff")) },
-        { SoapType.Assessment,  new SolidColorBrush((Color)ColorConverter.ConvertFromString("#228b22")) },
-        { SoapType.Plan,        new SolidColorBrush((Color)ColorConverter.ConvertFromString("#b22222")) }
-    };
-
-    private static readonly Dictionary<SoapType, DiffColorTheme> SoapThemes = new()
-    {
-        {
-            SoapType.Subjective,
-            new DiffColorTheme
-            {
-                LineDeletedBackground = BrushFrom("#ffd6d6"),
-                LineInsertedBackground = BrushFrom("#fff0cc"),
-                WordDeletedBackground = BrushFrom("#ff6666"),
-                WordInsertedBackground = BrushFrom("#ffcc66"),
-            }
-        },
-        {
-            SoapType.Objective,
-            new DiffColorTheme
-            {
-                LineDeletedBackground = BrushFrom("#d6eaff"),
-                LineInsertedBackground = BrushFrom("#d6ffd6"),
-                WordDeletedBackground = BrushFrom("#66b2ff"),
-                WordInsertedBackground = BrushFrom("#66ff66"),
-            }
-        },
-        {
-            SoapType.Assessment,
-            new DiffColorTheme
-            {
-                LineDeletedBackground = BrushFrom("#ffeecc"),
-                LineInsertedBackground = BrushFrom("#f0ffe6"),
-                WordDeletedBackground = BrushFrom("#ffaa33"),
-                WordInsertedBackground = BrushFrom("#66cc66"),
-            }
-        },
-        {
-            SoapType.Plan,
-            new DiffColorTheme
-            {
-                LineDeletedBackground = BrushFrom("#ffccff"),
-                LineInsertedBackground = BrushFrom("#ccf5ff"),
-                WordDeletedBackground = BrushFrom("#ff66cc"),
-                WordInsertedBackground = BrushFrom("#66e0ff"),
-            }
-        }
-    };
-
-    private static Brush BrushFrom(string hex) => new SolidColorBrush((Color)ColorConverter.ConvertFromString(hex));
-
-    public static void SetDiff(SoapType section, ref RichTextBox target, string oldText, string newText)
-    {
-        var builder = new InlineDiffBuilder(new Differ());
-        var diff = builder.BuildDiffModel(oldText, newText);
-        var document = new FlowDocument();
-        var body = new Paragraph { Margin = new System.Windows.Thickness(0) };
-        var theme = SoapThemes[section];
-        var foreground = SoapForegrounds[section];
-
-        for (int i = 0; i < diff.Lines.Count; i++)
-        {
-            var line = diff.Lines[i];
-
-            if (line.Type == ChangeType.Modified &&
-                i + 1 < diff.Lines.Count &&
-                diff.Lines[i + 1].Type == ChangeType.Inserted)
-            {
-                var deleted = BuildWordInline(section, line.Text, diff.Lines[i + 1].Text, isDeleted: true);
-                var inserted = BuildWordInline(section, line.Text, diff.Lines[i + 1].Text, isDeleted: false);
-                body.Inlines.AddRange(deleted);
-                body.Inlines.Add(new LineBreak());
-                body.Inlines.AddRange(inserted);
-                body.Inlines.Add(new LineBreak());
-                i++;
-                continue;
-            }
-
-            var run = new Run(line.Text)
-            {
-                Foreground = foreground,
-                Background = line.Type switch
-                {
-                    ChangeType.Inserted => theme.LineInsertedBackground,
-                    ChangeType.Deleted => theme.LineDeletedBackground,
-                    _ => null
-                }
-            };
-
-            body.Inlines.Add(run);
-            body.Inlines.Add(new LineBreak());
-        }
-
-        document.Blocks.Clear();
-        document.Blocks.Add(body);
-        target.Document = document;
-    }
-
-    private static InlineCollection BuildWordInline(SoapType section, string oldLine, string newLine, bool isDeleted)
-    {
-        var builder = new InlineDiffBuilder(new Differ());
-        var inner = builder.BuildDiffModel(oldLine, newLine).Lines;
-        var inlines = new Paragraph().Inlines;
-        var theme = SoapThemes[section];
-        var foreground = SoapForegrounds[section];
-
-        foreach (var line in inner)
-        {
-            foreach (var piece in line.SubPieces ?? new List<DiffPiece> { line })
-            {
-                var run = new Run(piece.Text)
-                {
-                    Foreground = foreground
-                };
-
-                if (piece.Type == ChangeType.Deleted && isDeleted)
-                {
-                    run.Background = theme.WordDeletedBackground;
-                    run.FontWeight = FontWeights.Bold;
-                }
-                else if (piece.Type == ChangeType.Inserted && !isDeleted)
-                {
-                    run.Background = theme.WordInsertedBackground;
-                    run.FontWeight = FontWeights.Bold;
-                }
-
-                inlines.Add(run);
-            }
-        }
-
-        return inlines;
+        #endregion SemanticKernel
     }
 }

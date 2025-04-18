@@ -21,7 +21,8 @@ public static class ThemeHelper
     {
         try
         {
-            using RegistryKey key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            const string name = @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize";
+            using var key = Registry.CurrentUser.OpenSubKey(name);
             return (int?)key?.GetValue("AppsUseLightTheme", 1) == 0;
         }
         catch

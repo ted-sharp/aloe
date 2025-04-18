@@ -47,5 +47,6 @@ CALL 02_00_create_indexes.bat
 
 CALL 03_00_create_triggers.bat
 
+ECHO 初回実行時は拡張を有効にしてください。
+ECHO postgresql.conf の書き換えを行い ext_create_extensions.sql の中身を手動で実行してください。
 PAUSE
-

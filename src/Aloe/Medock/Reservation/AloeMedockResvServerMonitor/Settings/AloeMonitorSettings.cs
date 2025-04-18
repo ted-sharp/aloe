@@ -72,4 +72,14 @@ public class AloeMonitorSettings
     /// サービス監視の間隔(ミリ秒)です。
     /// </summary>
     public int MonitoringInterval { get; set; }
+
+    /// <summary>
+    /// 監視するサービスの実行ファイルのフルパスを取得します。
+    /// </summary>
+    public string GetWindowsServiceFullPath()
+    {
+        var path = this.WindowsServicePath;
+        var fullPath = PathHelper.FromBase(path);
+        return fullPath;
+    }
 }

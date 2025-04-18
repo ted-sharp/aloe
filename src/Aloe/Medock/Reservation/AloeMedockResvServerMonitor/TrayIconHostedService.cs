@@ -47,7 +47,7 @@ public class TrayIconHostedService : IHostedService
             contextMenu.Items.Add(statusMenuItem);
 
             // "サービス フォルダを開く"
-            var servicePath = PathHelper.FromBase(this._settings.WindowsServicePath);
+            var servicePath = this._settings.GetWindowsServiceFullPath();
             var openServiceMenuItem = new ToolStripMenuItem("サービス フォルダを開く", null, (sender, e) => this.OpenExeFolder(servicePath));
             openServiceMenuItem.Image = Images.FolderOpen.Value;
             contextMenu.Items.Add(openServiceMenuItem);
@@ -85,6 +85,8 @@ public class TrayIconHostedService : IHostedService
             openExeMenuItem.Image = Images.FolderOpen.Value;
             contextMenu.Items.Add(openExeMenuItem);
 
+            // TODO: "ログを開く"
+
             // "終了"
             var exitMenuItem = new ToolStripMenuItem("終了", null, (sender, e) => this.ExitApplication());
             exitMenuItem.Image = Images.Logout.Value;
@@ -104,11 +106,11 @@ public class TrayIconHostedService : IHostedService
             timer.Interval = this._settings.MonitoringInterval;
             timer.Tick += (sender, e) =>
             {
-                this.SetStatus(this._serviceStatus.State);
+                this.RefreshStatus();
             };
             timer.Start();
 
-            this.SetStatus(this._serviceStatus.State);
+            this.RefreshStatus();
 
             // メッセージループを開始
             Application.Run();
@@ -138,7 +140,11 @@ public class TrayIconHostedService : IHostedService
     private void SetStatus(ServiceControllerStatus? state)
     {
         this._serviceStatus.SetState(state);
+        this.RefreshStatus();
+    }
 
+    private void RefreshStatus()
+    {
         if (this._notifyIcon is not null)
         {
             this._notifyIcon.Icon = this._serviceStatus.Icon;

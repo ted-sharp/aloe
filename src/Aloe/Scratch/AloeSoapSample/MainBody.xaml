@@ -166,22 +166,21 @@
 
                     </Grid>
                 </Border>
-
                 <StackPanel Orientation="Horizontal">
-                    <Label>差分</Label>
                     <Button
                         Margin="2"
                         Padding="4,1"
-                        Click="ClearDiffButton_OnClick">
+                        Click="ClearFocusButton_OnClick">
                         CLEAR
                     </Button>
                     <Button
                         Margin="2"
                         Padding="4,1"
-                        Click="AcceptDiffButton_OnClick">
-                        確定
+                        Click="SetFocusSample1Button_OnClick">
+                        SAMPLE 1
                     </Button>
                 </StackPanel>
+
                 <Border
                     Margin="4"
                     Padding="1"
@@ -199,40 +198,41 @@
                             <RowDefinition Height="Auto" MinHeight="40" />
                             <RowDefinition Height="Auto" MinHeight="40" />
                         </Grid.RowDefinitions>
+
                         <Label
                             Grid.Row="0"
                             Grid.Column="0"
                             Margin="1,2,0,2"
                             Padding="1"
-                            Background="#FFFBEB"
+                            Background="#E0BBE4"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="#7A4F01"
-                            ToolTip="S (Subjective)： 患者が訴える自覚症状や主観的な情報">
-                            [S]
+                            Foreground="#6A0DAD"
+                            ToolTip="Focus (焦点) / Problem (問題): 問題・注目点・出来事">
+                            [F]
                         </Label>
                         <Label
                             Grid.Row="1"
                             Grid.Column="0"
                             Margin="1,2,0,2"
                             Padding="1"
-                            Background="#EBF5FF"
+                            Background="#FFF3B0"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="#034694"
-                            ToolTip="O (Objective)： 診察や検査などで得た客観的な所見・データ">
-                            [O]
+                            Foreground="#7A5901"
+                            ToolTip="D (Data): 観察情報(主観・客観)">
+                            [D]
                         </Label>
                         <Label
                             Grid.Row="2"
                             Grid.Column="0"
                             Margin="1,2,0,2"
                             Padding="1"
-                            Background="#F0FDF4"
+                            Background="#AEDFF7"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="#036925"
-                            ToolTip="A (Assessment)： 主観的・客観的情報をもとにした医師の評価や診断">
+                            Foreground="#01579B"
+                            ToolTip="A (Action): 実施した対応">
                             [A]
                         </Label>
                         <Label
@@ -240,59 +240,79 @@
                             Grid.Column="0"
                             Margin="1,2,0,2"
                             Padding="1"
-                            Background="#FEF2F2"
+                            Background="#C8E6C9"
                             FontSize="14"
                             FontWeight="Bold"
-                            Foreground="#991B1B"
-                            ToolTip="P (Plan)： 治療計画、処方、検査など今後の対応方針">
-                            [P]
+                            Foreground="#1B5E20"
+                            ToolTip="R (Response): 患者の反応・変化">
+                            [R]
                         </Label>
 
-                        <RichTextBox
-                            x:Name="SubjectiveRichTextBox"
+                        <TextBox
+                            x:Name="FocusTextBox"
                             Grid.Row="0"
                             Grid.Column="1"
                             Margin="2"
                             Padding="4"
                             xml:space="preserve"
                             AcceptsReturn="True"
-                            Background="#FFFBEB"
+                            Background="#E0BBE4"
                             BorderThickness="0"
-                            Foreground="#7A4F01" />
+                            Foreground="#6A0DAD"
+                            TextWrapping="Wrap">
+夜間の胃酸逆流による睡眠困難の訴え
+        </TextBox>
 
-                        <RichTextBox
-                            x:Name="ObjectiveRichTextBox"
+                        <TextBox
+                            x:Name="DataTextBox"
                             Grid.Row="1"
                             Grid.Column="1"
                             Margin="2"
                             Padding="4"
                             xml:space="preserve"
                             AcceptsReturn="True"
-                            Background="#EBF5FF"
+                            Background="#FFF3B0"
                             BorderThickness="0"
-                            Foreground="#034694" />
-                        <RichTextBox
-                            x:Name="AssessmentRichTextBox"
+                            Foreground="#7A5901"
+                            TextWrapping="Wrap">
+50歳男性。1週間前から胸やけ感と食後の胃痛あり。特に夕食後や就寝時に症状が悪化し、「酸っぱいものが喉まで上がる」と表現。睡眠が浅く疲労感も訴える。
+診察では心窩部に圧痛、咽頭後壁に発赤を認める。バイタルは安定。既往に高血圧あり、ストレス多めと本人談。
+        </TextBox>
+
+                        <TextBox
+                            x:Name="ActionTextBox"
                             Grid.Row="2"
                             Grid.Column="1"
                             Margin="2"
                             Padding="4"
                             xml:space="preserve"
                             AcceptsReturn="True"
-                            Background="#F0FDF4"
+                            Background="#AEDFF7"
                             BorderThickness="0"
-                            Foreground="#036925" />
-                        <RichTextBox
-                            x:Name="PlanRichTextBox"
+                            Foreground="#01579B"
+                            TextWrapping="Wrap">
+胃酸分泌抑制のためPPIを朝食後に2週間処方。
+食事内容の改善（脂質・刺激物制限）、夜間の飲食制限、枕を高くする工夫を説明。
+ストレス対策の必要性についても共有。
+症状が続く場合は内視鏡検査を検討と伝える。
+        </TextBox>
+
+                        <TextBox
+                            x:Name="ResponseTextBox"
                             Grid.Row="3"
                             Grid.Column="1"
                             Margin="2"
                             Padding="4"
                             xml:space="preserve"
                             AcceptsReturn="True"
-                            Background="#FEF2F2"
+                            Background="#C8E6C9"
                             BorderThickness="0"
-                            Foreground="#991B1B" />
+                            Foreground="#1B5E20"
+                            TextWrapping="Wrap">
+「薬を飲みながら生活も見直してみます」と前向きな姿勢。
+枕の調整などもすぐに実行したいと話す。2週間後の再診に同意。
+        </TextBox>
+
                     </Grid>
                 </Border>
             </StackPanel>
@@ -318,18 +338,25 @@
                     Margin="2"
                     Padding="4,1"
                     Click="SetTalkSample1Button_OnClick">
-                    SAMPLE 1
+                    SOAP 1
                 </Button>
                 <Button
                     Margin="2"
                     Padding="4,1"
                     Click="SetTalkSample2Button_OnClick">
-                    SAMPLE 2
+                    SOAP 2
+                </Button>
+                <Button
+                    Margin="2"
+                    Padding="4,1"
+                    Click="SetTalkSample3Button_OnClick">
+                    FDAR 1
                 </Button>
             </StackPanel>
 
             <Grid DockPanel.Dock="Bottom">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="*" />
@@ -350,9 +377,17 @@
                     開始
                 </Button>
 
+                <Button
+                    x:Name="StopRecognitionButton"
+                    Grid.Column="2"
+                    Click="StopRecognitionButton_OnClick"
+                    IsEnabled="False">
+                    停止
+                </Button>
+
                 <ProgressBar
                     x:Name="AudioLevelBar"
-                    Grid.Column="2"
+                    Grid.Column="3"
                     Maximum="100" />
             </Grid>
             <Grid DockPanel.Dock="Bottom">

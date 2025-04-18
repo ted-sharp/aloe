@@ -1,0 +1,110 @@
+﻿# A5:ER FORMAT:19
+# A5:ER ENCODING:UTF8
+# A5:ER Mk-1 Copyright © 2007 m.matsubara
+# A5:SQL Mk-2 Version 2.20.2 Copyright © 1997 - 2025 m.matsubara
+#  https://a5m2.mmatsubara.com
+
+[Manager]
+ProjectName=aloe_reservation_grid
+Author=
+MaxEntityRowShow=1000
+ReadOnlyRecommend=0
+Page=sk
+PageInfo="sk",4,"A3Landscape",$FFFFFF
+LogicalView=1
+DecodeDomain=0
+ViewModePageIndividually=1
+ViewMode=4
+ViewFormat=0
+UseNondependenceDashLine=0
+FontName=Meiryo UI
+FontSize=12
+PaperSize=A4Landscape
+HeaderLeft=
+HeaderCenter=
+HeaderRight=
+FooterLeft=
+FooterCenter=
+FooterRight=
+ShowPageoutRelation=1
+RDBMSType=7
+RDBMSTypeName=PostgreSQL
+GenerateDropTableStatement=1
+DropTableIfExists=1
+CreatePkIndex=1
+DefaultPkName=%0:s_PKC
+DefaultPkIndexName=%0:s_PKI
+DefaultIndexName=%0:s_IX%1:d
+DefaultFkName=%0:s_FK%1:d
+SqlSeparator=0
+UpperCaseKeyword=1
+ShowTag=1
+ShowCommonAttributes=0
+BugFixEntityWidth=0
+
+[Entity]
+PName=sk.medical_embeddings
+LName=sk.medical_embeddings
+Comment=
+TableInnerOption=
+TableOption=
+Page=SK
+Left=900
+Top=100
+Field="embedding_id","embedding_id","UUID","NOT NULL",0,"uid_generate_v4()","",$000028FF,""
+Field="pt_id","pt_id","@INT","NOT NULL",,"0","",$000099FF,""
+Field="source_id","source_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF,""
+Field="source_type","source_type","TEXT","NOT NULL",,"\qssmix\q","",$FFFFFFFF,""
+Field="content","content","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="embedding","embedding","VECTOR(1536)","NOT NULL",,"","",$000099FF,""
+Field="created_at","created_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+UsingCommonColumns=0
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20250415114207
+Position="SK",900,100
+ZOrder=192
+
+[Entity]
+PName=sk.ssmix_sources
+LName=sk.ssmix_sources
+Comment=
+TableInnerOption=
+TableOption=
+Page=sk
+Left=100
+Top=100
+Field="source_id","source_id","UUID","NOT NULL",0,"uid_generate_v4()","",$000028FF,""
+Field="pt_id","pt_id","@INT","NOT NULL",,"0","",$000099FF,""
+Field="source_file","source_file","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="section_type","section_type","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="created_at","created_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+UsingCommonColumns=0
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20250415114516
+Position="sk",100,100
+ZOrder=193
+
+[Relation]
+Entity1=sk.ssmix_sources
+Entity2=sk.medical_embeddings
+RelationType1=2
+RelationType2=3
+Fields1=source_id
+Fields2=source_id
+Cardinarity1=
+Cardinarity2=
+Position="SK",0,2000,4861,1429,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=200
+Bar2=486
+Bar3=143
+TermPos1=R
+TermPos2=R
+ZOrder=195

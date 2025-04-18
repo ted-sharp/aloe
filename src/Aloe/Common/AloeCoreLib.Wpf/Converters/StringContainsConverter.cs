@@ -17,6 +17,11 @@ public sealed class StringContainsConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
+        if (value is null)
+        {
+            return false;
+        }
+
         var headerText = this.ExtractHeaderText(value);
         if (String.IsNullOrEmpty(headerText))
         {
@@ -36,7 +41,7 @@ public sealed class StringContainsConverter : IValueConverter
     /// Header が TextBlock ならその Text を、文字列ならそのまま返す。
     /// それ以外の場合は VisualTree をたどって最初に見つかった TextBlock の Text を返す。
     /// </summary>
-    private string ExtractHeaderText(object header)
+    private string? ExtractHeaderText(object header)
     {
         switch (header)
         {
@@ -57,15 +62,15 @@ public sealed class StringContainsConverter : IValueConverter
                 }
                 break;
         }
-        return header.ToString();
+        return header?.ToString();
     }
 
-    private TextBlock FindChildTextBlock(DependencyObject parent)
+    private TextBlock? FindChildTextBlock(DependencyObject parent)
     {
         var count = VisualTreeHelper.GetChildrenCount(parent);
         for (var i = 0; i < count; i++)
         {
-            DependencyObject child = VisualTreeHelper.GetChild(parent, i);
+            var child = VisualTreeHelper.GetChild(parent, i);
             if (child is TextBlock tb)
             {
                 return tb;

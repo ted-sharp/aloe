@@ -23,12 +23,15 @@ pgpass.conf をコピーする。
 `[repo]` はこのリポジトリを指すものとする。
 
 テーブル作成用スクリプトを実行する。
-基本的にはダブルクリックでの実行を想定しています。
+初回のみ拡張を有効にする。
 
 ```cmd
 > CD [repo]\sql\pg_setup\
 > .\00_setup.bat
 ```
+
+拡張有効化
+`[repo]\sql\pg_setup\ext_create_extensions.sql`
 
 必要であれば PGTune で設定を作成するとよい。
 

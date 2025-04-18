@@ -45,6 +45,20 @@ public class ServiceStatus
         this.StartStopMenuText = state.ToStartStopMenuText();
         this.StartStopMenuImage = state.ToStartStopMenuImage();
     }
+
+    public void SetNotFound()
+    {
+        this.State = null;
+        this.StateText = "---";
+        this.Icon = Icons.Circle.Value;
+        this.Image = Images.Circle.Value;
+        this.CanStartStop = false;
+        this.CanRegisterUnregister = false;
+        this.RegisterMenuText = "---";
+        this.RegisterMenuImage = null;
+        this.StartStopMenuText = "---";
+        this.StartStopMenuImage = null;
+    }
 }
 
 public static class ServiceControllerStatusExtensions
@@ -134,14 +148,14 @@ public static class ServiceControllerStatusExtensions
     {
         return status switch
         {
-            ServiceControllerStatus.Running => Icons.CheckCircle.Value,
-            ServiceControllerStatus.Stopped => Icons.Close.Value,
+            ServiceControllerStatus.Running => Icons.PlayCircle.Value,
+            ServiceControllerStatus.Stopped => Icons.StopCircle.Value,
             ServiceControllerStatus.StartPending => Icons.Hourglass.Value,
             ServiceControllerStatus.StopPending => Icons.Hourglass.Value,
             ServiceControllerStatus.ContinuePending => Icons.Hourglass.Value,
             ServiceControllerStatus.PausePending => Icons.Hourglass.Value,
-            ServiceControllerStatus.Paused => Icons.Pause.Value,
-            _ => Icons.DoNotDisturb.Value,
+            ServiceControllerStatus.Paused => Icons.PauseCircle.Value,
+            _ => Icons.Cancel.Value,
         };
     }
 
@@ -152,14 +166,14 @@ public static class ServiceControllerStatusExtensions
     {
         return status switch
         {
-            ServiceControllerStatus.Running => Images.CheckCircle.Value,
-            ServiceControllerStatus.Stopped => Images.Close.Value,
+            ServiceControllerStatus.Running => Images.PlayCircle.Value,
+            ServiceControllerStatus.Stopped => Images.StopCircle.Value,
             ServiceControllerStatus.StartPending => Images.Hourglass.Value,
             ServiceControllerStatus.StopPending => Images.Hourglass.Value,
             ServiceControllerStatus.ContinuePending => Images.Hourglass.Value,
             ServiceControllerStatus.PausePending => Images.Hourglass.Value,
-            ServiceControllerStatus.Paused => Images.Pause.Value,
-            _ => Images.DoNotDisturb.Value,
+            ServiceControllerStatus.Paused => Images.PauseCircle.Value,
+            _ => Images.Cancel.Value,
         };
     }
 }

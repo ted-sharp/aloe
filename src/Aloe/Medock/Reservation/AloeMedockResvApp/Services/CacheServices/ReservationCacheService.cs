@@ -208,6 +208,11 @@ public class ReservationCacheService
             .OrderByDescending(x => x.StartDate)
             .FirstOrDefault();
 
+        if (def is null)
+        {
+            return [];
+        }
+
         // 定義されている最大の slot の一覧を作成する
         var cols = new HashSet<string>();
 

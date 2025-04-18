@@ -28,7 +28,7 @@ public partial class MainHeader : UserControl
 
 public class DiseaseInfo
 {
-    public string StartDate { get; set; }
-    public string DiseaseName { get; set; }
-    public string Outcome { get; set; }
+    public string StartDate { get; set; } = "";
+    public string DiseaseName { get; set; } = "";
+    public string Outcome { get; set; } = "";
 }

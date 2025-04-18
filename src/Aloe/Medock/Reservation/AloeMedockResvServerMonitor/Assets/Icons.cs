@@ -10,11 +10,12 @@ namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Assets;
 
 public static class Icons
 {
-    public static Lazy<Icon> CheckCircle = new(() => Images.CheckCircle.Value.ToIcon());
-    public static Lazy<Icon> Close = new(() => Images.Close.Value.ToIcon());
+    public static Lazy<Icon> PlayCircle = new(() => Images.PlayCircle.Value.ToIcon());
+    public static Lazy<Icon> StopCircle = new(() => Images.StopCircle.Value.ToIcon());
     public static Lazy<Icon> Hourglass = new(() => Images.Hourglass.Value.ToIcon());
-    public static Lazy<Icon> Pause = new(() => Images.Pause.Value.ToIcon());
-    public static Lazy<Icon> DoNotDisturb = new(() => Images.DoNotDisturb.Value.ToIcon());
+    public static Lazy<Icon> PauseCircle = new(() => Images.PauseCircle.Value.ToIcon());
+    public static Lazy<Icon> Cancel = new(() => Images.Cancel.Value.ToIcon());
+    public static Lazy<Icon> Circle = new(() => Images.Circle.Value.ToIcon());
 
     // Win32 API の DestroyIcon を利用して一時的に作成したハンドルを解放します。
     [DllImport("user32.dll", CharSet = CharSet.Auto)]

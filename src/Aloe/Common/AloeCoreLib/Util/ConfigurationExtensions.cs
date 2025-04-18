@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 
 namespace Aloe.Common.AloeCoreLib.Util;
 
+// ReSharper disable ArrangeStaticMemberQualifier
+
 public static class ConfigurationExtensions
 {
     /// <summary>
@@ -19,7 +21,7 @@ public static class ConfigurationExtensions
     {
         var settings = configuration.GetSection(typeof(T).Name)
             .Get<T>();
-        return settings ?? new();
+        return settings ?? new T();
     }
 
     /// <summary>

@@ -164,6 +164,16 @@
           "StartProject": true
         }
       }
+    },
+
+    "SSMIX": {
+      "Projects": {
+        "AloeSsmixSample": {
+          "CommandLineArguments": "",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
     }
 
   }

@@ -1,6 +1,8 @@
 using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Settings;
 using Microsoft.Extensions.Options;
 using System.ServiceProcess;
+using Aloe.Common.AloeCoreLib.Util;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor;
 
@@ -45,6 +47,18 @@ public class MonitorBackgroundService : BackgroundService
         var serviceName = this._settings.WindowsServiceName;
         var existingService = ServiceController.GetServices()
             .FirstOrDefault(s => s.ServiceName.Equals(serviceName, StringComparison.OrdinalIgnoreCase));
+
+        if (existingService is null)
+        {
+            var serviceFullPath = this._settings.GetWindowsServiceFullPath();
+            if (!File.Exists(serviceFullPath))
+            {
+                // ファイルが存在しなければ専用のステータスとする
+                this._serviceStatus.SetNotFound();
+                this._logger.LogInformation($"Status: NotFound at {DateTimeOffset.Now} [{serviceFullPath}]");
+                return;
+            }
+        }
 
         var state = existingService?.Status;
         this._serviceStatus.SetState(state);
