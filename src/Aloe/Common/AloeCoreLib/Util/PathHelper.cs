@@ -16,4 +16,19 @@ public class PathHelper
 
         return Path.GetFullPath(combined);
     }
+
+    public static string[] GetFiles(
+        string path,
+        string searchPattern,
+        SearchOption searchOption = SearchOption.AllDirectories)
+    {
+        var fullPath = FromBase(path);
+        if (!Directory.Exists(fullPath))
+        {
+            return [];
+        }
+
+        var files = Directory.GetFiles(fullPath, searchPattern, searchOption);
+        return files;
+    }
 }

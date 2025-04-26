@@ -64,7 +64,8 @@ public class PostCsvImporter
               , prefecture
               , city
               , town
-            FROM ext.raw_zip_codes;
+            FROM ext.raw_zip_codes
+            ;
             """,
 
             // インデックスを作成する

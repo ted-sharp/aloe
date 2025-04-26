@@ -1,10 +1,10 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Settings;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using System.Diagnostics;
 using System.ServiceProcess;
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Common.AloeCoreLib.Win32;
 using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Assets;
+using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Configuration;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor;
 
@@ -12,7 +12,7 @@ public class TrayIconHostedService : IHostedService
 {
     private readonly ILogger _logger;
     private NotifyIcon? _notifyIcon;
-    private readonly AloeMonitorSettings _settings;
+    private readonly IOptionsMonitor<AloeMonitorOptions> _options;
     private readonly IHostApplicationLifetime _appLifetime;
     private Thread? _uiThread;
     private readonly ServiceStatus _serviceStatus;
@@ -23,18 +23,20 @@ public class TrayIconHostedService : IHostedService
 
     public TrayIconHostedService(
         ILogger<TrayIconHostedService> logger,
-        IOptions<AloeMonitorSettings> options,
+        IOptionsMonitor<AloeMonitorOptions> options,
         IHostApplicationLifetime appLifetime,
         ServiceStatus serviceStatus)
     {
         this._logger = logger;
-        this._settings = options.Value;
+        this._options = options;
         this._appLifetime = appLifetime;
         this._serviceStatus = serviceStatus;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        var options = this._options.CurrentValue;
+
         // STAスレッドを作成してUIコンポーネントの生成とメッセージループを実行
         this._uiThread = new Thread(() =>
         {
@@ -47,7 +49,7 @@ public class TrayIconHostedService : IHostedService
             contextMenu.Items.Add(statusMenuItem);
 
             // "サービス フォルダを開く"
-            var servicePath = this._settings.GetWindowsServiceFullPath();
+            var servicePath = options.GetWindowsServiceFullPath();
             var openServiceMenuItem = new ToolStripMenuItem("サービス フォルダを開く", null, (sender, e) => this.OpenExeFolder(servicePath));
             openServiceMenuItem.Image = Images.FolderOpen.Value;
             contextMenu.Items.Add(openServiceMenuItem);
@@ -103,7 +105,8 @@ public class TrayIconHostedService : IHostedService
 
             // UI 更新用タイマー（UIスレッド上で動作）
             var timer = new System.Windows.Forms.Timer();
-            timer.Interval = this._settings.MonitoringInterval;
+            var interval = options.MonitoringInterval;
+            timer.Interval = interval;
             timer.Tick += (sender, e) =>
             {
                 this.RefreshStatus();
@@ -187,7 +190,8 @@ public class TrayIconHostedService : IHostedService
 
     private void ToggleServiceRegistration()
     {
-        var serviceName = this._settings.WindowsServiceName;
+        var options = this._options.CurrentValue;
+        var serviceName = options.WindowsServiceName;
 
         // サービス一覧から対象サービスが存在するかチェック
         var existingService = ServiceController.GetServices()
@@ -195,16 +199,24 @@ public class TrayIconHostedService : IHostedService
 
         if (existingService == null)
         {
+            var servicePath = options.WindowsServicePath;
+            var serviceDescription = options.WindowsServiceDescription;
+            var serviceStartType = options.WindowsServiceStartType;
+            var serviceAccount = options.WindowsServiceAccount;
+            var serviceDependencies = options.WindowsServiceDependencies;
+            var serviceResets = options.WindowsServiceFailureResets;
+            var serviceActions = options.WindowsServiceFailureActions;
+
             // サービス登録（sc.exe を利用）
             var isSuccessful = Sc.CreateService(
-                this._settings.WindowsServiceName,
-                this._settings.WindowsServicePath,
-                this._settings.WindowsServiceDescription,
-                this._settings.WindowsServiceStartType,
-                this._settings.WindowsServiceAccount,
-                this._settings.WindowsServiceDependencies,
-                this._settings.WindowsServiceFailureResets,
-                this._settings.WindowsServiceFailureActions,
+                serviceName,
+                servicePath,
+                serviceDescription,
+                serviceStartType,
+                serviceAccount,
+                serviceDependencies,
+                serviceResets,
+                serviceActions,
                 this._logger);
             if (isSuccessful)
             {
@@ -219,7 +231,7 @@ public class TrayIconHostedService : IHostedService
         {
             // サービス登録解除
             var isSuccessful = Sc.DeleteService(
-                this._settings.WindowsServiceName,
+                serviceName,
                 this._logger);
             if (isSuccessful)
             {
@@ -235,7 +247,7 @@ public class TrayIconHostedService : IHostedService
 
     private void ToggleServiceStartStop()
     {
-        var serviceName = this._settings.WindowsServiceName;
+        var serviceName = this._options.CurrentValue.WindowsServiceName;
         try
         {
             using var service = new ServiceController(serviceName);
@@ -262,7 +274,7 @@ public class TrayIconHostedService : IHostedService
 
     private void RestartService()
     {
-        var serviceName = this._settings.WindowsServiceName;
+        var serviceName = this._options.CurrentValue.WindowsServiceName;
         try
         {
             using var service = new ServiceController(serviceName);

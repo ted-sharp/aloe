@@ -2,9 +2,8 @@
 using System.Diagnostics;
 using System.Windows;
 using Aloe.Common.AloeCoreLib.Wpf.Extensions;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Configuration;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
@@ -25,35 +24,35 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
 /// </remarks>
 public partial class LoginWindow
 {
-    private readonly LoginIni _ini;
+    private readonly UserOptions _options;
 
     private bool _isForceClose;
 
-    public LoginWindow(LoginIni ini)
+    public LoginWindow(UserOptions options)
     {
         this.InitializeComponent();
 
         this.Title = App.AppName;
         this.VersionText.Text = App.AppVersion;
 
-        this._ini = ini;
-        this.InitializeValue(ini);
+        this._options = options;
+        this.InitializeValue(options);
     }
 
     /// <summary>
     /// 設定ファイルの値を反映します。
     /// </summary>
-    private void InitializeValue(LoginIni ini)
+    private void InitializeValue(UserOptions options)
     {
-        this.UserRememberedCheckBox.IsChecked = ini.IsUserRemembered ?? false;
+        this.UserRememberedCheckBox.IsChecked = options.IsUserRemembered ?? false;
 
-        if (ini.IsUserRemembered.HasValue && ini.IsUserRemembered.Value)
+        if (options.IsUserRemembered.HasValue && options.IsUserRemembered.Value)
         {
-            this.UserTextBox.Text = ini.User ?? "";
+            this.UserTextBox.Text = options.User ?? "";
         }
-        if (ini.IsPasswordRemembered.HasValue && ini.IsPasswordRemembered.Value)
+        if (options.IsPasswordRemembered.HasValue && options.IsPasswordRemembered.Value)
         {
-            this.PasswordTextBox.Text = ini.Password ?? "";
+            this.PasswordTextBox.Text = options.Password ?? "";
         }
     }
 
@@ -128,7 +127,7 @@ public partial class LoginWindow
     private void LoginWindow_OnClosing(object? sender, CancelEventArgs e)
     {
         // 閉じるときに設定を保存します。
-        this.SaveIniFile();
+        this.SaveUserOptions();
 
         // 強制閉じるだとキャンセルしません。
         if (this._isForceClose)
@@ -144,30 +143,30 @@ public partial class LoginWindow
     /// <summary>
     /// ログイン画面の情報をINIファイルに保存します。
     /// </summary>
-    private void SaveIniFile()
+    private void SaveUserOptions()
     {
         try
         {
             var isRemembered = this.UserRememberedCheckBox.IsChecked ?? false;
 
-            this._ini.IsUserRemembered = isRemembered;
-            this._ini.IsPasswordRemembered = isRemembered;
+            this._options.IsUserRemembered = isRemembered;
+            this._options.IsPasswordRemembered = isRemembered;
             if (isRemembered)
             {
-                this._ini.User = this.UserTextBox.Text;
-                this._ini.Password = this.PasswordTextBox.Text;
+                this._options.User = this.UserTextBox.Text;
+                this._options.Password = this.PasswordTextBox.Text;
             }
             else
             {
-                this._ini.User = "";
-                this._ini.Password = "";
+                this._options.User = "";
+                this._options.Password = "";
             }
 
             // 変更になることを考慮して毎回取得し直します。
             var config = App.Resolve<IConfiguration>();
-            this._ini.HostUrl = config.GetGrpcUrl();
+            this._options.HostUrl = config.GetGrpcUrl();
 
-            this._ini.Save(App.IniFilePath);
+            this._options.Save();
         }
         catch (Exception ex)
         {
@@ -205,7 +204,7 @@ public partial class LoginWindow
     {
         this.UserRememberedCheckBox.IsChecked = false;
 
-        this._ini.Clear();
+        //this._options.Clear();
 
         // TODO: Window位置情報ファイルもリセットする
     }

@@ -2,6 +2,7 @@
 using System.Windows;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+
 public class WindowService
 {
     private readonly IServiceProvider _services;

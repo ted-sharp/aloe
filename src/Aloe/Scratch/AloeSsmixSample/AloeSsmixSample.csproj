@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
+    <UserSecretsId>c497a1ff-b37e-4e03-b901-d9e807b58f61</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,8 +20,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Configuration.UserSecrets" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.46.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.46.0" />
+    <PackageReference Include="Microsoft.SemanticKernel" Version="1.47.0" />
+    <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.47.0" />
     <PackageReference Include="Ookii.Dialogs.Wpf" Version="5.0.1" />
   </ItemGroup>
 

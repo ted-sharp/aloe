@@ -82,6 +82,18 @@
       }
     },
 
+    "Trace App(Standalone login Equip)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "StartExternalProgram": "C:\\Program Files\\dotnet\\dotnet.exe",
+          "CommandLineArguments": "trace collect --format speedscope --output \"$(TargetDir)$(ProjectName).nettrace\" -- $(TargetDir)$(ProjectName).exe --standalone --user=admin --pwd=admin --screen=4",
+          // https://www.speedscope.app
+          // https://github.com/jlfwong/speedscope#usage
+          "WorkingDirectory": "$(TargetDir)"
+        }
+      }
+    },
+
     "App(Standalone login Daily)": {
       "Projects": {
         "AloeMedockResvApp": {

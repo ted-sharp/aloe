@@ -38,7 +38,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
@@ -74,14 +74,14 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
             <Label
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                Content="ダウンロードURL" />
+                Content="郵便番号CSV URL" />
             <TextBox
                 x:Name="DownloadUrlTextBox"
                 Grid.Column="1"
@@ -101,7 +101,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
@@ -126,7 +126,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>

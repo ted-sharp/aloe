@@ -42,14 +42,14 @@
             </Grid.RowDefinitions>
 
             <DockPanel Grid.Row="0" Margin="0,2">
-                <TextBlock Width="72" DockPanel.Dock="Left">カルテ番号</TextBlock>
-                <TextBox x:Name="KarteNumberTextBox">12345678901234567890</TextBox>
-            </DockPanel>
-
-            <DockPanel Grid.Row="1" Margin="0,2">
                 <TextBlock Width="72" DockPanel.Dock="Left">SS-MIX2 パス</TextBlock>
                 <Button Click="OpenSsmixPathButton_OnClick" DockPanel.Dock="Right">...</Button>
                 <TextBox x:Name="SsmixPathTextBox">C:\ssmix</TextBox>
+            </DockPanel>
+
+            <DockPanel Grid.Row="1" Margin="0,2">
+                <TextBlock Width="72" DockPanel.Dock="Left">カルテ番号</TextBlock>
+                <TextBox x:Name="KarteNumberTextBox">12345678901234567890</TextBox>
             </DockPanel>
 
             <StackPanel

@@ -13,26 +13,43 @@ namespace Aloe.Common.AloeCoreLib.Util;
 
 public static class ConfigurationExtensions
 {
+    // TODO: Microsoft.Extensions.Configuration.Json が必要なため、ここではないほうがよいかも？
     /// <summary>
-    /// 指定された IConfiguration から設定値を取得し、<typeparamref name="T"/> 型のインスタンスを生成します。
+    /// 設定ファイルを登録します。
     /// </summary>
-    public static T GetSettings<T>(this IConfiguration configuration)
-        where T : class, new()
+    public static IConfigurationBuilder AddJsonFiles(this IConfigurationBuilder builder, IEnumerable<string> files)
     {
-        var settings = configuration.GetSection(typeof(T).Name)
-            .Get<T>();
-        return settings ?? new T();
+        var enumerable = files as string[] ?? files.ToArray();
+        foreach (var file in enumerable)
+        {
+            builder.AddJsonFile(file, optional: true, reloadOnChange: true);
+        }
+
+        return builder;
     }
 
     /// <summary>
     /// DIに設定用のクラスを登録します。
     /// </summary>
-    public static IHostApplicationBuilder AddSettings<T>(this IHostApplicationBuilder builder)
+    public static IHostApplicationBuilder BindSection<T>(this IHostApplicationBuilder builder)
         where T : class
     {
-        builder.Services.Configure<T>(options => builder.Configuration.GetSection(typeof(T).Name)
+        builder.Services
+            .Configure<T>(options => builder.Configuration.GetSection(typeof(T).Name)
             .Bind(options));
 
         return builder;
+    }
+
+    /// <summary>
+    /// 指定された IConfiguration から設定値を取得し、<typeparamref name="T"/> 型のインスタンスを生成します。
+    /// </summary>
+    public static T BindSection<T>(this IConfiguration configuration)
+        where T : class, new()
+    {
+        var instance = configuration
+            .GetSection(typeof(T).Name)
+            .Get<T>();
+        return instance ?? new T();
     }
 }

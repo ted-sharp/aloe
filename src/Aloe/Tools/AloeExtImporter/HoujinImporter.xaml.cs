@@ -20,6 +20,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Windows.Controls;
 using System.Security.Policy;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace AloeExtImporter;
 
@@ -35,8 +36,15 @@ public partial class HoujinImporter : UserControl
 
     private void HoujinImporter_OnLoaded(object sender, RoutedEventArgs e)
     {
-        this.RefreshHoujinDownloadStatus();
-        this.RefreshJisDownloadStatus();
+        try
+        {
+            this.RefreshHoujinDownloadStatus();
+            this.RefreshJisDownloadStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+        }
     }
 
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -129,12 +137,12 @@ public partial class HoujinImporter : UserControl
 
     private void RefreshHoujinDownloadStatus()
     {
-        var csvFilePath = this.GetHoujinCsvFilePath();
+        var filePath = this.GetHoujinCsvFilePath();
 
-        var isFileExists = File.Exists(csvFilePath);
+        var isFileExists = File.Exists(filePath);
         if (isFileExists)
         {
-            this.HoujinTextBox.Text = csvFilePath;
+            this.HoujinTextBox.Text = filePath;
         }
 
         this.SetHoujinDownloadStatus(isFileExists ? State.Completed : State.None);
@@ -142,19 +150,14 @@ public partial class HoujinImporter : UserControl
 
     private string GetHoujinCsvFilePath()
     {
-        // 1. 今日の日付から先月末を算
-        var today = DateTime.Today;
-        var lastDayOfPrevMonth = new DateTime(today.Year, today.Month, 1).AddDays(-1);
-
-        // 2. yyyyMMdd 形式の文字列を作る
-        var dateString = lastDayOfPrevMonth.ToString("yyyyMMdd");
-
-        // 3. ファイル名を組み立てる (例: zenkou_all_20230228.zip)
         var work = this.GetWorkDirectory();
-        var fileName = "00_zenkoku_all_" + dateString + ".zip";
-        var filePath = System.IO.Path.Combine(work, fileName);
+        var files = PathHelper.GetFiles(work, "00_zenkoku_all_*.zip");
+        if (files.Length > 0)
+        {
+            return files[0];
+        }
 
-        return filePath;
+        return "";
     }
 
     private void SetHoujinDownloadStatus(State state)

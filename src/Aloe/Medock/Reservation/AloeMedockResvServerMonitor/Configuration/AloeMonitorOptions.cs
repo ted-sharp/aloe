@@ -1,32 +1,12 @@
 ﻿using Aloe.Common.AloeCoreLib.Util;
-using Microsoft.Extensions.Configuration;
 
-namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Settings;
+namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Configuration;
 
 /// <summary>
 /// コマンドライン引数、設定ファイル、シークレット、環境変数から値を読み込みます。
 /// </summary>
-public class AloeMonitorSettings
+public class AloeMonitorOptions
 {
-
-    public static IConfigurationRoot CreateConfiguration(string[] args, string fileName = "appsettings.json")
-    {
-        var config = new ConfigurationBuilder()
-            // サービスとして登録する場合でも読めるように exe を基準とする
-            .SetBasePath(AppContext.BaseDirectory)
-            // 設定ファイル
-            .AddJsonFile(fileName, optional: true, reloadOnChange: true)
-            // シークレット(開発環境用)
-            .AddUserSecrets<AloeMonitorSettings>(optional: true)
-            // 環境変数
-            .AddEnvironmentVariables()
-            // コマンドライン引数
-            .AddCommandLine(args)
-            .Build();
-
-        return config;
-    }
-
     /// <summary>
     /// 監視するサービス名です。
     /// </summary>
@@ -71,7 +51,7 @@ public class AloeMonitorSettings
     /// <summary>
     /// サービス監視の間隔(ミリ秒)です。
     /// </summary>
-    public int MonitoringInterval { get; set; }
+    public int MonitoringInterval { get; set; } = 1000;
 
     /// <summary>
     /// 監視するサービスの実行ファイルのフルパスを取得します。

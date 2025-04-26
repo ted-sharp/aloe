@@ -13,10 +13,11 @@ using Microsoft.Extensions.Hosting;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
+/// <remarks>
+/// App.Global
+/// </remarks>
 public partial class App
 {
-    #region Global
-
     public static readonly AssemblyName AsmName = Assembly.GetExecutingAssembly().GetName();
 
     public static readonly string AppVersion = $"v{App.AsmName.Version?.Major ?? 0}.{App.AsmName.Version?.Minor ?? 0}";
@@ -56,6 +57,8 @@ public partial class App
 
     #region Global / Session
 
+    // TODO: ログインユーザー
+
     public static SessionDto? Session { get; set; }
 
     public static bool HasSession => App.Session != null;
@@ -75,6 +78,4 @@ public partial class App
     }
 
     #endregion Global / Session
-
-    #endregion Global
 }

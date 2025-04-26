@@ -1,6 +1,7 @@
 ﻿using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Common.AloeCoreLib.Logging;
+using Aloe.Common.AloeCoreLib.Util;
 using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -9,6 +10,7 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Aloe.Medock.Reservation.AloeMedockResvServer.Configuration;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -23,14 +25,26 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureSeeder<T>(this T builder, bool isSqlLoggingEnabled, string connectionStringName)
+    internal static T ConfigureSeeder<T>(this T builder, IConfigurationRoot config)
         where T : IHostApplicationBuilder
     {
+        var configArgs = config.BindSection<AloeServerArgs>();
+
         builder
-            .AddPostgreSql(isSqlLoggingEnabled, connectionStringName)
+            .AddConfiguration(config)
+            .AddPostgreSql(configArgs.IsSqlLogging, configArgs.ConnectionStringName)
             .AddSeederServices()
             .AddSerilog();
 
+        return builder;
+    }
+
+    /// <summary>
+    /// 設定クラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddConfiguration(this IHostApplicationBuilder builder, IConfigurationRoot config)
+    {
+        builder.Configuration.AddConfiguration(config);
         return builder;
     }
 
@@ -89,7 +103,7 @@ internal static class HostExtensions
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureServer<T>(this T builder, bool isSqlLoggingEnabled, string connectionStringName)
+    internal static T ConfigureServer<T>(this T builder, IConfigurationRoot config)
         where T : IHostApplicationBuilder
     {
         if (OperatingSystem.IsWindows() && WindowsServiceHelpers.IsWindowsService())
@@ -98,8 +112,11 @@ internal static class HostExtensions
             builder.Services.AddSingleton<IHostLifetime, WindowsServiceLifetime>();
         }
 
+        var configArgs = config.BindSection<AloeServerArgs>();
+
         builder
-            .AddPostgreSql(isSqlLoggingEnabled, connectionStringName)
+            .AddConfiguration(config)
+            .AddPostgreSql(configArgs.IsSqlLogging, configArgs.ConnectionStringName)
             .AddHealthChecks()
             .AddServerServices()
             .AddDomainServices()
@@ -203,7 +220,7 @@ internal static class HostExtensions
 
     #endregion ConfigureServer
 
-    #region ConfigureServerApp
+    #region ConfigureServerWebApp
 
     /// <summary>
     /// ホストを設定します。
@@ -232,5 +249,5 @@ internal static class HostExtensions
         return host;
     }
 
-    #endregion ConfigureServerApp
+    #endregion ConfigureServerWebApp
 }

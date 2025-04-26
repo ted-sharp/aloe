@@ -1,7 +1,7 @@
-using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Settings;
 using Microsoft.Extensions.Options;
 using System.ServiceProcess;
 using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Configuration;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServerMonitor;
@@ -10,15 +10,15 @@ public class MonitorBackgroundService : BackgroundService
 {
     private readonly ILogger _logger;
     private readonly ServiceStatus _serviceStatus;
-    private readonly AloeMonitorSettings _settings;
+    private readonly IOptionsMonitor<AloeMonitorOptions> _options;
 
     public MonitorBackgroundService(
         ILogger<MonitorBackgroundService> logger,
-        IOptions<AloeMonitorSettings> options,
+        IOptionsMonitor<AloeMonitorOptions> options,
         ServiceStatus serviceStatus)
     {
         this._logger = logger;
-        this._settings = options.Value;
+        this._options = options;
         this._serviceStatus = serviceStatus;
     }
 
@@ -30,7 +30,8 @@ public class MonitorBackgroundService : BackgroundService
             {
                 this.RefreshStatus();
 
-                await Task.Delay(this._settings.MonitoringInterval, stoppingToken);
+                var interval = this._options.CurrentValue.MonitoringInterval;
+                await Task.Delay(interval, stoppingToken);
             }
         }
         catch (TaskCanceledException)
@@ -44,13 +45,13 @@ public class MonitorBackgroundService : BackgroundService
     /// </summary>
     private void RefreshStatus()
     {
-        var serviceName = this._settings.WindowsServiceName;
+        var serviceName = this._options.CurrentValue.WindowsServiceName;
         var existingService = ServiceController.GetServices()
             .FirstOrDefault(s => s.ServiceName.Equals(serviceName, StringComparison.OrdinalIgnoreCase));
 
         if (existingService is null)
         {
-            var serviceFullPath = this._settings.GetWindowsServiceFullPath();
+            var serviceFullPath = this._options.CurrentValue.GetWindowsServiceFullPath();
             if (!File.Exists(serviceFullPath))
             {
                 // ファイルが存在しなければ専用のステータスとする

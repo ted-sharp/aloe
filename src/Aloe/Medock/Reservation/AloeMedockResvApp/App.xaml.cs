@@ -1,37 +1,25 @@
-﻿using System;
-using System.Configuration;
-using System.Data;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Windows;
-using System.Windows.Threading;
+using System.Windows.Controls;
+using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Configuration;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
-using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using CommunityToolkit.Diagnostics;
+using Grpc.Net.Client;
 using H.NotifyIcon;
 using H.NotifyIcon.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
-using System.Reflection;
-using System.Windows.Controls;
-using System.Windows.Interop;
-using System.Windows.Media;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Utils;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
-using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Constants;
-using Grpc.Net.Client;
-using MagicOnion;
-using Aloe.Common.AloeCoreLib.Wpf.Extensions;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
-using System.Runtime;
-using Microsoft.VisualBasic;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -46,7 +34,7 @@ public partial class App : Application
     private ILogger? _logger;
 
     private readonly IConfigurationRoot _config;
-    private readonly AloeClientSettings _settings;
+    private readonly AloeClientArgs _configArgs;
 
     private IHost? _host;
 
@@ -54,14 +42,18 @@ public partial class App : Application
     private LogWindow? _logWindow;
     private TaskbarIcon? _notifyIcon;
 
-    public App(IConfigurationRoot config, AloeClientSettings settings)
+    public App(IConfigurationRoot config)
     {
         this._ts.Stamp("Ctor");
 
         this._config = config;
-        this._settings = settings;
+
+        var configArgs = config.BindSection<AloeClientArgs>();
+        this._configArgs = configArgs;
 
         this.RegisterUnhandledExceptionHandlers();
+
+        this.InitializeComponent();
 
         this._ts.Stamp("Ctor finished");
     }
@@ -100,7 +92,7 @@ public partial class App : Application
 
     private void LogFirstChanceException(Exception ex)
     {
-        var isEnabled = this._settings?.IsFirstChanceExceptionLogging ?? false;
+        var isEnabled = this._configArgs?.IsFirstChanceExceptionLogging ?? false;
         if (!isEnabled)
         {
             return;
@@ -127,35 +119,42 @@ public partial class App : Application
 
             base.OnStartup(e);
 
-            var ini = LoginIni.Load(App.IniFilePath);
+            var userOptions = this._config.BindSection<UserOptions>();
 
             // 常駐するかどうか
-            var isResided = this._settings.ScreenCode.IsDefault();
+            var isResided = this._configArgs.ScreenCode.IsDefault();
 
             if (isResided)
             {
+                this._ts.Stamp("LoginWindow Creating...");
                 // IHost 作成前から使う
-                this._loginWindow = new LoginWindow(ini);
+                this._loginWindow = new LoginWindow(userOptions);
                 Application.Current.MainWindow = this._loginWindow;
 
                 this._loginWindow.Show();
 
+                this._ts.Stamp("LoginWindow Created");
+
+                this._ts.Stamp("LogWindow Creating...");
                 // IHost 初期化時にログを出力する RichTextBox を渡すために事前に作成しておく
                 this._logWindow = new LogWindow();
+                this._ts.Stamp("LogWindow Created");
             }
 
+            // 別スレッドで処理
             var task = Task.Run(async () =>
             {
+                this._ts.Stamp("OnStartup Task.Run...");
                 try
                 {
                     this._host = this.InitializeHost(this._config, this._logWindow?.LogRichTextBox);
                     this._loginWindow?.InvokeCompleteInitHost("Host initialized.");
 
                     App.s_services = this.Host.Services;
-                    this._logger = this.Host.Services.GetService<ILogger<App>>(); App.s_services = this.Host.Services;
+                    this._logger = this.Host.Services.GetService<ILogger<App>>();
                     //var confRoot = this.Host.Services.GetService<IConfigurationRoot>();
 
-                    if (this._settings.IsStandalone)
+                    if (this._configArgs.IsStandalone)
                     {
                         var auth = this.Host.Services.GetRequiredService<IAuthGrpcService>();
                         // standalone の場合はDBホスト名を使う
@@ -186,36 +185,47 @@ public partial class App : Application
 
                 // ロードが終わったらインジケーターを止める
                 this._loginWindow?.InvokeCompleteInitTask("Startup finished.");
+
+                this._ts.Stamp("OnStartup Task.Run finished");
+                this._ts.DumpAsync();
             });
 
-            if (!String.IsNullOrWhiteSpace(this._settings.User))
+            if (!String.IsNullOrWhiteSpace(this._configArgs.User))
             {
                 // 引数指定があるとき
                 var isSuccessful = await this.LoginAsync(task,
-                    this._settings.User,
-                    this._settings.Password,
-                    this._settings.ScreenCode);
+                    this._configArgs.User,
+                    this._configArgs.Password,
+                    this._configArgs.ScreenCode);
                 if (isSuccessful)
                 {
+                    this._ts.Stamp("OnStartup finished");
+                    this._ts.DumpAsync();
                     return;
                 }
             }
-            else if (ini.IsReadyForAutoLogin)
+            else if (userOptions.IsReadyForAutoLogin)
             {
                 // 自動ログインのとき
                 var isSuccessful = await this.LoginAsync(task,
-                    ini.User,
-                    ini.Password);
+                    userOptions.User,
+                    userOptions.Password);
                 if (isSuccessful)
                 {
+                    this._ts.Stamp("OnStartup finished");
+                    this._ts.DumpAsync();
                     return;
                 }
             }
-
-            if (!isResided)
+            else
             {
-                // 画面指定があって開けなかったら終了
-                this.Shutdown(0);
+                this._ts.Stamp("OnStartup finished");
+
+                if (!isResided)
+                {
+                    // 画面指定があって開けなかったら終了
+                    this.Shutdown(0);
+                }
             }
 
             //await Task.WhenAll(task);
@@ -223,11 +233,12 @@ public partial class App : Application
         catch (Exception ex)
         {
             this.SetError(ex, "OnStartup failed.");
+            this._ts.DumpAsync();
         }
         finally
         {
-            this._ts.Stamp("OnStartup finally");
-            this._ts.DumpAsync();
+            // ダンプするタイミングは、タスクが終わったときとする
+            //this._ts.DumpAsync();
         }
     }
 
@@ -257,24 +268,20 @@ public partial class App : Application
     {
         this.SetStatus("Host Initializing...");
 
-        var args = Environment.GetCommandLineArgs();
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
 
-        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
-
-        builder.Configuration.AddConfiguration(config);
-
-        if (this._settings.IsStandalone)
+        if (this._configArgs.IsStandalone)
         {
-            builder.ConfigureStandalone(logTextBox, this._settings);
+            builder.ConfigureStandalone(config, logTextBox);
         }
         else
         {
-            builder.ConfigureClient(logTextBox);
+            builder.ConfigureClient(config, logTextBox);
         }
 
         var host = builder.Build();
 
-        this.SetStatus("Host initialized");
+        this.SetStatus("Host initialized.");
 
         return host;
     }

@@ -38,7 +38,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
@@ -74,7 +74,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
@@ -82,7 +82,7 @@
             <Label
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                Content="EXCELファイル" />
+                Content="特定健診項目(xlsx)" />
             <TextBox
                 x:Name="MhlwTextBox"
                 Grid.Column="1"
@@ -99,6 +99,7 @@
                 Margin="10,0"
                 Click="OpenMhlwButton_OnClick"
                 Content="選択..."
+                Foreground="#ff6f00"
                 Style="{StaticResource MaterialDesignRaisedButton}" />
             <Button
                 Grid.Column="3"
@@ -111,7 +112,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="Auto" MinWidth="160" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
@@ -125,7 +126,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>

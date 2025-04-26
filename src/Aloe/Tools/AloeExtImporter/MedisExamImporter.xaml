@@ -1,5 +1,5 @@
 ﻿<UserControl
-    x:Class="AloeExtImporter.MedisImporter"
+    x:Class="AloeExtImporter.MedisExamImporter"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -9,6 +9,7 @@
     d:Background="DarkOliveGreen"
     d:DesignHeight="480"
     d:DesignWidth="640"
+    Loaded="MedisExamImporter_OnLoaded"
     mc:Ignorable="d">
 
     <UserControl.Resources>
@@ -23,7 +24,7 @@
     </UserControl.Resources>
 
     <StackPanel d:Margin="4">
-        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="MEDIS 臨床検査マスター" />
+        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="MEDIS 臨床検査マスター(JLAC10)" />
 
         <StackPanel Margin="0,20">
             <TextBlock Margin="0,0,0,5" Text="臨床検査マスター: 1万件" />
@@ -37,7 +38,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
@@ -73,7 +74,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
@@ -81,7 +82,7 @@
             <Label
                 Grid.Column="0"
                 HorizontalAlignment="Right"
-                Content="臨床検査マスター" />
+                Content="臨床検査マスター(xlsx)" />
             <TextBox
                 x:Name="MedisTextBox"
                 Grid.Column="1"
@@ -96,8 +97,9 @@
                 Grid.Column="2"
                 Width="100"
                 Margin="10,0"
-                Click="OpenMedisButton_OnClick"
+                Click="OpenMedisExamButton_OnClick"
                 Content="選択..."
+                Foreground="#ff6f00"
                 Style="{StaticResource MaterialDesignRaisedButton}" />
             <Button
                 Grid.Column="3"
@@ -110,7 +112,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="140" />
+                <ColumnDefinition Width="Auto" MinWidth="160" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>
@@ -124,7 +126,7 @@
 
         <Grid Margin="0,5">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" MinWidth="100" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" MinWidth="120" />
             </Grid.ColumnDefinitions>

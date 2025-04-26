@@ -3,6 +3,7 @@ using System.IO;
 using System.Text.Json;
 using System.Windows;
 using AloeSsmixSample.Data;
+using AloeSsmixSample.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.SemanticKernel;
@@ -51,16 +52,22 @@ public partial class MainWindow : Window
             this.VectorizeButton.IsEnabled = false;
             this.VectorizeButton.Content = "解析中";
 
-            // TODO: ssmix_root と カルテ番号から取得したい。GetSsmixPatientPath を作ってください。
-            var path = this.GetSsmixPatientPath();
+            var karteNumber = this.KarteNumberTextBox.Text.Trim();
+            var ssmixRoot = this.SsmixPathTextBox.Text.Trim();
+
+            // TODO: karteNumber から ptId を検索する
+            var ptId = 0;
+
+            var path = this.GetSsmixPatientPath(karteNumber, ssmixRoot);
             var dir = new DirectoryInfo(path);
-            var files = dir.GetFiles();
+
+            // ひとまずSOAP情報のXMLのみ探す。将来的にはHL7オーダー情報も含めてよい。
+            var files = dir.GetFiles("*.xml");
 
             // TODO: そのディレクトリ内のファイルを読み取ってベクトル化する
             foreach (var file in files)
             {
-                // TODO: ファイル内で文単位に分割する
-                var sources = this.CreateSsmixSources(file);
+                var sources = this.CreateSsmixSources(ptId, file);
                 foreach (var source in sources)
                 {
                     // TODO: ベクトル化したものは PostgreSQL pg_vectorに格納する
@@ -80,10 +87,8 @@ public partial class MainWindow : Window
         }
     }
 
-    private string GetSsmixPatientPath()
+    private string GetSsmixPatientPath(string karteNumber, string ssmixRoot)
     {
-        var karteNumber = this.KarteNumberTextBox.Text.Trim();
-        var ssmixRoot = this.SsmixPathTextBox.Text.Trim();
 
         if (karteNumber.Length < 6)
         {
@@ -91,7 +96,6 @@ public partial class MainWindow : Window
         }
         var part1 = karteNumber.Substring(0, 3);
         var part2 = karteNumber.Substring(3, 3);
-
 
         // もしssmixRootに既に患者フォルダが含まれている場合を検出する
         // 末尾の3階層が part1, part2, normalizedKarteNumber と一致していれば、
@@ -118,11 +122,40 @@ public partial class MainWindow : Window
         return Path.Combine(ssmixRoot, part1, part2, karteNumber);
     }
 
-    private SsmixSource[] CreateSsmixSources(FileInfo file)
+    private static readonly ISet<string> SoapSectionCodes = new HashSet<string>
     {
-        // TODO: file を読み取って、その種類によって
+        "MD0018560", // 主観的所見情報 (Ｓ)
+        "MD0018650", // 客観的所見情報 (Ｏ)
+        "MD0018830", // アセスメント情報 (Ａ)
+        "MD0019420", // 計画指示情報 (Ｐ)
+        "MD0022640", // 診療要約（自由記載）(Ｆ)
+    };
 
-        return [];
+
+    private SsmixSourceDto[] CreateSsmixSources(int ptId, FileInfo file)
+    {
+        if (!file.Extension.Equals(".xml", StringComparison.OrdinalIgnoreCase) ||
+            !Hl7CdaHelper.IsSoapCda(file.FullName))
+        {
+            return [];
+        }
+
+        // TODO: そのうち添付ファイルも考慮したい
+        var sections = Hl7CdaHelper.ExtractSections(file.FullName);
+        var sources = sections
+            .Where(x => SoapSectionCodes.Contains(x.SectionType))
+            .Select(x => new SsmixSourceDto()
+            {
+                SourceId = Guid.CreateVersion7(),
+                PtId = ptId,
+                SourceFile = file.FullName,
+                SourceKey = x.SectionKey,
+                SectionType = x.SectionType,
+                Content = x.Content,
+                ContentHash = x.ContentHash,
+            });
+
+        return sources.ToArray();
     }
 
     private void UpdateMessageText(string text)

@@ -1,9 +1,9 @@
 ﻿
 using Aloe.Common.AloeCoreLib.Util;
-using Aloe.Medock.Reservation.AloeMedockResvServer.Settings;
 using CommandLine;
 using Microsoft.Extensions.Hosting;
 using System.Diagnostics.Tracing;
+using Aloe.Medock.Reservation.AloeMedockResvServer.Configuration;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvServer;
 
@@ -17,16 +17,16 @@ public static class Program
             // サービスで起動した場合に exe の位置に変更する必要がある
             Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
-            var config = AloeServerSettings.CreateConfiguration(args);
-            var settings = config.GetSettings<AloeServerSettings>();
-            isSeed = settings.IsSeed;
+            var config = AloeServerConfig.CreateConfigurationRoot(args);
+            var configArgs = config.BindSection<AloeServerArgs>();
+
+            isSeed = configArgs.IsSeed;
 
             if (isSeed)
             {
                 // サンプルデータを挿入する
-                //var host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder(args)
-                var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args)
-                    .ConfigureSeeder(settings.IsSqlLogging, settings.ConnectionStringName)
+                var host = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder()
+                    .ConfigureSeeder(config)
                     .Build();
 
                 var seeder = host.Services.GetRequiredService<Seeder>();
@@ -36,12 +36,13 @@ public static class Program
             else
             {
                 // Kestrel で待ち受ける
-                var host = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder(args)
-                    .ConfigureServer(settings.IsSqlLogging, settings.ConnectionStringName)
+                var host = Microsoft.AspNetCore.Builder.WebApplication.CreateSlimBuilder()
+                    .ConfigureServer(config)
                     .ConfigureKestrel()
                     .Build();
 
-                await host.ConfigureServerWebApp()
+                await host
+                    .ConfigureServerWebApp()
                     .RunAsync()
                     .ConfigureAwait(false);
             }

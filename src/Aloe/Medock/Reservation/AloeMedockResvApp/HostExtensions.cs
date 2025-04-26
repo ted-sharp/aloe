@@ -1,35 +1,25 @@
-﻿using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
+﻿using System.Net.Http;
+using System.Windows.Controls;
+using Aloe.Common.AloeCoreLib.Logging;
+using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Configuration;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services.CacheServices;
 using Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using MagicOnion;
-using Microsoft.Extensions.Hosting;
-using Serilog.Sinks.SystemConsole.Themes;
-using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
-using Aloe.Common.AloeCoreLib.Logging;
 using Grpc.Net.Client;
+using MagicOnion;
 using MagicOnion.Client;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Windows.Controls;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
-using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
-using System.Runtime;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -39,38 +29,72 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
 internal static class HostExtensions
 {
-    #region Configuration
-
-    /// <summary>
-    /// 設定から gRPC 用のURLを取得します。
-    /// </summary>
-    public static string GetGrpcUrl(this IConfiguration config)
-    {
-        var grpcConfigSection = config.GetSection("Client:Targets:gRPC");
-
-        var grpcUrl = grpcConfigSection.GetValue<string>("Url");
-        if (String.IsNullOrEmpty(grpcUrl))
-        {
-            throw new InvalidOperationException("gRPC URL is not configured.");
-        }
-
-        return grpcUrl;
-    }
-
-    #endregion Configuration
-
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
-    internal static T ConfigureClient<T>(this T builder, RichTextBox? logTextBox)
+    internal static T ConfigureClient<T>(this T builder, IConfigurationRoot config, RichTextBox? logTextBox)
         where T : IHostApplicationBuilder
     {
         builder
+            .AddConfiguration(config)
             .AddMagicOnionClient()
             .AddServices()
             .AddSerilog(logTextBox);
 
         return builder;
+    }
+
+    /// <summary>
+    /// 設定クラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddConfiguration(this IHostApplicationBuilder builder, IConfigurationRoot config)
+    {
+        builder.Configuration.AddConfiguration(config);
+        return builder;
+    }
+
+    /// <summary>
+    /// gRPC と MagicOnion と関連クラスを追加します。
+    /// </summary>
+    private static IHostApplicationBuilder AddMagicOnionClient(this IHostApplicationBuilder builder)
+    {
+        // クライアントの gRPC ターゲット設定を読み取る
+        var grpcUrl = builder.Configuration.GetGrpcUrl();
+        if (String.IsNullOrEmpty(grpcUrl))
+        {
+            throw new InvalidOperationException("gRPC URL is not configured.");
+        }
+
+        // GrpcChannel を登録
+        builder.Services.AddSingleton(_ =>
+        {
+            var opt = new GrpcChannelOptions
+            {
+                HttpHandler = new HttpClientHandler(),
+            };
+
+            return GrpcChannel.ForAddress(grpcUrl, opt);
+        });
+
+        // MagicOnion クライアントを登録
+        AddSingletonGrpcService<IAuthGrpcService>();
+        AddSingletonGrpcService<IHolidayGrpcService>();
+        AddSingletonGrpcService<IReservationDailyGrpcService>();
+        AddSingletonGrpcService<IReservationEquipmentGrpcService>();
+
+        return builder;
+
+        // local function
+        void AddSingletonGrpcService<T>()
+            where T : class, IService<T>
+        {
+            builder.Services.AddSingleton<T>(services =>
+            {
+                // GrpcChannel を取得し MagicOnion クライアントを作成
+                var channel = services.GetRequiredService<GrpcChannel>();
+                return MagicOnionClient.Create<T>(channel);
+            });
+        }
     }
 
     /// <summary>
@@ -116,66 +140,21 @@ internal static class HostExtensions
         return builder;
     }
 
-    /// <summary>
-    /// gRPC と MagicOnion と関連クラスを追加します。
-    /// </summary>
-    private static IHostApplicationBuilder AddMagicOnionClient(this IHostApplicationBuilder builder)
-    {
-        // TODO: コマンドライン引数からも設定できるようにする
-
-        // クライアントの gRPC ターゲット設定を読み取る
-        //var grpcConfigSection = builder.Configuration.GetSection("Client:Targets:gRPC");
-        //var grpcUrl = grpcConfigSection.GetValue<string>("Url");
-        var grpcUrl = builder.Configuration.GetGrpcUrl();
-        if (String.IsNullOrEmpty(grpcUrl))
-        {
-            throw new InvalidOperationException("gRPC URL is not configured.");
-        }
-
-        // GrpcChannel を登録
-        builder.Services.AddSingleton(_ =>
-        {
-            var opt = new GrpcChannelOptions
-            {
-                HttpHandler = new HttpClientHandler(),
-            };
-
-            return GrpcChannel.ForAddress(grpcUrl, opt);
-        });
-
-        // MagicOnion クライアントを登録
-        AddSingletonGrpcService<IAuthGrpcService>();
-        AddSingletonGrpcService<IHolidayGrpcService>();
-        AddSingletonGrpcService<IReservationDailyGrpcService>();
-        AddSingletonGrpcService<IReservationEquipmentGrpcService>();
-
-        return builder;
-
-        // local function
-        void AddSingletonGrpcService<T>()
-            where T : class, IService<T>
-        {
-            builder.Services.AddSingleton<T>(services =>
-            {
-                // GrpcChannel を取得し MagicOnion クライアントを作成
-                var channel = services.GetRequiredService<GrpcChannel>();
-                return MagicOnionClient.Create<T>(channel);
-            });
-        }
-    }
-
     #region Standalone
 
     /// <summary>
     /// 構成の追加を行います。
     /// </summary>
     internal static T ConfigureStandalone<T>(this T builder,
-        RichTextBox? logTextBox,
-        AloeClientSettings settings)
+        IConfigurationRoot config,
+        RichTextBox? logTextBox)
         where T : IHostApplicationBuilder
     {
+        var configArgs = config.BindSection<AloeClientArgs>();
+
         builder
-            .AddPostgreSql(settings.IsStandaloneSqlLogging, settings.ConnectionStringName)
+            .AddConfiguration(config)
+            .AddPostgreSql(configArgs.IsStandaloneSqlLogging, configArgs.ConnectionStringName)
             .AddDomainServices()
             .AddStandaloneService()
             .AddServices()
@@ -232,6 +211,7 @@ internal static class HostExtensions
 
         builder.Services.AddTransient<IReservationDailyService, ReservationDailyService>();
         builder.Services.AddTransient<IReservationEquipmentService, ReservationEquipmentService>();
+
         return builder;
     }
 

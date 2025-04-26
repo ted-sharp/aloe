@@ -1,8 +1,7 @@
 ﻿using System.Windows;
 using Aloe.Common.AloeCoreLib.Util;
-using Microsoft.Extensions.Configuration;
-
-using Aloe.Medock.Reservation.AloeMedockResvApp.Settings;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Configuration;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Services;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
@@ -19,44 +18,41 @@ internal static class Program
         {
             var ts = new Timestamper("Main");
 
+            ts.Stamp("Mutex Checking...");
+
+            const string mutexName = "AloeMedockResvAppMutex";
+            using var mutex = new Mutex(false, mutexName, out var isFirstInstance);
+
+            if (!isFirstInstance)
+            {
+                // 既存インスタンスへ引数を通知して即終了
+                NamedPipeService.Send(mutexName, args);
+                return;
+            }
+
+            ts.Stamp("Mutex Checked.");
+
             ts.Stamp("Config Initializing...");
 
-            var config = AloeClientSettings.CreateConfiguration(args);
-            var settings = config.GetSettings<AloeClientSettings>();
+            // コマンドライン対応およびDI以前に使用するため先に読み込んでいます。
+            var config = AloeClientConfig.CreateConfigurationRoot(args);
 
             ts.Stamp("Config Initialized.");
 
+            var app = new App(config);
+
+            ts.Stamp("NamedPipe Initializing...");
+
+            // 最初のインスタンスだけパイプ受信サーバーを起動
+            using var ipcService = new NamedPipeService();
+
+            ipcService.ArgumentsReceived += app.IpcService_ArgumentsReceived;
+            ipcService.Listen(mutexName);
+
+            ts.Stamp("NamedPipe Initialized.");
+
             ts.DumpAsync();
 
-            // TODO: 引数なしで、すでに起動中だったらアクティブにしたい
-            // KarteNumber, ScreenCode が指定されていた場合は、まったく同じやつだったらアクティブにする？
-            //const string mutexName = @"Global\AloeMedockResvAppMutex";
-            //using var mutex = new Mutex(false, mutexName, out var isCreatedNew);
-            //if (!isCreatedNew)
-            //{
-            //    using var pipeClient = new NamedPipeClientStream(
-            //        ".",
-            //        mutexName,
-            //        PipeDirection.Out,
-            //        PipeOptions.Asynchronous);
-
-            //    pipeClient.Connect();
-
-            //    using var writer = new StreamWriter(pipeClient)
-            //    {
-            //        AutoFlush = true,
-            //    };
-
-            //    foreach (var arg in args)
-            //    {
-            //        writer.WriteLine(arg);
-            //    }
-
-            //    return;
-            //}
-
-            var app = new App(config, settings);
-            app.InitializeComponent();
             app.Run();
         }
         catch (Exception ex)
@@ -65,4 +61,5 @@ internal static class Program
             Environment.Exit(1);
         }
     }
+
 }

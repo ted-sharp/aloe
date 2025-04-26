@@ -1,5 +1,5 @@
 -- Project Name : aloe_reservation_grid
--- Date/Time    : 2025/04/01 10:45:52
+-- Date/Time    : 2025/04/25 14:24:30
 -- Author       : user
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -11,6 +11,67 @@
   Ç±ÇÃã@î\ÇÕàÍéûìIÇ… $$TableName ÇÃÇÊÇ§Ç»àÍéûÉeÅ[ÉuÉãÇçÏê¨ÇµÇ‹Ç∑ÅB
   Ç±ÇÃã@î\ÇÕ A5:SQL Mk-2Ç≈ÇÃÇ›óLå¯Ç≈Ç†ÇÈÇ±Ç∆Ç…íçà”ÇµÇƒÇ≠ÇæÇ≥Ç¢ÅB
 */
+
+-- ext.icd10_index_terms
+-- * BackupToTempTable
+DROP TABLE if exists ext.icd10_index_terms CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.icd10_index_terms (
+  index_term TEXT DEFAULT '' NOT NULL
+  , linked_code TEXT DEFAULT '' NOT NULL
+  , linked_table_code TEXT DEFAULT '' NOT NULL
+  , linked_name_variant_code TEXT DEFAULT '' NOT NULL
+  , synonym_type_code TEXT DEFAULT '' NOT NULL
+  , character_variant_type_code TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_icd10_index_terms
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_icd10_index_terms CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_icd10_index_terms (
+  index_term TEXT DEFAULT '' NOT NULL
+  , linked_code TEXT DEFAULT '' NOT NULL
+  , linked_table_code TEXT DEFAULT '' NOT NULL
+  , linked_name_variant_code TEXT DEFAULT '' NOT NULL
+  , synonym_type_code TEXT DEFAULT '' NOT NULL
+  , character_variant_type_code TEXT DEFAULT '' NOT NULL
+  , icd10_2013_entry_type_code TEXT DEFAULT '' NOT NULL
+  , reserved1 TEXT DEFAULT '' NOT NULL
+  , reserved2 TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.facility_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.facility_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.facility_codes (
+  facility_code TEXT DEFAULT '' NOT NULL
+  , facility_name TEXT DEFAULT '' NOT NULL
+  , zip_code TEXT DEFAULT '' NOT NULL
+  , address TEXT DEFAULT '' NOT NULL
+  , phone TEXT DEFAULT '' NOT NULL
+  , website TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_special_health_facility_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_special_health_facility_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_special_health_facility_codes (
+  facility_code TEXT DEFAULT '' NOT NULL
+  , facility_type TEXT DEFAULT '' NOT NULL
+  , facility_name TEXT DEFAULT '' NOT NULL
+  , zip_code TEXT DEFAULT '' NOT NULL
+  , phone TEXT DEFAULT '' NOT NULL
+  , address TEXT DEFAULT '' NOT NULL
+  , website TEXT DEFAULT '' NOT NULL
+  , owner TEXT DEFAULT '' NOT NULL
+) ;
 
 -- ext.raw_fhir_observation_codes
 -- * BackupToTempTable
@@ -48,6 +109,81 @@ CREATE TABLE ext.raw_mhlw_xml_tokutei_kenshin_items (
   , item_code_oid TEXT
   , xml_remarks TEXT
   , remarks TEXT
+) ;
+
+-- ext.icd10_modifier_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.icd10_modifier_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.icd10_modifier_codes (
+  modifier_code TEXT DEFAULT '' NOT NULL
+  , modifier_name TEXT DEFAULT '' NOT NULL
+  , modifier_name_kana TEXT DEFAULT '' NOT NULL
+  , modifier_position_code TEXT DEFAULT '' NOT NULL
+  , modifier_classification_code TEXT DEFAULT '' NOT NULL
+  , modifier_mutex_group_code TEXT DEFAULT '' NOT NULL
+  , modifier_description TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_icd10_modifier_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_icd10_modifier_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_icd10_modifier_codes (
+  change_flag TEXT DEFAULT '' NOT NULL
+  , modifier_id TEXT DEFAULT '' NOT NULL
+  , modifier_name TEXT DEFAULT '' NOT NULL
+  , modifier_name_kana TEXT DEFAULT '' NOT NULL
+  , modifier_code TEXT DEFAULT '' NOT NULL
+  , modifier_position_code TEXT DEFAULT '' NOT NULL
+  , modifier_classification_code TEXT DEFAULT '' NOT NULL
+  , modifier_mutex_group_code TEXT DEFAULT '' NOT NULL
+  , receipt_modifier_code TEXT DEFAULT '' NOT NULL
+  , modifier_description TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.icd10_diagnosis_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.icd10_diagnosis_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.icd10_diagnosis_codes (
+  diagnosis_code TEXT DEFAULT '' NOT NULL
+  , diagnosis_name TEXT DEFAULT '' NOT NULL
+  , diagnosis_name_kana TEXT DEFAULT '' NOT NULL
+  , diagnosis_frequency_level TEXT DEFAULT '' NOT NULL
+  , diagnosis_domain_code TEXT DEFAULT '' NOT NULL
+  , modifier_recommendation_code TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_icd10_diagnosis_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_icd10_diagnosis_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_icd10_diagnosis_codes (
+  change_flag TEXT DEFAULT '' NOT NULL
+  , diagnosis_id TEXT DEFAULT '' NOT NULL
+  , diagnosis_name TEXT DEFAULT '' NOT NULL
+  , diagnosis_name_kana TEXT DEFAULT '' NOT NULL
+  , diagnosis_frequency_level TEXT DEFAULT '' NOT NULL
+  , diagnosis_code TEXT DEFAULT '' NOT NULL
+  , diagnosis_code_2013 TEXT DEFAULT '' NOT NULL
+  , diagnosis_subcode_2013 TEXT DEFAULT '' NOT NULL
+  , reserved1 TEXT DEFAULT '' NOT NULL
+  , reserved2 TEXT DEFAULT '' NOT NULL
+  , receipt_diagnosis_code TEXT DEFAULT '' NOT NULL
+  , receipt_diagnosis_abbreviated_name TEXT DEFAULT '' NOT NULL
+  , diagnosis_domain_code TEXT DEFAULT '' NOT NULL
+  , revision_number TEXT DEFAULT '' NOT NULL
+  , updated_date TEXT DEFAULT '' NOT NULL
+  , migrated_diagnosis_id TEXT DEFAULT '' NOT NULL
+  , modifier_recommendation_code TEXT DEFAULT '' NOT NULL
+  , insurance_claim_exclusion_code TEXT DEFAULT '' NOT NULL
+  , reserved3 TEXT DEFAULT '' NOT NULL
+  , reserved4 TEXT DEFAULT '' NOT NULL
 ) ;
 
 -- ext.jlac10_codes
@@ -223,6 +359,43 @@ CREATE TABLE ext.raw_zip_codes (
   , update_reason TEXT DEFAULT '' NOT NULL
 ) ;
 
+COMMENT ON TABLE ext.icd10_index_terms IS 'ext.icd10_index_terms';
+COMMENT ON COLUMN ext.icd10_index_terms.index_term IS 'index_term';
+COMMENT ON COLUMN ext.icd10_index_terms.linked_code IS 'linked_code';
+COMMENT ON COLUMN ext.icd10_index_terms.linked_table_code IS 'linked_table_code:1: ïañºÉ}ÉXÉ^Å[, 2: èCè¸åÍÉ}ÉXÉ^Å[';
+COMMENT ON COLUMN ext.icd10_index_terms.linked_name_variant_code IS 'linked_name_variant_code:1: äøéö, 2: ÉJÉi';
+COMMENT ON COLUMN ext.icd10_index_terms.synonym_type_code IS 'synonym_type_code';
+COMMENT ON COLUMN ext.icd10_index_terms.character_variant_type_code IS 'character_variant_type_code';
+
+COMMENT ON TABLE ext.raw_icd10_index_terms IS 'ext.raw_icd10_index_terms';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.index_term IS 'çıà¯ópåÍ';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.linked_code IS 'ëŒâûópåÍÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.linked_table_code IS 'ïañºèCè¸åÍãÊï™:1: ïañºÉ}ÉXÉ^Å[, 2: èCè¸åÍÉ}ÉXÉ^Å[';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.linked_name_variant_code IS 'ÉJÉiäøéöãÊï™:1: äøéö, 2: ÉJÉi';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.synonym_type_code IS 'ìØã`åÍãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.character_variant_type_code IS 'àŸéöëÃãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.icd10_2013_entry_type_code IS 'ëÊàÍî≈çÃópï\ãLãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.reserved1 IS 'åæåÍãÊï™(ó\íË)';
+COMMENT ON COLUMN ext.raw_icd10_index_terms.reserved2 IS 'è»ó™ãÊï™(ó\íË)';
+
+COMMENT ON TABLE ext.facility_codes IS 'ext.facility_codes';
+COMMENT ON COLUMN ext.facility_codes.facility_code IS 'facility_code';
+COMMENT ON COLUMN ext.facility_codes.facility_name IS 'facility_name';
+COMMENT ON COLUMN ext.facility_codes.zip_code IS 'zip_code';
+COMMENT ON COLUMN ext.facility_codes.address IS 'address';
+COMMENT ON COLUMN ext.facility_codes.phone IS 'phone';
+COMMENT ON COLUMN ext.facility_codes.website IS 'website';
+
+COMMENT ON TABLE ext.raw_special_health_facility_codes IS 'ext.raw_special_health_facility_codes';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_code IS 'à„ó√ã@ä÷ÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_type IS 'à„ó√ã@ä÷éÌï ';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_name IS 'à„ó√ã@ä÷ñº';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.zip_code IS 'óXï÷î‘çÜ';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.phone IS 'ìdòbî‘çÜ';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.address IS 'èäç›ín';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.website IS 'ÉzÅ[ÉÄÉyÅ[ÉW';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.owner IS 'åoâcéÂëÃ';
+
 COMMENT ON TABLE ext.raw_fhir_observation_codes IS 'ext.raw_fhir_observation_codes';
 COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_code IS 'JLAC10ÉRÅ[Éh';
 COMMENT ON COLUMN ext.raw_fhir_observation_codes.jurisdiction_coding_system IS 'ÉVÉXÉeÉÄ';
@@ -249,20 +422,71 @@ COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_code_oid IS 'çÄñ⁄É
 COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_remarks IS 'XMLå¸ÇØîıçl';
 COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.remarks IS 'îıçl';
 
+COMMENT ON TABLE ext.icd10_modifier_codes IS 'ext.icd10_modifier_codes';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_code IS 'modifier_code';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_name IS 'modifier_name';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_name_kana IS 'modifier_name_kana';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_position_code IS 'modifier_position_code';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_classification_code IS 'modifier_classification_code';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_mutex_group_code IS 'modifier_mutex_group_code';
+COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_description IS 'modifier_description';
+
+COMMENT ON TABLE ext.raw_icd10_modifier_codes IS 'ext.raw_icd10_modifier_codes';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.change_flag IS 'ïœçXãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_id IS 'èCè¸åÍä«óùî‘çÜ';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_name IS 'èCè¸åÍï\ãL';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_name_kana IS 'èCè¸åÍï\ãLÉJÉi';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_code IS 'èCè¸åÍÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_position_code IS 'ê⁄ë±à íuãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_classification_code IS 'èCè¸åÍãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_mutex_group_code IS 'îrëºÉOÉãÅ[ÉvÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.receipt_modifier_code IS 'ÉåÉZìdéZèCè¸åÍÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_modifier_codes.modifier_description IS 'èCè¸åÍê‡ñæópÉâÉxÉã';
+
+COMMENT ON TABLE ext.icd10_diagnosis_codes IS 'ext.icd10_diagnosis_codes';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.diagnosis_code IS 'diagnosis_code';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.diagnosis_name IS 'diagnosis_name';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.diagnosis_name_kana IS 'diagnosis_name_kana';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.diagnosis_frequency_level IS 'diagnosis_frequency_level';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.diagnosis_domain_code IS 'diagnosis_domain_code';
+COMMENT ON COLUMN ext.icd10_diagnosis_codes.modifier_recommendation_code IS 'modifier_recommendation_code';
+
+COMMENT ON TABLE ext.raw_icd10_diagnosis_codes IS 'ext.raw_icd10_diagnosis_codes';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.change_flag IS 'ïœçXãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_id IS 'ïañºä«óùî‘çÜ';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_name IS 'ïañºï\ãL';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_name_kana IS 'ïañºï\ãLÉJÉi';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_frequency_level IS 'çÃëãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_code IS 'ICD10ïWèÄïañºÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_code_2013 IS 'ICD10-2013ÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_subcode_2013 IS 'ï°êîï™óﬁÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved1 IS 'ó\îı1';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved2 IS 'ó\îı2';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.receipt_diagnosis_code IS 'ÉåÉZìdéZèùïañºÉRÅ[Éh';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.receipt_diagnosis_abbreviated_name IS 'ÉåÉZèùïañºè»ó™ñºèÃ';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.diagnosis_domain_code IS 'égópï™ñÏ';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.revision_number IS 'ïœçXóöóî‘çÜ';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.updated_date IS 'çXêVì˙ït';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.migrated_diagnosis_id IS 'à⁄çsêÊïañºä«óùî‘çÜ';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.modifier_recommendation_code IS 'íPì∆égópã÷é~ãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.insurance_claim_exclusion_code IS 'ï€åØêøãÅäOãÊï™';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved3 IS 'ó\îı3';
+COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved4 IS 'ó\îı4';
+
 COMMENT ON TABLE ext.jlac10_codes IS 'ext.jlac10_codes';
-COMMENT ON COLUMN ext.jlac10_codes.jlac10_code IS 'JLAC10ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.analyte_code IS 'ï™êÕï®_ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.analyte_name IS 'ï™êÕï®_ñºèÃ';
-COMMENT ON COLUMN ext.jlac10_codes.identification_code IS 'éØï _ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.identification_name IS 'éØï _ñºèÃ';
-COMMENT ON COLUMN ext.jlac10_codes.specimen_code IS 'çﬁóø_ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.specimen_name IS 'çﬁóø_ñºèÃ';
-COMMENT ON COLUMN ext.jlac10_codes.methodology_code IS 'ë™íËñ@_ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.methodology_name IS 'ë™íËñ@_ñºèÃ';
-COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_code IS 'åãâ éØï (ã§í )_ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_name IS 'åãâ éØï (ã§í )_ñºèÃ';
-COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_code IS 'åãâ éØï (å≈óL)_ÉRÅ[Éh';
-COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_name IS 'åãâ éØï (å≈óL)_ñºèÃ';
+COMMENT ON COLUMN ext.jlac10_codes.jlac10_code IS 'jlac10_code';
+COMMENT ON COLUMN ext.jlac10_codes.analyte_code IS 'analyte_code';
+COMMENT ON COLUMN ext.jlac10_codes.analyte_name IS 'analyte_name';
+COMMENT ON COLUMN ext.jlac10_codes.identification_code IS 'identification_code';
+COMMENT ON COLUMN ext.jlac10_codes.identification_name IS 'identification_name';
+COMMENT ON COLUMN ext.jlac10_codes.specimen_code IS 'specimen_code';
+COMMENT ON COLUMN ext.jlac10_codes.specimen_name IS 'specimen_name';
+COMMENT ON COLUMN ext.jlac10_codes.methodology_code IS 'methodology_code';
+COMMENT ON COLUMN ext.jlac10_codes.methodology_name IS 'methodology_name';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_code IS 'result_identifying_general_code';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_general_name IS 'result_identifying_general_name';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_code IS 'result_identifying_specific_code';
+COMMENT ON COLUMN ext.jlac10_codes.result_identifying_specific_name IS 'result_identifying_specific_name';
 
 COMMENT ON TABLE ext.raw_jlac10_codes IS 'ext.raw_jlac10_codes';
 COMMENT ON COLUMN ext.raw_jlac10_codes.jlac10_code_17 IS 'JLAC10ÉRÅ[Éh(17åÖ)';

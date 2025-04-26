@@ -20,17 +20,30 @@ using Microsoft.EntityFrameworkCore;
 using System.Net.Http;
 using System.Windows.Controls;
 using System.Security.Policy;
+using Aloe.Common.AloeCoreLib.Util;
 
 namespace AloeExtImporter;
 
 /// <summary>
-/// MedisImporter.xaml の相互作用ロジック
+/// MedisExamImporter.xaml の相互作用ロジック
 /// </summary>
-public partial class MedisImporter : UserControl
+public partial class MedisExamImporter : UserControl
 {
-    public MedisImporter()
+    public MedisExamImporter()
     {
         this.InitializeComponent();
+    }
+
+    private void MedisExamImporter_OnLoaded(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            this.RefreshMedisStatus();
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show("Error: " + ex.Message);
+        }
     }
 
     private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
@@ -78,7 +91,7 @@ public partial class MedisImporter : UserControl
         }
     }
 
-    private void OpenMedisButton_OnClick(object sender, RoutedEventArgs e)
+    private void OpenMedisExamButton_OnClick(object sender, RoutedEventArgs e)
     {
         try
         {
@@ -88,7 +101,7 @@ public partial class MedisImporter : UserControl
                 && File.Exists(filePath))
             {
                 this.MedisTextBox.Text = filePath;
-                this.SetMedisDownloadStatus(State.Completed);
+                this.SetMedisExamDownloadStatus(State.Completed);
             }
         }
         catch (Exception ex)
@@ -101,9 +114,9 @@ public partial class MedisImporter : UserControl
     {
         try
         {
-            this.SetMedisImportStatus(State.None);
+            this.SetMedisExamImportStatus(State.None);
 
-            await this.ImportMedis();
+            await this.ImportMedisExam();
         }
         catch (Exception ex)
         {
@@ -117,7 +130,32 @@ public partial class MedisImporter : UserControl
         return String.IsNullOrWhiteSpace(work) ? "./tmp/" : work;
     }
 
-    private void SetMedisDownloadStatus(State state)
+    private void RefreshMedisStatus()
+    {
+        var filePath = this.GetMedisFilePath();
+
+        var isFileExists = File.Exists(filePath);
+        if (isFileExists)
+        {
+            this.MedisTextBox.Text = filePath;
+        }
+
+        this.SetMedisExamDownloadStatus(isFileExists ? State.Completed : State.None);
+    }
+
+
+    private string GetMedisFilePath()
+    {
+        var work = this.GetWorkDirectory();
+        var files = PathHelper.GetFiles(work, "まとめ表V*.xlsx");
+        if (files.Length > 0)
+        {
+            return files[0];
+        }
+        return "";
+    }
+
+    private void SetMedisExamDownloadStatus(State state)
     {
         switch (state)
         {
@@ -138,35 +176,35 @@ public partial class MedisImporter : UserControl
         }
     }
 
-    private async Task<bool> ImportMedis()
+    private async Task<bool> ImportMedisExam()
     {
         try
         {
-            this.SetMedisImportStatus(State.InProgress);
+            this.SetMedisExamImportStatus(State.InProgress);
 
             var medisFilePath = this.MedisTextBox.Text ?? "";
 
             if (!File.Exists(medisFilePath))
             {
-                this.SetMedisImportStatus(State.Error);
+                this.SetMedisExamImportStatus(State.Error);
                 return false;
             }
 
-            var importer = new MedisExcelImporter();
-            await Task.Run(() => importer.ImportExelToDatabase(medisFilePath));
+            var importer = new MedisImporter();
+            await Task.Run(() => importer.ImportExamExelToDatabase(medisFilePath));
 
-            this.SetMedisImportStatus(State.Completed);
+            this.SetMedisExamImportStatus(State.Completed);
             return true;
         }
         catch (Exception ex)
         {
             MessageBox.Show("Error: " + ex.Message);
-            this.SetMedisImportStatus(State.Error);
+            this.SetMedisExamImportStatus(State.Error);
             return false;
         }
     }
 
-    private void SetMedisImportStatus(State state)
+    private void SetMedisExamImportStatus(State state)
     {
         switch (state)
         {
@@ -194,5 +232,4 @@ public partial class MedisImporter : UserControl
                 throw new ArgumentOutOfRangeException(nameof(state), state, null);
         }
     }
-
 }

@@ -1,0 +1,153 @@
+﻿<UserControl
+    x:Class="AloeExtImporter.SpecialHealthFacilityImporter"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:AloeExtImporter"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    d:Background="DarkOliveGreen"
+    d:DesignHeight="480"
+    d:DesignWidth="640"
+    Loaded="SpecialHealthFacilityImporter_OnLoaded"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+        <Style TargetType="TextBox">
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Margin" Value="1" />
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel d:Margin="4">
+        <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="社会保険診療報酬支払基金 機関データ" />
+
+        <StackPanel Margin="0,20">
+            <TextBlock Margin="0,0,0,5" Text="6万件 10MB" />
+            <TextBlock Margin="0,0,0,0" Text="ダウンロードページ - 最新データのダウンロード" />
+            <TextBlock>
+                <Hyperlink NavigateUri="https://www.ssk.or.jp/kikankensaku/html/download.html" RequestNavigate="Hyperlink_RequestNavigate">
+                    https://www.ssk.or.jp/kikankensaku/html/download.html
+                </Hyperlink>
+            </TextBlock>
+        </StackPanel>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="作業ディレクトリ" />
+            <TextBox
+                x:Name="WorkTextBox"
+                Grid.Column="1"
+                materialDesign:HintAssist.Hint="./tmp/"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="Folder"
+                Style="{StaticResource MaterialDesignTextBox}"
+                Text="./tmp/" />
+            <Button
+                Grid.Column="2"
+                Width="100"
+                Margin="10,0"
+                Click="BrowseWorkButton_OnClick"
+                Content="選択..."
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+            <Button
+                Grid.Column="3"
+                Width="100"
+                Margin="10,0"
+                Click="OpenWorkButton_OnClick"
+                Content="開く..."
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="機関コード(csv) URL" />
+            <TextBox
+                x:Name="DownloadUrlTextBox"
+                Grid.Column="1"
+                materialDesign:TextFieldAssist.HasFilledTextField="True"
+                materialDesign:TextFieldAssist.HasLeadingIcon="True"
+                materialDesign:TextFieldAssist.LeadingIcon="DownloadBox"
+                Style="{StaticResource MaterialDesignTextBox}"
+                Text="https://www.ssk.or.jp/kikankensaku/html/zip/Pref_00.zip" />
+            <Button
+                Grid.Column="2"
+                Width="100"
+                Margin="10,0"
+                Click="ImportPostButton_OnClick"
+                Content="インポート"
+                Style="{StaticResource MaterialDesignRaisedButton}" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="ダウンロード" />
+            <ProgressBar
+                x:Name="DownloadProgressBar"
+                Grid.Column="1"
+                Height="20"
+                IsIndeterminate="False"
+                Maximum="100"
+                Minimum="0"
+                Value="0" />
+            <TextBlock
+                x:Name="DownloadStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
+        </Grid>
+
+        <Grid Margin="0,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" MinWidth="120" />
+            </Grid.ColumnDefinitions>
+            <Label
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Content="インポート" />
+            <ProgressBar
+                x:Name="ImportProgressBar"
+                Grid.Column="1"
+                Height="20"
+                IsIndeterminate="False"
+                Maximum="100"
+                Minimum="0"
+                Value="0" />
+            <TextBlock
+                x:Name="ImportStatusTextBlock"
+                Grid.Column="2"
+                Width="100"
+                Text="未処理" />
+        </Grid>
+
+    </StackPanel>
+</UserControl>

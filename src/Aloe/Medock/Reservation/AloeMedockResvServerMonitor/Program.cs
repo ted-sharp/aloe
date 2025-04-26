@@ -1,7 +1,7 @@
 using Aloe.Common.AloeCoreLib.Util;
 using Aloe.Common.AloeCoreLib.Win32;
 using Aloe.Medock.Reservation.AloeMedockResvServerMonitor;
-using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Settings;
+using Aloe.Medock.Reservation.AloeMedockResvServerMonitor.Configuration;
 
 // ¸Ši‚³‚ê‚Ä‚¢‚È‚¯‚ê‚ÎA‚±‚±‚ÅÄ‹N“®
 if (!ElevationHelper.EnsureRunAsAdministrator())
@@ -25,7 +25,7 @@ if (!createdNew)
 var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder(args);
 
 builder
-    .AddSettings<AloeMonitorSettings>()
+    .BindSection<AloeMonitorOptions>()
     .AddSerilog();
 
 builder.Services

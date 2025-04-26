@@ -16,11 +16,11 @@ using System.Runtime.ExceptionServices;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 
+/// <remarks>
+/// App.UnhandledException
+/// </remarks>
 public partial class App
 {
-
-    #region UnhandledException
-
     private void RegisterUnhandledExceptionHandlers()
     {
         this.SessionEnding += this.App_SessionEnding;
@@ -87,6 +87,4 @@ public partial class App
         // 例外が処理されたことを通知し、アプリケーションが強制終了しないようにする
         e.Handled = true;
     }
-
-    #endregion UnhandledException
 }

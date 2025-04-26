@@ -70,25 +70,31 @@
                     <dragablz:InterTabController Partition="{StaticResource Partition}" />
                 </dragablz:TabablzControl.InterTabController>
 
-                <TabItem Header="郵便番号">
+                <TabItem Header="日本郵便">
                     <materialDesign:Card Padding="20">
                         <local:PostImporter />
                     </materialDesign:Card>
                 </TabItem>
 
-                <TabItem Header="法人番号/JIS縮退マップ">
+                <TabItem Header="国税庁">
                     <materialDesign:Card Padding="20">
                         <local:HoujinImporter />
                     </materialDesign:Card>
                 </TabItem>
 
-                <TabItem Header="MEDIS">
+                <TabItem Header="MEDIS 病名">
                     <materialDesign:Card Padding="20">
-                        <local:MedisImporter />
+                        <local:MedisDiagnosisImporter />
                     </materialDesign:Card>
                 </TabItem>
 
-                <TabItem Header="厚生労働省">
+                <TabItem Header="MEDIS 検査">
+                    <materialDesign:Card Padding="20">
+                        <local:MedisExamImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
+                <TabItem Header="厚労省">
                     <materialDesign:Card Padding="20">
                         <local:MhlwImporter />
                     </materialDesign:Card>
@@ -97,6 +103,12 @@
                 <TabItem Header="FHIR">
                     <materialDesign:Card Padding="20">
                         <local:FhirImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
+                <TabItem Header="支払基金">
+                    <materialDesign:Card Padding="20">
+                        <local:SpecialHealthFacilityImporter />
                     </materialDesign:Card>
                 </TabItem>
             </dragablz:TabablzControl>

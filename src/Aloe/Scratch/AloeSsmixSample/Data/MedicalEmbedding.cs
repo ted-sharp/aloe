@@ -28,10 +28,6 @@ public class MedicalEmbedding
     [Required]
     public Guid SourceId { get; set; }
 
-    [Column("source_type")]
-    [Required]
-    public string SourceType { get; set; } = String.Empty;
-
     [Column("content")]
     [Required]
     public string Content { get; set; } = String.Empty;
