@@ -20,6 +20,9 @@ public class SessionDto
 
     [Key(2)]
     public required string UserDisplayName { get; init; }
+
+    [Key(3)]
+    public required DateTime LoginAt { get; init; }
 }
 
 public static class SessionExtensions
@@ -31,6 +34,7 @@ public static class SessionExtensions
             SessionId = session.SessionId,
             UserId = session.UserId,
             UserDisplayName = session.UserDisplayName,
+            LoginAt = session.LoginAt,
         };
     }
 }

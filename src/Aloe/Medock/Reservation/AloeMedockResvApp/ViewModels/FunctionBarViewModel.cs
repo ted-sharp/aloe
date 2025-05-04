@@ -254,7 +254,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             this.F10Text.Value = GetFunctionText(FunctionKey.AltF10);
             this.F11Text.Value = GetFunctionText(FunctionKey.AltF11);
             this.F12Text.Value = GetFunctionText(FunctionKey.AltF12);
-            this._logger.LogInformation("Alt が押されました。");
+            this._logger.LogDebug("Alt が押されました。");
         }
         else
         {
@@ -271,7 +271,7 @@ public class FunctionBarViewModel : ViewModelBase, INotifyPropertyChanged, IDisp
             this.F10Text.Value = GetFunctionText(FunctionKey.F10);
             this.F11Text.Value = GetFunctionText(FunctionKey.F11);
             this.F12Text.Value = GetFunctionText(FunctionKey.F12);
-            this._logger.LogInformation("Alt が離れました。");
+            this._logger.LogDebug("Alt が離れました。");
         }
 
         return;

@@ -19,6 +19,7 @@ public static class AloeClientConfig
         "--standalone",
         "--sql",
         "--firstchance",
+        "--resident",
     ];
 
     /// <summary>
@@ -39,6 +40,7 @@ public static class AloeClientConfig
         { "--sql", "AloeClientArgs:IsStandaloneSqlLogging" },
         { "--conn", "AloeClientArgs:ConnectionStringName" },
         { "--firstchance", "AloeClientArgs:IsFirstChanceExceptionLogging" },
+        { "--resident", "AloeClientArgs:IsResident" },
 
         { "--screen", "AloeClientArgs:ScreenCode" },
 

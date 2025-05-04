@@ -52,9 +52,23 @@ https://moji.or.jp/mojikiban/map/
 ※国税庁のJIS縮退マップを使用すれば、JIS第2水準までに変換できます。
 それ以上が必要な場合に使用を検討します。
 
-### 標準病名マスター
+### 医薬品HOTコードマスター
 
-標準病名マスター(ICD10対応)のCSVをダウンロードできます。
+医薬品HOTコードのCSVをダウンロードできます。
+HOTコードマスター 約7万件 18MB程度
+
+医薬品HOT コードマスター ダウンロード ZIP版
+https://www2.medis.or.jp/hcode/
+
+レセ用のコードが必要な場合は、支払基金の医薬品マスターを検討する。
+https://www.ssk.or.jp/seikyushiharai/tensuhyo/kihonmasta/
+
+FHIR HOT13
+https://jpfhir.jp/fhir/core/terminology/igv1/CodeSystem-medis-codesystem-hot13.html
+
+### 病名マスター
+
+病名マスター(ICD10対応)のCSVをダウンロードできます。
 病名マスター 約3万件 5MB程度
 修飾語マスター 約3千件 50KB程度
 索引語マスター 約12万件 7MB程度
@@ -110,6 +124,12 @@ JLAC10コードの一覧のみ欲しい場合に利用できます。
 
 社会保険診療報酬支払基金 機関情報一括ダウンロード
 https://www.ssk.or.jp/kikankensaku/html/download.html
+
+### JP FHIR
+
+https://jpfhir.jp/fhir/core/terminology/igv1/CodeSystem-medis-codesystem-hot13.html
+
+
 
 ## 各種レイアウト
 

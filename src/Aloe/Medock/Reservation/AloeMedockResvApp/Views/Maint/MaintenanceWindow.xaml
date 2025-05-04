@@ -1,12 +1,14 @@
-﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint.MaintenanceWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint"
-        mc:Ignorable="d"
-        Title="MaintenanceWindow" Height="450" Width="800">
-    <Grid>
-        
-    </Grid>
+﻿<Window
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint.MaintenanceWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    Title="MaintenanceWindow"
+    Width="800"
+    Height="450"
+    Icon="/Assets/MaterialIcons/grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico"
+    mc:Ignorable="d">
+    <Grid />
 </Window>

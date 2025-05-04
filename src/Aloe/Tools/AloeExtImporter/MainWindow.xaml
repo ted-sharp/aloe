@@ -82,6 +82,12 @@
                     </materialDesign:Card>
                 </TabItem>
 
+                <TabItem Header="MEDIS 医薬品">
+                    <materialDesign:Card Padding="20">
+                        <local:MedisHotImporter />
+                    </materialDesign:Card>
+                </TabItem>
+
                 <TabItem Header="MEDIS 病名">
                     <materialDesign:Card Padding="20">
                         <local:MedisDiagnosisImporter />

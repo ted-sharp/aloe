@@ -46,6 +46,7 @@ public partial class ErrorWindow : Window
     public ErrorWindow()
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
     }
 
     public void SetEnvironment()

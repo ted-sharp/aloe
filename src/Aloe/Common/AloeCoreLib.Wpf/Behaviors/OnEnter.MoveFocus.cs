@@ -1,6 +1,9 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+
+// ReSharper disable ArrangeStaticMemberQualifier
 
 namespace Aloe.Common.AloeCoreLib.Wpf.Behaviors;
 
@@ -11,16 +14,16 @@ public static partial class OnEnter
             "EnableMoveFocus",
             typeof(bool),
             typeof(OnEnter),
-            new PropertyMetadata(false, OnEnter.OnEnableMoveFocusChanged));
+            new PropertyMetadata(false, OnEnableMoveFocusChanged));
 
     public static bool GetEnableMoveFocus(Window obj)
     {
-        return (bool)obj.GetValue(OnEnter.EnableMoveFocusProperty);
+        return (bool)obj.GetValue(EnableMoveFocusProperty);
     }
 
     public static void SetEnableMoveFocus(Window obj, bool value)
     {
-        obj.SetValue(OnEnter.EnableMoveFocusProperty, value);
+        obj.SetValue(EnableMoveFocusProperty, value);
     }
 
     private static void OnEnableMoveFocusChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -30,11 +33,11 @@ public static partial class OnEnter
         {
             if ((bool)e.NewValue)
             {
-                element.PreviewKeyDown += OnEnter.MoveFocusWindow_PreviewKeyDown;
+                element.PreviewKeyDown += MoveFocusWindow_PreviewKeyDown;
             }
             else
             {
-                element.PreviewKeyDown -= OnEnter.MoveFocusWindow_PreviewKeyDown;
+                element.PreviewKeyDown -= MoveFocusWindow_PreviewKeyDown;
             }
         }
     }
@@ -46,6 +49,13 @@ public static partial class OnEnter
             if (Keyboard.FocusedElement is UIElement focusedElement)
             {
                 e.Handled = true;
+
+                if (focusedElement is Button button)
+                {
+                    // Button なら Click を発火
+                    button.RaiseEvent(new RoutedEventArgs(ButtonBase.ClickEvent));
+                    return;
+                }
 
                 var direction = FocusNavigationDirection.Next;
                 if ((Keyboard.Modifiers & ModifierKeys.Shift) == ModifierKeys.Shift)

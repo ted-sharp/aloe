@@ -35,6 +35,7 @@ public partial class ReservationEquipMonthlyWindow : Window
         ReservationEquipViewModel vm)
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
 
         // ItemsSource にバインドするため、デザイン時の内容をクリアする
         this.EquipTabControl.Items.Clear();

@@ -18,12 +18,14 @@ public class LoginResult
     public required bool IsSuccess { get; set; }
 
     [Key(1)]
-    public required string? ErrorMessage { get; set; }
+    public required bool IsPasswordInvalid { get; set; }
 
     [Key(2)]
-    public required SessionDto? SessionDto { get; set; }
+    public required string? ErrorMessage { get; set; }
 
     [Key(3)]
-    public required string? Host { get; set; }
+    public required SessionDto? SessionDto { get; set; }
 
+    [Key(4)]
+    public required UserDto? UserDto { get; set; }
 }

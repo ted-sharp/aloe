@@ -1,16 +1,19 @@
-﻿<UserControl x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust.LocationTabItem"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-             xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-             xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-             mc:Ignorable="d"
-             d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
-             d:Background="PaleGreen"
-             d:DesignHeight="220" d:DesignWidth="400"
-             MinHeight="180" MinWidth="400"
-             DataContextChanged="LocationTabItem_OnDataContextChanged">
+﻿<UserControl
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust.LocationTabItem"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    MinWidth="400"
+    MinHeight="180"
+    d:Background="PaleGreen"
+    d:DataContext="{d:DesignInstance Type=vm:ReservationEquipTabItemViewModel}"
+    d:DesignHeight="220"
+    d:DesignWidth="400"
+    DataContextChanged="LocationTabItem_OnDataContextChanged"
+    mc:Ignorable="d">
 
     <UserControl.Resources>
         <Style TargetType="ui:PackIcon">
@@ -42,15 +45,24 @@
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
+            <ColumnDefinition
+                Width="*"
+                MinWidth="80"
+                MaxWidth="160" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
+            <ColumnDefinition
+                Width="*"
+                MinWidth="80"
+                MaxWidth="160" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="*" MinWidth="80" MaxWidth="160" />
+            <ColumnDefinition
+                Width="*"
+                MinWidth="80"
+                MaxWidth="160" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -63,73 +75,117 @@
         </Grid.RowDefinitions>
 
         <Label Grid.Row="0" Grid.Column="0">送付先</Label>
-        <StackPanel Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="6" HorizontalAlignment="Left">
+        <StackPanel
+            Grid.Row="0"
+            Grid.Column="1"
+            Grid.ColumnSpan="6"
+            HorizontalAlignment="Left">
             <CheckBox>主要</CheckBox>
-            <TextBlock>　</TextBlock>
+            <TextBlock />
             <CheckBox ToolTip="事前帳票送付先">事前帳票</CheckBox>
-            <TextBlock>　</TextBlock>
+            <TextBlock />
             <CheckBox ToolTip="結果票送付先">結果票</CheckBox>
-            <TextBlock>　</TextBlock>
+            <TextBlock />
             <CheckBox ToolTip="請求書送付先">請求書</CheckBox>
         </StackPanel>
 
         <Label Grid.Row="1" Grid.Column="0">連絡先名</Label>
-        <TextBox Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="6">12345678901234567890</TextBox>
+        <TextBox
+            Grid.Row="1"
+            Grid.Column="1"
+            Grid.ColumnSpan="6">
+            12345678901234567890
+        </TextBox>
 
         <Label Grid.Row="2" Grid.Column="0">〒</Label>
         <TextBox Grid.Row="2" Grid.Column="1">123-1234</TextBox>
-        <Button Grid.Row="2" Grid.Column="2" HorizontalAlignment="Left">
-            <ui:PackIcon Kind="DotsHorizontal"/>
+        <Button
+            Grid.Row="2"
+            Grid.Column="2"
+            HorizontalAlignment="Left">
+            <ui:PackIcon Kind="DotsHorizontal" />
         </Button>
 
         <Label Grid.Row="3" Grid.Column="0">住所1</Label>
-        <TextBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="6">京都府京都市東山区三条通南裏二筋目白川筋西入二丁目南側南木之元町</TextBox>
+        <TextBox
+            Grid.Row="3"
+            Grid.Column="1"
+            Grid.ColumnSpan="6">
+            京都府京都市東山区三条通南裏二筋目白川筋西入二丁目南側南木之元町
+        </TextBox>
 
         <Label Grid.Row="4" Grid.Column="0">住所2</Label>
-        <TextBox Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="6">12345678901234567890</TextBox>
+        <TextBox
+            Grid.Row="4"
+            Grid.Column="1"
+            Grid.ColumnSpan="6">
+            12345678901234567890
+        </TextBox>
 
         <Label Grid.Row="5" Grid.Column="0">住所3</Label>
-        <TextBox Grid.Row="5" Grid.Column="1" Grid.ColumnSpan="6">12345678901234567890</TextBox>
+        <TextBox
+            Grid.Row="5"
+            Grid.Column="1"
+            Grid.ColumnSpan="6">
+            12345678901234567890
+        </TextBox>
 
         <StackPanel Grid.Row="6" Grid.Column="0">
             <Label>受取人名</Label>
-            <ui:PackIcon Kind="AccountTie"/>
+            <ui:PackIcon Kind="AccountTie" />
         </StackPanel>
-        <TextBox Grid.Row="6" Grid.Column="1" Grid.ColumnSpan="3">ご担当者 様</TextBox>
+        <TextBox
+            Grid.Row="6"
+            Grid.Column="1"
+            Grid.ColumnSpan="3">
+            ご担当者 様
+        </TextBox>
 
         <StackPanel Grid.Row="7" Grid.Column="0">
             <Label>TEL1</Label>
-            <ui:PackIcon Kind="Phone"/>
+            <ui:PackIcon Kind="Phone" />
         </StackPanel>
         <TextBox Grid.Row="7" Grid.Column="1">123-456-7890</TextBox>
 
         <StackPanel Grid.Row="7" Grid.Column="2">
             <Label>TEL2</Label>
-            <ui:PackIcon Kind="Phone"/>
+            <ui:PackIcon Kind="Phone" />
         </StackPanel>
         <TextBox Grid.Row="7" Grid.Column="3">123-456-7890</TextBox>
 
         <StackPanel Grid.Row="7" Grid.Column="4">
             <Label>FAX</Label>
-            <ui:PackIcon Kind="Fax"/>
+            <ui:PackIcon Kind="Fax" />
         </StackPanel>
         <TextBox Grid.Row="7" Grid.Column="5">123-456-7890</TextBox>
 
         <StackPanel Grid.Row="8" Grid.Column="0">
             <Label>E-Mail</Label>
-            <ui:PackIcon Kind="EMail"/>
+            <ui:PackIcon Kind="EMail" />
         </StackPanel>
-        <TextBox Grid.Row="8" Grid.Column="1" Grid.ColumnSpan="5">example@example.com</TextBox>
+        <TextBox
+            Grid.Row="8"
+            Grid.Column="1"
+            Grid.ColumnSpan="5">
+            example@example.com
+        </TextBox>
 
-        <StackPanel Grid.Row="9" Grid.Column="0" VerticalAlignment="Top">
+        <StackPanel
+            Grid.Row="9"
+            Grid.Column="0"
+            VerticalAlignment="Top">
             <Label>メモ</Label>
-            <ui:PackIcon Kind="NoteTextOutline"/>
+            <ui:PackIcon Kind="NoteTextOutline" />
         </StackPanel>
-        <TextBox Grid.Row="9" Grid.Column="1" Grid.ColumnSpan="6"
-                 VerticalAlignment="Stretch"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
-                 VerticalScrollBarVisibility="Visible"
-        >{メモ}</TextBox>
+        <TextBox
+            Grid.Row="9"
+            Grid.Column="1"
+            Grid.ColumnSpan="6"
+            VerticalAlignment="Stretch"
+            AcceptsReturn="True"
+            TextWrapping="Wrap"
+            VerticalScrollBarVisibility="Visible">
+            {メモ}
+        </TextBox>
     </Grid>
 </UserControl>

@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using Aloe.Common.AloeCoreLib.Util;
 using Microsoft.Extensions.Logging;
 
@@ -11,6 +12,7 @@ namespace Aloe.Common.AloeCoreLib.Win32;
 /// <summary>
 /// sc.exe (Service Controller) を実行します。
 /// </summary>
+[SupportedOSPlatform("windows")]
 public static class Sc
 {
     public static bool CreateService(

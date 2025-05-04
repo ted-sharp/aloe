@@ -6,6 +6,7 @@ using MagicOnion.Server;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Drawing;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Constants;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Domain.Services;
 

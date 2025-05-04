@@ -170,6 +170,11 @@ public class ReservationCacheService
         return slots;
     }
 
+    // TODO: その月が含まれるスロットを全部取得する
+    // そのデータを基に、Dictionary<date, slotId> のデータを作る
+    // あとは選択した日のslotIdが変われば、再描画をすればよい
+
+
     public async Task<List<string>> GetOrFetchDailySlotStrings(DateOnly date, int? floorId, bool useCache = true)
     {
 
@@ -283,7 +288,7 @@ public class ReservationCacheService
 
     #region Equipments
 
-    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchSlots(int year, int month, int? orEquipId, bool useCache = true)
+    public async Task<List<ReservationEquipmentSlotDto>> GetOrFetchEquipSlots(int year, int month, int? orEquipId, bool useCache = true)
     {
 
         var key = $"equipmentSlots_{year:0000}{month:00}_{orEquipId ?? 0}";
@@ -304,7 +309,7 @@ public class ReservationCacheService
         return slots;
     }
 
-    public async Task<List<string>> GetOrFetchSlotStrings(int year, int month, int? equipId, bool useCache = true)
+    public async Task<List<string>> GetOrFetchEquipSlotStrings(int year, int month, int? equipId, bool useCache = true)
     {
         var key = $"equipmentSlotStrings_{year:0000}{month:00}_{equipId ?? 0}";
         if (useCache && this._cache.TryGetValue<List<string>>(
@@ -313,8 +318,8 @@ public class ReservationCacheService
             return slotStrings ?? [];
         }
 
-        var slots = await this.GetOrFetchSlots(year, month, equipId, useCache);
-        slotStrings = this.CreateSlotStrings(slots, equipId);
+        var slots = await this.GetOrFetchEquipSlots(year, month, equipId, useCache);
+        slotStrings = this.CreateEquipSlotStrings(slots, equipId);
 
         this._cache.Set(key, slots, new MemoryCacheEntryOptions
         {
@@ -328,7 +333,7 @@ public class ReservationCacheService
     /// <summary>
     /// 最大公約数的なスロットのリストを作成します。
     /// </summary>
-    private List<string> CreateSlotStrings(List<ReservationEquipmentSlotDto> definitions, int? equipId)
+    private List<string> CreateEquipSlotStrings(List<ReservationEquipmentSlotDto> definitions, int? equipId)
     {
         // 定義されている最大の slot の一覧を作成する
         var cols = new HashSet<string>();
@@ -362,15 +367,15 @@ public class ReservationCacheService
         return cols.OrderBy(x => x).ToList();
     }
 
-    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchBookings(string monthString, int equipId, bool useCache = true)
+    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchEquipBookings(string monthString, int equipId, bool useCache = true)
     {
         var date = monthString.ToDateOrToday();
         var year = date.Year;
         var month = date.Month;
-        return await this.GetOrFetchBookings(year, month, equipId, useCache);
+        return await this.GetOrFetchEquipBookings(year, month, equipId, useCache);
     }
 
-    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchBookings(int year, int month, int equipId, bool useCache = true)
+    public async Task<List<ReservationEquipmentBookingDto>> GetOrFetchEquipBookings(int year, int month, int equipId, bool useCache = true)
     {
         var key = $"equipmentBookings_{year:0000}{month:00}_{equipId}";
         if (useCache && this._cache.TryGetValue<List<ReservationEquipmentBookingDto>>(

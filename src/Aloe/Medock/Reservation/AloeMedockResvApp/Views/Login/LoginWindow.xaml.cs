@@ -28,7 +28,7 @@ public partial class LoginWindow
 
     private bool _isForceClose;
 
-    public LoginWindow(UserOptions options)
+    public LoginWindow(UserOptions options, bool isResident)
     {
         this.InitializeComponent();
 
@@ -36,7 +36,10 @@ public partial class LoginWindow
         this.VersionText.Text = App.AppVersion;
 
         this._options = options;
+        this._isForceClose = !isResident;
         this.InitializeValue(options);
+
+        this.Closed += App.Current.Window_OnClosed;
     }
 
     /// <summary>
@@ -88,6 +91,30 @@ public partial class LoginWindow
             // ボタンを押せるようにする
             this.LoginButton.IsEnabled = true;
 
+        });
+    }
+
+    /// <summary>
+    /// ログイン名にフォーカスを移して選択状態にします。
+    /// </summary>
+    public void InvokeSelectAllUser()
+    {
+        this.Dispatcher.InvokeIfNeeded(() =>
+        {
+            this.UserTextBox.Focus();
+            this.UserTextBox.SelectAll();
+        });
+    }
+
+    /// <summary>
+    /// パスワードにフォーカスを移して選択状態にします。
+    /// </summary>
+    public void InvokeSelectAllPassword()
+    {
+        this.Dispatcher.InvokeIfNeeded(() =>
+        {
+            this.PasswordTextBox.Focus();
+            this.PasswordTextBox.SelectAll();
         });
     }
 
@@ -207,6 +234,8 @@ public partial class LoginWindow
         //this._options.Clear();
 
         // TODO: Window位置情報ファイルもリセットする
+
+        this.IniRemoveButton.IsEnabled = false;
     }
 
     private async void LoginButton_OnClick(object sender, RoutedEventArgs e)
@@ -256,6 +285,7 @@ public partial class LoginWindow
             this.InvokeSetStatus("Login successful.");
 
             App.Session = result.SessionDto;
+            App.User = result.UserDto;
 
             var window = App.Resolve<ReservationMainWindow>();
             window.Show();
@@ -266,6 +296,17 @@ public partial class LoginWindow
             var msg = "Login failed.";
             this.InvokeSetStatus(msg);
             this.InvokeShowSnackbar(result.ErrorMessage);
+
+            // 入力し直しやすいように戻す
+            if (result.IsPasswordInvalid)
+            {
+                this.InvokeSelectAllPassword();
+            }
+            else
+            {
+                this.InvokeSelectAllUser();
+
+            }
         }
     }
 
@@ -290,4 +331,5 @@ public partial class LoginWindow
             LoginWindow.LogError(ex);
         }
     }
+
 }

@@ -42,9 +42,13 @@ public class AloeClientArgs
 
     /// <summary>
     /// 起動後に開く画面を指定できます。
-    /// ただし、指定すると常駐しません。
     /// </summary>
     public ScreenCode ScreenCode { get; set; } = ScreenCode.None;
+
+    /// <summary>
+    /// アプリを常駐します。
+    /// </summary>
+    public bool IsResident { get; set; }
 
     /// <summary>
     /// 起動後に画面を開く場合に指定できる患者のカルテ番号です。

@@ -1,14 +1,19 @@
-﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login.LoginWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-        mc:Ignorable="d"
-        Title="LoginWindow"
-        Height="250" Width="400"
-        WindowStartupLocation="CenterScreen"
-        Closing="LoginWindow_OnClosing">
+﻿<Window
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login.LoginWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:bhv="http://schemas.aloe/wpf/behaviors"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
+    Title="LoginWindow"
+    Width="400"
+    Height="250"
+    bhv:OnEnter.EnableMoveFocus="True"
+    Closing="LoginWindow_OnClosing"
+    Icon="/Assets/MaterialIcons/grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico"
+    WindowStartupLocation="CenterScreen"
+    mc:Ignorable="d">
     <Window.Resources>
         <Style TargetType="Label">
             <Setter Property="HorizontalContentAlignment" Value="Right" />
@@ -38,117 +43,137 @@
     </Window.Resources>
 
     <DockPanel>
-        <!-- ステータスバー -->
-        <StatusBar DockPanel.Dock="Bottom" Padding="0">
-            <!-- コーナーを丸める -->
+        <!--  ステータスバー  -->
+        <StatusBar Padding="0" DockPanel.Dock="Bottom">
+            <!--  コーナーを丸める  -->
             <StatusBar.Template>
                 <ControlTemplate>
-                    <Border CornerRadius="0,0,10,10"
-                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
-                            BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                            BorderThickness="1">
+                    <Border
+                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}"
+                        BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                        BorderThickness="1"
+                        CornerRadius="0,0,10,10">
                         <ItemsPresenter />
                     </Border>
                 </ControlTemplate>
             </StatusBar.Template>
 
             <StatusBarItem>
-                <TextBlock x:Name="StatusText"
-                           Text="Startup processing..."
-                           Margin="5,0" />
+                <TextBlock
+                    x:Name="StatusText"
+                    Margin="5,0"
+                    Text="Startup processing..." />
             </StatusBarItem>
 
             <StatusBarItem DockPanel.Dock="Right">
-                <Button x:Name="ShowLogWindowButton"
-                        IsEnabled="False"
-                        BorderThickness="0"
-                        Margin="0,0,5,0"
-                        Click="ShowLogWindowButton_OnClick"
-                >
+                <Button
+                    x:Name="ShowLogWindowButton"
+                    Margin="0,0,5,0"
+                    BorderThickness="0"
+                    Click="ShowLogWindowButton_OnClick"
+                    IsEnabled="False">
                     <ui:PackIcon Kind="Console" />
                 </Button>
             </StatusBarItem>
 
             <StatusBarItem DockPanel.Dock="Right">
-                <TextBlock x:Name="VersionText"
-                           Text="v0.0"
-                           Margin="0" />
+                <TextBlock
+                    x:Name="VersionText"
+                    Margin="0"
+                    Text="v0.0" />
             </StatusBarItem>
 
             <StatusBarItem HorizontalContentAlignment="Stretch">
-                <ProgressBar x:Name="ProgressBar"
-                             IsIndeterminate="True"
-                             Margin="5,0" />
+                <ProgressBar
+                    x:Name="ProgressBar"
+                    Margin="5,0"
+                    IsIndeterminate="True" />
             </StatusBarItem>
 
         </StatusBar>
 
         <Grid>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <ui:PackIcon Grid.Row="1" Grid.Column="0" Kind="Account"/>
-            <!-- MaterialDesignOutlinedTextBox にしたい(参考: デモアプリ) -->
+            <ui:PackIcon
+                Grid.Row="1"
+                Grid.Column="0"
+                Kind="Account" />
+            <!--  MaterialDesignOutlinedTextBox にしたい(参考: デモアプリ)  -->
             <TextBox
-                Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
                 x:Name="UserTextBox"
+                Grid.Row="1"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
                 ui:HintAssist.Hint="User"
-                ui:TextFieldAssist.LeadingIcon="User"
-            />
+                ui:TextFieldAssist.LeadingIcon="User" />
 
-            <ui:PackIcon Grid.Row="2" Grid.Column="0" Kind="Key" HorizontalAlignment="Right"/>
+            <ui:PackIcon
+                Grid.Row="2"
+                Grid.Column="0"
+                HorizontalAlignment="Right"
+                Kind="Key" />
             <TextBox
-                Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
                 x:Name="PasswordTextBox"
+                Grid.Row="2"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
                 ui:HintAssist.Hint="Password"
-                ui:TextFieldAssist.LeadingIcon="Key"
                 ui:PasswordBoxAssist.PasswordMaskedIcon="Circle"
-            />
+                ui:TextFieldAssist.LeadingIcon="Key" />
+
+            <Button
+                x:Name="LoginButton"
+                Grid.Row="3"
+                Grid.Column="1"
+                Grid.ColumnSpan="2"
+                Click="LoginButton_OnClick"
+                Content="Login"
+                IsDefault="True"
+                IsEnabled="False" />
 
             <CheckBox
-                Grid.Row="3" Grid.Column="1"
                 x:Name="UserRememberedCheckBox"
+                Grid.Row="4"
+                Grid.Column="1"
                 Content="Remember me"
                 IsChecked="False"
-            />
+                ToolTip="ログイン情報を保持します。" />
+
             <Button
-                Grid.Row="3" Grid.Column="2"
                 x:Name="IniRemoveButton"
+                Grid.Row="4"
+                Grid.Column="2"
                 Background="Transparent"
                 BorderThickness="0"
-                IsEnabled="False"
                 Click="IniRemoveButton_OnClick"
-                ToolTip="ログイン情報および Window 位置情報をクリアします。"
-            >
-                <ui:PackIcon Kind="CloseCircle" HorizontalAlignment="Right"/>
+                IsEnabled="False"
+                ToolTip="ログイン情報および Window 位置情報をクリアします。">
+                <ui:PackIcon HorizontalAlignment="Right" Kind="CloseCircle" />
             </Button>
 
-            <Button
-                Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="2"
-                x:Name="LoginButton"
-                Content="Login"
-                IsEnabled="False"
-                Click="LoginButton_OnClick"
-            />
-
             <ui:Snackbar
-                Grid.Row="0" Grid.Column="0" Grid.RowSpan="6" Grid.ColumnSpan="4"
                 x:Name="Snackbar"
+                Grid.Row="0"
+                Grid.RowSpan="6"
+                Grid.Column="0"
+                Grid.ColumnSpan="4"
                 HorizontalAlignment="Center"
-                VerticalAlignment="Bottom"
-            />
+                VerticalAlignment="Bottom" />
         </Grid>
     </DockPanel>
 </Window>

@@ -23,6 +23,15 @@
         <Style TargetType="TextBlock">
             <Setter Property="Padding" Value="0,0,5,0" />
         </Style>
+        <Style x:Key="PopupLabel" TargetType="Label">
+            <Setter Property="Padding" Value="10,0,2,0" />
+            <Setter Property="HorizontalContentAlignment" Value="Right" />
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+        </Style>
+        <Style x:Key="PopupTextBlock" TargetType="TextBlock">
+            <Setter Property="Padding" Value="2,0,10,0" />
+            <Setter Property="Foreground" Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
+        </Style>
         <Style TargetType="ComboBox">
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />
@@ -62,16 +71,31 @@
         <!--  Space  -->
         <StatusBarItem Width="20" DockPanel.Dock="Right" />
 
+        <!--  履歴  -->
+        <StatusBarItem DockPanel.Dock="Right" Visibility="Visible">
+            <Button>
+                <!--  TODO: 選択したユーザーか企業を簡単に再選択できるようにしたい  -->
+                <ui:PackIcon Kind="ClipboardTextHistoryOutline" />
+            </Button>
+        </StatusBarItem>
+
+        <!--  設定  -->
+        <StatusBarItem DockPanel.Dock="Right" Visibility="Visible">
+            <Button>
+                <!--  TODO: ユーザー権限によるが、設定画面を開けるようにしたい  -->
+                <ui:PackIcon Kind="CogOutline" />
+            </Button>
+        </StatusBarItem>
 
         <!--  ログ  -->
-        <StatusBarItem DockPanel.Dock="Right" Visibility="Collapsed">
+        <StatusBarItem DockPanel.Dock="Right" Visibility="Visible">
             <Button Command="{Binding ShowLogWindowCommand}">
                 <ui:PackIcon Kind="Console" />
             </Button>
         </StatusBarItem>
 
         <!--  キャッシュクリア  -->
-        <StatusBarItem DockPanel.Dock="Right">
+        <StatusBarItem DockPanel.Dock="Right" ToolTip="キャッシュクリア">
             <StackPanel Orientation="Horizontal">
                 <Button>
                     <!--  TODO: キャッシュを強制開放  -->
@@ -106,6 +130,7 @@
                     <ui:PackIcon Kind="Minus" />
                 </Button>
                 <ComboBox
+                    Width="48"
                     IsEditable="True"
                     ItemStringFormat="{}{0} %"
                     ItemsSource="{Binding ScaleOptions}"
@@ -130,7 +155,7 @@
         </StatusBarItem>
 
         <!--  ログインユーザー名  -->
-        <StatusBarItem DockPanel.Dock="Right">
+        <StatusBarItem DockPanel.Dock="Right" ToolTip="ユーザー">
             <ui:PopupBox PlacementMode="TopAndAlignCentres">
                 <ui:PopupBox.ToggleContent>
                     <StackPanel Orientation="Horizontal">
@@ -138,16 +163,107 @@
                         <TextBlock Text="{Binding User.Value}" />
                     </StackPanel>
                 </ui:PopupBox.ToggleContent>
-                <StackPanel Margin="10">
-                    <CheckBox Content="Item1" />
-                    <CheckBox Content="Item2" />
-                    <CheckBox Content="Item3" />
+                <Grid Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <Label
+                        Grid.Row="0"
+                        Grid.Column="0"
+                        Margin="0,10,0,0"
+                        Content="ユーザー:"
+                        Style="{StaticResource PopupLabel}" />
+                    <TextBlock
+                        Grid.Row="0"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Margin="0,10,0,0"
+                        Style="{StaticResource PopupTextBlock}"
+                        Text="{Binding User.Value}" />
+                    <Label
+                        Grid.Row="1"
+                        Grid.Column="0"
+                        Content="ロール:"
+                        Style="{StaticResource PopupLabel}" />
+                    <TextBlock
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        Grid.ColumnSpan="2"
+                        Style="{StaticResource PopupTextBlock}"
+                        Text="{Binding Role.Value}" />
+                    <Label
+                        Grid.Row="2"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Content="ログイン回数:"
+                        Style="{StaticResource PopupLabel}" />
+                    <TextBlock
+                        Grid.Row="2"
+                        Grid.Column="2"
+                        Style="{StaticResource PopupTextBlock}"
+                        Text="{Binding LoginCount.Value}" />
+                    <Label
+                        Grid.Row="3"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Content="失敗回数:"
+                        Style="{StaticResource PopupLabel}" />
+                    <TextBlock
+                        Grid.Row="3"
+                        Grid.Column="2"
+                        Style="{StaticResource PopupTextBlock}"
+                        Text="{Binding FailureCount.Value}" />
+                    <Label
+                        Grid.Row="4"
+                        Grid.Column="0"
+                        Grid.ColumnSpan="2"
+                        Margin="0,0,0,10"
+                        Content="ログイン時刻:"
+                        Style="{StaticResource PopupLabel}" />
+                    <TextBlock
+                        Grid.Row="4"
+                        Grid.Column="2"
+                        Margin="0,0,0,10"
+                        Style="{StaticResource PopupTextBlock}"
+                        Text="{Binding LoginAt.Value}" />
+                </Grid>
+            </ui:PopupBox>
+        </StatusBarItem>
+
+        <!--  アプリ  -->
+        <StatusBarItem DockPanel.Dock="Right" ToolTip="クライアント">
+            <ui:PopupBox PlacementMode="TopAndAlignCentres">
+                <ui:PopupBox.ToggleContent>
+                    <StackPanel Orientation="Horizontal">
+                        <ui:PackIcon Margin="0,0,3,0" Kind="Monitor" />
+                        <TextBlock Text="{Binding AppVersion.Value}" />
+                    </StackPanel>
+                </ui:PopupBox.ToggleContent>
+                <StackPanel Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                    <WrapPanel Margin="10">
+                        <ui:PackIcon
+                            Margin="0,0,3,0"
+                            Foreground="Green"
+                            Kind="Grass" />
+                        <TextBlock Foreground="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" Text="{Binding AppName.Value}" />
+                    </WrapPanel>
+                    <!--  TODO: その他の何かの情報も表示したい  -->
                 </StackPanel>
             </ui:PopupBox>
         </StatusBarItem>
 
         <!--  DB名  -->
-        <StatusBarItem DockPanel.Dock="Right">
+        <StatusBarItem DockPanel.Dock="Right" ToolTip="データベース">
             <StackPanel Orientation="Horizontal" Visibility="{Binding DatabaseNameVisibility.Value}">
                 <ui:PackIcon Kind="Database" />
                 <TextBlock Text="{Binding DatabaseName.Value}" />
@@ -155,9 +271,9 @@
         </StatusBarItem>
 
         <!--  ホスト名  -->
-        <StatusBarItem DockPanel.Dock="Right">
+        <StatusBarItem DockPanel.Dock="Right" ToolTip="サーバー">
             <StackPanel Orientation="Horizontal">
-                <ui:PackIcon Kind="Lan" />
+                <ui:PackIcon Kind="ServerNetworkOutline" />
                 <TextBlock Text="{Binding HostName.Value}" />
             </StackPanel>
         </StatusBarItem>

@@ -25,6 +25,102 @@ public class MedisImporter
     /// <summary>
     /// CSVファイルをPostgreSQLに取り込む
     /// </summary>
+    public async Task ImportHotCsvToDatabase(string diagnosisPath)
+    {
+        var fullPath = Path.GetFullPath(diagnosisPath);
+        if (!File.Exists(fullPath))
+        {
+            throw new FileNotFoundException($"CSVファイルが見つかりません: {fullPath}");
+        }
+
+        var sqlCommands = new List<string>
+        {
+            // 取り込む前に前のデータを消す
+            "TRUNCATE ext.raw_hot13_codes;",
+
+            // CSV を取り込む
+            $"""
+             COPY ext.raw_hot13_codes
+             FROM '{fullPath}'
+             WITH (
+                 FORMAT   CSV
+               , HEADER   true
+               , ENCODING 'SJIS'
+             )
+             ;
+             """,
+
+            // 取り込む前に前のデータを消す
+            "TRUNCATE ext.hot13_codes;",
+
+            // インデックスがあったら削除する
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX1;",
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX2;",
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX3;",
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX4;",
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX5;",
+            "DROP INDEX IF EXISTS ext.hot13_codes_IX6;",
+
+            // 必要な項目だけ移す
+            """
+            INSERT INTO ext.hot13_codes
+            (
+                hot13_code
+              , hot9_code
+              , hot7_code
+              , yakka_code
+              , yj_code
+              , receipt_code
+              , official_name
+              , product_name
+              , receipt_drug_name
+              , medication_type
+              , pharmaceutical_company
+              , pharmaceutical_distributor
+            )
+            SELECT
+                hot13_code
+              , hot7_code || distributor_code
+              , hot7_code
+              , yakka_code
+              , yj_code
+              , receipt_code
+              , official_name
+              , product_name
+              , receipt_drug_name
+              , medication_type
+              , pharmaceutical_company
+              , pharmaceutical_distributor
+            FROM ext.raw_hot13_codes
+            WHERE record_type IN ('1', '4')
+              AND hot13_code IS NOT NULL
+              AND yakka_code IS NOT NULL
+              AND yj_code IS NOT NULL
+              AND receipt_code IS NOT NULL
+            ;
+            """,
+
+            // インデックスを作成する
+            "CREATE INDEX hot13_codes_IX1 ON ext.hot13_codes (hot13_code);",
+            "CREATE INDEX hot13_codes_IX2 ON ext.hot13_codes (hot9_code);",
+            "CREATE INDEX hot13_codes_IX3 ON ext.hot13_codes (hot7_code);",
+            "CREATE INDEX hot13_codes_IX4 ON ext.hot13_codes (yakka_code);",
+            "CREATE INDEX hot13_codes_IX5 ON ext.hot13_codes (yj_code);",
+            "CREATE INDEX hot13_codes_IX6 ON ext.hot13_codes (receipt_code);",
+
+            // 取り込んだあとは不要なので消す
+            "TRUNCATE ext.raw_hot13_codes;",
+        };
+
+        foreach (var sql in sqlCommands)
+        {
+            await this._dbContext.Database.ExecuteSqlRawAsync(sql);
+        }
+    }
+
+    /// <summary>
+    /// CSVファイルをPostgreSQLに取り込む
+    /// </summary>
     public async Task ImportDiagnosisCsvToDatabase(string diagnosisPath)
     {
         var fullPath = Path.GetFullPath(diagnosisPath);

@@ -10,5 +10,6 @@ public partial class ReservationEquipBookingWindow : Window
     public ReservationEquipBookingWindow()
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
     }
 }

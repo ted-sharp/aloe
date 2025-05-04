@@ -25,6 +25,7 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 /// 直近のログを確認できるログウィンドウです。
 /// </summary>
 /// <remarks>
+/// 一度作成したあとは、閉じても非表示にするだけで、インスタンスは維持されます。
 /// できるだけ初期表示時間を早めるため、初期表示には DI を使用しません。
 /// DI が使用できないので ViewModel も使用しません。
 /// 起動時に必要な画面以外は MVVM で実装しています。
@@ -38,6 +39,7 @@ public partial class LogWindow : Window
     public LogWindow()
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
     }
 
     /// <summary>

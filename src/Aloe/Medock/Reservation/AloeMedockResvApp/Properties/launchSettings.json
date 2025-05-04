@@ -1,10 +1,9 @@
 {
   "profiles": {
     "ReservationApp": {
-      "commandName": "Executable",
+      "commandName": "Project",
       "executablePath": "C:\\Program Files\\dotnet\\dotnet.exe",
-      "commandLineArgs": "trace collect --format speedscope --output \"C:\\my\\git-zip\\aloe-main\\src\\Aloe\\Medock\\Reservation\\AloeMedockResvApp\\bin\\Debug\\net9.0-windows7.0\\AloeMedockResvApp.nettrace\" -- C:\\my\\git-zip\\aloe-main\\src\\Aloe\\Medock\\Reservation\\AloeMedockResvApp\\bin\\Debug\\net9.0-windows7.0\\AloeMedockResvApp.exe --standalone --user=admin --pwd=admin --screen=4",
-      "workingDirectory": "C:\\my\\git-zip\\aloe-main\\src\\Aloe\\Medock\\Reservation\\AloeMedockResvApp\\bin\\Debug\\net9.0-windows7.0\\",
+      "commandLineArgs": "--standalone -uadmin -padmin --screen=6 ",
       "environmentVariables": {
         "DOTNET_ENVIRONMENT": "Development"
       }

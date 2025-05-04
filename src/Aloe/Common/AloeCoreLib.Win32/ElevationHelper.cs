@@ -1,12 +1,11 @@
 ﻿using System.ComponentModel;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 using System.Security.Principal;
-
-// Win32 向けAPIを使用しているため除外
-#pragma warning disable CA1416
 
 namespace Aloe.Common.AloeCoreLib.Win32;
 
+[SupportedOSPlatform("windows")]
 public static class ElevationHelper
 {
     /// <summary>

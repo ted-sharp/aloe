@@ -22,5 +22,6 @@ public partial class MaintenanceWindow : Window
     public MaintenanceWindow()
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
     }
 }

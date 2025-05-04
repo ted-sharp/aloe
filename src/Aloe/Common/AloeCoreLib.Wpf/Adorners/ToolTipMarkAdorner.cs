@@ -15,6 +15,7 @@ public class ToolTipMarkAdorner : Adorner
     public ToolTipMarkAdorner(UIElement adornedElement)
         : base(adornedElement)
     {
+        this.IsHitTestVisible = false;
     }
 
     protected override void OnRender(DrawingContext drawingContext)

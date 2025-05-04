@@ -42,6 +42,9 @@
     <Compile Update="FhirImporter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Update="MedisHotImporter.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Update="MedisDiagnosisImporter.xaml.cs">
       <SubType>Code</SubType>
     </Compile>

@@ -128,6 +128,7 @@
             SelectionMode="Extended"
             SelectionUnit="Cell"
             VerticalScrollBarVisibility="Visible"
+            VirtualizingPanel.IsContainerVirtualizable="True"
             VirtualizingPanel.IsVirtualizing="True"
             VirtualizingPanel.ScrollUnit="Pixel"
             VirtualizingPanel.VirtualizationMode="Recycling" />

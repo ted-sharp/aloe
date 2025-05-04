@@ -55,14 +55,24 @@
     "App(Standalone)": {
       "Projects": {
         "AloeMedockResvApp": {
-          "CommandLineArguments": "--standalone --sql",
+          "CommandLineArguments": "--standalone",
           "WorkingDirectory": "",
           "StartProject": true
         }
       }
     },
 
-    "App(Standalone login)": {
+    "App(Standalone, regident)": {
+      "Projects": {
+        "AloeMedockResvApp": {
+          "CommandLineArguments": "--standalone --resident",
+          "WorkingDirectory": "",
+          "StartProject": true
+        }
+      }
+    },
+
+        "App(Standalone login)": {
       "Projects": {
         "AloeMedockResvApp": {
           "CommandLineArguments": "--standalone -u admin -p admin",

@@ -1,21 +1,25 @@
-﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust.OrganizationWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
-        xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
-        xmlns:bhv="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
-        mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
-        Title="団体"
-        Width="640" Height="1080"
-        MinWidth="640" MinHeight="480"
-        d:Width="640" d:Height="1080"
-        ResizeMode="CanResizeWithGrip">
+﻿<Window
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust.OrganizationWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:bhv="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Cust"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+    xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    Title="団体"
+    Width="640"
+    Height="1080"
+    MinWidth="640"
+    MinHeight="480"
+    bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+    d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
+    d:Height="1080"
+    d:Width="640"
+    ResizeMode="CanResizeWithGrip"
+    mc:Ignorable="d">
 
     <Window.Resources>
         <Style TargetType="ui:PackIcon">
@@ -50,23 +54,22 @@
     </Window.Resources>
 
     <DockPanel LastChildFill="True">
-        <views:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
-        <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
+        <views:InformationBar DataContext="{Binding InformationBarVm}" DockPanel.Dock="Bottom" />
+        <views:FunctionBar DataContext="{Binding FunctionBarVm}" DockPanel.Dock="Bottom" />
 
 
         <Border
-            DockPanel.Dock="Top"
-            BorderThickness="1"
-            BorderBrush="Black"
-            CornerRadius="3"
-            Padding="3"
             Margin="3"
-        >
+            Padding="3"
+            BorderBrush="Black"
+            BorderThickness="1"
+            CornerRadius="3"
+            DockPanel.Dock="Top">
             <local:OrganizationBar />
         </Border>
 
         <Grid>
-            <!-- ここでTransformで拡大率を設定したい -->
+            <!--  ここでTransformで拡大率を設定したい  -->
 
 
             <Grid>
@@ -78,41 +81,32 @@
 
                 <TabControl>
                     <TabItem Header="患者基本情報">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
                             <local:OrganizationBasicPanel />
                         </ScrollViewer>
                     </TabItem>
 
-                    <TabItem Header="やりとり">
+                    <TabItem Header="やりとり" />
 
-                    </TabItem>
+                    <TabItem Header="ファイル" />
 
-                    <TabItem Header="ファイル">
+                    <TabItem Header="オーダー" />
 
-                    </TabItem>
+                    <TabItem Header="契約" />
 
-                    <TabItem Header="オーダー">
+                    <TabItem Header="子団体" />
 
-                    </TabItem>
-
-                    <TabItem Header="契約">
-
-                    </TabItem>
-
-                    <TabItem Header="子団体">
-
-                    </TabItem>
-
-                    <TabItem Header="所属員">
-
-                    </TabItem>
+                    <TabItem Header="所属員" />
 
                 </TabControl>
 
             </Grid>
 
-            <ui:Snackbar x:Name="Snackbar" HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                         MessageQueue="{Binding SnackbarMessageQueue}"/>
+            <ui:Snackbar
+                x:Name="Snackbar"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                MessageQueue="{Binding SnackbarMessageQueue}" />
         </Grid>
 
     </DockPanel>

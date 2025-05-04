@@ -33,6 +33,7 @@ public partial class PatientWindow : Window
         ReservationEquipViewModel vm)
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
 
 
         this._logger = logger;

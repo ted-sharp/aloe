@@ -30,8 +30,21 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv;
 public partial class ReservationDailyGrid : UserControl
 {
     private readonly ILogger _logger;
-    //private readonly ReservationRoommentCacheService _cache;
+    //private readonly ReservationRoomCacheService _cache;
     //private ReservationRoomTabItemViewModel? _vm;
+
+    private bool _isLoadedRectangle = false;
+    private static readonly int s_cellWidth = 88;
+    private static readonly int s_cellHeight = 22;
+    private static readonly int s_cellBorderThickness = 1;
+
+
+    // 左上 Row=0, Col=0, Text(日付)
+    // カラムヘッダー Row=0, Col, Text(ルーム)
+    // ローヘッダー Row, Col=0, Text(スロット)
+    // 内容 Row, Col, RowSpan, Text(x/y), SelectionAdorner
+
+
 
     public static bool IsInDesignMode =>
         (bool)DesignerProperties.IsInDesignModeProperty
@@ -46,23 +59,101 @@ public partial class ReservationDailyGrid : UserControl
             // デザイナーでエラーになるので回避
             this._logger = null!;
             //this._cache = null!;
+
             return;
         }
 
         this._logger = App.Resolve<ILogger<ReservationDailyGrid>>();
         //this._cache = App.Resolve<ReservationRoommentCacheService>();
+
+
+
+        // TODO: とりあえずダミーで設定しておく
+        this.RefreshRectangle(20, 16);
     }
 
     /// <summary>
     /// 親要素から DataContext が設定されたときに追加で関連付けます。
     /// </summary>
-    private void ReservationRoomTabItem_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+    private void ReservationDailyGrid_OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
     {
+        // TODO: ヘッダーはまず変わらないので、先に作ってしまう
+
+        if (this._isLoadedRectangle)
+        {
+            this._isLoadedRectangle = true;
+
+            // TODO: DataContext から数を取得
+            this.RefreshRectangle(20, 16);
+        }
+
         //this._vm = this.DataContext as ReservationRoomTabItemViewModel;
         //if (this._vm != null)
         //{
         //    this._vm.RefreshFuncAsync = this.RefreshAsync;
         //}
+    }
+
+    private void RefreshRectangle(int rows, int columns)
+    {
+        // 行・列定義
+        for (var i = 0; i < columns; i++)
+        {
+            this.BookingGrid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(ReservationDailyGrid.s_cellWidth) });
+        }
+        for (var i = 0; i < rows; i++)
+        {
+            this.BookingGrid.RowDefinitions.Add(new RowDefinition { Height = new GridLength(ReservationDailyGrid.s_cellHeight) });
+        }
+
+        // 横線
+        for (var row = 1; row < rows; row++)
+        {
+            var line = new Rectangle
+            {
+                Height = s_cellBorderThickness,
+                Fill = Brushes.Gray,
+                VerticalAlignment = VerticalAlignment.Top,
+                HorizontalAlignment = HorizontalAlignment.Stretch
+            };
+            Grid.SetRow(line, row);
+            Grid.SetColumnSpan(line, columns);
+            this.BookingGrid.Children.Add(line);
+        }
+
+        // 縦線
+        for (var col = 1; col < columns; col++)
+        {
+            var line = new Rectangle
+            {
+                Width = s_cellBorderThickness,
+                Fill = Brushes.Gray,
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Stretch
+            };
+            Grid.SetColumn(line, col);
+            Grid.SetRowSpan(line, rows);
+            this.BookingGrid.Children.Add(line);
+        }
+
+        // TODO: とりあえずダミーをいれておく
+        // セルごとの仮コンテンツ（例：TextBlock）
+        for (var row = 1; row < rows; row++)
+        {
+            for (var col = 1; col < columns; col++)
+            {
+                var text = new TextBlock
+                {
+                    Text = $"({row},{col})",
+                    HorizontalAlignment = HorizontalAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center,
+                };
+                Grid.SetRow(text, row);
+                Grid.SetColumn(text, col);
+                this.BookingGrid.Children.Add(text);
+            }
+        }
+
     }
 
     /// <summary>
@@ -126,322 +217,4 @@ public partial class ReservationDailyGrid : UserControl
         }
     }
 
-    #region DataGrid
-
-    /// <summary>
-    /// スロットの数だけ DataGrid のヘッダーを作成します。
-    /// 記号、氏名、備考がスロットの数だけ繰り返し作成します。
-    /// </summary>
-    private void GenerateDataGridColumns(DataGrid dataGrid, DateTime endDate)
-    {
-        try
-        {
-            //dataGrid.BeginInit();
-
-            dataGrid.Columns.Clear();
-
-            // TODO: 設備で作成する
-            //for (var i = 1; i <= endDate.Day; i++)
-            //{
-            //    //var column = GetOrCreateDataGridColumn(endDate.Year, endDate.Month, i);
-            //    //this._cache.SetColumn(endDate.Year, endDate.Month, i, column);
-            //    //dataGrid.Columns.Add(column);
-            //    dataGrid.Columns.Add(CreateDataGridColumn(endDate.Year, endDate.Month, i));
-            //}
-        }
-        finally
-        {
-            //dataGrid.EndInit();
-        }
-
-        return;
-
-        // local function
-        static DataGridTemplateColumn CreateDataGridColumn(int year, int month, int day)
-        {
-            var date = new DateTime(year, month, day);
-            var col = new DataGridTemplateColumn
-            {
-                Header = CreateHeader(date),
-                CellTemplate = CreateCellTemplate(date),
-                // 固定値を設定することでレイアウト計算の負荷を減らす
-                MinWidth = 160,
-                MaxWidth = 160,
-                Width = 160,
-            };
-
-            return col;
-        }
-
-        // local function
-        static TextBlock CreateHeader(DateTime date)
-        {
-            // 中央寄せのために必要
-            var content = new TextBlock
-            {
-                Text = date.ToString("MM/dd (ddd)"),
-                TextAlignment = TextAlignment.Center,
-                //// 固定値を設定することでレイアウト計算の負荷を減らす
-                MinWidth = 160,
-                MaxWidth = 160,
-                Width = 160,
-                MinHeight = 160,
-                MaxHeight = 160,
-                Height = 160,
-                Margin = new Thickness(0),
-                Padding = new Thickness(0),
-                // 他のスタイルを参照しないことで、Resourcesへのアクセスを減らす
-                Style = null,
-                OverridesDefaultStyle = false,
-            };
-            return content;
-        }
-
-        // local function
-        static DataTemplate CreateCellTemplate(DateTime date)
-        {
-            var template = new DataTemplate();
-
-            var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlockFactory.SetValue(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-
-            // 固定値を設定することでレイアウト計算の負荷を減らす
-            textBlockFactory.SetValue(TextBlock.MinWidthProperty, 160.0);
-            textBlockFactory.SetValue(TextBlock.MaxWidthProperty, 160.0);
-            textBlockFactory.SetValue(TextBlock.WidthProperty, 160.0);
-            textBlockFactory.SetValue(TextBlock.MinHeightProperty, 24.0);
-            textBlockFactory.SetValue(TextBlock.MaxHeightProperty, 24.0);
-            textBlockFactory.SetValue(TextBlock.HeightProperty, 24.0);
-            textBlockFactory.SetValue(TextBlock.MarginProperty, new Thickness(0));
-            textBlockFactory.SetValue(TextBlock.PaddingProperty, new Thickness(0));
-
-            // 他のスタイルを参照しないことで、Resourcesへのアクセスを減らす
-            textBlockFactory.SetValue(TextBlock.StyleProperty, null);
-            textBlockFactory.SetValue(TextBlock.OverridesDefaultStyleProperty, false);
-
-            var bindingText = $"{nameof(BookingRow.DateCells)}[{date}].{nameof(BookingCell.DisplayText)}";
-            var binding = new Binding(bindingText)
-            {
-                Mode = BindingMode.OneTime,
-                TargetNullValue = "-",
-                FallbackValue = "-",
-                IsAsync = true,
-            };
-            textBlockFactory.SetBinding(TextBlock.TextProperty, binding);
-
-            template.VisualTree = textBlockFactory;
-            return template;
-
-        }
-
-        //// local function
-        //static Style CreateCellStyle(DateTime date)
-        //{
-        //    var style = new Style(typeof(DataGridCell));
-
-        //    // デフォルトの背景色
-        //    style.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.White));
-
-        //    // 土日の背景色変更トリガー
-        //    var trigger = new DataTrigger
-        //    {
-        //        Binding = new Binding
-        //        {
-        //            Path = new PropertyPath(nameof(BookingCell.IsWeekend)),
-        //            Source = new BookingCell { IsWeekend = IsWeekend(date) } // 動的プロパティを設定
-        //        },
-        //        Value = true
-        //    };
-        //    trigger.Setters.Add(new Setter(DataGridCell.BackgroundProperty, Brushes.LightCoral));
-
-        //    style.Triggers.Add(trigger);
-
-        //    return style;
-        //}
-    }
-
-
-
-    /// <summary>
-    /// スロットの数だけ DataGrid のヘッダーを作成します。
-    /// 記号、氏名、備考がスロットの数だけ繰り返し作成します。
-    /// </summary>
-    private void GenerateDataGridColumns2(DataGrid dataGrid, DateTime endDate)
-    {
-        try
-        {
-            //dataGrid.BeginInit();
-
-            if (dataGrid.Columns.Count < 31)
-            {
-                // 初回は全部作る
-                dataGrid.Columns.Clear();
-                for (var day = 1; day <= 31; day++)
-                {
-                    dataGrid.Columns.Add(CreateDataGridColumn(endDate.Year, endDate.Month, day));
-                }
-            }
-            else
-            {
-                for (var day = 1; day <= 31; day++)
-                {
-                    var i = day - 1;
-                    var col = dataGrid.Columns[i];
-                    if (day <= endDate.Day)
-                    {
-                        var date = new DateTime(endDate.Year, endDate.Month, day);
-                        col.Header = date.ToString("MM/dd (ddd)");
-                        col.Visibility = Visibility.Visible;
-                    }
-                    else
-                    {
-                        col.Header = "";
-                        col.Visibility = Visibility.Hidden;
-                    }
-                }
-            }
-
-        }
-        finally
-        {
-            //dataGrid.EndInit();
-        }
-
-        return;
-
-        // local function
-        static DataGridTemplateColumn CreateDataGridColumn(int year, int month, int day)
-        {
-            var date = new DateTime(year, month, day);
-            var col = new DataGridTemplateColumn
-            {
-                Header = CreateHeader(date),
-                CellTemplate = CreateCellTemplate(day),
-            };
-
-            return col;
-        }
-
-        // local function
-        static TextBlock CreateHeader(DateTime date)
-        {
-            var content = new TextBlock
-            {
-                Text = date.ToString("MM/dd (ddd)"),
-                TextAlignment = TextAlignment.Center,
-                Style = null,
-                OverridesDefaultStyle = false,
-            };
-            return content;
-        }
-
-        // local function
-        static DataTemplate CreateCellTemplate(int day)
-        {
-            var template = new DataTemplate();
-
-            var textBlockFactory = new FrameworkElementFactory(typeof(TextBlock));
-            textBlockFactory.SetValue(TextBlock.HorizontalAlignmentProperty, HorizontalAlignment.Center);
-            textBlockFactory.SetValue(TextBlock.StyleProperty, null);
-            textBlockFactory.SetValue(TextBlock.OverridesDefaultStyleProperty, false);
-
-            var bindingText = $"{nameof(RecyclingBookingRow.DateCells)}[{day}].{nameof(BookingCell.DisplayText)}";
-            var binding = new Binding(bindingText)
-            {
-                Mode = BindingMode.OneTime,
-                TargetNullValue = "-",
-                FallbackValue = "-",
-                IsAsync = true,
-            };
-            textBlockFactory.SetBinding(TextBlock.TextProperty, binding);
-
-            template.VisualTree = textBlockFactory;
-            return template;
-
-        }
-    }
-
-    #endregion DataGrid
-
-
-    #region ListView
-
-    /// <summary>
-    /// スロットの数だけ DataGrid のヘッダーを作成します。
-    /// 記号、氏名、備考がスロットの数だけ繰り返し作成します。
-    /// </summary>
-    private void GenerateGridViewColumns(GridView dataGrid, DateTime endDate)
-    {
-        dataGrid.Columns.Clear();
-
-        dataGrid.Columns.Add(CreateGridViewSlotColumn());
-
-        for (var i = 1; i <= endDate.Day; i++)
-        {
-            //var column = GetOrCreateDataGridColumn(endDate.Year, endDate.Month, i);
-            //this._cache.SetColumn(endDate.Year, endDate.Month, i, column);
-            //dataGrid.Columns.Add(column);
-            dataGrid.Columns.Add(CreateGridViewColumn(endDate.Year, endDate.Month, i));
-        }
-
-        return;
-
-        // local function
-        static GridViewColumn CreateGridViewSlotColumn()
-        {
-            var col = new GridViewColumn
-            {
-                Header = "Slot",
-                DisplayMemberBinding = new System.Windows.Data.Binding("SlotDisplay"),
-                Width = 40,
-            };
-
-            return col;
-        }
-
-        // local function
-        static GridViewColumn CreateGridViewColumn(int year, int month, int day)
-        {
-            var date = new DateTime(year, month, day);
-            var col = new GridViewColumn
-            {
-                Header = GenerateHeader(date),
-                CellTemplate = GenerateCellTemplate(date),
-                Width = 160,
-            };
-
-            return col;
-        }
-
-        // local function
-        static TextBlock GenerateHeader(DateTime date)
-        {
-            var content = new TextBlock
-            {
-                Text = date.ToString("MM/dd (ddd)"),
-                Width = 160,
-                TextAlignment = TextAlignment.Center,
-            };
-            return content;
-        }
-
-        // local function
-        static DataTemplate GenerateCellTemplate(DateTime date)
-        {
-            var xaml = $@"
-    <DataTemplate xmlns='http://schemas.microsoft.com/winfx/2006/xaml/presentation'
-                  xmlns:x='http://schemas.microsoft.com/winfx/2006/xaml'>
-        <Border BorderBrush='Black' BorderThickness='1' HorizontalAlignment='Stretch' VerticalAlignment='Stretch'>
-            <TextBlock Text='{{Binding DateCells[{date}].DisplayText}}'
-                       HorizontalAlignment='Stretch'
-                       VerticalAlignment='Stretch'
-                       TextAlignment='Center' />
-        </Border>
-    </DataTemplate>";
-
-            return (DataTemplate)XamlReader.Parse(xaml);
-        }
-    }
-
-    #endregion ListView
 }

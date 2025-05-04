@@ -2,6 +2,8 @@
 using System.Windows.Controls;
 using System.Windows.Input;
 
+// ReSharper disable ArrangeStaticMemberQualifier
+
 namespace Aloe.Common.AloeCoreLib.Wpf.Behaviors;
 
 public static partial class OnEnter
@@ -11,16 +13,16 @@ public static partial class OnEnter
             "EnableUpdateSource",
             typeof(bool),
             typeof(OnEnter),
-            new PropertyMetadata(false, OnEnter.OnEnableUpdateSourceChanged));
+            new PropertyMetadata(false, OnEnableUpdateSourceChanged));
 
     public static bool GetEnableUpdateSource(TextBox obj)
     {
-        return (bool)obj.GetValue(OnEnter.EnableUpdateSourceProperty);
+        return (bool)obj.GetValue(EnableUpdateSourceProperty);
     }
 
     public static void SetEnableUpdateSource(TextBox obj, bool value)
     {
-        obj.SetValue(OnEnter.EnableUpdateSourceProperty, value);
+        obj.SetValue(EnableUpdateSourceProperty, value);
     }
 
     private static void OnEnableUpdateSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -29,11 +31,11 @@ public static partial class OnEnter
         {
             if ((bool)e.NewValue)
             {
-                element.KeyDown += OnEnter.UpdateSourceTextBox_KeyDown;
+                element.KeyDown += UpdateSourceTextBox_KeyDown;
             }
             else
             {
-                element.KeyDown -= OnEnter.UpdateSourceTextBox_KeyDown;
+                element.KeyDown -= UpdateSourceTextBox_KeyDown;
             }
         }
     }

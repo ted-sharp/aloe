@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Common.AloeCoreLib.Util;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Constants;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.EFCore;
 using MagicOnion;

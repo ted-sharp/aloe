@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Aloe.Common.AloeCoreLib.Security;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
@@ -50,9 +51,17 @@ public class User : AuditableEntityBase<int>
     [Required]
     public DateTime ExpireDate { get; set; } = DateTime.MaxValue.Date;
 
-    [Column("failed_attempt_count")]
+    [Column("login_success_count")]
     [Required]
-    public int FailedAttemptCount { get; set; }
+    public int LoginSuccessCount { get; set; }
+
+    [Column("login_failure_count")]
+    [Required]
+    public int LoginFailureCount { get; set; }
+
+    [Column("login_failure_attempts")]
+    [Required]
+    public int LoginFailureAttempts { get; set; }
 
     [Column("locked_until_at")]
     [Required]
@@ -96,15 +105,28 @@ public class User : AuditableEntityBase<int>
     /// ログイン失敗時の処理を行います。
     /// 失敗回数をインクリメントし、試行回数が超えていたら指定秒数間ログインできないようにロックします。
     /// </summary>
-    public void FailLogin(int maxFailedAttempts, int lockingSeconds, DateTime now)
+    public void FailLogin(int maxFailureAttempts, int lockingSeconds, DateTime now)
     {
-        this.FailedAttemptCount++;
+        this.LoginFailureCount++;
+        this.LoginFailureAttempts++;
 
-        if (this.FailedAttemptCount >= maxFailedAttempts)
+        if (this.LoginFailureAttempts >= maxFailureAttempts)
         {
-            this.FailedAttemptCount = 0;
+            this.LoginFailureAttempts = 0;
             this.LockedUntilAt = now.AddSeconds(lockingSeconds);
         }
+    }
+
+    /// <summary>
+    /// ログイン成功時の処理を行います。
+    /// 成功回数をインクリメントし、試行回数をリセットします。
+    /// </summary>
+    public void SucceedLogin(DateTime loginAt)
+    {
+
+        this.LoginSuccessCount++;
+        this.LoginFailureAttempts = 0;
+        this.LastLoginAt = loginAt;
     }
 
     public bool IsLocked(DateTime currentTime)

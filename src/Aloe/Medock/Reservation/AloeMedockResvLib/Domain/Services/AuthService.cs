@@ -110,9 +110,10 @@ public class AuthService : IAuthService
         var result = new LoginResult
         {
             IsSuccess = false,
+            IsPasswordInvalid = false,
             ErrorMessage = null,
             SessionDto = null,
-            Host = null,
+            UserDto = null,
         };
 
         try
@@ -140,6 +141,7 @@ public class AuthService : IAuthService
             if (!isCorrect)
             {
                 result.ErrorMessage = "パスワードが正しくありません。";
+                result.IsPasswordInvalid = true;
 
                 var lockingFailAttempts = await this._policyService.GetOrFetchValueAsync<int>(PolicyCode.LoginLockingFailAttempts);
                 var lockingSeconds = await this._policyService.GetOrFetchValueAsync<int>(PolicyCode.LoginLockingSeconds);
@@ -162,17 +164,18 @@ public class AuthService : IAuthService
 
             var session = await this.CreateAndAddNewSessionAsync(
                 context, user, request.ClientAppName, request.ClientEndpoint, now);
-            var sessionDto = session.ToSessionDto();
 
-            user.FailedAttemptCount = 0;
-            user.LastLoginAt = now;
+            var sessionDto = session.ToSessionDto();
+            user.SucceedLogin(sessionDto.LoginAt);
             user.SetUpdatedSession(sessionDto, now);
 
             // ユーザーのログインとセッション情報を記録する。
             await context.SaveChangesAsync();
 
+            var userDto = user.ToUserDto();
             result.IsSuccess = true;
             result.SessionDto = sessionDto;
+            result.UserDto = userDto;
         }
         catch (Exception ex)
         {
@@ -182,6 +185,7 @@ public class AuthService : IAuthService
             result.IsSuccess = false;
             result.ErrorMessage = msg;
             result.SessionDto = null;
+            result.UserDto = null;
         }
 
         return result;

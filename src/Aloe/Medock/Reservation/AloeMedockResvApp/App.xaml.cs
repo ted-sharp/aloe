@@ -40,7 +40,6 @@ public partial class App : Application
 
     private LoginWindow? _loginWindow;
     private LogWindow? _logWindow;
-    private TaskbarIcon? _notifyIcon;
 
     public App(IConfigurationRoot config)
     {
@@ -54,6 +53,8 @@ public partial class App : Application
         this.RegisterUnhandledExceptionHandlers();
 
         this.InitializeComponent();
+
+        App.s_appInstance = this;
 
         this._ts.Stamp("Ctor finished");
     }
@@ -121,25 +122,27 @@ public partial class App : Application
 
             var userOptions = this._config.BindSection<UserOptions>();
 
-            // 常駐するかどうか
-            var isResided = this._configArgs.ScreenCode.IsDefault();
+            var isResident = this._configArgs.IsResident;
 
-            if (isResided)
+            // ログイン画面を表示するかどうか
+            var isDefault = this._configArgs.ScreenCode.IsDefault();
+            if (isDefault)
             {
                 this._ts.Stamp("LoginWindow Creating...");
                 // IHost 作成前から使う
-                this._loginWindow = new LoginWindow(userOptions);
+                this._loginWindow = new LoginWindow(userOptions, isResident);
                 Application.Current.MainWindow = this._loginWindow;
 
                 this._loginWindow.Show();
 
                 this._ts.Stamp("LoginWindow Created");
-
-                this._ts.Stamp("LogWindow Creating...");
-                // IHost 初期化時にログを出力する RichTextBox を渡すために事前に作成しておく
-                this._logWindow = new LogWindow();
-                this._ts.Stamp("LogWindow Created");
             }
+
+            this._ts.Stamp("LogWindow Creating...");
+            // IHost 初期化時にログを出力する RichTextBox を渡すために事前に作成しておき、
+            // 閉じても非表示になるだけなので、以降インスタンスは維持される
+            this._logWindow = new LogWindow();
+            this._ts.Stamp("LogWindow Created");
 
             // 別スレッドで処理
             var task = Task.Run(async () =>
@@ -177,7 +180,7 @@ public partial class App : Application
                 }
             }).ContinueWith(_ =>
             {
-                if (isResided)
+                if (isResident)
                 {
                     // 常駐する場合はトレイアイコンを作成する
                     this.InitializeNotifyIcon();
@@ -197,6 +200,7 @@ public partial class App : Application
                     this._configArgs.User,
                     this._configArgs.Password,
                     this._configArgs.ScreenCode);
+
                 if (isSuccessful)
                 {
                     this._ts.Stamp("OnStartup finished");
@@ -210,6 +214,7 @@ public partial class App : Application
                 var isSuccessful = await this.LoginAsync(task,
                     userOptions.User,
                     userOptions.Password);
+
                 if (isSuccessful)
                 {
                     this._ts.Stamp("OnStartup finished");
@@ -221,11 +226,11 @@ public partial class App : Application
             {
                 this._ts.Stamp("OnStartup finished");
 
-                if (!isResided)
-                {
-                    // 画面指定があって開けなかったら終了
-                    this.Shutdown(0);
-                }
+                //if (!isResident)
+                //{
+                //    // 画面指定があって開けなかったら終了
+                //    this.Shutdown(0);
+                //}
             }
 
             //await Task.WhenAll(task);
@@ -308,6 +313,7 @@ public partial class App : Application
             this.SetStatus("Login successful.");
 
             App.Session = result.SessionDto;
+            App.User = result.UserDto;
 
             Window window = screenCode switch
             {
@@ -366,13 +372,13 @@ public partial class App : Application
 
             this.Dispatcher.InvokeIfNeeded(() =>
             {
-                this._notifyIcon = this.CreateNotifyIcon();
+                App.s_notifyIcon = this.CreateNotifyIcon();
 
                 // Window なしでタスクトレイに表示
-                this._notifyIcon.ForceCreate();
+                App.s_notifyIcon.ForceCreate();
 
                 // タスクトレイにあることを明示
-                this._notifyIcon.ShowNotification(
+                App.s_notifyIcon.ShowNotification(
                     "予約システム",
                     "予約システムが起動しました。\n常駐しますので、タスクトレイから操作してください。",
                     NotificationIcon.Info,
@@ -413,11 +419,11 @@ public partial class App : Application
             .GetResult();
 
         // アイコンのクリーンアップ
-        if (this._notifyIcon is not null)
+        if (App.s_notifyIcon is not null)
         {
-            this._notifyIcon.Visibility = Visibility.Hidden;
-            this._notifyIcon.Dispose();
-            this._notifyIcon = null;
+            App.s_notifyIcon.Visibility = Visibility.Hidden;
+            App.s_notifyIcon.Dispose();
+            App.s_notifyIcon = null;
         }
 
         this.UnregisterUnhandledExceptionHandlers();

@@ -1,31 +1,34 @@
-﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationMainWindow_old"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
-        xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
-        xmlns:behaviors="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
-        mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:ReservationMainViewModel}"
-        behaviors:Key.KeyDownCommand="{Binding FunctionBar.KeyDownCommand}"
-        Title="予約メイン" Height="450" Width="800"
-        ResizeMode="CanResizeWithGrip"
-        Loaded="ReservationMainWindow_old_OnLoaded"
-        Unloaded="ReservationMainWindow_old_OnUnloaded">
+﻿<Window
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationMainWindow_old"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+    xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    Title="予約メイン"
+    Width="800"
+    Height="450"
+    behaviors:Key.KeyDownCommand="{Binding FunctionBar.KeyDownCommand}"
+    d:DataContext="{d:DesignInstance Type=vm:ReservationMainViewModel}"
+    Loaded="ReservationMainWindow_old_OnLoaded"
+    ResizeMode="CanResizeWithGrip"
+    Unloaded="ReservationMainWindow_old_OnUnloaded"
+    mc:Ignorable="d">
     <DockPanel LastChildFill="True">
-        <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBar}" />
+        <views:FunctionBar DataContext="{Binding FunctionBar}" DockPanel.Dock="Bottom" />
 
         <Expander DockPanel.Dock="Top" IsExpanded="False">
             <Expander.Header>
                 <StackPanel Orientation="Horizontal">
-                    <Label>　</Label>
+                    <Label />
                     <Label>予約日</Label>
-                    <TextBox Text="{Binding StartDate.Value}" MinWidth="80" />
-                    <Label>　</Label>
+                    <TextBox MinWidth="80" Text="{Binding StartDate.Value}" />
+                    <Label />
                     <CheckBox IsChecked="{Binding IsAutoRefresh.Value}">自動更新</CheckBox>
-                    <TextBox Text="{Binding SecondsToRefresh.Value}" MinWidth="40" />
+                    <TextBox MinWidth="40" Text="{Binding SecondsToRefresh.Value}" />
                     <Label>秒</Label>
                 </StackPanel>
             </Expander.Header>
@@ -53,8 +56,14 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Label Grid.Row="0" Grid.Column="0" Content="総合" />
-            <ScrollViewer Grid.Row="0" Grid.Column="1" x:Name="ScrollViewer0"
+            <Label
+                Grid.Row="0"
+                Grid.Column="0"
+                Content="総合" />
+            <ScrollViewer
+                x:Name="ScrollViewer0"
+                Grid.Row="0"
+                Grid.Column="1"
                 HorizontalScrollBarVisibility="Visible"
                 VerticalScrollBarVisibility="Hidden">
                 <Grid>
@@ -63,89 +72,155 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" x:Name="HeaderGrid0" ShowGridLines="true">
-                        <!-- 下記定義はコードビハインドで動的に生成します。これは表示確認用のサンプルです。 -->
+                    <Grid
+                        x:Name="HeaderGrid0"
+                        Grid.Row="0"
+                        ShowGridLines="true">
+                        <!--  下記定義はコードビハインドで動的に生成します。これは表示確認用のサンプルです。  -->
                         <Grid.ColumnDefinitions>
-                            <!-- ルーム用(スペースのみ) -->
+                            <!--  ルーム用(スペースのみ)  -->
                             <ColumnDefinition Width="40" />
-                            <!-- AM/PM用(n個繰り返し) -->
+                            <!--  AM/PM用(n個繰り返し)  -->
                             <ColumnDefinition Width="24" />
                             <ColumnDefinition Width="24" />
-                            <!-- AM/PM用 -->
+                            <!--  AM/PM用  -->
                             <ColumnDefinition Width="24" />
                             <ColumnDefinition Width="24" />
-                            <!-- AM/PM用 -->
+                            <!--  AM/PM用  -->
                             <ColumnDefinition Width="24" />
                             <ColumnDefinition Width="24" />
                             <ColumnDefinition />
                         </Grid.ColumnDefinitions>
                         <Grid.RowDefinitions>
-                            <!-- 日付用 -->
+                            <!--  日付用  -->
                             <RowDefinition Height="Auto" />
-                            <!-- 曜日用 -->
+                            <!--  曜日用  -->
                             <RowDefinition Height="Auto" />
                         </Grid.RowDefinitions>
-                        <!-- Width は DataGrid の AM/PM ヘッダーの ActualWidth にバインドします。 -->
-                        <Label Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" Content="12/1" HorizontalContentAlignment="Center" />
-                        <Label Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Content="火" HorizontalContentAlignment="Center"/>
-                        <Label Grid.Row="0" Grid.Column="3" Grid.ColumnSpan="2" Content="12/2" HorizontalContentAlignment="Center" />
-                        <Label Grid.Row="1" Grid.Column="3" Grid.ColumnSpan="2" Content="水" HorizontalContentAlignment="Center"/>
-                        <Label Grid.Row="0" Grid.Column="5" Grid.ColumnSpan="2" Content="12/3" HorizontalContentAlignment="Center" />
-                        <Label Grid.Row="1" Grid.Column="5" Grid.ColumnSpan="2" Content="木" HorizontalContentAlignment="Center"/>
+                        <!--  Width は DataGrid の AM/PM ヘッダーの ActualWidth にバインドします。  -->
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="12/1" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="火" />
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="3"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="12/2" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="3"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="水" />
+                        <Label
+                            Grid.Row="0"
+                            Grid.Column="5"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="12/3" />
+                        <Label
+                            Grid.Row="1"
+                            Grid.Column="5"
+                            Grid.ColumnSpan="2"
+                            HorizontalContentAlignment="Center"
+                            Content="木" />
                     </Grid>
-                    <DataGrid Grid.Row="1" x:Name="BodyDataGrid0"
-                              ItemsSource="{Binding Schedules0.DefaultView, Mode=OneWay}"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserResizeRows="False"
-                              HeadersVisibility="All"
-                    />
+                    <DataGrid
+                        x:Name="BodyDataGrid0"
+                        Grid.Row="1"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        CanUserResizeRows="False"
+                        HeadersVisibility="All"
+                        ItemsSource="{Binding Schedules0.DefaultView, Mode=OneWay}" />
                 </Grid>
             </ScrollViewer>
 
-            <GridSplitter Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="5" HorizontalAlignment="Stretch" Background="Gray" />
+            <GridSplitter
+                Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Height="5"
+                HorizontalAlignment="Stretch"
+                Background="Gray" />
 
-            <Label Grid.Row="2" Grid.Column="0" Content="{Binding VerticalFloorName1}" />
-            <ScrollViewer Grid.Row="2" Grid.Column="1" x:Name="ScrollViewer1"
-                          HorizontalScrollBarVisibility="Visible"
-                          VerticalScrollBarVisibility="Hidden">
+            <Label
+                Grid.Row="2"
+                Grid.Column="0"
+                Content="{Binding VerticalFloorName1}" />
+            <ScrollViewer
+                x:Name="ScrollViewer1"
+                Grid.Row="2"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Visible"
+                VerticalScrollBarVisibility="Hidden">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" x:Name="HeaderGrid1" ShowGridLines="true" />
-                    <DataGrid Grid.Row="1" x:Name="BodyDataGrid1"
-                              ItemsSource="{Binding Schedules1.DefaultView, Mode=OneWay}"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserResizeRows="False"
-                              HeadersVisibility="All"
-                    />
+                    <Grid
+                        x:Name="HeaderGrid1"
+                        Grid.Row="0"
+                        ShowGridLines="true" />
+                    <DataGrid
+                        x:Name="BodyDataGrid1"
+                        Grid.Row="1"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        CanUserResizeRows="False"
+                        HeadersVisibility="All"
+                        ItemsSource="{Binding Schedules1.DefaultView, Mode=OneWay}" />
                 </Grid>
             </ScrollViewer>
 
-            <GridSplitter Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Height="5" HorizontalAlignment="Stretch" Background="Gray" />
+            <GridSplitter
+                Grid.Row="3"
+                Grid.Column="0"
+                Grid.ColumnSpan="2"
+                Height="5"
+                HorizontalAlignment="Stretch"
+                Background="Gray" />
 
-            <Label Grid.Row="4" Grid.Column="0" Content="{Binding VerticalFloorName2}" />
-            <ScrollViewer Grid.Row="4" Grid.Column="1" x:Name="ScrollViewer2"
-                          HorizontalScrollBarVisibility="Visible"
-                          VerticalScrollBarVisibility="Hidden">
+            <Label
+                Grid.Row="4"
+                Grid.Column="0"
+                Content="{Binding VerticalFloorName2}" />
+            <ScrollViewer
+                x:Name="ScrollViewer2"
+                Grid.Row="4"
+                Grid.Column="1"
+                HorizontalScrollBarVisibility="Visible"
+                VerticalScrollBarVisibility="Hidden">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
 
-                    <Grid Grid.Row="0" x:Name="HeaderGrid2" ShowGridLines="true" />
-                    <DataGrid Grid.Row="1" x:Name="BodyDataGrid2"
-                              ItemsSource="{Binding Schedules2.DefaultView, Mode=OneWay}"
-                              AutoGenerateColumns="False"
-                              CanUserAddRows="False"
-                              CanUserResizeRows="False"
-                              HeadersVisibility="All"
-                    />
+                    <Grid
+                        x:Name="HeaderGrid2"
+                        Grid.Row="0"
+                        ShowGridLines="true" />
+                    <DataGrid
+                        x:Name="BodyDataGrid2"
+                        Grid.Row="1"
+                        AutoGenerateColumns="False"
+                        CanUserAddRows="False"
+                        CanUserResizeRows="False"
+                        HeadersVisibility="All"
+                        ItemsSource="{Binding Schedules2.DefaultView, Mode=OneWay}" />
                 </Grid>
             </ScrollViewer>
         </Grid>

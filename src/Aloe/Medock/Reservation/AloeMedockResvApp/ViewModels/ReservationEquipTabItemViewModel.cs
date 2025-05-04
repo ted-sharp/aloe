@@ -95,7 +95,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
 
         // キャッシュがあるなら使う
         var holidays = await this._cache.GetOrFetchHolidays(year, month);
-        if (holidays is not null && holidays is { Count: > 0 })
+        if (holidays is { Count: > 0 })
         {
             this.Holidays = holidays.ToDictionary(x => x.HolidayDate);
             return;
@@ -109,7 +109,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
 
         // キャッシュがあるなら使う
         var data = this._cache.GetBookingData(year, month, equipId);
-        if (data is not null && data.Rows is { Count: > 0 })
+        if (data?.Rows is { Count: > 0 })
         {
             this.Rows = data.Rows;
             this.Overflows = data.Overflows;
@@ -117,8 +117,8 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
         }
 
         var rows = new List<BookingRow>();
-        var slots = await this._cache.GetOrFetchSlotStrings(year, month, equipId);
-        var monthBookings = await this._cache.GetOrFetchBookings(year, month, equipId);
+        var slots = await this._cache.GetOrFetchEquipSlotStrings(year, month, equipId);
+        var monthBookings = await this._cache.GetOrFetchEquipBookings(year, month, equipId);
 
         // スロット分の行を生成する
         foreach (var slot in slots)
@@ -168,7 +168,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
         var year = monthEndDate.Year;
         var month = monthEndDate.Month;
 
-        var slots = await this._cache.GetOrFetchSlotStrings(year, month, equipId);
+        var slots = await this._cache.GetOrFetchEquipSlotStrings(year, month, equipId);
 
         // スロット分ないときは作る
         if (this.RecyclingRows.Count != slots.Count)
@@ -181,7 +181,7 @@ public class ReservationEquipTabItemViewModel : ViewModelBase, INotifyPropertyCh
             }
         }
 
-        var monthBookings = await this._cache.GetOrFetchBookings(year, month, equipId);
+        var monthBookings = await this._cache.GetOrFetchEquipBookings(year, month, equipId);
 
         foreach (var slot in slots)
         {

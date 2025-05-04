@@ -1,26 +1,31 @@
-﻿<Window x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationEquipMonthlyWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
-        xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
-        xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
-        xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
-        xmlns:bhv="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
-        xmlns:cvt="http://schemas.aloe/wpf/converters"
-        mc:Ignorable="d"
-        d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
-        bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
-        bhv:OnEnter.EnableMoveFocus="True"
-        Title="設備予約(月別)"
-        Width="1920" Height="1080"
-        MinWidth="640" MinHeight="480"
-        d:Width="640" d:Height="480"
-        ResizeMode="CanResizeWithGrip">
+﻿<Window
+    x:Class="Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv.ReservationEquipMonthlyWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:bhv="clr-namespace:Aloe.Common.AloeCoreLib.Wpf.Behaviors;assembly=Aloe.Common.AloeCoreLib.Wpf"
+    xmlns:cvt="http://schemas.aloe/wpf/converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views.Resv"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:ui="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:views="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.Views"
+    xmlns:vm="clr-namespace:Aloe.Medock.Reservation.AloeMedockResvApp.ViewModels"
+    Title="設備予約(月別)"
+    Width="1920"
+    Height="1080"
+    MinWidth="640"
+    MinHeight="480"
+    bhv:Key.KeyDownCommand="{Binding FunctionBarVm.KeyDownCommand}"
+    bhv:OnEnter.EnableMoveFocus="True"
+    d:DataContext="{d:DesignInstance Type=vm:ReservationEquipViewModel}"
+    d:Height="480"
+    d:Width="640"
+    Icon="/Assets/MaterialIcons/grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico"
+    ResizeMode="CanResizeWithGrip"
+    mc:Ignorable="d">
 
     <Window.Resources>
-        <cvt:DateOnlyToStringConverter x:Key="DateOnlyToStringConverter" Format="yyyy.MM"/>
+        <cvt:DateOnlyToStringConverter x:Key="DateOnlyToStringConverter" Format="yyyy.MM" />
         <cvt:Int32ToPercentConverter x:Key="Int32ToPercentConverter" />
 
         <Style TargetType="ui:PackIcon">
@@ -40,23 +45,22 @@
     </Window.Resources>
 
     <DockPanel>
-        <views:InformationBar DockPanel.Dock="Bottom" DataContext="{Binding InformationBarVm}" />
-        <views:FunctionBar DockPanel.Dock="Bottom" DataContext="{Binding FunctionBarVm}" />
+        <views:InformationBar DataContext="{Binding InformationBarVm}" DockPanel.Dock="Bottom" />
+        <views:FunctionBar DataContext="{Binding FunctionBarVm}" DockPanel.Dock="Bottom" />
 
         <StackPanel DockPanel.Dock="Top" Orientation="Horizontal">
             <Label Margin="8,0,0,0">予約月</Label>
-            <ui:PackIcon Kind="CalendarMonth"/>
+            <ui:PackIcon Kind="CalendarMonth" />
             <TextBox
-                bhv:Hint.Watermark="yyyyMM"
-                bhv:Hint.EnableToolTipMark="True"
-                ToolTip="表示したい年月を入力してください。"
+                MinWidth="80"
+                MaxWidth="120"
                 HorizontalContentAlignment="Center"
-                MinWidth="80" MaxWidth="120"
+                bhv:Hint.EnableToolTipMark="True"
+                bhv:Hint.Watermark="yyyyMM"
+                bhv:OnEnter.EnableUpdateSource="True"
                 IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
-                Text="{Binding
-                    StartMonth.Value,
-                    Converter={StaticResource DateOnlyToStringConverter}}"
-                bhv:OnEnter.EnableUpdateSource="True" />
+                Text="{Binding StartMonth.Value, Converter={StaticResource DateOnlyToStringConverter}}"
+                ToolTip="表示したい年月を入力してください。" />
         </StackPanel>
 
         <Grid>
@@ -64,44 +68,36 @@
                 x:Name="EquipTabControl"
                 IsEnabled="{Binding FunctionBarVm.SharedCanExecute.Value}"
                 ItemsSource="{Binding ReservationEquipTabItems}"
+                PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel"
                 SelectedIndex="{Binding SelectedTabIndexInput, Mode=OneWayToSource}"
-                SelectionChanged="EquipTabControl_OnSelectionChanged"
-                PreviewMouseWheel="EquipTabControl_OnPreviewMouseWheel">
+                SelectionChanged="EquipTabControl_OnSelectionChanged">
 
-                <!-- TabItem ヘッダー部分 -->
+                <!--  TabItem ヘッダー部分  -->
                 <TabControl.ItemTemplate>
                     <DataTemplate>
                         <TextBlock Text="{Binding EquipName}" />
                     </DataTemplate>
                 </TabControl.ItemTemplate>
 
-                <!-- TabItem 中身 -->
+                <!--  TabItem 中身  -->
                 <TabControl.ContentTemplate>
                     <DataTemplate>
                         <local:ReservationEquipMonthlyGrid DataContext="{Binding .}">
                             <local:ReservationEquipMonthlyGrid.LayoutTransform>
-                                <ScaleTransform
-                                    ScaleX="{
-                                        Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
-                                        RelativeSource={RelativeSource AncestorType=Window},
-                                        Converter={StaticResource Int32ToPercentConverter}}"
-                                    ScaleY="{
-                                        Binding DataContext.InformationBarVm.SelectedScalePercentage.Value,
-                                        RelativeSource={RelativeSource AncestorType=Window},
-                                        Converter={StaticResource Int32ToPercentConverter}}"
-                                />
+                                <ScaleTransform ScaleX="{Binding DataContext.InformationBarVm.SelectedScalePercentage.Value, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Int32ToPercentConverter}}" ScaleY="{Binding DataContext.InformationBarVm.SelectedScalePercentage.Value, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource Int32ToPercentConverter}}" />
                             </local:ReservationEquipMonthlyGrid.LayoutTransform>
                         </local:ReservationEquipMonthlyGrid>
                     </DataTemplate>
                 </TabControl.ContentTemplate>
 
-                <!-- サンプル -->
+                <!--  サンプル  -->
                 <TabItem Header="Sample" />
             </TabControl>
 
             <ui:Snackbar
-                HorizontalAlignment="Center" VerticalAlignment="Bottom"
-                MessageQueue="{Binding SnackbarMessageQueue}"/>
+                HorizontalAlignment="Center"
+                VerticalAlignment="Bottom"
+                MessageQueue="{Binding SnackbarMessageQueue}" />
         </Grid>
 
     </DockPanel>

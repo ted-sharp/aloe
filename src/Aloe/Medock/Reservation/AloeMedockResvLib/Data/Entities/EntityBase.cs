@@ -6,32 +6,62 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading.Tasks;
+using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Constants;
 using Microsoft.EntityFrameworkCore;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 
 namespace Aloe.Medock.Reservation.AloeMedockResvLib.Data.Entities;
 
+/// <summary>
+/// 監視用に必要な項目を定義したもの。
+/// データベースのトリガーで記録するのに必要。
+/// </summary>
 public interface IAuditableEntity
 {
+    /// <summary>
+    /// 削除
+    /// </summary>
+    bool IsDeleted { get; set; }
+
+    /// <summary>
+    /// 作成日時
+    /// </summary>
     DateTime CreatedAt { get; set; }
 
+    /// <summary>
+    /// 作成者ID
+    /// </summary>
     int CreatedUserId { get; set; }
 
+    /// <summary>
+    /// 作成セッションID
+    /// </summary>
     Guid CreatedSessionId { get; set; }
 
+    /// <summary>
+    /// 更新日時
+    /// </summary>
     DateTime UpdatedAt { get; set; }
 
+    /// <summary>
+    /// 更新者ID
+    /// </summary>
     int UpdatedUserId { get; set; }
 
+    /// <summary>
+    /// 更新セッションID
+    /// </summary>
     Guid UpdatedSessionId { get; set; }
-
-    bool IsDeleted { get; set; }
 }
 
 public abstract class AuditableEntityBase<TKey> : IAuditableEntity
 {
     [NotMapped]
     public abstract TKey Id { get; }
+
+    [Column("is_deleted")]
+    [Required]
+    public bool IsDeleted { get; set; }
 
     [Column("created_at")]
     [Required]
@@ -56,10 +86,6 @@ public abstract class AuditableEntityBase<TKey> : IAuditableEntity
     [Column("updated_session_id")]
     [Required]
     public Guid UpdatedSessionId { get; set; }
-
-    [Column("is_deleted")]
-    [Required]
-    public bool IsDeleted { get; set; }
 
     public AuditableEntityBase<TKey> SetCreatedSession(SessionDto session, DateTime now)
     {

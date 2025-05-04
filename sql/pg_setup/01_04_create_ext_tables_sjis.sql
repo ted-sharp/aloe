@@ -1,5 +1,5 @@
 -- Project Name : aloe_reservation_grid
--- Date/Time    : 2025/04/25 14:24:30
+-- Date/Time    : 2025/04/28 13:21:15
 -- Author       : user
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -11,6 +11,58 @@
   この機能は一時的に $$TableName のような一時テーブルを作成します。
   この機能は A5:SQL Mk-2でのみ有効であることに注意してください。
 */
+
+-- ext.hot13_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.hot13_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.hot13_codes (
+  hot13_code TEXT DEFAULT '' NOT NULL
+  , hot9_code TEXT DEFAULT '' NOT NULL
+  , hot7_code TEXT DEFAULT '' NOT NULL
+  , yakka_code TEXT DEFAULT '' NOT NULL
+  , yj_code TEXT DEFAULT '' NOT NULL
+  , receipt_code TEXT DEFAULT '' NOT NULL
+  , official_name TEXT DEFAULT '' NOT NULL
+  , product_name TEXT DEFAULT '' NOT NULL
+  , receipt_drug_name TEXT DEFAULT '' NOT NULL
+  , medication_type TEXT DEFAULT '' NOT NULL
+  , pharmaceutical_company TEXT DEFAULT '' NOT NULL
+  , pharmaceutical_distributor TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_hot13_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_hot13_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_hot13_codes (
+  hot13_code TEXT NOT NULL
+  , hot7_code TEXT
+  , distributor_code TEXT
+  , package_code TEXT
+  , logistics_code TEXT
+  , gtin13_code TEXT
+  , yakka_code TEXT
+  , yj_code TEXT
+  , receipt_code TEXT
+  , receipt_code_old TEXT
+  , official_name TEXT
+  , product_name TEXT
+  , receipt_drug_name TEXT
+  , strength_per_unit TEXT
+  , package_form TEXT
+  , item_quantity_per_package TEXT
+  , item_quantity_unit TEXT
+  , total_quantity_per_product TEXT
+  , total_quantity_unit TEXT
+  , medication_type TEXT
+  , pharmaceutical_company TEXT
+  , pharmaceutical_distributor TEXT
+  , record_type TEXT
+  , update_date TEXT
+) ;
 
 -- ext.icd10_index_terms
 -- * BackupToTempTable
@@ -41,74 +93,6 @@ CREATE TABLE ext.raw_icd10_index_terms (
   , icd10_2013_entry_type_code TEXT DEFAULT '' NOT NULL
   , reserved1 TEXT DEFAULT '' NOT NULL
   , reserved2 TEXT DEFAULT '' NOT NULL
-) ;
-
--- ext.facility_codes
--- * BackupToTempTable
-DROP TABLE if exists ext.facility_codes CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE ext.facility_codes (
-  facility_code TEXT DEFAULT '' NOT NULL
-  , facility_name TEXT DEFAULT '' NOT NULL
-  , zip_code TEXT DEFAULT '' NOT NULL
-  , address TEXT DEFAULT '' NOT NULL
-  , phone TEXT DEFAULT '' NOT NULL
-  , website TEXT DEFAULT '' NOT NULL
-) ;
-
--- ext.raw_special_health_facility_codes
--- * BackupToTempTable
-DROP TABLE if exists ext.raw_special_health_facility_codes CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE ext.raw_special_health_facility_codes (
-  facility_code TEXT DEFAULT '' NOT NULL
-  , facility_type TEXT DEFAULT '' NOT NULL
-  , facility_name TEXT DEFAULT '' NOT NULL
-  , zip_code TEXT DEFAULT '' NOT NULL
-  , phone TEXT DEFAULT '' NOT NULL
-  , address TEXT DEFAULT '' NOT NULL
-  , website TEXT DEFAULT '' NOT NULL
-  , owner TEXT DEFAULT '' NOT NULL
-) ;
-
--- ext.raw_fhir_observation_codes
--- * BackupToTempTable
-DROP TABLE if exists ext.raw_fhir_observation_codes CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE ext.raw_fhir_observation_codes (
-  concept_code TEXT DEFAULT '' NOT NULL
-  , jurisdiction_coding_system TEXT DEFAULT '' NOT NULL
-  , concept_display TEXT DEFAULT '' NOT NULL
-) ;
-
--- ext.raw_mhlw_xml_tokutei_kenshin_items
--- * BackupToTempTable
-DROP TABLE if exists ext.raw_mhlw_xml_tokutei_kenshin_items CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE ext.raw_mhlw_xml_tokutei_kenshin_items (
-  category_code TEXT DEFAULT '' NOT NULL
-  , category_name TEXT
-  , sort_no TEXT
-  , jlac10_code TEXT
-  , item_name TEXT
-  , item_data_type TEXT
-  , xml_data_type TEXT
-  , xml_data_length TEXT
-  , xml_data_format TEXT
-  , item_data_unit TEXT
-  , xml_data_unit TEXT
-  , xml_analyte_code TEXT
-  , xml_analyte_name TEXT
-  , xml_methodology_code TEXT
-  , xml_methodology_name TEXT
-  , result_code_oid TEXT
-  , item_code_oid TEXT
-  , xml_remarks TEXT
-  , remarks TEXT
 ) ;
 
 -- ext.icd10_modifier_codes
@@ -184,6 +168,74 @@ CREATE TABLE ext.raw_icd10_diagnosis_codes (
   , insurance_claim_exclusion_code TEXT DEFAULT '' NOT NULL
   , reserved3 TEXT DEFAULT '' NOT NULL
   , reserved4 TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.facility_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.facility_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.facility_codes (
+  facility_code TEXT DEFAULT '' NOT NULL
+  , facility_name TEXT DEFAULT '' NOT NULL
+  , zip_code TEXT DEFAULT '' NOT NULL
+  , address TEXT DEFAULT '' NOT NULL
+  , phone TEXT DEFAULT '' NOT NULL
+  , website TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_special_health_facility_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_special_health_facility_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_special_health_facility_codes (
+  facility_code TEXT DEFAULT '' NOT NULL
+  , facility_type TEXT DEFAULT '' NOT NULL
+  , facility_name TEXT DEFAULT '' NOT NULL
+  , zip_code TEXT DEFAULT '' NOT NULL
+  , phone TEXT DEFAULT '' NOT NULL
+  , address TEXT DEFAULT '' NOT NULL
+  , website TEXT DEFAULT '' NOT NULL
+  , owner TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_fhir_observation_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_fhir_observation_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_fhir_observation_codes (
+  concept_code TEXT DEFAULT '' NOT NULL
+  , jurisdiction_coding_system TEXT DEFAULT '' NOT NULL
+  , concept_display TEXT DEFAULT '' NOT NULL
+) ;
+
+-- ext.raw_mhlw_xml_tokutei_kenshin_items
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_mhlw_xml_tokutei_kenshin_items CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_mhlw_xml_tokutei_kenshin_items (
+  category_code TEXT DEFAULT '' NOT NULL
+  , category_name TEXT
+  , sort_no TEXT
+  , jlac10_code TEXT
+  , item_name TEXT
+  , item_data_type TEXT
+  , xml_data_type TEXT
+  , xml_data_length TEXT
+  , xml_data_format TEXT
+  , item_data_unit TEXT
+  , xml_data_unit TEXT
+  , xml_analyte_code TEXT
+  , xml_analyte_name TEXT
+  , xml_methodology_code TEXT
+  , xml_methodology_name TEXT
+  , result_code_oid TEXT
+  , item_code_oid TEXT
+  , xml_remarks TEXT
+  , remarks TEXT
 ) ;
 
 -- ext.jlac10_codes
@@ -359,6 +411,46 @@ CREATE TABLE ext.raw_zip_codes (
   , update_reason TEXT DEFAULT '' NOT NULL
 ) ;
 
+COMMENT ON TABLE ext.hot13_codes IS 'ext.hot13_codes';
+COMMENT ON COLUMN ext.hot13_codes.hot13_code IS 'hot13_code';
+COMMENT ON COLUMN ext.hot13_codes.hot9_code IS 'hot9_code';
+COMMENT ON COLUMN ext.hot13_codes.hot7_code IS 'hot7_code';
+COMMENT ON COLUMN ext.hot13_codes.yakka_code IS 'yakka_code';
+COMMENT ON COLUMN ext.hot13_codes.yj_code IS 'yj_code';
+COMMENT ON COLUMN ext.hot13_codes.receipt_code IS 'receipt_code';
+COMMENT ON COLUMN ext.hot13_codes.official_name IS 'official_name';
+COMMENT ON COLUMN ext.hot13_codes.product_name IS 'product_name';
+COMMENT ON COLUMN ext.hot13_codes.receipt_drug_name IS 'receipt_drug_name';
+COMMENT ON COLUMN ext.hot13_codes.medication_type IS 'medication_type';
+COMMENT ON COLUMN ext.hot13_codes.pharmaceutical_company IS 'pharmaceutical_company';
+COMMENT ON COLUMN ext.hot13_codes.pharmaceutical_distributor IS 'pharmaceutical_distributor';
+
+COMMENT ON TABLE ext.raw_hot13_codes IS 'ext.raw_hot13_codes';
+COMMENT ON COLUMN ext.raw_hot13_codes.hot13_code IS 'HOT13(JAN粒度)';
+COMMENT ON COLUMN ext.raw_hot13_codes.hot7_code IS 'HOT7(処方粒度)';
+COMMENT ON COLUMN ext.raw_hot13_codes.distributor_code IS '会社用';
+COMMENT ON COLUMN ext.raw_hot13_codes.package_code IS '調剤用';
+COMMENT ON COLUMN ext.raw_hot13_codes.logistics_code IS '物流用';
+COMMENT ON COLUMN ext.raw_hot13_codes.gtin13_code IS 'JANコード(GTIN-13)';
+COMMENT ON COLUMN ext.raw_hot13_codes.yakka_code IS '薬価基準収載医薬品コード';
+COMMENT ON COLUMN ext.raw_hot13_codes.yj_code IS '個別医薬品コード';
+COMMENT ON COLUMN ext.raw_hot13_codes.receipt_code IS 'レセ用コード1';
+COMMENT ON COLUMN ext.raw_hot13_codes.receipt_code_old IS 'レセ用コード2(過去互換用)';
+COMMENT ON COLUMN ext.raw_hot13_codes.official_name IS '告示名称';
+COMMENT ON COLUMN ext.raw_hot13_codes.product_name IS '販売名';
+COMMENT ON COLUMN ext.raw_hot13_codes.receipt_drug_name IS 'レセ用医薬品名';
+COMMENT ON COLUMN ext.raw_hot13_codes.strength_per_unit IS '規格単位';
+COMMENT ON COLUMN ext.raw_hot13_codes.package_form IS '包装形態';
+COMMENT ON COLUMN ext.raw_hot13_codes.item_quantity_per_package IS '個数/包装(小数対応)';
+COMMENT ON COLUMN ext.raw_hot13_codes.item_quantity_unit IS '包装単位';
+COMMENT ON COLUMN ext.raw_hot13_codes.total_quantity_per_product IS '個数/製品(小数対応)';
+COMMENT ON COLUMN ext.raw_hot13_codes.total_quantity_unit IS '総量単位';
+COMMENT ON COLUMN ext.raw_hot13_codes.medication_type IS '医薬品区分';
+COMMENT ON COLUMN ext.raw_hot13_codes.pharmaceutical_company IS '製造会社';
+COMMENT ON COLUMN ext.raw_hot13_codes.pharmaceutical_distributor IS '販売会社';
+COMMENT ON COLUMN ext.raw_hot13_codes.record_type IS 'レコード区分';
+COMMENT ON COLUMN ext.raw_hot13_codes.update_date IS '更新日';
+
 COMMENT ON TABLE ext.icd10_index_terms IS 'ext.icd10_index_terms';
 COMMENT ON COLUMN ext.icd10_index_terms.index_term IS 'index_term';
 COMMENT ON COLUMN ext.icd10_index_terms.linked_code IS 'linked_code';
@@ -377,50 +469,6 @@ COMMENT ON COLUMN ext.raw_icd10_index_terms.character_variant_type_code IS '異字
 COMMENT ON COLUMN ext.raw_icd10_index_terms.icd10_2013_entry_type_code IS '第一版採用表記区分';
 COMMENT ON COLUMN ext.raw_icd10_index_terms.reserved1 IS '言語区分(予定)';
 COMMENT ON COLUMN ext.raw_icd10_index_terms.reserved2 IS '省略区分(予定)';
-
-COMMENT ON TABLE ext.facility_codes IS 'ext.facility_codes';
-COMMENT ON COLUMN ext.facility_codes.facility_code IS 'facility_code';
-COMMENT ON COLUMN ext.facility_codes.facility_name IS 'facility_name';
-COMMENT ON COLUMN ext.facility_codes.zip_code IS 'zip_code';
-COMMENT ON COLUMN ext.facility_codes.address IS 'address';
-COMMENT ON COLUMN ext.facility_codes.phone IS 'phone';
-COMMENT ON COLUMN ext.facility_codes.website IS 'website';
-
-COMMENT ON TABLE ext.raw_special_health_facility_codes IS 'ext.raw_special_health_facility_codes';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_code IS '医療機関コード';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_type IS '医療機関種別';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_name IS '医療機関名';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.zip_code IS '郵便番号';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.phone IS '電話番号';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.address IS '所在地';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.website IS 'ホームページ';
-COMMENT ON COLUMN ext.raw_special_health_facility_codes.owner IS '経営主体';
-
-COMMENT ON TABLE ext.raw_fhir_observation_codes IS 'ext.raw_fhir_observation_codes';
-COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_code IS 'JLAC10コード';
-COMMENT ON COLUMN ext.raw_fhir_observation_codes.jurisdiction_coding_system IS 'システム';
-COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_display IS '表示名';
-
-COMMENT ON TABLE ext.raw_mhlw_xml_tokutei_kenshin_items IS 'ext.raw_mhlw_xml_tokutei_kenshin_items';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_code IS '区分番号';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_name IS '区分名称';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.sort_no IS '順番合';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.jlac10_code IS '項目コード(17桁)';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_name IS '項目名';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_type IS 'データタイプ';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_type IS 'XMLデータ型';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_length IS '最大バイト長';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_format IS '数値フォーマット';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_unit IS '表示用単位';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_unit IS 'XML用単位';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_code IS '同一性項目コード';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_name IS '同一性項目名称';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_code IS 'XML検査方法コード';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_name IS 'XML検査方法';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.result_code_oid IS '結果コードOID';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_code_oid IS '項目コードOID';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_remarks IS 'XML向け備考';
-COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.remarks IS '備考';
 
 COMMENT ON TABLE ext.icd10_modifier_codes IS 'ext.icd10_modifier_codes';
 COMMENT ON COLUMN ext.icd10_modifier_codes.modifier_code IS 'modifier_code';
@@ -472,6 +520,50 @@ COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.modifier_recommendation_code IS 
 COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.insurance_claim_exclusion_code IS '保険請求外区分';
 COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved3 IS '予備3';
 COMMENT ON COLUMN ext.raw_icd10_diagnosis_codes.reserved4 IS '予備4';
+
+COMMENT ON TABLE ext.facility_codes IS 'ext.facility_codes';
+COMMENT ON COLUMN ext.facility_codes.facility_code IS 'facility_code';
+COMMENT ON COLUMN ext.facility_codes.facility_name IS 'facility_name';
+COMMENT ON COLUMN ext.facility_codes.zip_code IS 'zip_code';
+COMMENT ON COLUMN ext.facility_codes.address IS 'address';
+COMMENT ON COLUMN ext.facility_codes.phone IS 'phone';
+COMMENT ON COLUMN ext.facility_codes.website IS 'website';
+
+COMMENT ON TABLE ext.raw_special_health_facility_codes IS 'ext.raw_special_health_facility_codes';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_code IS '医療機関コード';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_type IS '医療機関種別';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.facility_name IS '医療機関名';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.zip_code IS '郵便番号';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.phone IS '電話番号';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.address IS '所在地';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.website IS 'ホームページ';
+COMMENT ON COLUMN ext.raw_special_health_facility_codes.owner IS '経営主体';
+
+COMMENT ON TABLE ext.raw_fhir_observation_codes IS 'ext.raw_fhir_observation_codes';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_code IS 'JLAC10コード';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.jurisdiction_coding_system IS 'システム';
+COMMENT ON COLUMN ext.raw_fhir_observation_codes.concept_display IS '表示名';
+
+COMMENT ON TABLE ext.raw_mhlw_xml_tokutei_kenshin_items IS 'ext.raw_mhlw_xml_tokutei_kenshin_items';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_code IS '区分番号';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.category_name IS '区分名称';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.sort_no IS '順番合';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.jlac10_code IS '項目コード(17桁)';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_name IS '項目名';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_type IS 'データタイプ';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_type IS 'XMLデータ型';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_length IS '最大バイト長';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_format IS '数値フォーマット';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_data_unit IS '表示用単位';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_data_unit IS 'XML用単位';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_code IS '同一性項目コード';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_analyte_name IS '同一性項目名称';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_code IS 'XML検査方法コード';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_methodology_name IS 'XML検査方法';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.result_code_oid IS '結果コードOID';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.item_code_oid IS '項目コードOID';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.xml_remarks IS 'XML向け備考';
+COMMENT ON COLUMN ext.raw_mhlw_xml_tokutei_kenshin_items.remarks IS '備考';
 
 COMMENT ON TABLE ext.jlac10_codes IS 'ext.jlac10_codes';
 COMMENT ON COLUMN ext.jlac10_codes.jlac10_code IS 'jlac10_code';

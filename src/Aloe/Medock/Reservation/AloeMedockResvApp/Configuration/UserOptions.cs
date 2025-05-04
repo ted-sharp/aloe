@@ -20,10 +20,15 @@ public class UserOptions
     /// ホストのURLを
     /// </summary>
     public string? HostUrl { get; set; }
+
     public bool? IsUserRemembered { get; set; }
+
     public bool? IsPasswordRemembered { get; set; }
+
     public bool? IsLoginSkipped { get; set; }
+
     public string? User { get; set; }
+
     public string? Password { get; set; }
 
     public bool IsReadyForAutoLogin => (this.IsLoginSkipped ?? false) &&

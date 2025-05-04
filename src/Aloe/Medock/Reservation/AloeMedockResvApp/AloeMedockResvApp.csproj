@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="Assets\MaterialIcons\favorite_24dp_EA3323_FILL1_wght400_GRAD0_opsz24.ico" />
+    <None Remove="Assets\MaterialIcons\grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico" />
     <None Remove="bookmark_schedule_date_appointment_icon_124679.ico" />
   </ItemGroup>
 
@@ -35,12 +37,8 @@
       <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
     </Content>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Assets\bookmark_schedule_date_appointment_icon_124679.ico">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </Resource>
+    <Resource Include="Assets\MaterialIcons\favorite_24dp_EA3323_FILL1_wght400_GRAD0_opsz24.ico" />
+    <Resource Include="Assets\MaterialIcons\grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -64,6 +62,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\Common\AloeCoreLib.Logging\Aloe.Common.AloeCoreLib.Logging.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib.Mvvm\Aloe.Common.AloeCoreLib.Mvvm.csproj" />
+    <ProjectReference Include="..\..\..\Common\AloeCoreLib.Win32\Aloe.Common.AloeCoreLib.Win32.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib.Wpf\Aloe.Common.AloeCoreLib.Wpf.csproj" />
     <ProjectReference Include="..\..\..\Common\AloeCoreLib\Aloe.Common.AloeCoreLib.csproj" />
     <ProjectReference Include="..\AloeMedockResvLib\Aloe.Medock.Reservation.AloeMedockResvLib.csproj" />

@@ -32,6 +32,7 @@ public partial class ReservationMainWindow : Window
     public ReservationMainWindow(ReservationMainViewModel vm)
     {
         this.InitializeComponent();
+        this.Closed += App.Current.Window_OnClosed;
 
         this._vm = vm;
 

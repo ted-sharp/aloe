@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Reflection;
 using System.Windows;
+using Aloe.Common.AloeCoreLib.Wpf.Extensions;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Login;
+using Aloe.Medock.Reservation.AloeMedockResvApp.Views.Maint;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Data.Dto;
 using Aloe.Medock.Reservation.AloeMedockResvLib.Grpc.Services;
-using Microsoft.Extensions.Configuration;
+using H.NotifyIcon;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -18,17 +16,16 @@ namespace Aloe.Medock.Reservation.AloeMedockResvApp;
 /// </remarks>
 public partial class App
 {
+    private static App? s_appInstance;
+
+    public new static App Current => App.s_appInstance
+        ?? throw new InvalidOperationException("App is not initialized.");
+
     public static readonly AssemblyName AsmName = Assembly.GetExecutingAssembly().GetName();
 
     public static readonly string AppVersion = $"v{App.AsmName.Version?.Major ?? 0}.{App.AsmName.Version?.Minor ?? 0}";
 
     public static readonly string AppName = $"{App.AsmName.Name} {App.AppVersion}";
-
-    public static readonly string IniFilePath =
-        System.IO.Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-            App.AsmName.Name ?? "AloeMedockResvApp",
-            "app.ini");
 
     #region Global / Resolve
 
@@ -49,6 +46,24 @@ public partial class App
 
     #endregion  Global / Resolve
 
+    #region Global / Notification
+
+    // TODO: INotificationService を用意するのがよさそう
+
+    private static TaskbarIcon? s_notifyIcon;
+
+    public static void ShowNotification(string title, string message)
+    {
+        //_ = App.s_notifyIcon ?? throw new InvalidOperationException("TaskbarIcon is not initialized.");
+        App.s_notifyIcon?.ShowNotification(
+            title,
+            message,
+            sound: false,
+            largeIcon: false);
+    }
+
+    #endregion Global / Notification
+
     public static string HostName { get; set; } = "";
 
     public static string DatabaseName { get; set; } = "";
@@ -57,24 +72,71 @@ public partial class App
 
     #region Global / Session
 
-    // TODO: ログインユーザー
+    public static bool HasSession => App.Session != null;
 
     public static SessionDto? Session { get; set; }
 
-    public static bool HasSession => App.Session != null;
+    public static UserDto? User { get; set; }
 
     public static async Task<bool> TryLogoutAsync()
     {
-        var session = App.Session;
-        if (session is null)
+        try
+        {
+            var session = App.Session;
+            if (session is null)
+            {
+                return false;
+            }
+
+            var auth = App.Resolve<IAuthGrpcService>();
+            await auth.LogoutAsync(session);
+
+            App.Session = null;
+            App.User = null;
+
+            return true;
+        }
+        catch
         {
             return false;
         }
+    }
 
-        var auth = App.Resolve<IAuthGrpcService>();
-        await auth.LogoutAsync(session);
-        App.Session = null;
-        return true;
+    /// <summary>
+    /// LogWindow が残るため、明示的に終了を実行します。
+    /// LoginWindow が残っていたら常駐のため、ログアウトして、LoginWindow を表示します。
+    /// </summary>
+    public async void Window_OnClosed(object? sender, EventArgs e)
+    {
+        try
+        {
+            var windows = this.Windows
+                .OfType<Window>()
+                // LogWindow は必ず生成しているので除外
+                .Where(x => x is not LogWindow)
+                // Visual Studio デバッグ中のみ AdornerWindow が追加されるので除外
+                .Where(x => x.GetType().Name != "AdornerWindow")
+                .ToArray();
+
+            // Window がなければアプリケーションを終了する
+            var isRunning = windows.Any();
+            if (!isRunning)
+            {
+                Application.Current.Shutdown();
+                return;
+            }
+
+            // LoginWindow だけであれば、ログアウトして表示する
+            if (windows is [LoginWindow loginWindow])
+            {
+                await App.TryLogoutAsync();
+                loginWindow.ShowOrActivate();
+            }
+        }
+        catch (Exception ex)
+        {
+            this.LogError(ex);
+        }
     }
 
     #endregion Global / Session

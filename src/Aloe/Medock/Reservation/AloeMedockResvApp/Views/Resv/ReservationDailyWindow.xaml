@@ -20,6 +20,7 @@
     d:DataContext="{d:DesignInstance Type=vm:ReservationDailyViewModel}"
     d:Height="480"
     d:Width="640"
+    Icon="/Assets/MaterialIcons/grass_24dp_75FB4C_FILL1_wght400_GRAD0_opsz24.ico"
     ResizeMode="CanResizeWithGrip"
     mc:Ignorable="d">
 

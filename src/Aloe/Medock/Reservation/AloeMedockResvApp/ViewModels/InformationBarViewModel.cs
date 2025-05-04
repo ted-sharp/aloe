@@ -22,13 +22,25 @@ public class InformationBarViewModel : ViewModelBase, INotifyPropertyChanged, ID
     public static readonly int MaxScale = 200;
     public static readonly int WheelStepScale = 5;
 
-    public BindableReactiveProperty<string> User { get; } = new(App.Session?.UserDisplayName ?? "");
+    public BindableReactiveProperty<string> AppName { get; } = new(App.AppName);
+
+    public BindableReactiveProperty<string> AppVersion { get; } = new(App.AppVersion);
 
     public BindableReactiveProperty<string> HostName { get; } = new(App.HostName);
 
     public BindableReactiveProperty<string> DatabaseName { get; } = new(App.DatabaseName);
 
     public BindableReactiveProperty<Visibility> DatabaseNameVisibility { get; } = new(Visibility.Collapsed);
+
+    public BindableReactiveProperty<string> User { get; } = new(App.User?.DisplayName ?? "");
+
+    public BindableReactiveProperty<string> Role { get; } = new("Administrator");
+
+    public BindableReactiveProperty<string> LoginCount { get; } = new(App.User?.LoginSuccessCount.ToString() ?? "---");
+
+    public BindableReactiveProperty<string> FailureCount { get; } = new(App.User?.LoginFailureCount.ToString() ?? "---");
+
+    public BindableReactiveProperty<string> LoginAt { get; } = new(App.Session?.LoginAt.ToString("HH:mm:ss") ?? "--:--");
 
     public ObservableCollection<int> ScaleOptions { get; } =
         [
