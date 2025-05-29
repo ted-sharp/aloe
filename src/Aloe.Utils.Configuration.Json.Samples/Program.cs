@@ -9,12 +9,13 @@ var builder = Host.CreateApplicationBuilder(args);
 // 2. ConfigurationManager に対してベースパスと JSON ファイルを設定
 builder.Configuration
     .SetBasePath(AppContext.BaseDirectory)
-    .AddJsonFiles(
-    [
-        "appsettings.json",
-        "appsettings.PostgreSQL.json",
-        "appsettings.Serilog.json"
-    ], reloadOnChange: true);
+    .AddAllJsonFiles("*.json");
+    //.AddJsonFiles(
+    //[
+    //    "appsettings.json",
+    //    "appsettings.PostgreSQL.json",
+    //    "appsettings.Serilog.json"
+    //]);
 
 // 3. ビルドして IHost を生成
 using var host = builder.Build();
@@ -47,3 +48,8 @@ Console.WriteLine("WriteTo      : " +
           .GetSection("WriteTo")
           .GetChildren()
           .Select(c => c["Name"])));
+
+Console.WriteLine();
+Console.WriteLine("Press any key to exit...");
+Console.ReadKey();
+Console.WriteLine();
