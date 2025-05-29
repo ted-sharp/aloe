@@ -45,11 +45,20 @@ var isDebug = true;
 
 var builder = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
+    // Pattern can be specified
+    .AddAllJsonFiles("*.json")
     // Multiple files can be specified
     .AddJsonFiles(["appsettings.PostgreSql.json", "appsettings.Serilog.json" ])
     // Conditions can be specified within the method chain
     .AddJsonFileIf(isDebug, "appsettings.Debug.json");
 ```
+
+## Note
+
+### Build only once when setting `reloadOnChange: true`
+
+In `ConfigurationBuilder`, when `reloadOnChange: true` is set, file monitoring is enabled and the files will not be released by GC.
+Therefore, configuration files should be loaded only once at application startup.
 
 ## License
 
@@ -57,4 +66,4 @@ MIT License
 
 ## Contributing
 
-Bug reports and feature requests are welcome on GitHub Issues. Pull requests are also appreciated. 
+Bug reports and feature requests are welcome on GitHub Issues. Pull requests are also appreciated.

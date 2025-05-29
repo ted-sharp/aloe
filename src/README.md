@@ -23,6 +23,8 @@ var isDebug = true;
 
 var builder = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
+    // Pattern can be specified
+    .AddAllJsonFiles("*.json")
     // Multiple files can be specified
     .AddJsonFiles(["appsettings.PostgreSql.json", "appsettings.Serilog.json" ])
     // Conditions can be specified within the method chain

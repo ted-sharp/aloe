@@ -41,15 +41,22 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Configuration.Json;
 using Aloe.Utils.Configuration.Json;
 
-var isDebug = true;
-
 var builder = new ConfigurationBuilder()
     .AddJsonFile("appsettings.json")
+    // パターンを指定できる。
+    .AddAllJsonFiles("*.json")
     // 複数ファイルを指定できる。
     .AddJsonFiles(["appsettings.PostgreSql.json", "appsettings.Serilog.json" ])
     // メソッドチェーン内で条件を指定できる。
-    .AddJsonFileIf(isDebug, "appsettings.Debug.json");
+    .AddJsonFileIf(condition: true, "appsettings.Debug.json");
 ```
+
+## Note
+
+### `reloadOnChange: true` を設定する場合は1回だけビルドする
+
+`ConfigurationBuilder` では、`reloadOnChange: true` にすると、ファイル監視が有効になるため GC で解放されなくなります。
+そのため、設定ファイルはアプリケーションの開始時に一度だけ読み込みます。
 
 ## ライセンス
 
