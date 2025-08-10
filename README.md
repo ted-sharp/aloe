@@ -49,12 +49,6 @@ if (DateHelper.TryParseEx("令和5年4月1日", out var date))
     Console.WriteLine(date); // 2023-04-01
 }
 
-// 漢数字を含む日付文字列のパース
-if (DateHelper.TryParseEx("令和五年四月一日", out var date2))
-{
-    Console.WriteLine(date2); // 2023-04-01
-}
-
 // 会計年度の月の解析
 if (DateHelper.TryParseEx("4月", out var date3))
 {
@@ -65,6 +59,15 @@ if (DateHelper.TryParseEx("4月", out var date3))
 var span = new TimeSpan(1, 2, 3, 4);
 Console.WriteLine(span.ToJaString()); // 1日 2時間 3分 4秒
 Console.WriteLine(span.ToApproximateJaString()); // 約1日
+
+// 文字列→日付（拡張メソッド）
+var d1 = "202403".ToDateOrToday(); // 2024-03-01（今日が異なるなら今日）
+var d2 = "invalid".ToDateOr(new DateOnly(2024, 1, 2)); // フォールバックを返す
+
+// DateOnly ↔ DateTime 変換
+DateOnly only = new DateOnly(2024, 3, 15);
+DateTime dt = only.ToDateTime(); // 2024-03-15 00:00:00
+DateOnly? only2 = DateTime.Now.ToDateOnly();
 ```
 
 ## ライセンス
