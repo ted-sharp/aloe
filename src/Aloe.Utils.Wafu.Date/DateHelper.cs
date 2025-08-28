@@ -72,11 +72,6 @@ public static class DateHelper
         DateOnly.FromDateTime(DateTime.Today);
 
     /// <summary>
-    /// 入力文字列を正規化します。
-    /// </summary>
-    /// <param name="input">正規化する入力文字列</param>
-    /// <returns>正規化された文字列</returns>
-    /// <summary>
     /// 今月の初日（1日）を DateOnly 型で取得します。
     /// </summary>
     /// <returns>今月の初日</returns>
@@ -86,12 +81,6 @@ public static class DateHelper
         return new DateOnly(today.Year, today.Month, 1);
     }
 
-    /// <summary>
-    /// 1-2桁の数字や月名が指定された場合は月数(1-12)にパースします。
-    /// </summary>
-    /// <param name="input">解析する月名または数値</param>
-    /// <param name="month">解析結果の月数</param>
-    /// <returns>解析が成功した場合は true、それ以外の場合は false</returns>
     /// <summary>
     /// 今月の初日（1日）を DateTime 型で取得します。
     /// </summary>
@@ -103,11 +92,6 @@ public static class DateHelper
     }
 
     /// <summary>
-    /// 漢数字の文字列を数値に変換します。
-    /// </summary>
-    /// <param name="input">変換する漢数字の文字列</param>
-    /// <returns>変換された数値。変換に失敗した場合は -1</returns>
-    /// <summary>
     /// 指定された年月の初日（1日）を DateOnly 型で取得します。
     /// </summary>
     /// <param name="year">年</param>
@@ -115,11 +99,6 @@ public static class DateHelper
     /// <returns>指定された年月の初日</returns>
     public static DateOnly GetFirstDate(int year, int month) => new DateOnly(year, month, 1);
 
-    /// <summary>
-    /// 文字列内の複合漢数字を数値に置換します。
-    /// </summary>
-    /// <param name="input">置換対象の文字列</param>
-    /// <returns>漢数字が数値に置換された文字列</returns>
     /// <summary>
     /// 指定された年月の初日（1日）を DateTime 型で取得します。
     /// </summary>
@@ -129,12 +108,6 @@ public static class DateHelper
     public static DateTime GetFirstDateTime(int year, int month) => new DateTime(year, month, 1);
 
     /// <summary>
-    /// 会計年度の月を解析して日付に変換します。
-    /// </summary>
-    /// <param name="s">解析する月名または数値</param>
-    /// <param name="date">解析結果の日付</param>
-    /// <returns>解析が成功した場合は true、それ以外の場合は false</returns>
-    /// <summary>
     /// 指定された日付の月末日を DateOnly 型で取得します。
     /// </summary>
     /// <param name="date">基準となる日付</param>
@@ -142,13 +115,6 @@ public static class DateHelper
     public static DateOnly GetEndDate(DateOnly date) =>
         new DateOnly(date.Year, date.Month, 1).AddMonths(1).AddDays(-1);
 
-    /// <summary>
-    /// 日付文字列を解析して DateOnly 型に変換します。
-    /// </summary>
-    /// <param name="dateString">解析する日付文字列</param>
-    /// <param name="date">解析結果の DateOnly 値</param>
-    /// <returns>解析が成功した場合は true、それ以外の場合は false</returns>
-    /// <exception cref="ArgumentNullException">dateString が null の場合にスローされます。</exception>
     /// <summary>
     /// 指定された日付の月末日を DateTime 型で取得します。
     /// </summary>
@@ -372,17 +338,7 @@ public static class DateHelper
         return false;
     }
 
-    /// <summary>
-    /// 今月の初日（1日）を DateOnly 型で取得します。
-    /// </summary>
-    /// <returns>今月の初日</returns>
     // ---------------------- private nested types (should follow fields) ----------------------
-
-    /// <summary>
-    /// 今月の初日（1日）を DateTime 型で取得します。
-    /// </summary>
-    /// <returns>今月の初日</returns>
-    // ReSharper disable once ClassNeverInstantiated.Local
 
     /// <summary>
     /// 指定された年月の初日（1日）を DateOnly 型で取得します。
