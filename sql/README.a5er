@@ -1,7 +1,7 @@
 ﻿# A5:ER FORMAT:19
 # A5:ER ENCODING:UTF8
 # A5:ER Mk-1 Copyright © 2007 m.matsubara
-# A5:SQL Mk-2 Version 2.20.2 Copyright © 1997 - 2025 m.matsubara
+# A5:SQL Mk-2 Version 2.20.4 Copyright © 1997 - 2025 m.matsubara
 #  https://a5m2.mmatsubara.com
 
 [Manager]
@@ -148,7 +148,9 @@ Left=100
 Top=1750
 Field="Int32","col_int","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="Int64","col_id","BIGINT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="Guid","col_uuid","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF,""
+Field="Guid","col_uuidv7","UUID","NOT NULL",,"uuidv7()","PG18以降",$FFFFFFFF,""
+Field="Guid","col_uuidv4","UUID","NOT NULL",,"gen_random_uuid()","PG17以前",$FFFFFFFF,""
+Field="Guid[]","col_uuids","UUID[]","NOT NULL",,"\q{}\q","for GIN",$FFFFFFFF,""
 Field="Boolean","col_boolean","@BOOLEAN","NOT NULL",,"\q0\q","",$FFFFFFFF,""
 Field="Decimal","col_numeric","NUMERIC","NOT NULL",,"0","",$FFFFFFFF,""
 Field="DateTime","col_date","@DATETIME","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
@@ -159,7 +161,7 @@ Field="Poco","col_json","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20250325152907
+ModifiedDateTime=20251119224919
 Position="README",100,1750
 ZOrder=38
 
@@ -182,6 +184,6 @@ Field="更新セッション","updated_session_id","UUID",,,"\q00000000-0000-000
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20250325152920
+ModifiedDateTime=20251119223630
 Position="README",100,100
 ZOrder=41
