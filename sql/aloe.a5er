@@ -5,7 +5,7 @@
 #  https://a5m2.mmatsubara.com
 
 [Manager]
-ProjectName=apoch_yoyaku
+ProjectName=aloe
 Author=
 MaxEntityRowShow=1000
 ReadOnlyRecommend=0
@@ -43,13 +43,19 @@ RDBMSType=7
 RDBMSTypeName=PostgreSQL
 GenerateDropTableStatement=1
 DropTableIfExists=1
+ForceQuoteIdentifier=1
 CreatePkIndex=1
+CreateFk=1
+FkOnDeleteOption=cascade
+FkOnUpdateOption=cascade
+CreateFK_ParentCard1Only=1
+FKParentIndex=1
 CommonField="is_deleted","is_deleted","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF
-CommonField="created_at","created_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF
-CommonField="created_user_id","created_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF
+CommonField="created_at","created_at","TIMESTAMPTZ","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF
+CommonField="created_user_id","created_user_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF
 CommonField="created_session_id","created_session_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF
-CommonField="updated_at","updated_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF
-CommonField="updated_user_id","updated_user_id","@INT","NOT NULL",,"0","",$FFFFFFFF
+CommonField="updated_at","updated_at","TIMESTAMPTZ","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF
+CommonField="updated_user_id","updated_user_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF
 CommonField="updated_session_id","updated_session_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$FFFFFFFF
 DefaultPkName=%0:s_PKC
 DefaultPkIndexName=%0:s_PKI
@@ -1454,13 +1460,15 @@ TableOption=
 Page=USER
 Left=3000
 Top=1400
-Field="role_permission_code","role_permission_code","@VARCHAR(32)","NOT NULL",0,"","",$000028FF,""
-Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000099FF,""
-Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",,"\q\q","",$000099FF,""
+Field="role_permission_code","role_permission_code","@VARCHAR(32)","NOT NULL",0,"\q\q","",$000028FF,""
+Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"","",$000099FF,""
+Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",,"","",$000099FF,""
+Index==1,role_code,permission_code
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155829
+ModifiedDateTime=20251122191705
 Position="USER",3000,1400
 ZOrder=31
 
@@ -1473,14 +1481,14 @@ TableOption=
 Page=USER
 Left=2000
 Top=1400
-Field="role_code","role_code","@VARCHAR(10)","NOT NULL",0,"","",$000000FF,""
+Field="role_code","role_code","@VARCHAR(10)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="role_name","role_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="role_desc","role_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="role_seq","role_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155833
+ModifiedDateTime=20251122182515
 Position="USER",2000,1400
 ZOrder=32
 
@@ -1493,13 +1501,15 @@ TableOption=
 Page=USER
 Left=2000
 Top=1700
-Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",0,"","",$000000FF,""
-Field="resource_code","resource_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000099FF,""
-Field="operation_code","operation_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000099FF,""
+Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",0,"\q\q","",$000000FF,""
+Field="resource_code","resource_code","@VARCHAR(10)","NOT NULL",,"","",$000099FF,""
+Field="operation_code","operation_code","@VARCHAR(10)","NOT NULL",,"","",$000099FF,""
+Index==1,resource_code,operation_code
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155826
+ModifiedDateTime=20251122191710
 Position="USER",2000,1700
 ZOrder=30
 
@@ -1513,22 +1523,24 @@ Page=USER
 Left=1000
 Top=400
 Field="user_id","user_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
-Field="user_code","user_code","@VARCHAR(100)","NOT NULL",,"\q\q","",$000099FF,""
-Field="email","email","@VARCHAR(254)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="password_hash","password_hash","@VARCHAR(255)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="password_salt","password_salt","@VARCHAR(64)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="expire_date","expire_date","@DATETIME","NOT NULL",,"\q9999-12-31\q","",$FFFFFFFF,""
+Field="user_code","user_code","@VARCHAR(100)","NOT NULL",,"","",$000099FF,""
+Field="email","email","@VARCHAR(254)","NOT NULL",,"","",$000099FF,""
+Field="password_hash","password_hash","@VARCHAR(255)","NOT NULL",,"","",$FFFFFFFF,""
+Field="password_salt","password_salt","@VARCHAR(64)","NOT NULL",,"","",$FFFFFFFF,""
+Field="expire_date","expire_date","TIMESTAMPTZ","NOT NULL",,"\q9999-12-31\q","",$FFFFFFFF,""
 Field="login_success_count","login_success_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="login_failure_count","login_failure_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="login_failure_attempts","login_failure_attempts","@INT","NOT NULL",,"0","ログイン成功でリセットします",$FFFFFFFF,""
-Field="locked_until_at","locked_until_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","ロックされたら更新します",$FFFFFFFF,""
-Field="last_login_at","last_login_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
-Field="last_logout_at","last_logout_at","@DATETIME","NOT NULL",,"CURRENT_TIMESTAMP","login_atより前を探すため初期値は同じとします。",$FFFFFFFF,""
+Field="locked_until_at","locked_until_at","TIMESTAMPTZ","NOT NULL",,"\q1970-01-01\q","ロックされたら更新します、ロックの前回値としてずっと保持します",$FFFFFFFF,""
+Field="last_login_at","last_login_at","TIMESTAMPTZ","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
+Field="last_logout_at","last_logout_at","TIMESTAMPTZ","NOT NULL",,"CURRENT_TIMESTAMP","login_atより前を探すため初期値は同じとします。",$FFFFFFFF,""
 Field="is_system_admin","is_system_admin","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+Index==1,user_code
+Index==1,email
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122162158
+ModifiedDateTime=20251122192108
 Position="USER",1000,400
 ZOrder=29
 
@@ -1587,7 +1599,7 @@ TableOption=
 Page=USER
 Left=100
 Top=100
-Field="policy_code","policy_code","@VARCHAR(10)","NOT NULL",0,"","",$000000FF,""
+Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="policy_name","policy_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="policy_desc","policy_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="data_type","data_type","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -1597,7 +1609,7 @@ Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155512
+ModifiedDateTime=20251122182314
 Position="USER",100,100
 ZOrder=44
 
@@ -1726,7 +1738,7 @@ TableOption=
 Page=USER
 Left=2000
 Top=100
-Field="preference_code","preference_code","@VARCHAR(10)","NOT NULL",0,"","",$000000FF,""
+Field="preference_code","preference_code","@VARCHAR(100)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="preference_name","preference_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="preference_desc","preference_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="data_type","data_type","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -1736,7 +1748,7 @@ Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155819
+ModifiedDateTime=20251122182333
 Position="USER",2000,100
 ZOrder=59
 
@@ -1751,12 +1763,14 @@ Left=3000
 Top=400
 Field="user_preference_id","user_preference_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
 Field="user_id","user_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="preference_code","preference_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000099FF,""
+Field="preference_code","preference_code","@VARCHAR(100)","NOT NULL",,"","",$000099FF,""
 Field="preference_value","preference_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Index==1,user_id,preference_code
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122155855
+ModifiedDateTime=20251122191636
 Position="USER",3000,400
 ZOrder=60
 
@@ -2485,13 +2499,13 @@ TableOption=
 Page=USER
 Left=100
 Top=1300
-Field="tenant_id","tenant_id","UUID","NOT NULL",0,"uuidv7()","0 はグローバル",$000000FF,""
+Field="tenant_id","tenant_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
 Field="tenant_name","tenant_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155947
+ModifiedDateTime=20251122182241
 Position="USER",100,1300
 ZOrder=245
 
@@ -2505,15 +2519,19 @@ Page=USER
 Left=1000
 Top=1300
 Field="tenant_user_id","tenant_user_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$000099FF,""
-Field="user_id","user_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$000099FF,""
+Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="user_id","user_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="display_name","display_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="tenant_user_seq","tenant_user_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="is_tenant_admin","is_tenant_admin","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+Index==1,tenant_id,user_id
+IndexOption=WHERE is_deleted = FALSE
+Index==0,user_id,tenant_id
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122155730
+ModifiedDateTime=20251122191656
 Position="USER",1000,1300
 ZOrder=248
 
@@ -2555,7 +2573,7 @@ Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251122155651
+ModifiedDateTime=20251122182255
 Position="USER",1000,2100
 ZOrder=250
 
@@ -2655,12 +2673,14 @@ Page=USER
 Left=2000
 Top=900
 Field="user_role_id","user_role_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="user_id","user_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$000099FF,""
-Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000099FF,""
+Field="user_id","user_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"","",$000099FF,""
+Index==1,user_id,role_code
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122151934
+ModifiedDateTime=20251122191647
 Position="USER",2000,900
 ZOrder=262
 
@@ -2738,12 +2758,12 @@ Left=3000
 Top=700
 Field="user_id","user_id","UUID","NOT NULL",0,"","",$000000FF,""
 Field="permission_codes","permission_codes","@VARCHAR(21)[]","NOT NULL",,"\q{}\q","",$000099FF,""
-Field="expire_date","expire_date","@DATETIME",,,"","",$FFFFFFFF,""
+Field="expire_date","expire_date","TIMESTAMPTZ",,,"","",$FFFFFFFF,""
 UsingCommonColumns=0
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122155848
+ModifiedDateTime=20251122192321
 Position="USER",3000,700
 ZOrder=267
 
@@ -2757,13 +2777,15 @@ Page=USER
 Left=1000
 Top=100
 Field="tenant_policy_id","tenant_policy_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$000099FF,""
-Field="policy_code","policy_code","@VARCHAR(10)","NOT NULL",,"","",$000099FF,""
-Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"","",$FFFFFFFF,""
+Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",,"","",$000099FF,""
+Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Index==1,tenant_id,policy_code
+IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251122145259
+ModifiedDateTime=20251122191604
 Position="USER",1000,100
 ZOrder=270
 
