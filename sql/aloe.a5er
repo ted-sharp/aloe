@@ -352,7 +352,7 @@ IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251127214600
+ModifiedDateTime=20251201200516
 Position="USER",1000,400
 ZOrder=29
 
@@ -1179,11 +1179,11 @@ Field="continuation_code","continuation_code","TEXT","NOT NULL",,"\q\q","任意�
 Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 Field="deactivated_on","deactivated_on","@DATE",,,"","無効日",$FFFFFFFF,""
 Field="pt_insure_card_memo","pt_insure_card_memo","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="pt_insure_card_seq","pt_insure_card_seq","",,,"","",$FFFFFFFF,""
+Field="pt_insure_card_seq","pt_insure_card_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251127004258
+ModifiedDateTime=20251201201443
 Position="INSUR",500,1400
 ZOrder=287
 
