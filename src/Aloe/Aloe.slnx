@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/Apps/" />
+  <Folder Name="/Apps/Medock/">
+    <Project Path="Apps/Medock/Aloe.Apps.Medock/Medock.csproj" />
+    <Project Path="Apps/Medock/Aloe.Apps.MedockLib/Aloe.Apps.MedockLib.csproj" Id="768c101a-91a1-4886-9718-fb9499b3176d" />
+    <Project Path="Apps/Medock/Aloe.Apps.MedockSeed/MedockSeed.csproj" />
+  </Folder>
+</Solution>
