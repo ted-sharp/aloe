@@ -7,4 +7,8 @@
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Aloe.Apps.MedockLib\Aloe.Apps.MedockLib.csproj" />
+  </ItemGroup>
+
 </Project>

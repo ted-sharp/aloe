@@ -1,0 +1,162 @@
+@page "/calendar"
+
+<PageTitle>カレンダー - Aloe Medock</PageTitle>
+
+<div class="space-y-6">
+    <!-- ヘッダー -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">予約カレンダー</h1>
+            <p class="text-base-content/60 mt-1">予約状況を確認・管理できます</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+            <!-- ビュー切り替え -->
+            <div class="btn-group">
+                <button class="btn @(CurrentView == CalendarView.Month ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Month)">月</button>
+                <button class="btn @(CurrentView == CalendarView.Week ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Week)">週</button>
+                <button class="btn @(CurrentView == CalendarView.Day ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Day)">日</button>
+            </div>
+            <button class="btn btn-primary" @onclick="OpenNewAppointmentModal">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                新規予約
+            </button>
+        </div>
+    </div>
+
+    <!-- カレンダーナビゲーション -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <div class="flex items-center justify-between">
+                <button class="btn btn-ghost btn-circle" @onclick="PreviousPeriod">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <div class="text-center">
+                    <h2 class="text-xl font-bold">@GetCurrentPeriodTitle()</h2>
+                    <button class="btn btn-ghost btn-sm" @onclick="GoToToday">今日</button>
+                </div>
+                <button class="btn btn-ghost btn-circle" @onclick="NextPeriod">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- カレンダー本体 -->
+    <div class="card bg-base-100 shadow overflow-hidden">
+        @if (CurrentView == CalendarView.Month)
+        {
+            <MonthView CurrentDate="@CurrentDate" OnDateClick="HandleDateClick" />
+        }
+        else if (CurrentView == CalendarView.Week)
+        {
+            <WeekView CurrentDate="@CurrentDate" OnTimeSlotClick="HandleTimeSlotClick" />
+        }
+        else
+        {
+            <DayView CurrentDate="@CurrentDate" OnTimeSlotClick="HandleTimeSlotClick" />
+        }
+    </div>
+
+    <!-- 凡例 -->
+    <div class="card bg-base-100 shadow">
+        <div class="card-body p-4">
+            <h3 class="font-bold mb-2">ステータス凡例</h3>
+            <div class="flex flex-wrap gap-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded bg-warning"></span>
+                    <span class="text-sm">予約</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded bg-info"></span>
+                    <span class="text-sm">待機中</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded bg-success"></span>
+                    <span class="text-sm">来院済み</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded bg-error"></span>
+                    <span class="text-sm">キャンセル</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private CalendarView CurrentView { get; set; } = CalendarView.Month;
+
+    private enum CalendarView
+    {
+        Month,
+        Week,
+        Day
+    }
+
+    private void SetView(CalendarView view)
+    {
+        CurrentView = view;
+    }
+
+    private string GetCurrentPeriodTitle()
+    {
+        return CurrentView switch
+        {
+            CalendarView.Month => $"{CurrentDate.Year}年{CurrentDate.Month}月",
+            CalendarView.Week => $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日の週",
+            CalendarView.Day => $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日",
+            _ => ""
+        };
+    }
+
+    private void PreviousPeriod()
+    {
+        CurrentDate = CurrentView switch
+        {
+            CalendarView.Month => CurrentDate.AddMonths(-1),
+            CalendarView.Week => CurrentDate.AddDays(-7),
+            CalendarView.Day => CurrentDate.AddDays(-1),
+            _ => CurrentDate
+        };
+    }
+
+    private void NextPeriod()
+    {
+        CurrentDate = CurrentView switch
+        {
+            CalendarView.Month => CurrentDate.AddMonths(1),
+            CalendarView.Week => CurrentDate.AddDays(7),
+            CalendarView.Day => CurrentDate.AddDays(1),
+            _ => CurrentDate
+        };
+    }
+
+    private void GoToToday()
+    {
+        CurrentDate = DateOnly.FromDateTime(DateTime.Today);
+    }
+
+    private void HandleDateClick(DateOnly date)
+    {
+        CurrentDate = date;
+        CurrentView = CalendarView.Day;
+    }
+
+    private void HandleTimeSlotClick(DateTime dateTime)
+    {
+        // TODO: 予約作成モーダルを表示
+    }
+
+    private void OpenNewAppointmentModal()
+    {
+        // TODO: 新規予約モーダルを表示
+    }
+}
+

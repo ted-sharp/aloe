@@ -1,0 +1,135 @@
+@* 日表示コンポーネント *@
+
+<div class="overflow-x-auto">
+    <!-- 日付ヘッダー -->
+    <div class="p-4 bg-base-200 border-b border-base-300">
+        @{
+            var dayNames = new[] { "日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日" };
+            var dayOfWeek = (int)CurrentDate.DayOfWeek;
+            var isToday = CurrentDate == DateOnly.FromDateTime(DateTime.Today);
+        }
+        <div class="text-center">
+            <span class="text-2xl font-bold @(dayOfWeek == 0 ? "text-error" : dayOfWeek == 6 ? "text-info" : "")">
+                @CurrentDate.Day
+            </span>
+            <span class="ml-2 @(dayOfWeek == 0 ? "text-error" : dayOfWeek == 6 ? "text-info" : "")">
+                @dayNames[dayOfWeek]
+            </span>
+            @if (isToday)
+            {
+                <span class="badge badge-primary ml-2">今日</span>
+            }
+        </div>
+    </div>
+
+    <!-- 時間スロット -->
+    <div class="min-h-[600px]">
+        @for (int hour = 8; hour <= 18; hour++)
+        {
+            var dateTime = CurrentDate.ToDateTime(new TimeOnly(hour, 0));
+            var appointments = GetSampleHourAppointments(hour).ToList();
+
+            <div class="flex border-b border-base-300 hover:bg-base-200/50 transition-colors">
+                <!-- 時間ラベル -->
+                <div class="w-20 p-3 text-right text-sm text-base-content/60 border-r border-base-300 flex-shrink-0">
+                    @hour:00
+                </div>
+
+                <!-- 予約スロット -->
+                <div class="flex-1 p-2 min-h-[80px] cursor-pointer"
+                     @onclick="() => OnTimeSlotClick.InvokeAsync(dateTime)">
+                    @if (appointments.Any())
+                    {
+                        <div class="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                            @foreach (var appt in appointments)
+                            {
+                                <div class="card bg-base-100 shadow-sm border @GetStatusBorderClass(appt.Status)">
+                                    <div class="card-body p-3">
+                                        <div class="flex items-start justify-between">
+                                            <div>
+                                                <h4 class="font-semibold">@appt.Name</h4>
+                                                <p class="text-sm text-base-content/60">@appt.Org</p>
+                                            </div>
+                                            <span class="badge @GetStatusBadgeClass(appt.Status)">@GetStatusText(appt.Status)</span>
+                                        </div>
+                                        <div class="text-xs text-base-content/60 mt-1">
+                                            @hour:00 - @(hour + 1):00
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="h-full flex items-center justify-center text-base-content/30 text-sm">
+                            クリックして予約を追加
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public DateOnly CurrentDate { get; set; }
+
+    [Parameter]
+    public EventCallback<DateTime> OnTimeSlotClick { get; set; }
+
+    // サンプルデータ
+    private IEnumerable<(string Name, string Org, int Status)> GetSampleHourAppointments(int hour)
+    {
+        var hash = (CurrentDate.GetHashCode() + hour) % 10;
+        if (hash < 4) yield break;
+
+        var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲" };
+        var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF" };
+
+        yield return (names[hash % 4], orgs[hash % 4], hash % 4);
+
+        if (hash > 7)
+        {
+            yield return (names[(hash + 1) % 4], orgs[(hash + 1) % 4], (hash + 1) % 4);
+        }
+    }
+
+    private string GetStatusBorderClass(int status)
+    {
+        return status switch
+        {
+            0 => "border-l-4 border-warning",
+            1 => "border-l-4 border-info",
+            2 => "border-l-4 border-success",
+            3 => "border-l-4 border-error",
+            _ => ""
+        };
+    }
+
+    private string GetStatusBadgeClass(int status)
+    {
+        return status switch
+        {
+            0 => "badge-warning",
+            1 => "badge-info",
+            2 => "badge-success",
+            3 => "badge-error",
+            _ => ""
+        };
+    }
+
+    private string GetStatusText(int status)
+    {
+        return status switch
+        {
+            0 => "予約",
+            1 => "待機中",
+            2 => "来院済み",
+            3 => "キャンセル",
+            _ => "不明"
+        };
+    }
+}
+

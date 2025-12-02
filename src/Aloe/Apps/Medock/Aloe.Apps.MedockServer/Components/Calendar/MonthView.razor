@@ -1,0 +1,108 @@
+@* 月表示コンポーネント *@
+
+<div class="overflow-x-auto">
+    <!-- 曜日ヘッダー -->
+    <div class="grid grid-cols-7 bg-base-200">
+        @foreach (var day in new[] { "日", "月", "火", "水", "木", "金", "土" })
+        {
+            <div class="p-2 text-center font-semibold border-b border-base-300 @(day == "日" ? "text-error" : day == "土" ? "text-info" : "")">
+                @day
+            </div>
+        }
+    </div>
+
+    <!-- カレンダーグリッド -->
+    <div class="grid grid-cols-7 min-h-[500px]">
+        @{
+            var firstDayOfMonth = new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
+            var startDay = firstDayOfMonth.AddDays(-(int)firstDayOfMonth.DayOfWeek);
+            var today = DateOnly.FromDateTime(DateTime.Today);
+        }
+
+        @for (int week = 0; week < 6; week++)
+        {
+            @for (int day = 0; day < 7; day++)
+            {
+                var date = startDay.AddDays(week * 7 + day);
+                var isCurrentMonth = date.Month == CurrentDate.Month;
+                var isToday = date == today;
+                var isWeekend = day == 0 || day == 6;
+
+                <div class="border border-base-300 p-1 min-h-[80px] cursor-pointer hover:bg-base-200 transition-colors @(!isCurrentMonth ? "bg-base-200/50 text-base-content/50" : "")"
+                     @onclick="() => OnDateClick.InvokeAsync(date)">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="@(isToday ? "badge badge-primary" : "") @(isWeekend && day == 0 ? "text-error" : "") @(isWeekend && day == 6 ? "text-info" : "")">
+                            @date.Day
+                        </span>
+                        @if (isCurrentMonth && GetSampleAppointmentCount(date) > 0)
+                        {
+                            <span class="badge badge-sm badge-secondary">@GetSampleAppointmentCount(date)</span>
+                        }
+                    </div>
+
+                    @if (isCurrentMonth)
+                    {
+                        <!-- サンプル予約表示 -->
+                        <div class="space-y-1">
+                            @foreach (var appt in GetSampleAppointments(date).Take(3))
+                            {
+                                <div class="text-xs p-1 rounded truncate @GetStatusClass(appt.Status)">
+                                    @appt.Time @appt.Name
+                                </div>
+                            }
+                            @{
+                                var remaining = GetSampleAppointments(date).Count() - 3;
+                            }
+                            @if (remaining > 0)
+                            {
+                                <div class="text-xs text-base-content/60">他 @remaining 件</div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public DateOnly CurrentDate { get; set; }
+
+    [Parameter]
+    public EventCallback<DateOnly> OnDateClick { get; set; }
+
+    // サンプルデータ（実際はリポジトリから取得）
+    private int GetSampleAppointmentCount(DateOnly date)
+    {
+        // デモ用のランダムな件数
+        if (date.Month != CurrentDate.Month) return 0;
+        var hash = date.GetHashCode();
+        return Math.Abs(hash % 10);
+    }
+
+    private IEnumerable<(string Time, string Name, int Status)> GetSampleAppointments(DateOnly date)
+    {
+        var count = GetSampleAppointmentCount(date);
+        var names = new[] { "山田", "佐藤", "鈴木", "田中", "高橋" };
+        var times = new[] { "09:00", "10:00", "11:00", "14:00", "15:00" };
+
+        for (int i = 0; i < Math.Min(count, 5); i++)
+        {
+            yield return (times[i % 5], names[i % 5], i % 4);
+        }
+    }
+
+    private string GetStatusClass(int status)
+    {
+        return status switch
+        {
+            0 => "bg-warning/20 text-warning-content",
+            1 => "bg-info/20 text-info-content",
+            2 => "bg-success/20 text-success-content",
+            3 => "bg-error/20 text-error-content",
+            _ => "bg-base-200"
+        };
+    }
+}
+

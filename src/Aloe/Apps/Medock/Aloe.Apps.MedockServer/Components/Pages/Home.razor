@@ -1,7 +1,33 @@
 ﻿@page "/"
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Aloe Medock</PageTitle>
 
-<h1>Hello, world!</h1>
+@* 
+    このページはルートパス（/）へのアクセス時に表示される。
+    認証状態に応じて適切なページへリダイレクトする。
+    - 未ログイン → /login
+    - ログイン済み（複数テナント） → /tenant-select
+    - ログイン済み（単一テナント） → /calendar
+*@
 
-Welcome to your new app.
+<div class="min-h-screen flex items-center justify-center bg-base-200">
+    <div class="text-center">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <p class="mt-4 text-gray-600">読み込み中...</p>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // TODO: 認証状態のチェック
+        // var isAuthenticated = await CheckAuthentication();
+        // var tenantCount = await GetUserTenantCount();
+        
+        // デモ用: 常にログイン画面へリダイレクト
+        await Task.Delay(100);
+        NavigationManager.NavigateTo("/login");
+    }
+}

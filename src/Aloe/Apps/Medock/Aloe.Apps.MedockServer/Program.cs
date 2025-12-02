@@ -1,10 +1,58 @@
+using System.Text;
+using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Add Controllers
+builder.Services.AddControllers();
+
+// Configure JWT Settings
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+
+// Add DbContext
+builder.Services.AddDbContext<MedockDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add Services
+builder.Services.AddSingleton(PasswordHasher.Default);
+builder.Services.AddScoped<JwtTokenService>();
+builder.Services.AddScoped<AuthService>();
+
+// Configure JWT Authentication
+var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
+if (jwtSettings != null)
+{
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtSettings.Issuer,
+            ValidAudience = jwtSettings.Audience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+            ClockSkew = TimeSpan.Zero
+        };
+    });
+}
+
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
@@ -20,7 +68,11 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.MapStaticAssets();
+app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
