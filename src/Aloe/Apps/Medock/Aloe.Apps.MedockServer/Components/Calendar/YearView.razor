@@ -1,10 +1,10 @@
 @* 
-    MonthView - 月間カレンダー表示（Canvas版）
-    各日をAM/PM円グラフで表示し、予約状況を視覚化
+    YearView - 年間カレンダー表示
+    12ヶ月分のミニカレンダーを表示し、各日をAM/PM円グラフで表示
 *@
 
 <CalendarCanvas 
-    ViewType="month"
+    ViewType="year"
     CurrentDate="@CurrentDate"
     DayStats="@DayStats"
     Height="@Height"
@@ -12,7 +12,7 @@
 
 @code {
     /// <summary>
-    /// 表示する月の基準日
+    /// 表示する年の基準日
     /// </summary>
     [Parameter]
     public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -27,7 +27,7 @@
     /// カレンダーの高さ
     /// </summary>
     [Parameter]
-    public string Height { get; set; } = "600px";
+    public string Height { get; set; } = "700px";
 
     /// <summary>
     /// 日付クリック時のコールバック
@@ -40,3 +40,4 @@
         await OnDateClick.InvokeAsync(date);
     }
 }
+

@@ -13,6 +13,11 @@
     <!-- daisyUI v4 CDN (more stable than v5) -->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
     
+    <!-- D3.js for calculations -->
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <!-- Konva.js for Canvas rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
+    
     <!-- Custom styles for container queries -->
     <style>
         /* コンテナクエリ対応 */
@@ -52,6 +57,7 @@
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="js/calendar-canvas.js"></script>
 </body>
 
 </html>

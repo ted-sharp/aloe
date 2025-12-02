@@ -1,0 +1,304 @@
+@* 
+    CalendarCanvas - High Performance Canvas Calendar Component
+    All rendering is done in JavaScript (Konva.js) for optimal performance.
+    This Blazor component is a thin wrapper that:
+    - Provides the container div
+    - Sends data to JavaScript
+    - Receives action callbacks from JavaScript
+*@
+
+@implements IAsyncDisposable
+@inject IJSRuntime JSRuntime
+
+<div id="@ContainerId" 
+     class="calendar-canvas-container @CssClass" 
+     style="width: 100%; height: @Height; position: relative;">
+</div>
+
+@code {
+    /// <summary>
+    /// Current view type: "year", "month", "week"
+    /// </summary>
+    [Parameter]
+    public string ViewType { get; set; } = "month";
+
+    /// <summary>
+    /// Current date (center of the view)
+    /// </summary>
+    [Parameter]
+    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>
+    /// Appointment data for the calendar
+    /// </summary>
+    [Parameter]
+    public IEnumerable<CalendarAppointment>? Appointments { get; set; }
+
+    /// <summary>
+    /// Day statistics (AM/PM counts per day)
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, CalendarDayStats>? DayStats { get; set; }
+
+    /// <summary>
+    /// Number of days to show in week view (1, 3, 7, 14, 31)
+    /// </summary>
+    [Parameter]
+    public int WeekDays { get; set; } = 7;
+
+    /// <summary>
+    /// Start hour for week/day view
+    /// </summary>
+    [Parameter]
+    public int StartHour { get; set; } = 8;
+
+    /// <summary>
+    /// End hour for week/day view
+    /// </summary>
+    [Parameter]
+    public int EndHour { get; set; } = 18;
+
+    /// <summary>
+    /// Height of the canvas container
+    /// </summary>
+    [Parameter]
+    public string Height { get; set; } = "600px";
+
+    /// <summary>
+    /// Additional CSS classes
+    /// </summary>
+    [Parameter]
+    public string? CssClass { get; set; }
+
+    /// <summary>
+    /// Callback when a date is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelected { get; set; }
+
+    /// <summary>
+    /// Callback when an appointment is clicked
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnAppointmentClicked { get; set; }
+
+    /// <summary>
+    /// Callback when create is requested (date + time)
+    /// </summary>
+    [Parameter]
+    public EventCallback<(DateOnly Date, TimeOnly Time)> OnCreateRequested { get; set; }
+
+    private string ContainerId { get; } = $"calendar-canvas-{Guid.NewGuid():N}";
+    private DotNetObjectReference<CalendarCanvas>? _dotNetRef;
+    private bool _isInitialized = false;
+    private string? _lastViewType;
+    private DateOnly _lastDate;
+    private int _lastWeekDays;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            await InitializeCalendarAsync();
+            _isInitialized = true;
+            _lastViewType = ViewType;
+            _lastDate = CurrentDate;
+            _lastWeekDays = WeekDays;
+        }
+        else if (_isInitialized)
+        {
+            // Check if we need to update the view
+            if (_lastViewType != ViewType || _lastDate != CurrentDate || _lastWeekDays != WeekDays)
+            {
+                await ChangeViewAsync();
+                _lastViewType = ViewType;
+                _lastDate = CurrentDate;
+                _lastWeekDays = WeekDays;
+            }
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_isInitialized && (Appointments != null || DayStats != null))
+        {
+            await UpdateDataAsync();
+        }
+    }
+
+    private async Task InitializeCalendarAsync()
+    {
+        var data = BuildDataObject();
+        var options = new
+        {
+            weekDays = WeekDays,
+            showSlots = true,
+            startHour = StartHour,
+            endHour = EndHour
+        };
+
+        await JSRuntime.InvokeVoidAsync(
+            "MedockCalendar.init",
+            ContainerId,
+            data,
+            options,
+            _dotNetRef);
+
+        // Set initial view
+        await JSRuntime.InvokeVoidAsync(
+            "MedockCalendar.changeView",
+            ViewType,
+            CurrentDate.ToString("yyyy-MM-dd"));
+    }
+
+    private async Task UpdateDataAsync()
+    {
+        if (!_isInitialized) return;
+
+        var data = BuildDataObject();
+        await JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
+    }
+
+    private async Task ChangeViewAsync()
+    {
+        if (!_isInitialized) return;
+
+        // Update options if weekDays changed
+        if (_lastWeekDays != WeekDays)
+        {
+            var options = new
+            {
+                weekDays = WeekDays,
+                startHour = StartHour,
+                endHour = EndHour
+            };
+            await JSRuntime.InvokeVoidAsync("MedockCalendar.setOptions", options);
+        }
+
+        await JSRuntime.InvokeVoidAsync(
+            "MedockCalendar.changeView",
+            ViewType,
+            CurrentDate.ToString("yyyy-MM-dd"));
+    }
+
+    private object BuildDataObject()
+    {
+        var appointments = Appointments?.Select(a => new
+        {
+            id = a.Id.ToString(),
+            date = a.Date.ToString("yyyy-MM-dd"),
+            startTime = a.StartTime?.ToString("HH:mm") ?? "09:00",
+            endTime = a.EndTime?.ToString("HH:mm") ?? "10:00",
+            patientName = a.PatientName,
+            orgName = a.OrganizationName,
+            status = a.Status
+        }).ToArray() ?? Array.Empty<object>();
+
+        var dayStats = DayStats != null 
+            ? DayStats.ToDictionary(
+                kvp => kvp.Key,
+                kvp => (object)new
+                {
+                    am = kvp.Value.AmCount,
+                    pm = kvp.Value.PmCount,
+                    amMax = kvp.Value.AmMax,
+                    pmMax = kvp.Value.PmMax
+                })
+            : new Dictionary<string, object>();
+
+        return new
+        {
+            appointments,
+            dayStats
+        };
+    }
+
+    // ============================================================
+    // JSInvokable callbacks (called from JavaScript)
+    // ============================================================
+
+    [JSInvokable]
+    public async Task OnDateSelectedCallback(string dateStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date))
+        {
+            await OnDateSelected.InvokeAsync(date);
+        }
+    }
+
+    [JSInvokable("OnDateSelected")]
+    public async Task OnDateSelectedFromJs(string dateStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date))
+        {
+            await OnDateSelected.InvokeAsync(date);
+        }
+    }
+
+    [JSInvokable("OnAppointmentClicked")]
+    public async Task OnAppointmentClickedFromJs(string apptId)
+    {
+        if (Guid.TryParse(apptId, out var id))
+        {
+            await OnAppointmentClicked.InvokeAsync(id);
+        }
+    }
+
+    [JSInvokable("OnCreateRequested")]
+    public async Task OnCreateRequestedFromJs(string dateStr, string timeStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date) && 
+            TimeOnly.TryParse(timeStr, out var time))
+        {
+            await OnCreateRequested.InvokeAsync((date, time));
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_isInitialized)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("MedockCalendar.destroy");
+            }
+            catch
+            {
+                // Ignore errors during disposal
+            }
+        }
+
+        _dotNetRef?.Dispose();
+    }
+
+    // ============================================================
+    // Data Models
+    // ============================================================
+
+    /// <summary>
+    /// Appointment data for calendar display
+    /// </summary>
+    public class CalendarAppointment
+    {
+        public Guid Id { get; set; }
+        public DateOnly Date { get; set; }
+        public TimeOnly? StartTime { get; set; }
+        public TimeOnly? EndTime { get; set; }
+        public string? PatientName { get; set; }
+        public string? OrganizationName { get; set; }
+        public int Status { get; set; }
+    }
+
+    /// <summary>
+    /// Day statistics for AM/PM pie charts
+    /// </summary>
+    public class CalendarDayStats
+    {
+        public int AmCount { get; set; }
+        public int PmCount { get; set; }
+        public int AmMax { get; set; } = 10;
+        public int PmMax { get; set; } = 10;
+    }
+}
+

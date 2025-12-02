@@ -1,0 +1,328 @@
+@* 
+    AppointmentModal - 予約作成・編集モーダル
+    daisyUI モーダルを使用
+*@
+
+@if (IsOpen)
+{
+    <div class="modal modal-open">
+        <div class="modal-box max-w-2xl">
+            <!-- ヘッダー -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg">
+                    @if (IsEditMode)
+                    {
+                        <span>予約編集</span>
+                    }
+                    else
+                    {
+                        <span>新規予約</span>
+                    }
+                </h3>
+                <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleClose">✕</button>
+            </div>
+
+            <!-- フォーム -->
+            <EditForm Model="@FormModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 日付 -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">予約日 <span class="text-error">*</span></span>
+                        </label>
+                        <InputDate @bind-Value="FormModel.Date" class="input input-bordered w-full" />
+                        <ValidationMessage For="@(() => FormModel.Date)" class="text-error text-sm mt-1" />
+                    </div>
+
+                    <!-- ステータス -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">ステータス</span>
+                        </label>
+                        <InputSelect @bind-Value="FormModel.Status" class="select select-bordered w-full">
+                            <option value="0">予約</option>
+                            <option value="1">待機中</option>
+                            <option value="2">来院済み</option>
+                            <option value="3">キャンセル</option>
+                        </InputSelect>
+                    </div>
+
+                    <!-- 開始時間 -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">開始時間</span>
+                        </label>
+                        <InputSelect @bind-Value="FormModel.StartTimeString" class="select select-bordered w-full">
+                            @foreach (var time in TimeSlots)
+                            {
+                                <option value="@time">@time</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <!-- 終了時間 -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">終了時間</span>
+                        </label>
+                        <InputSelect @bind-Value="FormModel.EndTimeString" class="select select-bordered w-full">
+                            @foreach (var time in TimeSlots)
+                            {
+                                <option value="@time">@time</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <!-- 患者名 -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">患者名 <span class="text-error">*</span></span>
+                        </label>
+                        <InputText @bind-Value="FormModel.PatientName" 
+                                   placeholder="患者名を入力" 
+                                   class="input input-bordered w-full" />
+                        <ValidationMessage For="@(() => FormModel.PatientName)" class="text-error text-sm mt-1" />
+                    </div>
+
+                    <!-- 団体名 -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">団体名</span>
+                        </label>
+                        <InputText @bind-Value="FormModel.OrganizationName" 
+                                   placeholder="団体名を入力（任意）" 
+                                   class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- メモ -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">メモ</span>
+                        </label>
+                        <InputTextArea @bind-Value="FormModel.Memo" 
+                                       placeholder="メモを入力（任意）" 
+                                       class="textarea textarea-bordered w-full h-24" />
+                    </div>
+                </div>
+
+                <!-- エラーメッセージ -->
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-error mt-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>@ErrorMessage</span>
+                    </div>
+                }
+
+                <!-- ボタン -->
+                <div class="modal-action">
+                    @if (IsEditMode)
+                    {
+                        <button type="button" class="btn btn-error btn-outline" @onclick="HandleDelete" disabled="@IsProcessing">
+                            @if (IsDeleting)
+                            {
+                                <span class="loading loading-spinner loading-sm"></span>
+                            }
+                            削除
+                        </button>
+                    }
+                    <button type="button" class="btn btn-ghost" @onclick="HandleClose" disabled="@IsProcessing">
+                        キャンセル
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@IsProcessing">
+                        @if (IsSaving)
+                        {
+                            <span class="loading loading-spinner loading-sm"></span>
+                        }
+                        @(IsEditMode ? "更新" : "作成")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="modal-backdrop" @onclick="HandleClose"></div>
+    </div>
+}
+
+@code {
+    /// <summary>
+    /// モーダルの開閉状態
+    /// </summary>
+    [Parameter]
+    public bool IsOpen { get; set; }
+
+    /// <summary>
+    /// 編集対象の予約ID（新規作成時はnull）
+    /// </summary>
+    [Parameter]
+    public Guid? AppointmentId { get; set; }
+
+    /// <summary>
+    /// 選択された日付（新規作成時）
+    /// </summary>
+    [Parameter]
+    public DateOnly? SelectedDate { get; set; }
+
+    /// <summary>
+    /// 選択された時間（新規作成時）
+    /// </summary>
+    [Parameter]
+    public TimeOnly? SelectedTime { get; set; }
+
+    /// <summary>
+    /// 閉じる時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    /// <summary>
+    /// 保存成功時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnSave { get; set; }
+
+    /// <summary>
+    /// 削除成功時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnDelete { get; set; }
+
+    private AppointmentFormModel FormModel { get; set; } = new();
+    private bool IsEditMode => AppointmentId.HasValue;
+    private bool IsSaving { get; set; }
+    private bool IsDeleting { get; set; }
+    private bool IsProcessing => IsSaving || IsDeleting;
+    private string? ErrorMessage { get; set; }
+
+    // 時間スロット（30分刻み）
+    private static readonly string[] TimeSlots = Enumerable.Range(8, 11)
+        .SelectMany(h => new[] { $"{h:D2}:00", $"{h:D2}:30" })
+        .ToArray();
+
+    protected override void OnParametersSet()
+    {
+        if (IsOpen)
+        {
+            InitializeForm();
+        }
+    }
+
+    private void InitializeForm()
+    {
+        ErrorMessage = null;
+
+        if (IsEditMode)
+        {
+            // TODO: AppointmentServiceから予約データを取得
+            // 今はダミーデータ
+            FormModel = new AppointmentFormModel
+            {
+                Date = DateOnly.FromDateTime(DateTime.Today),
+                StartTimeString = "09:00",
+                EndTimeString = "10:00",
+                Status = 0,
+                PatientName = "編集中の患者",
+                OrganizationName = "団体名"
+            };
+        }
+        else
+        {
+            // 新規作成
+            FormModel = new AppointmentFormModel
+            {
+                Date = SelectedDate ?? DateOnly.FromDateTime(DateTime.Today),
+                StartTimeString = SelectedTime?.ToString("HH:mm") ?? "09:00",
+                EndTimeString = SelectedTime?.AddHours(1).ToString("HH:mm") ?? "10:00",
+                Status = 0,
+                PatientName = string.Empty,
+                OrganizationName = string.Empty
+            };
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(FormModel.PatientName))
+        {
+            ErrorMessage = "患者名を入力してください。";
+            return;
+        }
+
+        IsSaving = true;
+        ErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // TODO: AppointmentServiceで保存
+            await Task.Delay(500); // 仮の処理時間
+
+            await OnSave.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"保存に失敗しました: {ex.Message}";
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleDelete()
+    {
+        if (!IsEditMode) return;
+
+        IsDeleting = true;
+        ErrorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            // TODO: AppointmentServiceで削除
+            await Task.Delay(500); // 仮の処理時間
+
+            await OnDelete.InvokeAsync();
+            await OnClose.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"削除に失敗しました: {ex.Message}";
+        }
+        finally
+        {
+            IsDeleting = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        if (!IsProcessing)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+
+    /// <summary>
+    /// フォームモデル
+    /// </summary>
+    public class AppointmentFormModel
+    {
+        public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+        public string StartTimeString { get; set; } = "09:00";
+        public string EndTimeString { get; set; } = "10:00";
+        public int Status { get; set; } = 0;
+        public string PatientName { get; set; } = string.Empty;
+        public string? OrganizationName { get; set; }
+        public string? Memo { get; set; }
+
+        public TimeOnly? StartTime => TimeOnly.TryParse(StartTimeString, out var t) ? t : null;
+        public TimeOnly? EndTime => TimeOnly.TryParse(EndTimeString, out var t) ? t : null;
+    }
+}
+

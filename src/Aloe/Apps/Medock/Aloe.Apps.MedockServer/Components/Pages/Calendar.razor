@@ -2,9 +2,9 @@
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
-<div class="space-y-6">
+<div class="space-y-4">
     <!-- ヘッダー -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-base-content">予約カレンダー</h1>
             <p class="text-base-content/60 mt-1">予約状況を確認・管理できます</p>
@@ -12,9 +12,27 @@
         <div class="flex flex-wrap gap-2">
             <!-- ビュー切り替え -->
             <div class="btn-group">
-                <button class="btn @(CurrentView == CalendarView.Month ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Month)">月</button>
-                <button class="btn @(CurrentView == CalendarView.Week ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Week)">週</button>
-                <button class="btn @(CurrentView == CalendarView.Day ? "btn-active" : "")" @onclick="() => SetView(CalendarView.Day)">日</button>
+                <button class="btn @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")" 
+                        @onclick="() => SetView(CalendarViewType.Year)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    年
+                </button>
+                <button class="btn @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")" 
+                        @onclick="() => SetView(CalendarViewType.Month)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    月
+                </button>
+                <button class="btn @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")" 
+                        @onclick="() => SetView(CalendarViewType.Week)">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    週
+                </button>
             </div>
             <button class="btn btn-primary" @onclick="OpenNewAppointmentModal">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -49,18 +67,39 @@
 
     <!-- カレンダー本体 -->
     <div class="card bg-base-100 shadow overflow-hidden">
-        @if (CurrentView == CalendarView.Month)
-        {
-            <MonthView CurrentDate="@CurrentDate" OnDateClick="HandleDateClick" />
-        }
-        else if (CurrentView == CalendarView.Week)
-        {
-            <WeekView CurrentDate="@CurrentDate" OnTimeSlotClick="HandleTimeSlotClick" />
-        }
-        else
-        {
-            <DayView CurrentDate="@CurrentDate" OnTimeSlotClick="HandleTimeSlotClick" />
-        }
+        <div class="card-body p-2 sm:p-4">
+            @if (CurrentView == CalendarViewType.Year)
+            {
+                <YearView 
+                    CurrentDate="@CurrentDate" 
+                    DayStats="@SampleDayStats"
+                    Height="700px"
+                    OnDateClick="@HandleDateClick" />
+            }
+            else if (CurrentView == CalendarViewType.Month)
+            {
+                <MonthView 
+                    CurrentDate="@CurrentDate" 
+                    DayStats="@SampleDayStats"
+                    Height="600px"
+                    OnDateClick="@HandleDateClick" />
+            }
+            else
+            {
+                <WeekScheduler 
+                    CurrentDate="@CurrentDate"
+                    WeekDays="@WeekDays"
+                    ShowSlots="@ShowSlots"
+                    Appointments="@SampleAppointments"
+                    DayStats="@SampleDayStats"
+                    Height="600px"
+                    OnDateSelected="@HandleDateClick"
+                    OnAppointmentClicked="@HandleAppointmentClick"
+                    OnCreateRequested="@HandleCreateRequest"
+                    OnWeekDaysChanged="@HandleWeekDaysChanged"
+                    OnShowSlotsChanged="@HandleShowSlotsChanged" />
+            }
+        </div>
     </div>
 
     <!-- 凡例 -->
@@ -84,23 +123,116 @@
                     <span class="w-4 h-4 rounded bg-error"></span>
                     <span class="text-sm">キャンセル</span>
                 </div>
+                <div class="divider divider-horizontal"></div>
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-4 rounded-full overflow-hidden flex">
+                        <span class="w-4 h-4 bg-emerald-500"></span>
+                        <span class="w-4 h-4 bg-blue-500"></span>
+                    </div>
+                    <span class="text-sm">AM/PM 予約率</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
+<!-- 予約モーダル（後で実装） -->
+@if (IsModalOpen)
+{
+    <AppointmentModal 
+        IsOpen="@IsModalOpen"
+        SelectedDate="@ModalDate"
+        SelectedTime="@ModalTime"
+        AppointmentId="@SelectedAppointmentId"
+        OnClose="@CloseModal"
+        OnSave="@HandleSaveAppointment" />
+}
+
 @code {
     private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
-    private CalendarView CurrentView { get; set; } = CalendarView.Month;
+    private CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
+    private int WeekDays { get; set; } = 7;
+    private bool ShowSlots { get; set; } = true;
 
-    private enum CalendarView
+    // Modal state
+    private bool IsModalOpen { get; set; } = false;
+    private DateOnly? ModalDate { get; set; }
+    private TimeOnly? ModalTime { get; set; }
+    private Guid? SelectedAppointmentId { get; set; }
+
+    // サンプルデータ（後で実データに置き換え）
+    private Dictionary<string, CalendarCanvas.CalendarDayStats> SampleDayStats { get; set; } = new();
+    private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
+
+    private enum CalendarViewType
     {
+        Year,
         Month,
-        Week,
-        Day
+        Week
     }
 
-    private void SetView(CalendarView view)
+    protected override void OnInitialized()
+    {
+        // サンプルデータを生成
+        GenerateSampleData();
+    }
+
+    private void GenerateSampleData()
+    {
+        var random = new Random(42); // 固定シードで再現性のあるデータ
+        var today = DateTime.Today;
+        var startDate = new DateTime(today.Year, 1, 1);
+        var endDate = new DateTime(today.Year, 12, 31);
+
+        // 日別統計を生成
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            var dateStr = date.ToString("yyyy-MM-dd");
+            var dayOfWeek = date.DayOfWeek;
+            
+            // 週末は予約が少ない
+            var maxAm = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday ? 5 : 10;
+            var maxPm = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday ? 5 : 10;
+            
+            SampleDayStats[dateStr] = new CalendarCanvas.CalendarDayStats
+            {
+                AmCount = random.Next(0, maxAm + 1),
+                PmCount = random.Next(0, maxPm + 1),
+                AmMax = maxAm,
+                PmMax = maxPm
+            };
+        }
+
+        // 今週の予約を生成
+        var weekStart = today.AddDays(-(int)today.DayOfWeek);
+        var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲", "高橋 健二" };
+        var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF", "○○健保組合" };
+
+        for (var day = 0; day < 7; day++)
+        {
+            var date = weekStart.AddDays(day);
+            var count = random.Next(3, 8);
+
+            for (var i = 0; i < count; i++)
+            {
+                var startHour = random.Next(8, 16);
+                var duration = random.Next(1, 3);
+                
+                SampleAppointments.Add(new CalendarCanvas.CalendarAppointment
+                {
+                    Id = Guid.NewGuid(),
+                    Date = DateOnly.FromDateTime(date),
+                    StartTime = new TimeOnly(startHour, 0),
+                    EndTime = new TimeOnly(Math.Min(startHour + duration, 18), 0),
+                    PatientName = names[random.Next(names.Length)],
+                    OrganizationName = orgs[random.Next(orgs.Length)],
+                    Status = random.Next(0, 4)
+                });
+            }
+        }
+    }
+
+    private void SetView(CalendarViewType view)
     {
         CurrentView = view;
     }
@@ -109,9 +241,11 @@
     {
         return CurrentView switch
         {
-            CalendarView.Month => $"{CurrentDate.Year}年{CurrentDate.Month}月",
-            CalendarView.Week => $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日の週",
-            CalendarView.Day => $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日",
+            CalendarViewType.Year => $"{CurrentDate.Year}年",
+            CalendarViewType.Month => $"{CurrentDate.Year}年{CurrentDate.Month}月",
+            CalendarViewType.Week => WeekDays == 1 
+                ? $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日"
+                : $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日の週",
             _ => ""
         };
     }
@@ -120,9 +254,9 @@
     {
         CurrentDate = CurrentView switch
         {
-            CalendarView.Month => CurrentDate.AddMonths(-1),
-            CalendarView.Week => CurrentDate.AddDays(-7),
-            CalendarView.Day => CurrentDate.AddDays(-1),
+            CalendarViewType.Year => CurrentDate.AddYears(-1),
+            CalendarViewType.Month => CurrentDate.AddMonths(-1),
+            CalendarViewType.Week => CurrentDate.AddDays(-WeekDays),
             _ => CurrentDate
         };
     }
@@ -131,9 +265,9 @@
     {
         CurrentDate = CurrentView switch
         {
-            CalendarView.Month => CurrentDate.AddMonths(1),
-            CalendarView.Week => CurrentDate.AddDays(7),
-            CalendarView.Day => CurrentDate.AddDays(1),
+            CalendarViewType.Year => CurrentDate.AddYears(1),
+            CalendarViewType.Month => CurrentDate.AddMonths(1),
+            CalendarViewType.Week => CurrentDate.AddDays(WeekDays),
             _ => CurrentDate
         };
     }
@@ -146,17 +280,63 @@
     private void HandleDateClick(DateOnly date)
     {
         CurrentDate = date;
-        CurrentView = CalendarView.Day;
+        // 年→月、月→週へ遷移
+        if (CurrentView == CalendarViewType.Year)
+        {
+            CurrentView = CalendarViewType.Month;
+        }
+        else if (CurrentView == CalendarViewType.Month)
+        {
+            CurrentView = CalendarViewType.Week;
+            WeekDays = 7;
+        }
     }
 
-    private void HandleTimeSlotClick(DateTime dateTime)
+    private void HandleAppointmentClick(Guid apptId)
     {
-        // TODO: 予約作成モーダルを表示
+        SelectedAppointmentId = apptId;
+        ModalDate = null;
+        ModalTime = null;
+        IsModalOpen = true;
+    }
+
+    private void HandleCreateRequest((DateOnly Date, TimeOnly Time) request)
+    {
+        SelectedAppointmentId = null;
+        ModalDate = request.Date;
+        ModalTime = request.Time;
+        IsModalOpen = true;
+    }
+
+    private void HandleWeekDaysChanged(int days)
+    {
+        WeekDays = days;
+    }
+
+    private void HandleShowSlotsChanged(bool showSlots)
+    {
+        ShowSlots = showSlots;
     }
 
     private void OpenNewAppointmentModal()
     {
-        // TODO: 新規予約モーダルを表示
+        SelectedAppointmentId = null;
+        ModalDate = CurrentDate;
+        ModalTime = new TimeOnly(9, 0);
+        IsModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        IsModalOpen = false;
+        SelectedAppointmentId = null;
+        ModalDate = null;
+        ModalTime = null;
+    }
+
+    private void HandleSaveAppointment()
+    {
+        // TODO: 保存処理
+        CloseModal();
     }
 }
-

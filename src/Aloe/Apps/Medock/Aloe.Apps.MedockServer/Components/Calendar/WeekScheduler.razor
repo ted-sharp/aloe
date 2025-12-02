@@ -1,0 +1,170 @@
+@* 
+    WeekScheduler - 週間スケジューラー（Canvas版）
+    可変日数表示（31日/14日/7日/3日/1日）に対応
+    縦軸: 時間、横軸: 日付
+    スロット表示と詳細表示の切り替え
+*@
+
+<div class="week-scheduler">
+    <!-- 日数切替ボタン -->
+    <div class="flex items-center gap-2 mb-4">
+        <span class="text-sm font-medium text-base-content/70">表示日数:</span>
+        <div class="btn-group">
+            @foreach (var days in DayOptions)
+            {
+                <button class="btn btn-sm @(WeekDays == days ? "btn-active btn-primary" : "")"
+                        @onclick="() => SetWeekDays(days)">
+                    @(days)日
+                </button>
+            }
+        </div>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
+        <!-- 表示モード切替 -->
+        <span class="text-sm font-medium text-base-content/70">表示:</span>
+        <div class="btn-group">
+            <button class="btn btn-sm @(ShowSlots ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetShowSlots(true)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                スロット
+            </button>
+            <button class="btn btn-sm @(!ShowSlots ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetShowSlots(false)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                詳細
+            </button>
+        </div>
+    </div>
+
+    <!-- Canvas カレンダー -->
+    <CalendarCanvas 
+        ViewType="week"
+        CurrentDate="@CurrentDate"
+        Appointments="@Appointments"
+        DayStats="@DayStats"
+        WeekDays="@WeekDays"
+        StartHour="@StartHour"
+        EndHour="@EndHour"
+        Height="@Height"
+        OnDateSelected="@HandleDateSelected"
+        OnAppointmentClicked="@HandleAppointmentClicked"
+        OnCreateRequested="@HandleCreateRequested" />
+</div>
+
+@code {
+    /// <summary>
+    /// 日数オプション
+    /// </summary>
+    private static readonly int[] DayOptions = { 1, 3, 7, 14, 31 };
+
+    /// <summary>
+    /// 表示する週の基準日
+    /// </summary>
+    [Parameter]
+    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    /// <summary>
+    /// 表示日数（デフォルト7日）
+    /// </summary>
+    [Parameter]
+    public int WeekDays { get; set; } = 7;
+
+    /// <summary>
+    /// スロット表示かどうか
+    /// </summary>
+    [Parameter]
+    public bool ShowSlots { get; set; } = true;
+
+    /// <summary>
+    /// 予約データ
+    /// </summary>
+    [Parameter]
+    public IEnumerable<CalendarCanvas.CalendarAppointment>? Appointments { get; set; }
+
+    /// <summary>
+    /// 日別統計データ
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, CalendarCanvas.CalendarDayStats>? DayStats { get; set; }
+
+    /// <summary>
+    /// 開始時間
+    /// </summary>
+    [Parameter]
+    public int StartHour { get; set; } = 8;
+
+    /// <summary>
+    /// 終了時間
+    /// </summary>
+    [Parameter]
+    public int EndHour { get; set; } = 18;
+
+    /// <summary>
+    /// カレンダーの高さ
+    /// </summary>
+    [Parameter]
+    public string Height { get; set; } = "600px";
+
+    /// <summary>
+    /// 日付選択時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelected { get; set; }
+
+    /// <summary>
+    /// 予約クリック時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<Guid> OnAppointmentClicked { get; set; }
+
+    /// <summary>
+    /// 予約作成リクエスト時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<(DateOnly Date, TimeOnly Time)> OnCreateRequested { get; set; }
+
+    /// <summary>
+    /// 表示日数変更時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> OnWeekDaysChanged { get; set; }
+
+    /// <summary>
+    /// 表示モード変更時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnShowSlotsChanged { get; set; }
+
+    private async Task SetWeekDays(int days)
+    {
+        WeekDays = days;
+        await OnWeekDaysChanged.InvokeAsync(days);
+    }
+
+    private async Task SetShowSlots(bool showSlots)
+    {
+        ShowSlots = showSlots;
+        await OnShowSlotsChanged.InvokeAsync(showSlots);
+    }
+
+    private async Task HandleDateSelected(DateOnly date)
+    {
+        await OnDateSelected.InvokeAsync(date);
+    }
+
+    private async Task HandleAppointmentClicked(Guid apptId)
+    {
+        await OnAppointmentClicked.InvokeAsync(apptId);
+    }
+
+    private async Task HandleCreateRequested((DateOnly Date, TimeOnly Time) request)
+    {
+        await OnCreateRequested.InvokeAsync(request);
+    }
+}
+
