@@ -36,6 +36,9 @@ public class MedockDbContext : DbContext
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
 
+    // マスタ系
+    public DbSet<Holiday> Holidays => Set<Holiday>();
+
     /// <summary>
     /// 監査情報を設定します。SaveChanges時に自動でCreated/Updatedフィールドに反映されます。
     /// </summary>
@@ -333,6 +336,17 @@ public class MedockDbContext : DbContext
             entity.HasOne(e => e.Patient)
                 .WithMany(p => p.Appointments)
                 .HasForeignKey(e => e.PtId);
+        });
+
+        // Holiday
+        modelBuilder.Entity<Holiday>(entity =>
+        {
+            entity.ToTable("holidays");
+            entity.HasKey(e => e.HolidayDate);
+            entity.Property(e => e.HolidayDate).HasColumnName("holiday_date");
+            entity.Property(e => e.HolidayName).HasColumnName("holiday_name");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
         });
     }
 

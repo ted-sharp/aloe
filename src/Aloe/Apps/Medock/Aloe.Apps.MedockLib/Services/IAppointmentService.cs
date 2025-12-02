@@ -49,6 +49,14 @@ public interface IAppointmentService
     /// <param name="apptId">予約ID</param>
     /// <returns>削除成功したかどうか</returns>
     Task<bool> DeleteAppointmentAsync(Guid apptId);
+
+    /// <summary>
+    /// 指定期間の祝日を取得します
+    /// </summary>
+    /// <param name="startDate">開始日</param>
+    /// <param name="endDate">終了日</param>
+    /// <returns>祝日DTOのリスト</returns>
+    Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate);
 }
 
 /// <summary>
@@ -108,5 +116,14 @@ public class UpdateAppointmentDto
     public Guid? OrganizationId { get; set; }
     public Guid? FloorId { get; set; }
     public int? Status { get; set; }
+}
+
+/// <summary>
+/// 祝日DTO
+/// </summary>
+public class HolidayDto
+{
+    public DateOnly Date { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 

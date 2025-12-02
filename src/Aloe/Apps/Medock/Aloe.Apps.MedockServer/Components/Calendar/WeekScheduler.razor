@@ -47,13 +47,16 @@
         CurrentDate="@CurrentDate"
         Appointments="@Appointments"
         DayStats="@DayStats"
+        Holidays="@Holidays"
         WeekDays="@WeekDays"
+        ShowSlots="@ShowSlots"
         StartHour="@StartHour"
         EndHour="@EndHour"
         Height="@Height"
         OnDateSelected="@HandleDateSelected"
         OnAppointmentClicked="@HandleAppointmentClicked"
-        OnCreateRequested="@HandleCreateRequested" />
+        OnCreateRequested="@HandleCreateRequested"
+        OnAppointmentMoved="@HandleAppointmentMoved" />
 </div>
 
 @code {
@@ -91,6 +94,12 @@
     /// </summary>
     [Parameter]
     public Dictionary<string, CalendarCanvas.CalendarDayStats>? DayStats { get; set; }
+
+    /// <summary>
+    /// 祝日データ（日付文字列 -> 祝日名）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, string>? Holidays { get; set; }
 
     /// <summary>
     /// 開始時間
@@ -140,6 +149,12 @@
     [Parameter]
     public EventCallback<bool> OnShowSlotsChanged { get; set; }
 
+    /// <summary>
+    /// 予約移動時のコールバック（D&D）
+    /// </summary>
+    [Parameter]
+    public EventCallback<(Guid ApptId, DateOnly NewDate, TimeOnly NewTime)> OnAppointmentMoved { get; set; }
+
     private async Task SetWeekDays(int days)
     {
         WeekDays = days;
@@ -165,6 +180,11 @@
     private async Task HandleCreateRequested((DateOnly Date, TimeOnly Time) request)
     {
         await OnCreateRequested.InvokeAsync(request);
+    }
+
+    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
+    {
+        await OnAppointmentMoved.InvokeAsync(moveInfo);
     }
 }
 

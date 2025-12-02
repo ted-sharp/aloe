@@ -212,6 +212,24 @@ public class AppointmentService : IAppointmentService
         return true;
     }
 
+    /// <inheritdoc />
+    public async Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate)
+    {
+        var holidays = await _context.Holidays
+            .Where(h => !h.IsDeleted &&
+                        h.HolidayDate >= startDate &&
+                        h.HolidayDate <= endDate)
+            .OrderBy(h => h.HolidayDate)
+            .Select(h => new HolidayDto
+            {
+                Date = h.HolidayDate,
+                Name = h.HolidayName
+            })
+            .ToListAsync();
+
+        return holidays;
+    }
+
     private static AppointmentDto MapToDto(Appointment appointment)
     {
         return new AppointmentDto

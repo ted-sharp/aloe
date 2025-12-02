@@ -7,6 +7,7 @@
     ViewType="year"
     CurrentDate="@CurrentDate"
     DayStats="@DayStats"
+    Holidays="@Holidays"
     Height="@Height"
     OnDateSelected="@HandleDateSelected" />
 
@@ -22,6 +23,12 @@
     /// </summary>
     [Parameter]
     public Dictionary<string, CalendarCanvas.CalendarDayStats>? DayStats { get; set; }
+
+    /// <summary>
+    /// 祝日データ（日付文字列 -> 祝日名）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, string>? Holidays { get; set; }
 
     /// <summary>
     /// カレンダーの高さ

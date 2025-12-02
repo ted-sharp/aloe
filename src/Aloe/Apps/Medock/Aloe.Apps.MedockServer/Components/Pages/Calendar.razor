@@ -1,4 +1,6 @@
 @page "/calendar"
+@using Aloe.Apps.MedockLib.Services
+@inject IAppointmentService AppointmentService
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
@@ -73,6 +75,7 @@
                 <YearView 
                     CurrentDate="@CurrentDate" 
                     DayStats="@SampleDayStats"
+                    Holidays="@Holidays"
                     Height="700px"
                     OnDateClick="@HandleDateClick" />
             }
@@ -81,6 +84,7 @@
                 <MonthView 
                     CurrentDate="@CurrentDate" 
                     DayStats="@SampleDayStats"
+                    Holidays="@Holidays"
                     Height="600px"
                     OnDateClick="@HandleDateClick" />
             }
@@ -92,12 +96,14 @@
                     ShowSlots="@ShowSlots"
                     Appointments="@SampleAppointments"
                     DayStats="@SampleDayStats"
+                    Holidays="@Holidays"
                     Height="600px"
                     OnDateSelected="@HandleDateClick"
                     OnAppointmentClicked="@HandleAppointmentClick"
                     OnCreateRequested="@HandleCreateRequest"
                     OnWeekDaysChanged="@HandleWeekDaysChanged"
-                    OnShowSlotsChanged="@HandleShowSlotsChanged" />
+                    OnShowSlotsChanged="@HandleShowSlotsChanged"
+                    OnAppointmentMoved="@HandleAppointmentMoved" />
             }
         </div>
     </div>
@@ -163,6 +169,7 @@
     // サンプルデータ（後で実データに置き換え）
     private Dictionary<string, CalendarCanvas.CalendarDayStats> SampleDayStats { get; set; } = new();
     private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
+    private Dictionary<string, string> Holidays { get; set; } = new();
 
     private enum CalendarViewType
     {
@@ -171,10 +178,33 @@
         Week
     }
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         // サンプルデータを生成
         GenerateSampleData();
+        
+        // 祝日データを取得
+        await LoadHolidaysAsync();
+    }
+    
+    private async Task LoadHolidaysAsync()
+    {
+        try
+        {
+            var startDate = new DateOnly(CurrentDate.Year, 1, 1);
+            var endDate = new DateOnly(CurrentDate.Year, 12, 31);
+            var holidays = await AppointmentService.GetHolidaysAsync(startDate, endDate);
+            
+            Holidays = holidays.ToDictionary(
+                h => h.Date.ToString("yyyy-MM-dd"),
+                h => h.Name
+            );
+        }
+        catch (Exception)
+        {
+            // 祝日取得に失敗しても動作を続行
+            Holidays = new Dictionary<string, string>();
+        }
     }
 
     private void GenerateSampleData()
@@ -338,5 +368,42 @@
     {
         // TODO: 保存処理
         CloseModal();
+    }
+
+    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
+    {
+        try
+        {
+            // サンプルデータから既存の予約を取得して時間を計算
+            var appt = SampleAppointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
+            if (appt != null)
+            {
+                var duration = appt.EndTime.HasValue && appt.StartTime.HasValue 
+                    ? appt.EndTime.Value - appt.StartTime.Value 
+                    : TimeSpan.FromHours(1);
+                var newEndTime = moveInfo.NewTime.Add(duration);
+                
+                // 予約時間を更新
+                await AppointmentService.UpdateAppointmentAsync(
+                    moveInfo.ApptId, 
+                    new UpdateAppointmentDto
+                    {
+                        Date = moveInfo.NewDate,
+                        StartTime = moveInfo.NewTime,
+                        EndTime = newEndTime
+                    });
+                
+                // サンプルデータも更新（後で実データに置き換え）
+                appt.Date = moveInfo.NewDate;
+                appt.StartTime = moveInfo.NewTime;
+                appt.EndTime = newEndTime;
+                StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            // TODO: エラーハンドリング（トースト通知など）
+            Console.WriteLine($"予約移動エラー: {ex.Message}");
+        }
     }
 }

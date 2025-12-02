@@ -49,6 +49,7 @@ window.MedockCalendar = (function () {
         currentDate: new Date(),
         appointments: [],
         dayStats: new Map(), // date string -> { am: count, pm: count, total: count }
+        holidays: new Map(), // date string -> holiday name
         options: {
             weekDays: 7, // 1, 3, 7, 14, 31
             showSlots: true,
@@ -161,6 +162,15 @@ window.MedockCalendar = (function () {
 
     function showTooltip(x, y, content) {
         if (!state.tooltip) return;
+        
+        // Convert client coordinates to container-relative coordinates
+        const container = document.getElementById(state.containerId);
+        if (container) {
+            const rect = container.getBoundingClientRect();
+            x = x - rect.left;
+            y = y - rect.top;
+        }
+        
         state.tooltip.innerHTML = content;
         state.tooltip.style.left = `${x + 10}px`;
         state.tooltip.style.top = `${y + 10}px`;
@@ -276,6 +286,65 @@ window.MedockCalendar = (function () {
             layers.grid.add(dayHeader);
         }
 
+        // Draw grid lines and weekend backgrounds
+        // サブピクセルレンダリング問題を回避するために座標を0.5pxオフセット
+        function snapToPixel(val) {
+            return Math.floor(val) + 0.5;
+        }
+        
+        for (let row = 0; row <= rows; row++) {
+            for (let col = 0; col < 7; col++) {
+                const cellLeft = x + col * cellWidth;
+                const cellTop = gridTop + (row + 1) * cellHeight;
+                
+                // Weekend background color
+                if (row < rows) {
+                    let bgColor = null;
+                    if (col === 0) bgColor = 'rgba(239, 68, 68, 0.08)'; // Sunday - light red
+                    else if (col === 6) bgColor = 'rgba(59, 130, 246, 0.08)'; // Saturday - light blue
+                    
+                    if (bgColor) {
+                        const weekendBg = new Konva.Rect({
+                            x: cellLeft,
+                            y: cellTop,
+                            width: cellWidth,
+                            height: cellHeight,
+                            fill: bgColor
+                        });
+                        layers.background.add(weekendBg);
+                    }
+                }
+                
+                // Vertical grid lines (曜日ヘッダーから最下段まで)
+                if (col > 0) {
+                    const vLine = new Konva.Line({
+                        points: [snapToPixel(cellLeft), snapToPixel(gridTop), snapToPixel(cellLeft), snapToPixel(gridTop + (rows + 1) * cellHeight)],
+                        stroke: '#e5e7eb',
+                        strokeWidth: 1
+                    });
+                    layers.grid.add(vLine);
+                }
+            }
+            
+            // Horizontal grid lines
+            if (row > 0) {
+                const hLine = new Konva.Line({
+                    points: [snapToPixel(x), snapToPixel(gridTop + (row + 1) * cellHeight), snapToPixel(x + width), snapToPixel(gridTop + (row + 1) * cellHeight)],
+                    stroke: '#e5e7eb',
+                    strokeWidth: 1
+                });
+                layers.grid.add(hLine);
+            }
+        }
+        
+        // 曜日ヘッダーと日付セルの境界線を追加
+        const headerBottomLine = new Konva.Line({
+            points: [snapToPixel(x), snapToPixel(gridTop + cellHeight), snapToPixel(x + width), snapToPixel(gridTop + cellHeight)],
+            stroke: '#e5e7eb',
+            strokeWidth: 1
+        });
+        layers.grid.add(headerBottomLine);
+
         // Day cells with pie charts
         let day = 1;
         for (let row = 0; row < rows; row++) {
@@ -283,63 +352,89 @@ window.MedockCalendar = (function () {
                 const cellIndex = row * 7 + col;
                 if (cellIndex < startDayOfWeek || day > daysInMonth) continue;
 
-                const cellX = x + col * cellWidth + cellWidth / 2;
-                const cellY = gridTop + (row + 1) * cellHeight + cellHeight / 2;
+                const cellLeft = x + col * cellWidth;
+                const cellTop = gridTop + (row + 1) * cellHeight;
+                const cellX = cellLeft + cellWidth / 2;
+                const cellY = cellTop + cellHeight / 2;
                 const radius = Math.min(cellWidth, cellHeight) / 2 - 2;
 
                 const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+                const isHoliday = state.holidays.has(dateStr);
+                
+                // Holiday background (light red, same as Sunday)
+                if (isHoliday && !isToday(dateStr)) {
+                    const holidayBg = new Konva.Rect({
+                        x: cellLeft + 1,
+                        y: cellTop + 1,
+                        width: cellWidth - 2,
+                        height: cellHeight - 2,
+                        fill: 'rgba(239, 68, 68, 0.12)',
+                        cornerRadius: 2
+                    });
+                    layers.grid.add(holidayBg);
+                }
+                
+                // Today's cell background (bright green rectangle)
+                if (isToday(dateStr)) {
+                    const todayBg = new Konva.Rect({
+                        x: cellLeft + 1,
+                        y: cellTop + 1,
+                        width: cellWidth - 2,
+                        height: cellHeight - 2,
+                        fill: 'rgba(16, 185, 129, 0.3)',
+                        cornerRadius: 2
+                    });
+                    layers.grid.add(todayBg);
+                }
+                
                 const stats = dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
                 const amRatio = stats.amMax > 0 ? stats.am / stats.amMax : 0;
                 const pmRatio = stats.pmMax > 0 ? stats.pm / stats.pmMax : 0;
 
-                renderDayPieChart(cellX, cellY, radius, amRatio, pmRatio, dateStr, day);
+                renderDayPieChart(cellX, cellY, radius, amRatio, pmRatio, dateStr, day, isHoliday);
 
                 day++;
             }
         }
     }
 
-    function renderDayPieChart(cx, cy, radius, amRatio, pmRatio, dateStr, dayNumber) {
+    function renderDayPieChart(cx, cy, radius, amRatio, pmRatio, dateStr, dayNumber, isHoliday = false) {
         const { layers } = state;
-        const innerRadius = radius * 0.55; // ドーナツの内側半径
+        const innerRadius = radius * 0.4; // ドーナツの内側半径（太い色付き部分）
 
-        // Background circle (outer ring)
+        // Background circle (outer ring) - no gap
         const bgCircle = new Konva.Circle({
             x: cx,
             y: cy,
             radius: radius,
-            fill: '#e5e7eb',
-            stroke: isToday(dateStr) ? CONFIG.colors.today : '#d1d5db',
-            strokeWidth: isToday(dateStr) ? 2 : 1
+            fill: '#d1d5db'
         });
         layers.content.add(bgCircle);
 
-        // AM filled arc (donut style)
+        // AM filled arc (donut style) - no gap
         if (amRatio > 0) {
             const amArc = new Konva.Arc({
                 x: cx,
                 y: cy,
                 innerRadius: innerRadius,
-                outerRadius: radius - 1,
+                outerRadius: radius,
                 angle: 180 * amRatio,
                 rotation: -90,
-                fill: CONFIG.colors.am.filled,
-                opacity: 0.9
+                fill: CONFIG.colors.am.filled
             });
             layers.content.add(amArc);
         }
 
-        // PM filled arc (donut style)
+        // PM filled arc (donut style) - no gap
         if (pmRatio > 0) {
             const pmArc = new Konva.Arc({
                 x: cx,
                 y: cy,
                 innerRadius: innerRadius,
-                outerRadius: radius - 1,
+                outerRadius: radius,
                 angle: 180 * pmRatio,
                 rotation: 90,
-                fill: CONFIG.colors.pm.filled,
-                opacity: 0.9
+                fill: CONFIG.colors.pm.filled
             });
             layers.content.add(pmArc);
         }
@@ -348,14 +443,16 @@ window.MedockCalendar = (function () {
         const centerCircle = new Konva.Circle({
             x: cx,
             y: cy,
-            radius: innerRadius - 1,
-            fill: 'white',
-            stroke: '#e5e7eb',
-            strokeWidth: 0.5
+            radius: innerRadius,
+            fill: 'white'
         });
         layers.content.add(centerCircle);
 
         // Day number text (centered in white circle)
+        const dayOfWeek = new Date(dateStr).getDay();
+        // 祝日と日曜日は赤色で表示
+        const textColor = (isHoliday || dayOfWeek === 0) ? CONFIG.colors.weekend.sun :
+            dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151';
         const text = new Konva.Text({
             x: cx - innerRadius,
             y: cy - CONFIG.font.sizeSmall / 2,
@@ -363,8 +460,8 @@ window.MedockCalendar = (function () {
             text: String(dayNumber),
             fontSize: CONFIG.font.sizeSmall,
             fontFamily: CONFIG.font.family,
-            fontStyle: isToday(dateStr) ? 'bold' : 'normal',
-            fill: isToday(dateStr) ? CONFIG.colors.today : '#374151',
+            fontStyle: 'normal',
+            fill: textColor,
             align: 'center'
         });
         layers.content.add(text);
@@ -491,6 +588,19 @@ window.MedockCalendar = (function () {
         const amRatio = stats.amMax > 0 ? stats.am / stats.amMax : 0;
         const pmRatio = stats.pmMax > 0 ? stats.pm / stats.pmMax : 0;
         const total = stats.am + stats.pm;
+        const isHoliday = state.holidays.has(dateStr);
+
+        // Determine background color (priority: today > holiday > weekend > normal)
+        let bgColor = 'white';
+        if (isToday(dateStr)) {
+            bgColor = 'rgba(16, 185, 129, 0.25)';
+        } else if (isHoliday) {
+            bgColor = 'rgba(239, 68, 68, 0.12)';
+        } else if (dayOfWeek === 0) {
+            bgColor = 'rgba(239, 68, 68, 0.08)';
+        } else if (dayOfWeek === 6) {
+            bgColor = 'rgba(59, 130, 246, 0.08)';
+        }
 
         // Cell background
         const cellBg = new Konva.Rect({
@@ -498,55 +608,51 @@ window.MedockCalendar = (function () {
             y: y,
             width: width,
             height: height,
-            fill: isToday(dateStr) ? 'rgba(16, 185, 129, 0.1)' : 'white',
-            stroke: CONFIG.colors.grid,
-            strokeWidth: 1
+            fill: bgColor,
+            stroke: isToday(dateStr) ? CONFIG.colors.today : CONFIG.colors.grid,
+            strokeWidth: isToday(dateStr) ? 2 : 1
         });
         layers.grid.add(cellBg);
 
         // AM/PM Donut chart centered in cell
         const pieRadius = Math.min(width, height) * 0.35;
-        const innerRadius = pieRadius * 0.5;
+        const innerRadius = pieRadius * 0.4; // 太い色付き部分
         const pieCx = x + width / 2;
         const pieCy = y + height / 2;
 
-        // Background circle (outer ring)
+        // Background circle (outer ring) - no gap
         const pieCircle = new Konva.Circle({
             x: pieCx,
             y: pieCy,
             radius: pieRadius,
-            fill: '#e5e7eb',
-            stroke: isToday(dateStr) ? CONFIG.colors.today : '#d1d5db',
-            strokeWidth: isToday(dateStr) ? 2 : 1
+            fill: '#d1d5db'
         });
         layers.content.add(pieCircle);
 
-        // AM arc (donut style)
+        // AM arc (donut style) - no gap
         if (amRatio > 0) {
             const amArc = new Konva.Arc({
                 x: pieCx,
                 y: pieCy,
                 innerRadius: innerRadius,
-                outerRadius: pieRadius - 1,
+                outerRadius: pieRadius,
                 angle: 180 * amRatio,
                 rotation: -90,
-                fill: CONFIG.colors.am.filled,
-                opacity: 0.9
+                fill: CONFIG.colors.am.filled
             });
             layers.content.add(amArc);
         }
 
-        // PM arc (donut style)
+        // PM arc (donut style) - no gap
         if (pmRatio > 0) {
             const pmArc = new Konva.Arc({
                 x: pieCx,
                 y: pieCy,
                 innerRadius: innerRadius,
-                outerRadius: pieRadius - 1,
+                outerRadius: pieRadius,
                 angle: 180 * pmRatio,
                 rotation: 90,
-                fill: CONFIG.colors.pm.filled,
-                opacity: 0.9
+                fill: CONFIG.colors.pm.filled
             });
             layers.content.add(pmArc);
         }
@@ -555,15 +661,14 @@ window.MedockCalendar = (function () {
         const centerCircle = new Konva.Circle({
             x: pieCx,
             y: pieCy,
-            radius: innerRadius - 1,
-            fill: 'white',
-            stroke: '#e5e7eb',
-            strokeWidth: 0.5
+            radius: innerRadius,
+            fill: 'white'
         });
         layers.content.add(centerCircle);
 
         // Day number text (centered in white circle)
-        const textColor = dayOfWeek === 0 ? CONFIG.colors.weekend.sun :
+        // 祝日と日曜日は赤色で表示
+        const textColor = (isHoliday || dayOfWeek === 0) ? CONFIG.colors.weekend.sun :
             dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151';
         const dayText = new Konva.Text({
             x: pieCx - innerRadius,
@@ -572,8 +677,8 @@ window.MedockCalendar = (function () {
             text: String(dayNumber),
             fontSize: CONFIG.font.sizeLarge,
             fontFamily: CONFIG.font.family,
-            fontStyle: isToday(dateStr) ? 'bold' : 'normal',
-            fill: isToday(dateStr) ? CONFIG.colors.today : textColor,
+            fontStyle: 'normal',
+            fill: textColor,
             align: 'center'
         });
         layers.content.add(dayText);
@@ -613,7 +718,8 @@ window.MedockCalendar = (function () {
                 `<strong>${dateStr}</strong><br>午前: ${stats.am}件<br>午後: ${stats.pm}件<br>合計: ${total}件`);
         });
         hitArea.on('mouseleave', function () {
-            cellBg.fill(isToday(dateStr) ? 'rgba(16, 185, 129, 0.1)' : 'white');
+            // 元の背景色に戻す（優先順位: today > holiday > weekend > normal）
+            cellBg.fill(bgColor);
             layers.grid.batchDraw();
             hideTooltip();
         });
@@ -799,7 +905,25 @@ window.MedockCalendar = (function () {
 
     function renderAppointments(timeColumnWidth, headerHeight, dayWidth, hourHeight, startDate) {
         const { layers, appointments, options } = state;
+        const { startHour, weekDays, showSlots } = options;
+
+        if (showSlots) {
+            // スロット表示モード: タイムスロット枠を表示
+            renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, startDate);
+        } else {
+            // 詳細表示モード: アバター表示
+            renderDetailMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, startDate);
+        }
+    }
+
+    function renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, startDate) {
+        const { layers, appointments, options } = state;
         const { startHour, weekDays } = options;
+
+        // 30分単位のスロットを表示
+        const slotMinutes = 30;
+        const slotHeight = hourHeight / 2;
+        const maxPerSlot = 4; // 1スロットあたり最大4人
 
         appointments.forEach(appt => {
             const apptDate = parseDate(appt.date);
@@ -902,6 +1026,183 @@ window.MedockCalendar = (function () {
         });
     }
 
+    function renderDetailMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, startDate) {
+        const { layers, appointments, options } = state;
+        const { startHour, weekDays } = options;
+
+        // 苗字の最初の文字を取得
+        function getInitial(name) {
+            if (!name) return '?';
+            // スペースで分割して苗字を取得
+            const parts = name.split(/[\s　]/);
+            return parts[0].charAt(0);
+        }
+
+        // 色のパレット（アバターの色）
+        const avatarColors = [
+            '#3b82f6', // blue
+            '#10b981', // green
+            '#f59e0b', // amber
+            '#ef4444', // red
+            '#8b5cf6', // purple
+            '#ec4899', // pink
+            '#06b6d4', // cyan
+            '#f97316', // orange
+        ];
+
+        // スロットごとに予約をグループ化（30分単位）
+        const slotMap = new Map(); // key: "dayIndex-hour-half" -> appointments[]
+
+        appointments.forEach(appt => {
+            const apptDate = parseDate(appt.date);
+            const dayIndex = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
+
+            if (dayIndex < 0 || dayIndex >= weekDays) return;
+
+            const startParts = appt.startTime.split(':');
+            const hourNum = parseInt(startParts[0]);
+            const minNum = parseInt(startParts[1]) || 0;
+            const half = minNum >= 30 ? 1 : 0;
+            const slotKey = `${dayIndex}-${hourNum}-${half}`;
+
+            if (!slotMap.has(slotKey)) {
+                slotMap.set(slotKey, []);
+            }
+            slotMap.get(slotKey).push(appt);
+        });
+
+        // 各スロットにアバターを描画
+        slotMap.forEach((slotAppts, slotKey) => {
+            const [dayIndex, hourNum, half] = slotKey.split('-').map(Number);
+            const slotHeight = hourHeight / 2;
+            const avatarSize = Math.min(28, slotHeight - 4, (dayWidth - 8) / Math.min(slotAppts.length, 4) - 4);
+            
+            const baseX = timeColumnWidth + dayIndex * dayWidth + 4;
+            const baseY = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight + (slotHeight - avatarSize) / 2;
+
+            slotAppts.forEach((appt, idx) => {
+                if (idx >= 4) return; // 1スロット最大4人まで表示
+                
+                const avatarX = baseX + idx * (avatarSize + 4);
+                const avatarY = baseY;
+                const initial = getInitial(appt.patientName);
+                const colorIdx = appt.patientName ? appt.patientName.charCodeAt(0) % avatarColors.length : 0;
+                const avatarColor = avatarColors[colorIdx];
+
+                // アバター円
+                const avatar = new Konva.Circle({
+                    x: avatarX + avatarSize / 2,
+                    y: avatarY + avatarSize / 2,
+                    radius: avatarSize / 2,
+                    fill: avatarColor,
+                    stroke: 'white',
+                    strokeWidth: 2,
+                    shadowColor: 'rgba(0,0,0,0.3)',
+                    shadowBlur: 3,
+                    shadowOffsetY: 1,
+                    draggable: true
+                });
+                avatar.id(appt.id);
+
+                // イニシャル文字
+                const initialText = new Konva.Text({
+                    x: avatarX,
+                    y: avatarY + avatarSize / 2 - 7,
+                    width: avatarSize,
+                    text: initial,
+                    fontSize: 14,
+                    fontFamily: CONFIG.font.family,
+                    fontStyle: 'bold',
+                    fill: 'white',
+                    align: 'center',
+                    listening: false
+                });
+
+                // グループにまとめてドラッグ可能に
+                const group = new Konva.Group({
+                    x: 0,
+                    y: 0,
+                    draggable: true
+                });
+                group.add(avatar);
+                group.add(initialText);
+                group.id(appt.id);
+
+                // ホバー時のハイライト
+                group.on('mouseenter', function (e) {
+                    avatar.stroke('#fbbf24');
+                    avatar.strokeWidth(3);
+                    avatar.shadowBlur(6);
+                    layers.content.batchDraw();
+                    document.body.style.cursor = 'pointer';
+                    showTooltip(e.evt.clientX, e.evt.clientY,
+                        `<strong>${appt.patientName || '未設定'}</strong><br>` +
+                        `${appt.orgName || ''}<br>` +
+                        `${appt.startTime} - ${appt.endTime}<br>` +
+                        `ステータス: ${getStatusText(appt.status)}`);
+                });
+
+                group.on('mouseleave', function () {
+                    avatar.stroke('white');
+                    avatar.strokeWidth(2);
+                    avatar.shadowBlur(3);
+                    layers.content.batchDraw();
+                    document.body.style.cursor = 'default';
+                    hideTooltip();
+                });
+
+                // クリックで選択
+                group.on('click', function () {
+                    if (state.dotNetRef) {
+                        state.dotNetRef.invokeMethodAsync('OnAppointmentClicked', appt.id);
+                    }
+                });
+
+                // ドラッグ開始時
+                group.on('dragstart', function () {
+                    avatar.shadowBlur(8);
+                    avatar.shadowColor('rgba(0,0,0,0.5)');
+                    group.moveToTop();
+                    hideTooltip();
+                });
+
+                // ドラッグ終了時（ドロップ位置から新しい日時を計算）
+                group.on('dragend', function () {
+                    avatar.shadowBlur(3);
+                    avatar.shadowColor('rgba(0,0,0,0.3)');
+                    
+                    const pos = group.position();
+                    const dropX = avatarX + avatarSize / 2 + pos.x;
+                    const dropY = avatarY + avatarSize / 2 + pos.y;
+                    
+                    // ドロップ位置から日付と時間を計算
+                    const newDayIndex = Math.floor((dropX - timeColumnWidth) / dayWidth);
+                    const newHourOffset = (dropY - headerHeight) / hourHeight;
+                    const newHour = Math.floor(startHour + newHourOffset);
+                    const newMin = (newHourOffset % 1) >= 0.5 ? 30 : 0;
+                    
+                    if (newDayIndex >= 0 && newDayIndex < weekDays && newHour >= startHour && newHour < options.endHour) {
+                        const newDate = new Date(startDate);
+                        newDate.setDate(newDate.getDate() + newDayIndex);
+                        const newDateStr = dateToString(newDate);
+                        const newTimeStr = `${String(newHour).padStart(2, '0')}:${String(newMin).padStart(2, '0')}`;
+                        
+                        // ドラッグ＆ドロップ完了をサーバーに通知
+                        if (state.dotNetRef) {
+                            state.dotNetRef.invokeMethodAsync('OnAppointmentMoved', appt.id, newDateStr, newTimeStr);
+                        }
+                    }
+                    
+                    // 元の位置に戻す（サーバー側で更新後にリフレッシュされる）
+                    group.position({ x: 0, y: 0 });
+                    layers.content.batchDraw();
+                });
+
+                layers.content.add(group);
+            });
+        });
+    }
+
     function getStatusText(status) {
         const statusTexts = {
             0: '予約',
@@ -965,7 +1266,7 @@ window.MedockCalendar = (function () {
 
         /**
          * Update calendar data
-         * @param {object} data - { appointments: [], dayStats: {} }
+         * @param {object} data - { appointments: [], dayStats: {}, holidays: {} }
          */
         updateData: function (data) {
             if (data.appointments) {
@@ -974,6 +1275,10 @@ window.MedockCalendar = (function () {
 
             if (data.dayStats) {
                 state.dayStats = new Map(Object.entries(data.dayStats));
+            }
+
+            if (data.holidays) {
+                state.holidays = new Map(Object.entries(data.holidays));
             }
 
             this.render();
@@ -1059,6 +1364,7 @@ window.MedockCalendar = (function () {
                 currentDate: new Date(),
                 appointments: [],
                 dayStats: new Map(),
+                holidays: new Map(),
                 options: {
                     weekDays: 7,
                     showSlots: true,
