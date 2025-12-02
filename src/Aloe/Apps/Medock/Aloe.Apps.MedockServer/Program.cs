@@ -1,4 +1,4 @@
-using Aloe.Apps.Medock.Components;
+using Aloe.Apps.MedockServer.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
