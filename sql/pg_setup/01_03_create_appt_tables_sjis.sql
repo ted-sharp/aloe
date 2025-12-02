@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/01 19:58:56
+-- Date/Time    : 2025/12/02 18:36:39
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -157,7 +157,7 @@ CREATE TABLE "patient_insurance_cards" (
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
   , "deactivated_on" date
   , "pt_insure_card_memo" TEXT DEFAULT '' NOT NULL
-  , "pt_insure_card_seq" 
+  , "pt_insure_card_seq" integer DEFAULT 0 NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -1033,7 +1033,7 @@ CREATE TABLE "users" (
   , "email" character varying(254) NOT NULL
   , "password_hash" character varying(255) NOT NULL
   , "password_salt" character varying(64) NOT NULL
-  , "expire_date" TIMESTAMPTZ DEFAULT '9999-12-31' NOT NULL
+  , "expires_date" TIMESTAMPTZ DEFAULT '9999-12-31' NOT NULL
   , "login_success_count" integer DEFAULT 0 NOT NULL
   , "login_failure_count" integer DEFAULT 0 NOT NULL
   , "login_failure_attempts" integer DEFAULT 0 NOT NULL
@@ -1869,7 +1869,7 @@ COMMENT ON COLUMN "users"."user_code" IS 'user_code:ログイン用ID';
 COMMENT ON COLUMN "users"."email" IS 'email:メールアドレスも併用';
 COMMENT ON COLUMN "users"."password_hash" IS 'password_hash';
 COMMENT ON COLUMN "users"."password_salt" IS 'password_salt';
-COMMENT ON COLUMN "users"."expire_date" IS 'expire_date';
+COMMENT ON COLUMN "users"."expires_date" IS 'expires_date';
 COMMENT ON COLUMN "users"."login_success_count" IS 'login_success_count';
 COMMENT ON COLUMN "users"."login_failure_count" IS 'login_failure_count';
 COMMENT ON COLUMN "users"."login_failure_attempts" IS 'login_failure_attempts:ログイン成功でリセットします';

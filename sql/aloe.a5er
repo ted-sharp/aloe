@@ -337,7 +337,7 @@ Field="user_code","user_code","@VARCHAR(100)","NOT NULL",,"","ログイン用ID"
 Field="email","email","@VARCHAR(254)","NOT NULL",,"","メールアドレスも併用",$000028FF,""
 Field="password_hash","password_hash","@VARCHAR(255)","NOT NULL",,"","",$FFFFFFFF,""
 Field="password_salt","password_salt","@VARCHAR(64)","NOT NULL",,"","",$FFFFFFFF,""
-Field="expire_date","expire_date","TIMESTAMPTZ","NOT NULL",,"\q9999-12-31\q","",$FFFFFFFF,""
+Field="expires_date","expires_date","TIMESTAMPTZ","NOT NULL",,"\q9999-12-31\q","",$FFFFFFFF,""
 Field="login_success_count","login_success_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="login_failure_count","login_failure_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="login_failure_attempts","login_failure_attempts","@INT","NOT NULL",,"0","ログイン成功でリセットします",$FFFFFFFF,""
@@ -352,7 +352,7 @@ IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251201200516
+ModifiedDateTime=20251202183630
 Position="USER",1000,400
 ZOrder=29
 
