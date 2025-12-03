@@ -38,3 +38,4 @@ public class Tenant : IAuditableEntity
     public virtual ICollection<Organization> Organizations { get; set; } = new List<Organization>();
 }
 
+

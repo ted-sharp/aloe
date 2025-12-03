@@ -46,3 +46,4 @@ public class Appointment : IAuditableEntity
     public virtual Patient Patient { get; set; } = null!;
 }
 
+

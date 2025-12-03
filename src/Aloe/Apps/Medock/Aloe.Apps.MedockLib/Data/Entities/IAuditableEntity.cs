@@ -24,3 +24,4 @@ public interface IAuditableEntity
     Guid UpdatedSessionId { get; set; }
 }
 
+

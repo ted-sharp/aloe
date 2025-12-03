@@ -30,3 +30,4 @@ public class UserRole : IAuditableEntity
     public virtual Role Role { get; set; } = null!;
 }
 
+

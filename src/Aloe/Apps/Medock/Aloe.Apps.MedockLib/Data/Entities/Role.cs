@@ -33,3 +33,4 @@ public class Role : IAuditableEntity
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
 }
 
+

@@ -47,3 +47,4 @@ public class Facility : IAuditableEntity
     public virtual ICollection<Organization> Organizations { get; set; } = new List<Organization>();
 }
 
+

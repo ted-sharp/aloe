@@ -39,3 +39,4 @@ public class TenantUser : IAuditableEntity
     public virtual User User { get; set; } = null!;
 }
 
+

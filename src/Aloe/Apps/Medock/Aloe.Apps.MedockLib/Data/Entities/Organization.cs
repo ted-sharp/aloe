@@ -56,3 +56,4 @@ public class Organization : IAuditableEntity
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 }
 
+

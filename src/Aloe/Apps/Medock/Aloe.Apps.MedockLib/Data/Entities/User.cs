@@ -61,3 +61,4 @@ public class User : IAuditableEntity
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 }
 
+

@@ -30,3 +30,4 @@ public class RolePermission : IAuditableEntity
     public virtual Permission Permission { get; set; } = null!;
 }
 
+
