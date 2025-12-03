@@ -30,11 +30,16 @@ public class MedockDbContext : DbContext
     public DbSet<Facility> Facilities => Set<Facility>();
     public DbSet<Floor> Floors => Set<Floor>();
     public DbSet<Room> Rooms => Set<Room>();
+    public DbSet<Equipment> Equipments => Set<Equipment>();
 
     // 業務系
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Organization> Organizations => Set<Organization>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
+    public DbSet<AppointmentStats> AppointmentStats => Set<AppointmentStats>();
+    public DbSet<AppointmentSlot> AppointmentSlots => Set<AppointmentSlot>();
+    public DbSet<RoomSlot> RoomSlots => Set<RoomSlot>();
+    public DbSet<EquipmentSlot> EquipmentSlots => Set<EquipmentSlot>();
 
     // マスタ系
     public DbSet<Holiday> Holidays => Set<Holiday>();
@@ -347,6 +352,100 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.HolidayName).HasColumnName("holiday_name");
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
+        });
+
+        // Equipment
+        modelBuilder.Entity<Equipment>(entity =>
+        {
+            entity.ToTable("equipments");
+            entity.HasKey(e => e.EquipId);
+            entity.Property(e => e.EquipId).HasColumnName("equip_id");
+            entity.Property(e => e.FloorId).HasColumnName("floor_id");
+            entity.Property(e => e.EquipName).HasColumnName("equip_name");
+            entity.Property(e => e.EquipDesc).HasColumnName("equip_desc");
+            entity.Property(e => e.EquipSeq).HasColumnName("equip_seq");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Floor)
+                .WithMany(f => f.Equipments)
+                .HasForeignKey(e => e.FloorId);
+        });
+
+        // AppointmentStats
+        modelBuilder.Entity<AppointmentStats>(entity =>
+        {
+            entity.ToTable("appointment_stats");
+            entity.HasKey(e => e.ApptStatId);
+            entity.Property(e => e.ApptStatId).HasColumnName("appt_stat_id");
+            entity.Property(e => e.FloorId).HasColumnName("floor_id");
+            entity.Property(e => e.ApptDate).HasColumnName("appt_date");
+            entity.Property(e => e.ApptCount).HasColumnName("appt_count");
+            entity.Property(e => e.ApptMax).HasColumnName("appt_max");
+            entity.Property(e => e.ApptGraph).HasColumnName("appt_graph").HasColumnType("jsonb");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Floor)
+                .WithMany(f => f.AppointmentStats)
+                .HasForeignKey(e => e.FloorId);
+        });
+
+        // AppointmentSlot
+        modelBuilder.Entity<AppointmentSlot>(entity =>
+        {
+            entity.ToTable("appointment_slots");
+            entity.HasKey(e => e.ApptSlotId);
+            entity.Property(e => e.ApptSlotId).HasColumnName("appt_slot_id");
+            entity.Property(e => e.FloorId).HasColumnName("floor_id");
+            entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.ActiveFrom).HasColumnName("active_from");
+            entity.Property(e => e.ActiveTo).HasColumnName("active_to");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Floor)
+                .WithMany(f => f.AppointmentSlots)
+                .HasForeignKey(e => e.FloorId);
+        });
+
+        // RoomSlot
+        modelBuilder.Entity<RoomSlot>(entity =>
+        {
+            entity.ToTable("room_slots");
+            entity.HasKey(e => e.RoomSlotId);
+            entity.Property(e => e.RoomSlotId).HasColumnName("room_slot_id");
+            entity.Property(e => e.RoomId).HasColumnName("room_id");
+            entity.Property(e => e.RoomSlots).HasColumnName("room_slots").HasColumnType("jsonb");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.ActiveFrom).HasColumnName("active_from");
+            entity.Property(e => e.ActiveTo).HasColumnName("active_to");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Room)
+                .WithMany(r => r.RoomSlots)
+                .HasForeignKey(e => e.RoomId);
+        });
+
+        // EquipmentSlot
+        modelBuilder.Entity<EquipmentSlot>(entity =>
+        {
+            entity.ToTable("equipment_slots");
+            entity.HasKey(e => e.EquipSlotId);
+            entity.Property(e => e.EquipSlotId).HasColumnName("equip_slot_id");
+            entity.Property(e => e.EquipId).HasColumnName("equip_id");
+            entity.Property(e => e.EquipSlots).HasColumnName("equip_slots").HasColumnType("jsonb");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.ActiveFrom).HasColumnName("active_from");
+            entity.Property(e => e.ActiveTo).HasColumnName("active_to");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Equipment)
+                .WithMany(eq => eq.EquipmentSlots)
+                .HasForeignKey(e => e.EquipId);
         });
     }
 

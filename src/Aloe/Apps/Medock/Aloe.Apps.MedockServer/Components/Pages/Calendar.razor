@@ -67,6 +67,16 @@
         </div>
     </div>
 
+    <!-- 検索フィルター（年間表示の場合のみ表示） -->
+    @if (CurrentView == CalendarViewType.Year)
+    {
+        <SearchFilterPanel 
+            AvailableRooms="@AvailableRooms"
+            AvailableEquipments="@AvailableEquipments"
+            OnFilterApplied="@HandleFilterApplied"
+            OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
+    }
+
     <!-- カレンダー本体 -->
     <div class="card bg-base-100 shadow overflow-hidden">
         <div class="card-body p-2 sm:p-4">
@@ -77,7 +87,11 @@
                     DayStats="@SampleDayStats"
                     Holidays="@Holidays"
                     Height="700px"
-                    OnDateClick="@HandleDateClick" />
+                    OnDateClick="@HandleDateClick"
+                    OnMonthClick="@HandleMonthClick"
+                    OnDateSelect="@HandleDateSelect"
+                    OnDateDoubleClick="@HandleDateDoubleClick"
+                    OnDateRangeSelect="@HandleDateRangeSelect" />
             }
             else if (CurrentView == CalendarViewType.Month)
             {
@@ -166,10 +180,20 @@
     private TimeOnly? ModalTime { get; set; }
     private Guid? SelectedAppointmentId { get; set; }
 
+    // 選択状態
+    private DateOnly? SelectedDate { get; set; }
+    private (DateOnly Start, DateOnly End)? SelectedDateRange { get; set; }
+
     // サンプルデータ（後で実データに置き換え）
     private Dictionary<string, CalendarCanvas.CalendarDayStats> SampleDayStats { get; set; } = new();
+    private Dictionary<string, CalendarCanvas.CalendarDayStats> OriginalDayStats { get; set; } = new();
     private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
     private Dictionary<string, string> Holidays { get; set; } = new();
+
+    // フィルター用データ
+    private List<SearchFilterPanel.FilterItem> AvailableRooms { get; set; } = new();
+    private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
+    private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
 
     private enum CalendarViewType
     {
@@ -183,8 +207,44 @@
         // サンプルデータを生成
         GenerateSampleData();
         
+        // 部屋と設備のサンプルデータを生成
+        GenerateFilterOptions();
+        
         // 祝日データを取得
         await LoadHolidaysAsync();
+    }
+
+    private void GenerateFilterOptions()
+    {
+        // 部屋のサンプルデータ
+        AvailableRooms = new List<SearchFilterPanel.FilterItem>
+        {
+            new() { Id = Guid.NewGuid(), Name = "問診室1" },
+            new() { Id = Guid.NewGuid(), Name = "問診室2" },
+            new() { Id = Guid.NewGuid(), Name = "問診室3" },
+            new() { Id = Guid.NewGuid(), Name = "検査室1" },
+            new() { Id = Guid.NewGuid(), Name = "検査室2" },
+            new() { Id = Guid.NewGuid(), Name = "検査室3" },
+            new() { Id = Guid.NewGuid(), Name = "X線室" },
+            new() { Id = Guid.NewGuid(), Name = "CT室" },
+            new() { Id = Guid.NewGuid(), Name = "MRI室" },
+            new() { Id = Guid.NewGuid(), Name = "内視鏡室" },
+        };
+
+        // 設備のサンプルデータ
+        AvailableEquipments = new List<SearchFilterPanel.FilterItem>
+        {
+            new() { Id = Guid.NewGuid(), Name = "CT装置" },
+            new() { Id = Guid.NewGuid(), Name = "MRI装置" },
+            new() { Id = Guid.NewGuid(), Name = "胃カメラ" },
+            new() { Id = Guid.NewGuid(), Name = "大腸カメラ" },
+            new() { Id = Guid.NewGuid(), Name = "超音波装置1" },
+            new() { Id = Guid.NewGuid(), Name = "超音波装置2" },
+            new() { Id = Guid.NewGuid(), Name = "心電計" },
+            new() { Id = Guid.NewGuid(), Name = "肺機能検査装置" },
+            new() { Id = Guid.NewGuid(), Name = "眼底カメラ" },
+            new() { Id = Guid.NewGuid(), Name = "聴力検査装置" },
+        };
     }
     
     private async Task LoadHolidaysAsync()
@@ -214,22 +274,77 @@
         var startDate = new DateTime(today.Year, 1, 1);
         var endDate = new DateTime(today.Year, 12, 31);
 
+        // 時間帯枠の定義
+        var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
+        var slotMaxes = new[] { 5, 8, 8, 8, 8, 8, 8, 5 };
+
         // 日別統計を生成
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
             var dateStr = date.ToString("yyyy-MM-dd");
             var dayOfWeek = date.DayOfWeek;
+            var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
             
-            // 週末は予約が少ない
-            var maxAm = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday ? 5 : 10;
-            var maxPm = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday ? 5 : 10;
+            // 時間帯枠ごとのデータを生成
+            var slots = new List<CalendarCanvas.TimeSlotStats>();
+            var amCount = 0;
+            var pmCount = 0;
+            var amMax = 0;
+            var pmMax = 0;
             
-            SampleDayStats[dateStr] = new CalendarCanvas.CalendarDayStats
+            for (var i = 0; i < slotTimes.Length; i++)
             {
-                AmCount = random.Next(0, maxAm + 1),
-                PmCount = random.Next(0, maxPm + 1),
-                AmMax = maxAm,
-                PmMax = maxPm
+                var max = isWeekend ? Math.Max(1, slotMaxes[i] / 2) : slotMaxes[i];
+                var count = random.Next(0, max + 1);
+                
+                slots.Add(new CalendarCanvas.TimeSlotStats
+                {
+                    Time = slotTimes[i],
+                    Count = count,
+                    Max = max,
+                    IsGrayedOut = false
+                });
+                
+                // AM/PM集計（フォールバック用）
+                var hour = int.Parse(slotTimes[i].Split(':')[0]);
+                if (hour < 12)
+                {
+                    amCount += count;
+                    amMax += max;
+                }
+                else
+                {
+                    pmCount += count;
+                    pmMax += max;
+                }
+            }
+            
+            var dayStats = new CalendarCanvas.CalendarDayStats
+            {
+                AmCount = amCount,
+                PmCount = pmCount,
+                AmMax = amMax,
+                PmMax = pmMax,
+                Slots = slots,
+                IsGrayedOut = false
+            };
+            SampleDayStats[dateStr] = dayStats;
+            
+            // オリジナルデータを保存（フィルター解除用）
+            OriginalDayStats[dateStr] = new CalendarCanvas.CalendarDayStats
+            {
+                AmCount = amCount,
+                PmCount = pmCount,
+                AmMax = amMax,
+                PmMax = pmMax,
+                Slots = slots.Select(s => new CalendarCanvas.TimeSlotStats
+                {
+                    Time = s.Time,
+                    Count = s.Count,
+                    Max = s.Max,
+                    IsGrayedOut = false
+                }).ToList(),
+                IsGrayedOut = false
             };
         }
 
@@ -310,15 +425,155 @@
     private void HandleDateClick(DateOnly date)
     {
         CurrentDate = date;
-        // 年→月、月→週へ遷移
-        if (CurrentView == CalendarViewType.Year)
-        {
-            CurrentView = CalendarViewType.Month;
-        }
-        else if (CurrentView == CalendarViewType.Month)
+        // 年→月、月→週へ遷移（旧動作、月間表示では日クリックで週間に遷移）
+        if (CurrentView == CalendarViewType.Month)
         {
             CurrentView = CalendarViewType.Week;
             WeekDays = 7;
+        }
+    }
+
+    /// <summary>
+    /// 月ヘッダークリック時のハンドラ - 月間表示に切り替え
+    /// </summary>
+    private void HandleMonthClick((int Year, int Month) yearMonth)
+    {
+        CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        CurrentView = CalendarViewType.Month;
+    }
+
+    /// <summary>
+    /// 日付シングルクリック時のハンドラ - 選択状態にする
+    /// </summary>
+    private void HandleDateSelect(DateOnly date)
+    {
+        SelectedDate = date;
+        SelectedDateRange = null;
+        // 年間表示ではビュー切り替えなし、選択のみ
+    }
+
+    /// <summary>
+    /// 日付ダブルクリック時のハンドラ - その日のスケジュール表示
+    /// </summary>
+    private void HandleDateDoubleClick(DateOnly date)
+    {
+        CurrentDate = date;
+        CurrentView = CalendarViewType.Week;
+        WeekDays = 1; // 1日表示
+    }
+
+    /// <summary>
+    /// 範囲選択時のハンドラ
+    /// </summary>
+    private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
+    {
+        SelectedDate = null;
+        SelectedDateRange = range;
+        // 範囲選択状態を保持（検索フィルターなどで利用可能）
+    }
+
+    /// <summary>
+    /// フィルター適用時のハンドラ
+    /// </summary>
+    private void HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
+    {
+        CurrentFilter = filter;
+        ApplyFilterToStats(filter);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// リアルタイムフィルター変更時のハンドラ
+    /// </summary>
+    private void HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
+    {
+        CurrentFilter = filter;
+        ApplyFilterToStats(filter);
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// フィルターをカレンダーデータに適用
+    /// </summary>
+    private void ApplyFilterToStats(SearchFilterPanel.SearchFilter filter)
+    {
+        // フィルターが無効な場合はオリジナルに戻す
+        if (!filter.IsActive)
+        {
+            foreach (var kvp in OriginalDayStats)
+            {
+                if (SampleDayStats.TryGetValue(kvp.Key, out var stats))
+                {
+                    stats.IsGrayedOut = false;
+                    if (stats.Slots != null)
+                    {
+                        foreach (var slot in stats.Slots)
+                        {
+                            slot.IsGrayedOut = false;
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        foreach (var kvp in SampleDayStats)
+        {
+            var dateStr = kvp.Key;
+            var stats = kvp.Value;
+            var date = DateOnly.Parse(dateStr);
+            
+            // 日付レベルのグレーアウト判定
+            var isDateGrayed = false;
+
+            // 期間フィルター
+            if (filter.StartDate.HasValue && date < filter.StartDate.Value)
+                isDateGrayed = true;
+            if (filter.EndDate.HasValue && date > filter.EndDate.Value)
+                isDateGrayed = true;
+
+            // 曜日フィルター
+            var dayOfWeek = (int)date.DayOfWeek;
+            if (filter.SelectedDays.Any() && !filter.SelectedDays.Contains(dayOfWeek))
+                isDateGrayed = true;
+
+            // 時間帯枠レベルのグレーアウト判定
+            var hasAvailableSlot = false;
+            if (stats.Slots != null)
+            {
+                foreach (var slot in stats.Slots)
+                {
+                    var isSlotGrayed = false;
+
+                    // 特定の時間帯フィルター
+                    if (!string.IsNullOrEmpty(filter.TimeSlot) && slot.Time != filter.TimeSlot)
+                    {
+                        isSlotGrayed = true;
+                    }
+
+                    // 空き枠数フィルター
+                    var availableCapacity = slot.Max - slot.Count;
+                    if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
+                    {
+                        isSlotGrayed = true;
+                    }
+
+                    slot.IsGrayedOut = isSlotGrayed || isDateGrayed;
+                    
+                    if (!slot.IsGrayedOut)
+                        hasAvailableSlot = true;
+                }
+            }
+            else
+            {
+                // スロットがない場合はAM/PMで判定
+                var amAvailable = stats.AmMax - stats.AmCount;
+                var pmAvailable = stats.PmMax - stats.PmCount;
+                hasAvailableSlot = amAvailable >= filter.RequiredCapacity || pmAvailable >= filter.RequiredCapacity;
+            }
+
+            // 日付全体のグレーアウト（条件に合う枠が1つもない場合）
+            stats.IsGrayedOut = isDateGrayed || !hasAvailableSlot;
         }
     }
 

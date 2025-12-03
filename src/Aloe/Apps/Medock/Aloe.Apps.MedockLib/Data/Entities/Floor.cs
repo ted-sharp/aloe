@@ -38,6 +38,9 @@ public class Floor : IAuditableEntity
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
     public virtual ICollection<Room> Rooms { get; set; } = new List<Room>();
+    public virtual ICollection<Equipment> Equipments { get; set; } = new List<Equipment>();
+    public virtual ICollection<AppointmentSlot> AppointmentSlots { get; set; } = new List<AppointmentSlot>();
+    public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
 }
 
 

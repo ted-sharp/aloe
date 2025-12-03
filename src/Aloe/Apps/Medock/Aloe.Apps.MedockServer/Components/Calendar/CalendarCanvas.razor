@@ -106,6 +106,30 @@
     [Parameter]
     public EventCallback<(Guid ApptId, DateOnly NewDate, TimeOnly NewTime)> OnAppointmentMoved { get; set; }
 
+    /// <summary>
+    /// Callback when a month header is clicked (for switching to month view)
+    /// </summary>
+    [Parameter]
+    public EventCallback<(int Year, int Month)> OnMonthClicked { get; set; }
+
+    /// <summary>
+    /// Callback when a date is single-clicked (for selection)
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelectedSingle { get; set; }
+
+    /// <summary>
+    /// Callback when a date is double-clicked (for day schedule view)
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateDoubleClicked { get; set; }
+
+    /// <summary>
+    /// Callback when a date range is selected via drag
+    /// </summary>
+    [Parameter]
+    public EventCallback<(DateOnly Start, DateOnly End)> OnDateRangeSelected { get; set; }
+
     private string ContainerId { get; } = $"calendar-canvas-{Guid.NewGuid():N}";
     private DotNetObjectReference<CalendarCanvas>? _dotNetRef;
     private bool _isInitialized = false;
@@ -225,7 +249,15 @@
                     am = kvp.Value.AmCount,
                     pm = kvp.Value.PmCount,
                     amMax = kvp.Value.AmMax,
-                    pmMax = kvp.Value.PmMax
+                    pmMax = kvp.Value.PmMax,
+                    slots = kvp.Value.Slots?.Select(s => new 
+                    { 
+                        time = s.Time, 
+                        count = s.Count, 
+                        max = s.Max,
+                        isGrayedOut = s.IsGrayedOut
+                    }).ToArray(),
+                    isGrayedOut = kvp.Value.IsGrayedOut
                 })
             : new Dictionary<string, object>();
 
@@ -291,6 +323,40 @@
         }
     }
 
+    [JSInvokable("OnMonthClicked")]
+    public async Task OnMonthClickedFromJs(int year, int month)
+    {
+        await OnMonthClicked.InvokeAsync((year, month));
+    }
+
+    [JSInvokable("OnDateSelectedSingle")]
+    public async Task OnDateSelectedSingleFromJs(string dateStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date))
+        {
+            await OnDateSelectedSingle.InvokeAsync(date);
+        }
+    }
+
+    [JSInvokable("OnDateDoubleClicked")]
+    public async Task OnDateDoubleClickedFromJs(string dateStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date))
+        {
+            await OnDateDoubleClicked.InvokeAsync(date);
+        }
+    }
+
+    [JSInvokable("OnDateRangeSelected")]
+    public async Task OnDateRangeSelectedFromJs(string startDateStr, string endDateStr)
+    {
+        if (DateOnly.TryParse(startDateStr, out var startDate) &&
+            DateOnly.TryParse(endDateStr, out var endDate))
+        {
+            await OnDateRangeSelected.InvokeAsync((startDate, endDate));
+        }
+    }
+
     public async ValueTask DisposeAsync()
     {
         if (_isInitialized)
@@ -327,7 +393,7 @@
     }
 
     /// <summary>
-    /// Day statistics for AM/PM pie charts
+    /// Day statistics for time slot pie charts
     /// </summary>
     public class CalendarDayStats
     {
@@ -335,6 +401,27 @@
         public int PmCount { get; set; }
         public int AmMax { get; set; } = 10;
         public int PmMax { get; set; } = 10;
+        
+        /// <summary>
+        /// 時間帯枠ごとの統計データ
+        /// </summary>
+        public List<TimeSlotStats>? Slots { get; set; }
+        
+        /// <summary>
+        /// グレーアウト対象かどうか（検索フィルター用）
+        /// </summary>
+        public bool IsGrayedOut { get; set; }
+    }
+
+    /// <summary>
+    /// 時間帯枠統計データ
+    /// </summary>
+    public class TimeSlotStats
+    {
+        public string Time { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public int Max { get; set; }
+        public bool IsGrayedOut { get; set; }
     }
 }
 

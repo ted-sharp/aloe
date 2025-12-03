@@ -1,24 +1,24 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
 /// <summary>
-/// 部屋エンティティ
+/// 設備エンティティ
 /// </summary>
-public class Room : IAuditableEntity
+public class Equipment : IAuditableEntity
 {
-    /// <summary>部屋ID (PK)</summary>
-    public Guid RoomId { get; set; }
+    /// <summary>設備ID (PK)</summary>
+    public Guid EquipId { get; set; }
 
     /// <summary>フロアID (FK)</summary>
     public Guid FloorId { get; set; }
 
-    /// <summary>部屋名</summary>
-    public string RoomName { get; set; } = string.Empty;
+    /// <summary>設備名</summary>
+    public string EquipName { get; set; } = string.Empty;
 
-    /// <summary>部屋説明</summary>
-    public string RoomDesc { get; set; } = string.Empty;
+    /// <summary>設備説明</summary>
+    public string EquipDesc { get; set; } = string.Empty;
 
     /// <summary>表示順</summary>
-    public int RoomSeq { get; set; }
+    public int EquipSeq { get; set; }
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }
@@ -33,7 +33,6 @@ public class Room : IAuditableEntity
 
     // Navigation Properties
     public virtual Floor Floor { get; set; } = null!;
-    public virtual ICollection<RoomSlot> RoomSlots { get; set; } = new List<RoomSlot>();
+    public virtual ICollection<EquipmentSlot> EquipmentSlots { get; set; } = new List<EquipmentSlot>();
 }
-
 

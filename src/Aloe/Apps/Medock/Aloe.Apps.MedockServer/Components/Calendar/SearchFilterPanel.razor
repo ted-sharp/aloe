@@ -1,0 +1,465 @@
+@* 
+    SearchFilterPanel - 年間カレンダー用の検索フィルターパネル
+    条件に当てはまらない日/時間帯をグレーアウト表示するためのフィルター
+*@
+
+<div class="card bg-base-100 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <!-- フィルター展開/折りたたみヘッダー -->
+        <div class="flex items-center justify-between cursor-pointer" @onclick="ToggleExpanded">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <h3 class="font-bold text-base-content">空き検索フィルター</h3>
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="badge badge-primary badge-sm">@ActiveFilterCount</span>
+                }
+            </div>
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform @(IsExpanded ? "rotate-180" : "")" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+
+        <!-- アクティブフィルターのバッジ表示 -->
+        @if (!IsExpanded && ActiveFilters.Any())
+        {
+            <div class="flex flex-wrap gap-2 mt-2">
+                @foreach (var filter in ActiveFilters)
+                {
+                    <span class="badge badge-outline gap-1">
+                        @filter
+                        <button class="btn btn-ghost btn-xs p-0" @onclick="() => RemoveFilter(filter)">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </span>
+                }
+            </div>
+        }
+
+        <!-- フィルター詳細パネル -->
+        @if (IsExpanded)
+        {
+            <div class="divider my-2"></div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <!-- 期間 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">期間</span>
+                    </label>
+                    <div class="flex gap-2 items-center">
+                        <input type="date" class="input input-bordered input-sm flex-1" 
+                               @bind="StartDate" @bind:event="oninput" @onchange="OnFilterChanged" />
+                        <span class="text-base-content/60">〜</span>
+                        <input type="date" class="input input-bordered input-sm flex-1" 
+                               @bind="EndDate" @bind:event="oninput" @onchange="OnFilterChanged" />
+                    </div>
+                </div>
+
+                <!-- 曜日 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">曜日</span>
+                    </label>
+                    <div class="flex flex-wrap gap-1">
+                        @foreach (var (day, index) in DayNames.Select((d, i) => (d, i)))
+                        {
+                            var dayIndex = index;
+                            <label class="cursor-pointer">
+                                <input type="checkbox" 
+                                       class="checkbox checkbox-xs checkbox-primary hidden peer" 
+                                       checked="@SelectedDays.Contains(dayIndex)"
+                                       @onchange="() => ToggleDay(dayIndex)" />
+                                <span class="badge @(SelectedDays.Contains(dayIndex) ? "badge-primary" : "badge-outline") 
+                                             @(dayIndex == 0 ? "text-error" : dayIndex == 6 ? "text-info" : "")">
+                                    @day
+                                </span>
+                            </label>
+                        }
+                    </div>
+                </div>
+
+                <!-- 時間帯 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">時間帯</span>
+                    </label>
+                    <select class="select select-bordered select-sm" @bind="SelectedTimeSlot" @bind:after="OnFilterChanged">
+                        <option value="">すべて</option>
+                        @foreach (var slot in TimeSlots)
+                        {
+                            <option value="@slot">@slot</option>
+                        }
+                    </select>
+                </div>
+
+                <!-- 必要人数 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">空き枠数</span>
+                    </label>
+                    <div class="flex items-center gap-2">
+                        <input type="number" class="input input-bordered input-sm w-20" 
+                               min="1" max="10"
+                               @bind="RequiredCapacity" @bind:event="oninput" @bind:after="OnFilterChanged" />
+                        <span class="text-sm text-base-content/60">名以上</span>
+                    </div>
+                </div>
+
+                <!-- 部屋（コース） -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">部屋</span>
+                    </label>
+                    <div class="dropdown w-full">
+                        <div tabindex="0" role="button" class="btn btn-sm btn-outline w-full justify-between">
+                            @if (SelectedRooms.Any())
+                            {
+                                <span>@SelectedRooms.Count 件選択中</span>
+                            }
+                            else
+                            {
+                                <span class="text-base-content/50">選択...</span>
+                            }
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-full max-h-48 overflow-y-auto">
+                            @foreach (var room in AvailableRooms)
+                            {
+                                <li>
+                                    <label class="flex gap-2">
+                                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                                               checked="@SelectedRooms.Contains(room.Id)"
+                                               @onchange="() => ToggleRoom(room.Id)" />
+                                        <span>@room.Name</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    @if (SelectedRooms.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @foreach (var roomId in SelectedRooms)
+                            {
+                                var room = AvailableRooms.FirstOrDefault(r => r.Id == roomId);
+                                if (room != null)
+                                {
+                                    <span class="badge badge-primary badge-sm gap-1">
+                                        @room.Name
+                                        <button class="btn btn-ghost btn-xs p-0" @onclick="() => ToggleRoom(roomId)">×</button>
+                                    </span>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- 設備 -->
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">設備</span>
+                    </label>
+                    <div class="dropdown w-full">
+                        <div tabindex="0" role="button" class="btn btn-sm btn-outline w-full justify-between">
+                            @if (SelectedEquipments.Any())
+                            {
+                                <span>@SelectedEquipments.Count 件選択中</span>
+                            }
+                            else
+                            {
+                                <span class="text-base-content/50">選択...</span>
+                            }
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                        <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-full max-h-48 overflow-y-auto">
+                            @foreach (var equipment in AvailableEquipments)
+                            {
+                                <li>
+                                    <label class="flex gap-2">
+                                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
+                                               checked="@SelectedEquipments.Contains(equipment.Id)"
+                                               @onchange="() => ToggleEquipment(equipment.Id)" />
+                                        <span>@equipment.Name</span>
+                                    </label>
+                                </li>
+                            }
+                        </ul>
+                    </div>
+                    @if (SelectedEquipments.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 mt-1">
+                            @foreach (var equipId in SelectedEquipments)
+                            {
+                                var equip = AvailableEquipments.FirstOrDefault(e => e.Id == equipId);
+                                if (equip != null)
+                                {
+                                    <span class="badge badge-secondary badge-sm gap-1">
+                                        @equip.Name
+                                        <button class="btn btn-ghost btn-xs p-0" @onclick="() => ToggleEquipment(equipId)">×</button>
+                                    </span>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <!-- アクションボタン -->
+            <div class="flex justify-end gap-2 mt-4">
+                <button class="btn btn-ghost btn-sm" @onclick="ClearFilters">
+                    クリア
+                </button>
+                <button class="btn btn-primary btn-sm" @onclick="ApplyFilters">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    検索
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// 利用可能な部屋のリスト
+    /// </summary>
+    [Parameter]
+    public List<FilterItem> AvailableRooms { get; set; } = new();
+
+    /// <summary>
+    /// 利用可能な設備のリスト
+    /// </summary>
+    [Parameter]
+    public List<FilterItem> AvailableEquipments { get; set; } = new();
+
+    /// <summary>
+    /// フィルター変更時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<SearchFilter> OnFilterApplied { get; set; }
+
+    /// <summary>
+    /// リアルタイム検索用のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<SearchFilter> OnFilterChangedRealtime { get; set; }
+
+    // UI状態
+    private bool IsExpanded { get; set; } = false;
+
+    // フィルター値
+    private DateOnly? StartDate { get; set; }
+    private DateOnly? EndDate { get; set; }
+    private HashSet<int> SelectedDays { get; set; } = new() { 0, 1, 2, 3, 4, 5, 6 }; // 全曜日選択
+    private string SelectedTimeSlot { get; set; } = string.Empty;
+    private int RequiredCapacity { get; set; } = 1;
+    private HashSet<Guid> SelectedRooms { get; set; } = new();
+    private HashSet<Guid> SelectedEquipments { get; set; } = new();
+
+    // 定数
+    private readonly string[] DayNames = { "日", "月", "火", "水", "木", "金", "土" };
+    private readonly string[] TimeSlots = { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
+
+    private int ActiveFilterCount => 
+        (StartDate.HasValue || EndDate.HasValue ? 1 : 0) +
+        (SelectedDays.Count < 7 ? 1 : 0) +
+        (!string.IsNullOrEmpty(SelectedTimeSlot) ? 1 : 0) +
+        (RequiredCapacity > 1 ? 1 : 0) +
+        (SelectedRooms.Any() ? 1 : 0) +
+        (SelectedEquipments.Any() ? 1 : 0);
+
+    private List<string> ActiveFilters
+    {
+        get
+        {
+            var filters = new List<string>();
+            if (StartDate.HasValue || EndDate.HasValue)
+            {
+                var startStr = StartDate?.ToString("M/d") ?? "";
+                var endStr = EndDate?.ToString("M/d") ?? "";
+                filters.Add($"期間: {startStr}〜{endStr}");
+            }
+            if (SelectedDays.Count < 7 && SelectedDays.Any())
+            {
+                var days = string.Join("", SelectedDays.OrderBy(d => d).Select(d => DayNames[d]));
+                filters.Add($"曜日: {days}");
+            }
+            if (!string.IsNullOrEmpty(SelectedTimeSlot))
+            {
+                filters.Add($"時間: {SelectedTimeSlot}");
+            }
+            if (RequiredCapacity > 1)
+            {
+                filters.Add($"空き: {RequiredCapacity}名以上");
+            }
+            if (SelectedRooms.Any())
+            {
+                filters.Add($"部屋: {SelectedRooms.Count}件");
+            }
+            if (SelectedEquipments.Any())
+            {
+                filters.Add($"設備: {SelectedEquipments.Count}件");
+            }
+            return filters;
+        }
+    }
+
+    private void ToggleExpanded()
+    {
+        IsExpanded = !IsExpanded;
+    }
+
+    private void ToggleDay(int dayIndex)
+    {
+        if (SelectedDays.Contains(dayIndex))
+        {
+            SelectedDays.Remove(dayIndex);
+        }
+        else
+        {
+            SelectedDays.Add(dayIndex);
+        }
+        OnFilterChanged();
+    }
+
+    private void ToggleRoom(Guid roomId)
+    {
+        if (SelectedRooms.Contains(roomId))
+        {
+            SelectedRooms.Remove(roomId);
+        }
+        else
+        {
+            SelectedRooms.Add(roomId);
+        }
+        OnFilterChanged();
+    }
+
+    private void ToggleEquipment(Guid equipId)
+    {
+        if (SelectedEquipments.Contains(equipId))
+        {
+            SelectedEquipments.Remove(equipId);
+        }
+        else
+        {
+            SelectedEquipments.Add(equipId);
+        }
+        OnFilterChanged();
+    }
+
+    private void RemoveFilter(string filterText)
+    {
+        // フィルターテキストに基づいてリセット
+        if (filterText.StartsWith("期間"))
+        {
+            StartDate = null;
+            EndDate = null;
+        }
+        else if (filterText.StartsWith("曜日"))
+        {
+            SelectedDays = new HashSet<int> { 0, 1, 2, 3, 4, 5, 6 };
+        }
+        else if (filterText.StartsWith("時間"))
+        {
+            SelectedTimeSlot = string.Empty;
+        }
+        else if (filterText.StartsWith("空き"))
+        {
+            RequiredCapacity = 1;
+        }
+        else if (filterText.StartsWith("部屋"))
+        {
+            SelectedRooms.Clear();
+        }
+        else if (filterText.StartsWith("設備"))
+        {
+            SelectedEquipments.Clear();
+        }
+        OnFilterChanged();
+    }
+
+    private void ClearFilters()
+    {
+        StartDate = null;
+        EndDate = null;
+        SelectedDays = new HashSet<int> { 0, 1, 2, 3, 4, 5, 6 };
+        SelectedTimeSlot = string.Empty;
+        RequiredCapacity = 1;
+        SelectedRooms.Clear();
+        SelectedEquipments.Clear();
+        OnFilterChanged();
+    }
+
+    private async Task ApplyFilters()
+    {
+        var filter = BuildFilter();
+        await OnFilterApplied.InvokeAsync(filter);
+    }
+
+    private async void OnFilterChanged()
+    {
+        // リアルタイム検索
+        var filter = BuildFilter();
+        await OnFilterChangedRealtime.InvokeAsync(filter);
+    }
+
+    private SearchFilter BuildFilter()
+    {
+        return new SearchFilter
+        {
+            StartDate = StartDate,
+            EndDate = EndDate,
+            SelectedDays = SelectedDays.ToList(),
+            TimeSlot = SelectedTimeSlot,
+            RequiredCapacity = RequiredCapacity,
+            RoomIds = SelectedRooms.ToList(),
+            EquipmentIds = SelectedEquipments.ToList()
+        };
+    }
+
+    /// <summary>
+    /// フィルター選択肢の項目
+    /// </summary>
+    public class FilterItem
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>
+    /// 検索フィルターのデータ
+    /// </summary>
+    public class SearchFilter
+    {
+        public DateOnly? StartDate { get; set; }
+        public DateOnly? EndDate { get; set; }
+        public List<int> SelectedDays { get; set; } = new();
+        public string TimeSlot { get; set; } = string.Empty;
+        public int RequiredCapacity { get; set; } = 1;
+        public List<Guid> RoomIds { get; set; } = new();
+        public List<Guid> EquipmentIds { get; set; } = new();
+        
+        /// <summary>
+        /// フィルターが有効かどうか
+        /// </summary>
+        public bool IsActive => 
+            StartDate.HasValue || 
+            EndDate.HasValue || 
+            SelectedDays.Count < 7 || 
+            !string.IsNullOrEmpty(TimeSlot) || 
+            RequiredCapacity > 1 || 
+            RoomIds.Any() || 
+            EquipmentIds.Any();
+    }
+}
+
