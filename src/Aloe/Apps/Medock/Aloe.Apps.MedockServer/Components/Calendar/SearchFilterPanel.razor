@@ -87,13 +87,20 @@
                     <label class="label">
                         <span class="label-text font-semibold">時間帯</span>
                     </label>
-                    <select class="select select-bordered select-sm" @bind="SelectedTimeSlot" @bind:after="OnFilterChanged">
-                        <option value="">すべて</option>
+                    <div class="flex flex-wrap gap-1">
                         @foreach (var slot in TimeSlots)
                         {
-                            <option value="@slot">@slot</option>
+                            <label class="cursor-pointer">
+                                <input type="checkbox"
+                                       class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                       checked="@SelectedTimeSlots.Contains(slot)"
+                                       @onchange="() => ToggleTimeSlot(slot)" />
+                                <span class="badge @(SelectedTimeSlots.Contains(slot) ? "badge-primary" : "badge-outline")">
+                                    @slot
+                                </span>
+                            </label>
                         }
-                    </select>
+                    </div>
                 </div>
 
                 <!-- 必要人数 -->
@@ -259,8 +266,8 @@
     // フィルター値
     private DateOnly? StartDate { get; set; }
     private DateOnly? EndDate { get; set; }
-    private HashSet<int> SelectedDays { get; set; } = new() { 0, 1, 2, 3, 4, 5, 6 }; // 全曜日選択
-    private string SelectedTimeSlot { get; set; } = string.Empty;
+    private HashSet<int> SelectedDays { get; set; } = new(); // デフォルト全オフ
+    private HashSet<string> SelectedTimeSlots { get; set; } = new(); // 時間帯複数選択
     private int RequiredCapacity { get; set; } = 1;
     private HashSet<Guid> SelectedRooms { get; set; } = new();
     private HashSet<Guid> SelectedEquipments { get; set; } = new();
@@ -269,10 +276,10 @@
     private readonly string[] DayNames = { "日", "月", "火", "水", "木", "金", "土" };
     private readonly string[] TimeSlots = { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
 
-    private int ActiveFilterCount => 
+    private int ActiveFilterCount =>
         (StartDate.HasValue || EndDate.HasValue ? 1 : 0) +
-        (SelectedDays.Count < 7 ? 1 : 0) +
-        (!string.IsNullOrEmpty(SelectedTimeSlot) ? 1 : 0) +
+        (SelectedDays.Any() ? 1 : 0) +
+        (SelectedTimeSlots.Any() ? 1 : 0) +
         (RequiredCapacity > 1 ? 1 : 0) +
         (SelectedRooms.Any() ? 1 : 0) +
         (SelectedEquipments.Any() ? 1 : 0);
@@ -288,14 +295,15 @@
                 var endStr = EndDate?.ToString("M/d") ?? "";
                 filters.Add($"期間: {startStr}〜{endStr}");
             }
-            if (SelectedDays.Count < 7 && SelectedDays.Any())
+            if (SelectedDays.Any())
             {
                 var days = string.Join("", SelectedDays.OrderBy(d => d).Select(d => DayNames[d]));
                 filters.Add($"曜日: {days}");
             }
-            if (!string.IsNullOrEmpty(SelectedTimeSlot))
+            if (SelectedTimeSlots.Any())
             {
-                filters.Add($"時間: {SelectedTimeSlot}");
+                var times = string.Join(",", SelectedTimeSlots.OrderBy(t => t));
+                filters.Add($"時間: {times}");
             }
             if (RequiredCapacity > 1)
             {
@@ -357,6 +365,19 @@
         OnFilterChanged();
     }
 
+    private void ToggleTimeSlot(string timeSlot)
+    {
+        if (SelectedTimeSlots.Contains(timeSlot))
+        {
+            SelectedTimeSlots.Remove(timeSlot);
+        }
+        else
+        {
+            SelectedTimeSlots.Add(timeSlot);
+        }
+        OnFilterChanged();
+    }
+
     private void RemoveFilter(string filterText)
     {
         // フィルターテキストに基づいてリセット
@@ -367,11 +388,11 @@
         }
         else if (filterText.StartsWith("曜日"))
         {
-            SelectedDays = new HashSet<int> { 0, 1, 2, 3, 4, 5, 6 };
+            SelectedDays = new();
         }
         else if (filterText.StartsWith("時間"))
         {
-            SelectedTimeSlot = string.Empty;
+            SelectedTimeSlots.Clear();
         }
         else if (filterText.StartsWith("空き"))
         {
@@ -392,8 +413,8 @@
     {
         StartDate = null;
         EndDate = null;
-        SelectedDays = new HashSet<int> { 0, 1, 2, 3, 4, 5, 6 };
-        SelectedTimeSlot = string.Empty;
+        SelectedDays = new();
+        SelectedTimeSlots.Clear();
         RequiredCapacity = 1;
         SelectedRooms.Clear();
         SelectedEquipments.Clear();
@@ -420,11 +441,42 @@
             StartDate = StartDate,
             EndDate = EndDate,
             SelectedDays = SelectedDays.ToList(),
-            TimeSlot = SelectedTimeSlot,
+            TimeSlots = SelectedTimeSlots.ToList(),
             RequiredCapacity = RequiredCapacity,
             RoomIds = SelectedRooms.ToList(),
             EquipmentIds = SelectedEquipments.ToList()
         };
+    }
+
+    /// <summary>
+    /// 外部から開始日を設定（シングルクリック時）
+    /// </summary>
+    public void SetStartDate(DateOnly date)
+    {
+        StartDate = date;
+        StateHasChanged();
+        OnFilterChanged();
+    }
+
+    /// <summary>
+    /// 外部から終了日を設定（Shift+クリック時）
+    /// </summary>
+    public void SetEndDate(DateOnly date)
+    {
+        EndDate = date;
+        StateHasChanged();
+        OnFilterChanged();
+    }
+
+    /// <summary>
+    /// 外部から期間を設定（範囲選択時）
+    /// </summary>
+    public void SetDateRange(DateOnly start, DateOnly end)
+    {
+        StartDate = start;
+        EndDate = end;
+        StateHasChanged();
+        OnFilterChanged();
     }
 
     /// <summary>
@@ -444,7 +496,7 @@
         public DateOnly? StartDate { get; set; }
         public DateOnly? EndDate { get; set; }
         public List<int> SelectedDays { get; set; } = new();
-        public string TimeSlot { get; set; } = string.Empty;
+        public List<string> TimeSlots { get; set; } = new();
         public int RequiredCapacity { get; set; } = 1;
         public List<Guid> RoomIds { get; set; } = new();
         public List<Guid> EquipmentIds { get; set; } = new();
@@ -452,13 +504,13 @@
         /// <summary>
         /// フィルターが有効かどうか
         /// </summary>
-        public bool IsActive => 
-            StartDate.HasValue || 
-            EndDate.HasValue || 
-            SelectedDays.Count < 7 || 
-            !string.IsNullOrEmpty(TimeSlot) || 
-            RequiredCapacity > 1 || 
-            RoomIds.Any() || 
+        public bool IsActive =>
+            StartDate.HasValue ||
+            EndDate.HasValue ||
+            SelectedDays.Any() ||
+            TimeSlots.Any() ||
+            RequiredCapacity > 1 ||
+            RoomIds.Any() ||
             EquipmentIds.Any();
     }
 }

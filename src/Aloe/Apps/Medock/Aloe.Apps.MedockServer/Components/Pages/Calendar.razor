@@ -70,7 +70,7 @@
     <!-- 検索フィルター（年間表示の場合のみ表示） -->
     @if (CurrentView == CalendarViewType.Year)
     {
-        <SearchFilterPanel 
+        <SearchFilterPanel @ref="filterPanelRef"
             AvailableRooms="@AvailableRooms"
             AvailableEquipments="@AvailableEquipments"
             OnFilterApplied="@HandleFilterApplied"
@@ -123,37 +123,38 @@
     </div>
 
     <!-- 凡例 -->
-    <div class="card bg-base-100 shadow">
-        <div class="card-body p-4">
-            <h3 class="font-bold mb-2">ステータス凡例</h3>
-            <div class="flex flex-wrap gap-4">
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded bg-warning"></span>
-                    <span class="text-sm">予約</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded bg-info"></span>
-                    <span class="text-sm">待機中</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded bg-success"></span>
-                    <span class="text-sm">来院済み</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-4 rounded bg-error"></span>
-                    <span class="text-sm">キャンセル</span>
-                </div>
-                <div class="divider divider-horizontal"></div>
-                <div class="flex items-center gap-2">
-                    <div class="w-8 h-4 rounded-full overflow-hidden flex">
-                        <span class="w-4 h-4 bg-emerald-500"></span>
-                        <span class="w-4 h-4 bg-blue-500"></span>
+    @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
+    {
+        <!-- 年間・月間カレンダー用の凡例 -->
+        <CalendarLegend />
+    }
+    else
+    {
+        <!-- 週間スケジューラー用の凡例 -->
+        <div class="card bg-base-100 shadow">
+            <div class="card-body p-4">
+                <h3 class="font-bold mb-2">ステータス凡例</h3>
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded bg-warning"></span>
+                        <span class="text-sm">予約</span>
                     </div>
-                    <span class="text-sm">AM/PM 予約率</span>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded bg-info"></span>
+                        <span class="text-sm">待機中</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded bg-success"></span>
+                        <span class="text-sm">来院済み</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-4 rounded bg-error"></span>
+                        <span class="text-sm">キャンセル</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    }
 </div>
 
 <!-- 予約モーダル（後で実装） -->
@@ -194,6 +195,7 @@
     private List<SearchFilterPanel.FilterItem> AvailableRooms { get; set; } = new();
     private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
+    private SearchFilterPanel? filterPanelRef;
 
     private enum CalendarViewType
     {
@@ -449,6 +451,8 @@
     {
         SelectedDate = date;
         SelectedDateRange = null;
+        // 検索フィルターの開始日に設定
+        filterPanelRef?.SetStartDate(date);
         // 年間表示ではビュー切り替えなし、選択のみ
     }
 
@@ -469,7 +473,7 @@
     {
         SelectedDate = null;
         SelectedDateRange = range;
-        // 範囲選択状態を保持（検索フィルターなどで利用可能）
+        filterPanelRef?.SetDateRange(range.Start, range.End);
     }
 
     /// <summary>
@@ -546,7 +550,7 @@
                     var isSlotGrayed = false;
 
                     // 特定の時間帯フィルター
-                    if (!string.IsNullOrEmpty(filter.TimeSlot) && slot.Time != filter.TimeSlot)
+                    if (filter.TimeSlots.Any() && !filter.TimeSlots.Contains(slot.Time))
                     {
                         isSlotGrayed = true;
                     }
