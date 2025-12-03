@@ -94,6 +94,25 @@ JWTトークンの内容はOIDCに寄せてください。
 ### 閉域でインターネットに接続できない場合
 WebView2 をWPFアプリなどで配布する想定。
 
+#### Google Fonts のセルフホスト
+閉域環境では Google Fonts (M PLUS 1 Code) をセルフホストする必要がある。
+
+1. [google-webfonts-helper](https://gwfh.mranftl.com/fonts/m-plus-1-code) からフォントファイルをダウンロード
+2. `wwwroot/fonts/` ディレクトリに配置
+3. `App.razor` の Google Fonts CDN リンクを以下に置き換え:
+
+```css
+@font-face {
+  font-family: 'M PLUS 1 Code';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('/fonts/m-plus-1-code-v13-japanese-variable.woff2') format('woff2');
+}
+```
+
+または、LibMan でローカルにフォントを配置する方法も検討可能。
+
 ## サーバー
 
 ### Seed
