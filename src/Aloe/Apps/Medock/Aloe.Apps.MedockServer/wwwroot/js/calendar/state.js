@@ -1,0 +1,85 @@
+/**
+ * Centralized State Management
+ *
+ * カレンダーの状態を管理する単一のstateオブジェクト
+ * 全モジュールから参照・更新される共有状態
+ */
+
+import { CONFIG } from './config.js';
+
+/**
+ * カレンダーの状態オブジェクト
+ */
+let state = {
+    stage: null,                      // Konva Stage インスタンス
+    layers: {},                       // Konva レイヤー { background, grid, content, interaction }
+    dotNetRef: null,                  // .NET オブジェクト参照（コールバック用）
+    containerId: null,                // コンテナ要素のID
+    currentView: 'month',             // 現在のビュー: 'year', 'month', 'week'
+    currentDate: new Date(),          // 現在表示中の日付
+    appointments: [],                 // 予約データの配列
+    dayStats: new Map(),              // 日付文字列 -> { am, pm, amMax, pmMax, slots[], isGrayedOut }
+    holidays: new Map(),              // 日付文字列 -> 祝日名
+    options: {
+        weekDays: 7,                  // 週表示で表示する日数: 1, 3, 7, 14, 31
+        showSlots: true,              // スロット表示モード（true）かアバター表示（false）か
+        startHour: 8,                 // 週表示の開始時刻
+        endHour: 18                   // 週表示の終了時刻
+    },
+    tooltip: null,                    // ツールチップのDOM要素
+    hoveredElement: null,             // 現在ホバー中の要素
+    // インタラクション用の追加状態
+    selectedDate: null,               // 選択中の日付
+    selectedDateRange: null,          // 範囲選択 { start: string, end: string }
+    lastClickTime: 0,                 // ダブルクリック検出用（最後のクリック時刻）
+    lastClickDate: null,              // ダブルクリック検出用（最後にクリックした日付）
+    isDragging: false,                // ドラッグ中フラグ
+    dragStartDate: null,              // ドラッグ開始日
+    resizeObserver: null              // ResizeObserver インスタンス（クリーンアップ用）
+};
+
+/**
+ * 状態オブジェクトを取得
+ * @returns {Object} 現在の状態オブジェクト
+ */
+export function getState() {
+    return state;
+}
+
+/**
+ * 状態を更新
+ * @param {Object} updates - 更新する状態のプロパティ
+ */
+export function setState(updates) {
+    Object.assign(state, updates);
+}
+
+/**
+ * 状態をリセット（クリーンアップ）
+ */
+export function resetState() {
+    // Konva Stageを破棄
+    if (state.stage) {
+        state.stage.destroy();
+    }
+
+    // ResizeObserverを切断
+    if (state.resizeObserver) {
+        state.resizeObserver.disconnect();
+    }
+
+    // 状態をリセット（必要なプロパティのみクリア）
+    state = {
+        ...state,
+        stage: null,
+        layers: {},
+        appointments: [],
+        dayStats: new Map(),
+        holidays: new Map(),
+        resizeObserver: null,
+        selectedDate: null,
+        selectedDateRange: null,
+        isDragging: false,
+        dragStartDate: null
+    };
+}
