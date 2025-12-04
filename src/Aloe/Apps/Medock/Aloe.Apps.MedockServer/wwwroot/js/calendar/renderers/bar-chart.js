@@ -49,7 +49,14 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     // 時間帯枠データを取得
     const stats = state.dayStats.get(dateStr);
     const slots = stats?.slots || null;
-    const isDateGrayed = stats?.isGrayedOut || false;
+
+    // グレーアウト判定: confirmedDateRange がある場合は範囲外をグレーアウト
+    let isDateGrayed = false;
+    if (state.confirmedDateRange) {
+        isDateGrayed = !isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end);
+    } else {
+        isDateGrayed = stats?.isGrayedOut || false;
+    }
 
     // 日付テキスト表示エリア
     const dayTextHeight = CONFIG.font.sizeSmall + 4;
@@ -96,11 +103,28 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     // 棒グラフ描画
     if (slots && slots.length > 0) {
-        // 時間帯枠ベースの表示
-        const slotCount = slots.length;
-        const gapWidth = 1; // 棒の間隔
+        // 業務時間設定を取得
+        const startHour = state.options.startHour || 8;
+        const endHour = state.options.endHour || 18;
+        const totalHours = endHour - startHour;
         const barAreaWidth = cellWidth - 4; // 左右余白2px
-        const barWidth = (barAreaWidth - (slotCount - 1) * gapWidth) / slotCount;
+        const barWidth = 3; // 固定幅
+
+        // AM/PM境界線を描画（12:00の位置）
+        const noonHour = 12;
+        if (startHour < noonHour && endHour > noonHour) {
+            const noonPosition = (noonHour - startHour) / totalHours;
+            const noonX = cellLeft + 2 + noonPosition * barAreaWidth;
+
+            const noonLine = new Konva.Line({
+                points: [noonX, barAreaTop, noonX, barAreaTop + barAreaHeight],
+                stroke: '#9ca3af',
+                strokeWidth: 1,
+                dash: [2, 2], // 点線
+                opacity: 0.5
+            });
+            layers.content.add(noonLine);
+        }
 
         slots.forEach((slot, index) => {
             const ratio = slot.max > 0 ? slot.count / slot.max : 0;
@@ -108,9 +132,22 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(ratio);
             const barHeight = barAreaHeight * ratio;
 
-            const barX = cellLeft + 2 + index * (barWidth + gapWidth);
+            // 時刻を解析（例: "08:00-09:00" → 開始時刻 "08:00" → 8.0）
+            const startTime = slot.time.split('-')[0]; // "08:00-09:00" → "08:00"
+            const timeParts = startTime.split(':');
+            const hour = parseInt(timeParts[0], 10);
+            const minute = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
+            const timeInHours = hour + minute / 60;
+
+            // 業務時間内での相対位置を計算（0.0 ～ 1.0）
+            const relativePosition = Math.max(0, Math.min(1,
+                (timeInHours - startHour) / totalHours));
+
+            // X座標を時刻に応じて配置
+            const barX = cellLeft + 2 + relativePosition * (barAreaWidth - barWidth);
             const barY = barAreaTop + barAreaHeight - barHeight;
 
+            // 通常の棒グラフ
             const bar = new Konva.Rect({
                 x: barX,
                 y: barY,
@@ -121,6 +158,24 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 opacity: isSlotGrayed ? 0.4 : 1
             });
             layers.content.add(bar);
+
+            // フィルター条件の重ね表示（filteredCount > 0 の場合）
+            if (slot.filteredCount > 0) {
+                const filteredRatio = slot.max > 0 ? slot.filteredCount / slot.max : 0;
+                const filteredBarHeight = barAreaHeight * filteredRatio;
+                const filteredBarY = barAreaTop + barAreaHeight - filteredBarHeight;
+
+                const filterBar = new Konva.Rect({
+                    x: barX,
+                    y: filteredBarY,
+                    width: barWidth,
+                    height: filteredBarHeight,
+                    fill: '#fb923c', // オレンジ色
+                    cornerRadius: 1,
+                    opacity: 0.7
+                });
+                layers.content.add(filterBar);
+            }
         });
     } else {
         // フォールバック: AM/PM 2本の棒
@@ -168,16 +223,31 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     hitArea.on('mouseenter', function (e) {
         let tooltipContent = `<strong>${dateStr}</strong><br>`;
+
         if (slots && slots.length > 0) {
             const totalCount = slots.reduce((sum, s) => sum + s.count, 0);
             const totalMax = slots.reduce((sum, s) => sum + s.max, 0);
-            tooltipContent += `予約: ${totalCount}/${totalMax}件<br>`;
-            tooltipContent += `<small>`;
+            tooltipContent += `予約: ${totalCount}/${totalMax}件<br><br>`;
+
+            // 横棒グラフで表示
+            tooltipContent += '<div style="font-size: 11px;">';
             slots.forEach(s => {
-                const emoji = s.count >= s.max ? '🔴' : s.count > 0 ? '🟡' : '🔵';
-                tooltipContent += `${s.time}: ${emoji} ${s.count}/${s.max}<br>`;
+                const ratio = s.max > 0 ? (s.count / s.max) * 100 : 0;
+                const color = ratio >= 100 ? '#ef4444' : ratio >= 70 ? '#f97316' : ratio >= 30 ? '#fbbf24' : '#3b82f6';
+
+                tooltipContent += `
+                    <div style="margin-bottom: 6px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+                            <span>${s.time}</span>
+                            <span>${s.count}/${s.max} (${Math.round(ratio)}%)</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="background: ${color}; height: 100%; width: ${ratio}%; transition: width 0.2s;"></div>
+                        </div>
+                    </div>
+                `;
             });
-            tooltipContent += `</small>`;
+            tooltipContent += '</div>';
         } else {
             const st = state.dayStats.get(dateStr) || { am: 0, pm: 0 };
             tooltipContent += `午前: ${st.am}件<br>午後: ${st.pm}件`;
@@ -193,8 +263,18 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         if (!state.isDragging) {
             const isSelected = state.selectedDate === dateStr ||
                 (state.selectedDateRange && isDateInRange(dateStr, state.selectedDateRange.start, state.selectedDateRange.end));
-            bgRect.stroke(isSelected ? '#3b82f6' : isToday(dateStr) ? CONFIG.colors.today : null);
-            bgRect.strokeWidth(isSelected || isToday(dateStr) ? 2 : 0);
+
+            if (isSelected) {
+                bgRect.stroke('#3b82f6');
+                bgRect.strokeWidth(2);
+            } else if (isToday(dateStr)) {
+                bgRect.stroke(CONFIG.colors.today);
+                bgRect.strokeWidth(2);
+            } else {
+                // 完全に枠線を削除
+                bgRect.stroke(null);
+                bgRect.strokeWidth(0);
+            }
         }
         layers.content.batchDraw();
     });
@@ -211,19 +291,39 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 state.dotNetRef.invokeMethodAsync('OnDateDoubleClicked', dateStr);
             }
         } else if (isShiftClick && state.selectedDate) {
+            const range = { start: state.selectedDate, end: dateStr };
             if (state.dotNetRef) {
-                state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', state.selectedDate, dateStr);
+                state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', range.start, range.end);
             }
-            setState({ selectedDateRange: { start: state.selectedDate, end: dateStr } });
-        } else {
+            // Shift+クリックでも確定した範囲を設定
             setState({
-                lastClickTime: now,
-                lastClickDate: dateStr,
-                selectedDate: dateStr,
-                selectedDateRange: null
+                selectedDateRange: range,
+                confirmedDateRange: range
             });
-            if (state.dotNetRef) {
-                state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
+        } else {
+            // 同じ日付をクリックした場合は選択解除
+            if (state.selectedDate === dateStr) {
+                setState({
+                    lastClickTime: 0,
+                    lastClickDate: null,
+                    selectedDate: null,
+                    selectedDateRange: null,
+                    confirmedDateRange: null
+                });
+                if (state.dotNetRef) {
+                    state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', null);
+                }
+            } else {
+                setState({
+                    lastClickTime: now,
+                    lastClickDate: dateStr,
+                    selectedDate: dateStr,
+                    selectedDateRange: null,
+                    confirmedDateRange: null
+                });
+                if (state.dotNetRef) {
+                    state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
+                }
             }
         }
     });

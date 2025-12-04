@@ -250,12 +250,13 @@
                     pm = kvp.Value.PmCount,
                     amMax = kvp.Value.AmMax,
                     pmMax = kvp.Value.PmMax,
-                    slots = kvp.Value.Slots?.Select(s => new 
-                    { 
-                        time = s.Time, 
-                        count = s.Count, 
+                    slots = kvp.Value.Slots?.Select(s => new
+                    {
+                        time = s.Time,
+                        count = s.Count,
                         max = s.Max,
-                        isGrayedOut = s.IsGrayedOut
+                        isGrayedOut = s.IsGrayedOut,
+                        filteredCount = s.FilteredCount
                     }).ToArray(),
                     isGrayedOut = kvp.Value.IsGrayedOut
                 })
@@ -422,6 +423,11 @@
         public int Count { get; set; }
         public int Max { get; set; }
         public bool IsGrayedOut { get; set; }
+
+        /// <summary>
+        /// 検索条件に合致する予約数（部屋・施設条件フィルター用）
+        /// </summary>
+        public int FilteredCount { get; set; }
     }
 }
 

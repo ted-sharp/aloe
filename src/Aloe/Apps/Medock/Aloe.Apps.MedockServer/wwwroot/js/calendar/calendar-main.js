@@ -67,7 +67,7 @@ function init(containerId, data, options, dotNetRef) {
         const state = getState();
         if (state.isDragging && state.selectedDateRange) {
             const range = state.selectedDateRange;
-            // 範囲が有効な場合のみコールバック
+            // 範囲が有効な場合のみコールバックと confirmedDateRange を設定
             if (range.start !== range.end && state.dotNetRef) {
                 // 日付の順序を正規化
                 const start = parseDate(range.start);
@@ -76,6 +76,11 @@ function init(containerId, data, options, dotNetRef) {
                     ? { start: range.start, end: range.end }
                     : { start: range.end, end: range.start };
                 state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', normalizedRange.start, normalizedRange.end);
+                // 確定した範囲を設定（グレーアウト判定に使用）
+                setState({ confirmedDateRange: normalizedRange });
+            } else {
+                // 範囲が無効な場合は confirmedDateRange をクリア
+                setState({ confirmedDateRange: null });
             }
         }
         setState({ isDragging: false, dragStartDate: null });

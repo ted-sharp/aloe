@@ -31,6 +31,7 @@ let state = {
     // インタラクション用の追加状態
     selectedDate: null,               // 選択中の日付
     selectedDateRange: null,          // 範囲選択 { start: string, end: string }
+    confirmedDateRange: null,         // 確定した範囲選択 { start: string, end: string } - グレーアウト判定に使用
     lastClickTime: 0,                 // ダブルクリック検出用（最後のクリック時刻）
     lastClickDate: null,              // ダブルクリック検出用（最後にクリックした日付）
     isDragging: false,                // ドラッグ中フラグ
@@ -79,6 +80,7 @@ export function resetState() {
         resizeObserver: null,
         selectedDate: null,
         selectedDateRange: null,
+        confirmedDateRange: null,
         isDragging: false,
         dragStartDate: null
     };
