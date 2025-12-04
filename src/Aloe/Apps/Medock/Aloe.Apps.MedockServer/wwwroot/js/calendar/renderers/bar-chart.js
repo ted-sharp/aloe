@@ -227,7 +227,15 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         if (slots && slots.length > 0) {
             const totalCount = slots.reduce((sum, s) => sum + s.count, 0);
             const totalMax = slots.reduce((sum, s) => sum + s.max, 0);
-            tooltipContent += `予約: ${totalCount}/${totalMax}件<br><br>`;
+            tooltipContent += `予約: ${totalCount}/${totalMax}件<br>`;
+
+            // Show room filter summary
+            const hasRoomFilter = slots.some(s => s.filteredCount > 0);
+            if (hasRoomFilter) {
+                const totalFiltered = slots.reduce((sum, s) => sum + (s.filteredCount || 0), 0);
+                tooltipContent += `<span style="color: #fb923c;">選択部屋: ${totalFiltered}件</span><br>`;
+            }
+            tooltipContent += '<br>';
 
             // 横棒グラフで表示
             tooltipContent += '<div style="font-size: 11px;">';
@@ -235,11 +243,17 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 const ratio = s.max > 0 ? (s.count / s.max) * 100 : 0;
                 const color = ratio >= 100 ? '#ef4444' : ratio >= 70 ? '#f97316' : ratio >= 30 ? '#fbbf24' : '#3b82f6';
 
+                // Show room-filtered count in each slot
+                let roomInfo = '';
+                if (s.filteredCount > 0) {
+                    roomInfo = ` <span style="color: #fb923c;">[部屋:${s.filteredCount}]</span>`;
+                }
+
                 tooltipContent += `
                     <div style="margin-bottom: 6px;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
                             <span>${s.time}</span>
-                            <span>${s.count}/${s.max} (${Math.round(ratio)}%)</span>
+                            <span>${s.count}/${s.max} (${Math.round(ratio)}%)${roomInfo}</span>
                         </div>
                         <div style="background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; overflow: hidden;">
                             <div style="background: ${color}; height: 100%; width: ${ratio}%; transition: width 0.2s;"></div>

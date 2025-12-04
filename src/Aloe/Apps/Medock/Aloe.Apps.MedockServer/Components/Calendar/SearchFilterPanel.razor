@@ -45,20 +45,6 @@
         {
             <div class="divider my-2"></div>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 期間 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">期間</span>
-                    </label>
-                    <div class="flex gap-2 items-center">
-                        <input type="date" class="input input-bordered input-sm flex-1" 
-                               @bind="StartDate" @bind:event="oninput" @onchange="OnFilterChanged" />
-                        <span class="text-base-content/60">〜</span>
-                        <input type="date" class="input input-bordered input-sm flex-1" 
-                               @bind="EndDate" @bind:event="oninput" @onchange="OnFilterChanged" />
-                    </div>
-                </div>
-
                 <!-- 曜日 -->
                 <div class="form-control">
                     <label class="label">
@@ -166,57 +152,6 @@
                         </div>
                     }
                 </div>
-
-                <!-- 設備 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">設備</span>
-                    </label>
-                    <div class="dropdown w-full">
-                        <div tabindex="0" role="button" class="btn btn-sm btn-outline w-full justify-between">
-                            @if (SelectedEquipments.Any())
-                            {
-                                <span>@SelectedEquipments.Count 件選択中</span>
-                            }
-                            else
-                            {
-                                <span class="text-base-content/50">選択...</span>
-                            }
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </div>
-                        <ul tabindex="0" class="dropdown-content z-50 menu p-2 shadow bg-base-100 rounded-box w-full max-h-48 overflow-y-auto">
-                            @foreach (var equipment in AvailableEquipments)
-                            {
-                                <li>
-                                    <label class="flex gap-2">
-                                        <input type="checkbox" class="checkbox checkbox-xs checkbox-primary"
-                                               checked="@SelectedEquipments.Contains(equipment.Id)"
-                                               @onchange="() => ToggleEquipment(equipment.Id)" />
-                                        <span>@equipment.Name</span>
-                                    </label>
-                                </li>
-                            }
-                        </ul>
-                    </div>
-                    @if (SelectedEquipments.Any())
-                    {
-                        <div class="flex flex-wrap gap-1 mt-1">
-                            @foreach (var equipId in SelectedEquipments)
-                            {
-                                var equip = AvailableEquipments.FirstOrDefault(e => e.Id == equipId);
-                                if (equip != null)
-                                {
-                                    <span class="badge badge-secondary badge-sm gap-1">
-                                        @equip.Name
-                                        <button class="btn btn-ghost btn-xs p-0" @onclick="() => ToggleEquipment(equipId)">×</button>
-                                    </span>
-                                }
-                            }
-                        </div>
-                    }
-                </div>
             </div>
 
             <!-- アクションボタン -->
@@ -243,12 +178,6 @@
     public List<FilterItem> AvailableRooms { get; set; } = new();
 
     /// <summary>
-    /// 利用可能な設備のリスト
-    /// </summary>
-    [Parameter]
-    public List<FilterItem> AvailableEquipments { get; set; } = new();
-
-    /// <summary>
     /// フィルター変更時のコールバック
     /// </summary>
     [Parameter]
@@ -264,37 +193,26 @@
     private bool IsExpanded { get; set; } = false;
 
     // フィルター値
-    private DateOnly? StartDate { get; set; }
-    private DateOnly? EndDate { get; set; }
     private HashSet<int> SelectedDays { get; set; } = new(); // デフォルト全オフ
     private HashSet<string> SelectedTimeSlots { get; set; } = new(); // 時間帯複数選択
     private int RequiredCapacity { get; set; } = 1;
     private HashSet<Guid> SelectedRooms { get; set; } = new();
-    private HashSet<Guid> SelectedEquipments { get; set; } = new();
 
     // 定数
     private readonly string[] DayNames = { "日", "月", "火", "水", "木", "金", "土" };
     private readonly string[] TimeSlots = { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
 
     private int ActiveFilterCount =>
-        (StartDate.HasValue || EndDate.HasValue ? 1 : 0) +
         (SelectedDays.Any() ? 1 : 0) +
         (SelectedTimeSlots.Any() ? 1 : 0) +
         (RequiredCapacity > 1 ? 1 : 0) +
-        (SelectedRooms.Any() ? 1 : 0) +
-        (SelectedEquipments.Any() ? 1 : 0);
+        (SelectedRooms.Any() ? 1 : 0);
 
     private List<string> ActiveFilters
     {
         get
         {
             var filters = new List<string>();
-            if (StartDate.HasValue || EndDate.HasValue)
-            {
-                var startStr = StartDate?.ToString("M/d") ?? "";
-                var endStr = EndDate?.ToString("M/d") ?? "";
-                filters.Add($"期間: {startStr}〜{endStr}");
-            }
             if (SelectedDays.Any())
             {
                 var days = string.Join("", SelectedDays.OrderBy(d => d).Select(d => DayNames[d]));
@@ -312,10 +230,6 @@
             if (SelectedRooms.Any())
             {
                 filters.Add($"部屋: {SelectedRooms.Count}件");
-            }
-            if (SelectedEquipments.Any())
-            {
-                filters.Add($"設備: {SelectedEquipments.Count}件");
             }
             return filters;
         }
@@ -352,19 +266,6 @@
         OnFilterChanged();
     }
 
-    private void ToggleEquipment(Guid equipId)
-    {
-        if (SelectedEquipments.Contains(equipId))
-        {
-            SelectedEquipments.Remove(equipId);
-        }
-        else
-        {
-            SelectedEquipments.Add(equipId);
-        }
-        OnFilterChanged();
-    }
-
     private void ToggleTimeSlot(string timeSlot)
     {
         if (SelectedTimeSlots.Contains(timeSlot))
@@ -381,12 +282,7 @@
     private void RemoveFilter(string filterText)
     {
         // フィルターテキストに基づいてリセット
-        if (filterText.StartsWith("期間"))
-        {
-            StartDate = null;
-            EndDate = null;
-        }
-        else if (filterText.StartsWith("曜日"))
+        if (filterText.StartsWith("曜日"))
         {
             SelectedDays = new();
         }
@@ -402,22 +298,15 @@
         {
             SelectedRooms.Clear();
         }
-        else if (filterText.StartsWith("設備"))
-        {
-            SelectedEquipments.Clear();
-        }
         OnFilterChanged();
     }
 
     private void ClearFilters()
     {
-        StartDate = null;
-        EndDate = null;
         SelectedDays = new();
         SelectedTimeSlots.Clear();
         RequiredCapacity = 1;
         SelectedRooms.Clear();
-        SelectedEquipments.Clear();
         OnFilterChanged();
     }
 
@@ -438,45 +327,11 @@
     {
         return new SearchFilter
         {
-            StartDate = StartDate,
-            EndDate = EndDate,
             SelectedDays = SelectedDays.ToList(),
             TimeSlots = SelectedTimeSlots.ToList(),
             RequiredCapacity = RequiredCapacity,
-            RoomIds = SelectedRooms.ToList(),
-            EquipmentIds = SelectedEquipments.ToList()
+            RoomIds = SelectedRooms.ToList()
         };
-    }
-
-    /// <summary>
-    /// 外部から開始日を設定（シングルクリック時）
-    /// </summary>
-    public void SetStartDate(DateOnly date)
-    {
-        StartDate = date;
-        StateHasChanged();
-        OnFilterChanged();
-    }
-
-    /// <summary>
-    /// 外部から終了日を設定（Shift+クリック時）
-    /// </summary>
-    public void SetEndDate(DateOnly date)
-    {
-        EndDate = date;
-        StateHasChanged();
-        OnFilterChanged();
-    }
-
-    /// <summary>
-    /// 外部から期間を設定（範囲選択時）
-    /// </summary>
-    public void SetDateRange(DateOnly start, DateOnly end)
-    {
-        StartDate = start;
-        EndDate = end;
-        StateHasChanged();
-        OnFilterChanged();
     }
 
     /// <summary>
@@ -493,25 +348,19 @@
     /// </summary>
     public class SearchFilter
     {
-        public DateOnly? StartDate { get; set; }
-        public DateOnly? EndDate { get; set; }
         public List<int> SelectedDays { get; set; } = new();
         public List<string> TimeSlots { get; set; } = new();
         public int RequiredCapacity { get; set; } = 1;
         public List<Guid> RoomIds { get; set; } = new();
-        public List<Guid> EquipmentIds { get; set; } = new();
-        
+
         /// <summary>
         /// フィルターが有効かどうか
         /// </summary>
         public bool IsActive =>
-            StartDate.HasValue ||
-            EndDate.HasValue ||
             SelectedDays.Any() ||
             TimeSlots.Any() ||
             RequiredCapacity > 1 ||
-            RoomIds.Any() ||
-            EquipmentIds.Any();
+            RoomIds.Any();
     }
 }
 

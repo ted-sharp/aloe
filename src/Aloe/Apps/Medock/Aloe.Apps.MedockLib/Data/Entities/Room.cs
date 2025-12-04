@@ -34,6 +34,7 @@ public class Room : IAuditableEntity
     // Navigation Properties
     public virtual Floor Floor { get; set; } = null!;
     public virtual ICollection<RoomSlot> RoomSlots { get; set; } = new List<RoomSlot>();
+    public virtual ICollection<RoomAppointmentStats> RoomAppointmentStats { get; set; } = new List<RoomAppointmentStats>();
 }
 
 

@@ -209,36 +209,72 @@ try
         Console.WriteLine("[SKIP] Rooms already exist.");
     }
 
-    // 6. 設備データ作成
-    var existingEquipments = await context.Equipments.AnyAsync();
-    if (!existingEquipments && floorId.HasValue)
+    // 6. 部屋予約統計データ生成
+    var existingRoomStats = await context.RoomAppointmentStats.AnyAsync();
+    if (!existingRoomStats)
     {
-        Console.WriteLine("[INFO] Creating equipment seed data...");
-        var equipments = new List<Equipment>
+        Console.WriteLine("[INFO] Creating room appointment stats seed data...");
+        var rooms = await context.Rooms.Where(r => !r.IsDeleted).ToListAsync();
+        if (rooms.Any())
         {
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "CT装置", EquipDesc = "64列マルチスライスCT", EquipSeq = 1 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "MRI装置", EquipDesc = "1.5テスラMRI", EquipSeq = 2 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "胃カメラ", EquipDesc = "経鼻内視鏡", EquipSeq = 3 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "大腸カメラ", EquipDesc = "大腸内視鏡", EquipSeq = 4 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "超音波装置1", EquipDesc = "腹部エコー用", EquipSeq = 5 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "超音波装置2", EquipDesc = "心臓エコー用", EquipSeq = 6 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "心電計", EquipDesc = "12誘導心電図", EquipSeq = 7 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "肺機能検査装置", EquipDesc = "スパイロメーター", EquipSeq = 8 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "眼底カメラ", EquipDesc = "無散瞳眼底カメラ", EquipSeq = 9 },
-            new() { EquipId = Guid.NewGuid(), FloorId = floorId.Value, EquipName = "聴力検査装置", EquipDesc = "オージオメーター", EquipSeq = 10 },
-        };
-        foreach (var equipment in equipments)
-        {
-            equipment.IsDeleted = false;
-            equipment.CreatedAt = DateTimeOffset.UtcNow;
-            equipment.UpdatedAt = DateTimeOffset.UtcNow;
+            var random = new Random(42); // 固定シードで再現性のあるデータ
+            var startDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
+            var endDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(2));
+            var roomStats = new List<RoomAppointmentStats>();
+
+            foreach (var room in rooms)
+            {
+                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                {
+                    // Skip weekends
+                    if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                        continue;
+
+                    // 時間帯枠ごとのデータを生成
+                    var slots = new List<object>();
+                    var totalCount = 0;
+                    var totalMax = 0;
+
+                    var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
+                    var slotMaxes = new[] { 2, 3, 3, 3, 3, 3, 3, 2 }; // 部屋ごとの最大数は少なめ
+
+                    for (var i = 0; i < slotTimes.Length; i++)
+                    {
+                        var max = slotMaxes[i];
+                        var count = random.Next(0, max + 1);
+                        slots.Add(new { time = slotTimes[i], count, max });
+                        totalCount += count;
+                        totalMax += max;
+                    }
+
+                    var graphJson = System.Text.Json.JsonSerializer.Serialize(new { slots });
+
+                    roomStats.Add(new RoomAppointmentStats
+                    {
+                        ApptStatId = Guid.NewGuid(),
+                        RoomId = room.RoomId,
+                        ApptDate = date,
+                        ApptCount = totalCount,
+                        ApptMax = totalMax,
+                        ApptGraph = graphJson,
+                        IsDeleted = false,
+                        CreatedAt = DateTimeOffset.UtcNow,
+                        UpdatedAt = DateTimeOffset.UtcNow
+                    });
+                }
+            }
+
+            context.RoomAppointmentStats.AddRange(roomStats);
+            Console.WriteLine($"  [+] Room Appointment Stats: {roomStats.Count} entries ({rooms.Count} rooms × ~90 days)");
         }
-        context.Equipments.AddRange(equipments);
-        Console.WriteLine($"  [+] Equipments: {equipments.Count} entries");
+        else
+        {
+            Console.WriteLine("[WARN] No rooms found. Skipping room appointment stats seed.");
+        }
     }
-    else if (existingEquipments)
+    else
     {
-        Console.WriteLine("[SKIP] Equipments already exist.");
+        Console.WriteLine("[SKIP] Room appointment stats already exist.");
     }
 
     // 7. 予約スロット定義作成

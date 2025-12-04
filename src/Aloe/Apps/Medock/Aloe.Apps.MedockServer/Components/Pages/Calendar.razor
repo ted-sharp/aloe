@@ -72,7 +72,6 @@
     {
         <SearchFilterPanel @ref="filterPanelRef"
             AvailableRooms="@AvailableRooms"
-            AvailableEquipments="@AvailableEquipments"
             OnFilterApplied="@HandleFilterApplied"
             OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
     }
@@ -193,7 +192,6 @@
 
     // フィルター用データ
     private List<SearchFilterPanel.FilterItem> AvailableRooms { get; set; } = new();
-    private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
     private SearchFilterPanel? filterPanelRef;
 
@@ -231,21 +229,6 @@
             new() { Id = Guid.NewGuid(), Name = "CT室" },
             new() { Id = Guid.NewGuid(), Name = "MRI室" },
             new() { Id = Guid.NewGuid(), Name = "内視鏡室" },
-        };
-
-        // 設備のサンプルデータ
-        AvailableEquipments = new List<SearchFilterPanel.FilterItem>
-        {
-            new() { Id = Guid.NewGuid(), Name = "CT装置" },
-            new() { Id = Guid.NewGuid(), Name = "MRI装置" },
-            new() { Id = Guid.NewGuid(), Name = "胃カメラ" },
-            new() { Id = Guid.NewGuid(), Name = "大腸カメラ" },
-            new() { Id = Guid.NewGuid(), Name = "超音波装置1" },
-            new() { Id = Guid.NewGuid(), Name = "超音波装置2" },
-            new() { Id = Guid.NewGuid(), Name = "心電計" },
-            new() { Id = Guid.NewGuid(), Name = "肺機能検査装置" },
-            new() { Id = Guid.NewGuid(), Name = "眼底カメラ" },
-            new() { Id = Guid.NewGuid(), Name = "聴力検査装置" },
         };
     }
     
@@ -451,8 +434,6 @@
     {
         SelectedDate = date;
         SelectedDateRange = null;
-        // 検索フィルターの開始日に設定
-        filterPanelRef?.SetStartDate(date);
         // 年間表示ではビュー切り替えなし、選択のみ
     }
 
@@ -473,7 +454,6 @@
     {
         SelectedDate = null;
         SelectedDateRange = range;
-        filterPanelRef?.SetDateRange(range.Start, range.End);
     }
 
     /// <summary>
@@ -514,6 +494,7 @@
                         foreach (var slot in stats.Slots)
                         {
                             slot.IsGrayedOut = false;
+                            slot.FilteredCount = 0;
                         }
                     }
                 }
@@ -529,12 +510,6 @@
             
             // 日付レベルのグレーアウト判定
             var isDateGrayed = false;
-
-            // 期間フィルター
-            if (filter.StartDate.HasValue && date < filter.StartDate.Value)
-                isDateGrayed = true;
-            if (filter.EndDate.HasValue && date > filter.EndDate.Value)
-                isDateGrayed = true;
 
             // 曜日フィルター
             var dayOfWeek = (int)date.DayOfWeek;
@@ -562,8 +537,19 @@
                         isSlotGrayed = true;
                     }
 
+                    // 部屋フィルター適用
+                    if (filter.RoomIds.Any())
+                    {
+                        var roomFilteredCount = CalculateRoomFilteredCount(date, slot.Time, filter.RoomIds);
+                        slot.FilteredCount = roomFilteredCount;
+                    }
+                    else
+                    {
+                        slot.FilteredCount = 0;
+                    }
+
                     slot.IsGrayedOut = isSlotGrayed || isDateGrayed;
-                    
+
                     if (!slot.IsGrayedOut)
                         hasAvailableSlot = true;
                 }
@@ -664,5 +650,23 @@
             // TODO: エラーハンドリング（トースト通知など）
             Console.WriteLine($"予約移動エラー: {ex.Message}");
         }
+    }
+
+    /// <summary>
+    /// 部屋フィルター適用時の予約数を計算
+    /// TODO: 実際のroom_appointment_statsテーブルから取得する実装に置き換え
+    /// </summary>
+    private int CalculateRoomFilteredCount(DateOnly date, string timeSlot, List<Guid> roomIds)
+    {
+        // Mock implementation: Return random count for demonstration
+        // XORを使ってオーバーフローを回避
+        var roomHash = 0;
+        foreach (var roomId in roomIds)
+        {
+            roomHash ^= roomId.GetHashCode();
+        }
+        var seed = date.DayNumber ^ timeSlot.GetHashCode() ^ roomHash;
+        var random = new Random(seed);
+        return random.Next(0, 3);  // 0-2件のランダム
     }
 }
