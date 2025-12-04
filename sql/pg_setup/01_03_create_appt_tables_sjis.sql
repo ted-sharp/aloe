@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/02 18:36:39
+-- Date/Time    : 2025/12/04 22:42:21
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -11,6 +11,75 @@
   この機能は一時的に $$TableName のような一時テーブルを作成します。
   この機能は A5:SQL Mk-2でのみ有効であることに注意してください。
 */
+
+-- room_appointment_stats
+-- * BackupToTempTable
+DROP TABLE if exists "room_appointment_stats" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "room_appointment_stats" (
+  "appt_stat_id" UUID NOT NULL
+  , "room_id" UUID NOT NULL
+  , "appt_date" date NOT NULL
+  , "appt_count" integer DEFAULT 0 NOT NULL
+  , "appt_max" integer DEFAULT 0 NOT NULL
+  , "appt_graph" JSONB DEFAULT '{}' NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "room_appointment_stats_IX1"
+  ON "room_appointment_stats"("room_id","appt_date") WHERE is_deleted = FALSE;
+
+CREATE UNIQUE INDEX "room_appointment_stats_PKI"
+  ON "room_appointment_stats"("appt_stat_id");
+
+ALTER TABLE "room_appointment_stats"
+  ADD CONSTRAINT "room_appointment_stats_PKC" PRIMARY KEY ("appt_stat_id");
+
+-- room_appointments
+-- * BackupToTempTable
+DROP TABLE if exists "room_appointments" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "room_appointments" (
+  "room_appt_id" UUID NOT NULL
+  , "room_id" UUID NOT NULL
+  , "org_id" UUID NOT NULL
+  , "pt_id" UUID NOT NULL
+  , "appt_date" date
+  , "appt_start_at" timestamp
+  , "appt_end_at" timestamp
+  , "appt_status_code" integer DEFAULT 0 NOT NULL
+  , "appt_memo" character varying(1000) DEFAULT `` NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "room_appointments_IX1"
+  ON "room_appointments"("appt_date");
+
+CREATE INDEX "room_appointments_IX2"
+  ON "room_appointments"("org_id");
+
+CREATE INDEX "room_appointments_IX3"
+  ON "room_appointments"("pt_id");
+
+CREATE UNIQUE INDEX "room_appointments_PKI"
+  ON "room_appointments"("room_appt_id");
+
+ALTER TABLE "room_appointments"
+  ADD CONSTRAINT "room_appointments_PKC" PRIMARY KEY ("room_appt_id");
 
 -- appointment_stats
 -- * BackupToTempTable
@@ -33,44 +102,14 @@ CREATE TABLE "appointment_stats" (
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
 
-CREATE INDEX "appointment_stats_IX1"
-  ON "appointment_stats"("floor_id","appt_date");
+CREATE UNIQUE INDEX "appointment_stats_IX1"
+  ON "appointment_stats"("floor_id","appt_date") WHERE is_deleted = FALSE;
 
 CREATE UNIQUE INDEX "appointment_stats_PKI"
   ON "appointment_stats"("appt_stat_id");
 
 ALTER TABLE "appointment_stats"
   ADD CONSTRAINT "appointment_stats_PKC" PRIMARY KEY ("appt_stat_id");
-
--- equipment_slots
--- * BackupToTempTable
-DROP TABLE if exists "equipment_slots" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "equipment_slots" (
-  "equip_slot_id" UUID NOT NULL
-  , "equip_id" UUID NOT NULL
-  , "equip_slots" JSONB DEFAULT '{}' NOT NULL
-  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
-  , "active_from" date DEFAULT CURRENT_DATE NOT NULL
-  , "active_to" date DEFAULT '9999-12-31' NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "equipment_slots_IX1"
-  ON "equipment_slots"("equip_id");
-
-CREATE UNIQUE INDEX "equipment_slots_PKI"
-  ON "equipment_slots"("equip_slot_id");
-
-ALTER TABLE "equipment_slots"
-  ADD CONSTRAINT "equipment_slots_PKC" PRIMARY KEY ("equip_slot_id");
 
 -- room_slots
 -- * BackupToTempTable
@@ -557,6 +596,7 @@ CREATE TABLE "appointments" (
   , "appt_start_at" timestamp
   , "appt_end_at" timestamp
   , "appt_status_code" integer DEFAULT 0 NOT NULL
+  , "appt_memo" character varying(1000) DEFAULT `` NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -618,9 +658,9 @@ DROP TABLE if exists "floors" CASCADE;
 CREATE TABLE "floors" (
   "floor_id" UUID NOT NULL
   , "facility_id" UUID NOT NULL
-  , "floor_code" TEXT DEFAULT '' NOT NULL
-  , "floor_name" TEXT DEFAULT '' NOT NULL
-  , "floor_desc" TEXT DEFAULT '' NOT NULL
+  , "floor_code" character varying(10) DEFAULT '' NOT NULL
+  , "floor_name" character varying(100) DEFAULT '' NOT NULL
+  , "floor_desc" character varying(1000) DEFAULT '' NOT NULL
   , "floor_seq" integer DEFAULT 0 NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -633,9 +673,6 @@ CREATE TABLE "floors" (
 
 CREATE UNIQUE INDEX "floors_IX1"
   ON "floors"("facility_id","floor_code") WHERE is_deleted = FALSE;
-
-CREATE INDEX "floors_IX2"
-  ON "floors"("floor_code");
 
 CREATE UNIQUE INDEX "floors_PKI"
   ON "floors"("floor_id");
@@ -1094,10 +1131,10 @@ CREATE TABLE "patients" (
 ) ;
 
 CREATE UNIQUE INDEX "patients_IX1"
-  ON "patients"("pt_code") WHERE is_deleted = FALSE;
+  ON "patients"("facility_id","pt_code") WHERE is_deleted = FALSE;
 
 CREATE UNIQUE INDEX "patients_IX2"
-  ON "patients"("karte_code") WHERE is_deleted = FALSE;
+  ON "patients"("facility_id","karte_code") WHERE is_deleted = FALSE;
 
 CREATE INDEX "patients_IX3"
   ON "patients"("canonical_pt_id");
@@ -1144,7 +1181,7 @@ CREATE TABLE "organizations" (
 ) ;
 
 CREATE UNIQUE INDEX "organizations_IX1"
-  ON "organizations"("org_code") WHERE is_deleted = FALSE;
+  ON "organizations"("facility_id","org_code") WHERE is_deleted = FALSE;
 
 CREATE INDEX "organizations_IX2"
   ON "organizations"("tenant_id","facility_id");
@@ -1158,34 +1195,25 @@ CREATE UNIQUE INDEX "organizations_PKI"
 ALTER TABLE "organizations"
   ADD CONSTRAINT "organizations_PKC" PRIMARY KEY ("org_id");
 
--- equipments
--- * BackupToTempTable
-DROP TABLE if exists "equipments" CASCADE;
+ALTER TABLE "room_appointments"
+  ADD CONSTRAINT "room_appointments_FK1" FOREIGN KEY ("pt_id") REFERENCES "patients"("pt_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
 
--- * RestoreFromTempTable
-CREATE TABLE "equipments" (
-  "equip_id" UUID NOT NULL
-  , "floor_id" UUID NOT NULL
-  , "equip_name" TEXT DEFAULT '' NOT NULL
-  , "equip_desc" TEXT DEFAULT '' NOT NULL
-  , "equip_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
+ALTER TABLE "room_appointments"
+  ADD CONSTRAINT "room_appointments_FK2" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
 
-CREATE INDEX "equipments_IX1"
-  ON "equipments"("floor_id");
+ALTER TABLE "room_appointment_stats"
+  ADD CONSTRAINT "room_appointment_stats_FK1" FOREIGN KEY ("room_id") REFERENCES "rooms"("room_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
 
-CREATE UNIQUE INDEX "equipments_PKI"
-  ON "equipments"("equip_id");
-
-ALTER TABLE "equipments"
-  ADD CONSTRAINT "equipments_PKC" PRIMARY KEY ("equip_id");
+ALTER TABLE "room_appointments"
+  ADD CONSTRAINT "room_appointments_FK3" FOREIGN KEY ("room_id") REFERENCES "rooms"("room_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
 
 ALTER TABLE "appointment_stats"
   ADD CONSTRAINT "appointment_stats_FK1" FOREIGN KEY ("floor_id") REFERENCES "floors"("floor_id")
@@ -1207,18 +1235,8 @@ ALTER TABLE "appointments"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "equipment_slots"
-  ADD CONSTRAINT "equipment_slots_FK1" FOREIGN KEY ("equip_id") REFERENCES "equipments"("equip_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
 ALTER TABLE "room_slots"
   ADD CONSTRAINT "room_slots_FK1" FOREIGN KEY ("room_id") REFERENCES "rooms"("room_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "equipments"
-  ADD CONSTRAINT "equipments_FK1" FOREIGN KEY ("floor_id") REFERENCES "floors"("floor_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1357,6 +1375,39 @@ ALTER TABLE "tenant_users"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+COMMENT ON TABLE "room_appointment_stats" IS 'room_appointment_stats';
+COMMENT ON COLUMN "room_appointment_stats"."appt_stat_id" IS 'room_appt_stat_id';
+COMMENT ON COLUMN "room_appointment_stats"."room_id" IS 'room_id';
+COMMENT ON COLUMN "room_appointment_stats"."appt_date" IS 'appt_date';
+COMMENT ON COLUMN "room_appointment_stats"."appt_count" IS 'appt_count';
+COMMENT ON COLUMN "room_appointment_stats"."appt_max" IS 'appt_max';
+COMMENT ON COLUMN "room_appointment_stats"."appt_graph" IS 'appt_graph';
+COMMENT ON COLUMN "room_appointment_stats"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "room_appointment_stats"."created_at" IS 'created_at';
+COMMENT ON COLUMN "room_appointment_stats"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "room_appointment_stats"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "room_appointment_stats"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "room_appointment_stats"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "room_appointment_stats"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "room_appointments" IS 'room_appointments';
+COMMENT ON COLUMN "room_appointments"."room_appt_id" IS 'room_appt_id';
+COMMENT ON COLUMN "room_appointments"."room_id" IS 'room_id';
+COMMENT ON COLUMN "room_appointments"."org_id" IS 'org_id';
+COMMENT ON COLUMN "room_appointments"."pt_id" IS 'pt_id';
+COMMENT ON COLUMN "room_appointments"."appt_date" IS 'appt_date:未定がある';
+COMMENT ON COLUMN "room_appointments"."appt_start_at" IS 'appt_start_at:時間未定がある';
+COMMENT ON COLUMN "room_appointments"."appt_end_at" IS 'appt_end_at:時間未定がある';
+COMMENT ON COLUMN "room_appointments"."appt_status_code" IS 'appt_status_code:仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル';
+COMMENT ON COLUMN "room_appointments"."appt_memo" IS 'appt_memo';
+COMMENT ON COLUMN "room_appointments"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "room_appointments"."created_at" IS 'created_at';
+COMMENT ON COLUMN "room_appointments"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "room_appointments"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "room_appointments"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "room_appointments"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "room_appointments"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "appointment_stats" IS 'appointment_stats';
 COMMENT ON COLUMN "appointment_stats"."appt_stat_id" IS 'appt_stat_id';
 COMMENT ON COLUMN "appointment_stats"."floor_id" IS 'floor_id';
@@ -1371,21 +1422,6 @@ COMMENT ON COLUMN "appointment_stats"."created_session_id" IS 'created_session_i
 COMMENT ON COLUMN "appointment_stats"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointment_stats"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_stats"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "equipment_slots" IS 'equipment_slots';
-COMMENT ON COLUMN "equipment_slots"."equip_slot_id" IS 'equip_slot_id';
-COMMENT ON COLUMN "equipment_slots"."equip_id" IS 'equip_id';
-COMMENT ON COLUMN "equipment_slots"."equip_slots" IS 'equip_slots';
-COMMENT ON COLUMN "equipment_slots"."is_active" IS 'is_active';
-COMMENT ON COLUMN "equipment_slots"."active_from" IS 'active_from:期限内の古い方から順に適用していく';
-COMMENT ON COLUMN "equipment_slots"."active_to" IS 'active_to:排他';
-COMMENT ON COLUMN "equipment_slots"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "equipment_slots"."created_at" IS 'created_at';
-COMMENT ON COLUMN "equipment_slots"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "equipment_slots"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "equipment_slots"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "equipment_slots"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "equipment_slots"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "room_slots" IS 'room_slots';
 COMMENT ON COLUMN "room_slots"."room_slot_id" IS 'room_slot_id';
@@ -1639,6 +1675,7 @@ COMMENT ON COLUMN "appointments"."appt_date" IS 'appt_date:未定がある';
 COMMENT ON COLUMN "appointments"."appt_start_at" IS 'appt_start_at:時間未定がある';
 COMMENT ON COLUMN "appointments"."appt_end_at" IS 'appt_end_at:時間未定がある';
 COMMENT ON COLUMN "appointments"."appt_status_code" IS 'appt_status_code:仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル';
+COMMENT ON COLUMN "appointments"."appt_memo" IS 'appt_memo';
 COMMENT ON COLUMN "appointments"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointments"."created_at" IS 'created_at';
 COMMENT ON COLUMN "appointments"."created_user_id" IS 'created_user_id';
@@ -1929,18 +1966,4 @@ COMMENT ON COLUMN "organizations"."created_session_id" IS 'created_session_id';
 COMMENT ON COLUMN "organizations"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "organizations"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "organizations"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "equipments" IS 'equipments';
-COMMENT ON COLUMN "equipments"."equip_id" IS 'equip_id';
-COMMENT ON COLUMN "equipments"."floor_id" IS 'floor_id';
-COMMENT ON COLUMN "equipments"."equip_name" IS 'equip_name';
-COMMENT ON COLUMN "equipments"."equip_desc" IS 'equip_desc';
-COMMENT ON COLUMN "equipments"."equip_seq" IS 'equip_seq';
-COMMENT ON COLUMN "equipments"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "equipments"."created_at" IS 'created_at';
-COMMENT ON COLUMN "equipments"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "equipments"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "equipments"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "equipments"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "equipments"."updated_session_id" IS 'updated_session_id';
 
