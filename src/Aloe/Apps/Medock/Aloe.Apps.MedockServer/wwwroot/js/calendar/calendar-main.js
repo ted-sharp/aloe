@@ -65,25 +65,31 @@ function init(containerId, data, options, dotNetRef) {
     // ドラッグ終了イベント（mouseup）をステージに追加
     stage.on('mouseup', function () {
         const state = getState();
-        if (state.isDragging && state.selectedDateRange) {
-            const range = state.selectedDateRange;
-            // 範囲が有効な場合のみコールバックと confirmedDateRange を設定
-            if (range.start !== range.end && state.dotNetRef) {
-                // 日付の順序を正規化
-                const start = parseDate(range.start);
-                const end = parseDate(range.end);
-                const normalizedRange = start <= end
-                    ? { start: range.start, end: range.end }
-                    : { start: range.end, end: range.start };
-                state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', normalizedRange.start, normalizedRange.end);
-                // 確定した範囲を設定（グレーアウト判定に使用）
-                setState({ confirmedDateRange: normalizedRange });
-            } else {
-                // 範囲が無効な場合は confirmedDateRange をクリア
-                setState({ confirmedDateRange: null });
+        if (state.isDragging) {
+            if (state.selectedDateRange) {
+                const range = state.selectedDateRange;
+                // 範囲が有効な場合のみコールバックと confirmedDateRange を設定
+                if (range.start !== range.end && state.dotNetRef) {
+                    // 日付の順序を正規化
+                    const start = parseDate(range.start);
+                    const end = parseDate(range.end);
+                    const normalizedRange = start <= end
+                        ? { start: range.start, end: range.end }
+                        : { start: range.end, end: range.start };
+                    state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', normalizedRange.start, normalizedRange.end);
+                    // 確定した範囲を設定（グレーアウト判定に使用）、単一選択をクリア
+                    setState({
+                        confirmedDateRange: normalizedRange,
+                        selectedDate: null,
+                        lastClickTime: 0,
+                        lastClickDate: null
+                    });
+                }
+                // range.start === range.end の場合は何もしない（単一クリックとして扱い、既存の confirmedDateRange を保持）
             }
+            // 常に isDragging と selectedDateRange をリセット
+            setState({ isDragging: false, dragStartDate: null, selectedDateRange: null });
         }
-        setState({ isDragging: false, dragStartDate: null });
     });
 
     // コンテナ外でのmouseupも処理

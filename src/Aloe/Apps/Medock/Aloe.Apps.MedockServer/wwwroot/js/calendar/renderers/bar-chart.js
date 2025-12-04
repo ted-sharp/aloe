@@ -261,17 +261,12 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     hitArea.on('mouseleave', function () {
         hideTooltip();
         if (!state.isDragging) {
-            const isSelected = state.selectedDate === dateStr ||
-                (state.selectedDateRange && isDateInRange(dateStr, state.selectedDateRange.start, state.selectedDateRange.end));
-
-            if (isSelected) {
-                bgRect.stroke('#3b82f6');
-                bgRect.strokeWidth(2);
-            } else if (isToday(dateStr)) {
+            // ホバー解除後は枠線を削除（今日の日付のみ枠線を残す）
+            if (isToday(dateStr)) {
                 bgRect.stroke(CONFIG.colors.today);
                 bgRect.strokeWidth(2);
             } else {
-                // 完全に枠線を削除
+                // 選択状態に関わらず、ホバー解除後は枠線を削除
                 bgRect.stroke(null);
                 bgRect.strokeWidth(0);
             }
@@ -295,11 +290,31 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             if (state.dotNetRef) {
                 state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', range.start, range.end);
             }
-            // Shift+クリックでも確定した範囲を設定
+            // Shift+クリックで範囲選択（両方の日付が異なる場合のみ confirmedDateRange を設定）
             setState({
+                selectedDate: null,  // 範囲選択時は単一選択をクリア
+                lastClickTime: 0,    // ダブルクリック判定をリセット
+                lastClickDate: null,
                 selectedDateRange: range,
-                confirmedDateRange: range
+                confirmedDateRange: range.start !== range.end ? range : null
             });
+        } else if (state.confirmedDateRange &&
+                   isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end)) {
+            // 範囲選択内の日付をクリックした場合は範囲選択を解除
+            setState({
+                lastClickTime: 0,
+                lastClickDate: null,
+                selectedDate: null,
+                selectedDateRange: null,
+                confirmedDateRange: null
+            });
+            if (state.dotNetRef) {
+                state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', null);
+            }
+            // カレンダーを再描画してグレーアウトを解除
+            if (window.MedockCalendar) {
+                window.MedockCalendar.render();
+            }
         } else {
             // 同じ日付をクリックした場合は選択解除
             if (state.selectedDate === dateStr) {
@@ -330,26 +345,22 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     // ドラッグによる範囲選択
     hitArea.on('mousedown', function (e) {
+        // mousedown では isDragging と dragStartDate のみ設定
+        // selectedDateRange は mousemove で実際にドラッグが開始された時に設定
         setState({
             isDragging: true,
-            dragStartDate: dateStr,
-            selectedDateRange: { start: dateStr, end: dateStr }
+            dragStartDate: dateStr
         });
     });
 
     hitArea.on('mouseup', function () {
-        if (state.isDragging && state.dragStartDate) {
-            const start = state.dragStartDate;
-            const end = dateStr;
-            if (state.dotNetRef) {
-                state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', start, end);
-            }
-            setState({ isDragging: false });
-        }
+        // mouseup は処理しない（calendar-main.js の stage mouseup で処理される）
+        // ここでは何もしない
     });
 
     hitArea.on('mousemove', function () {
         if (state.isDragging && state.dragStartDate) {
+            // 実際にドラッグが開始された場合のみ selectedDateRange を設定
             setState({ selectedDateRange: { start: state.dragStartDate, end: dateStr } });
         }
     });
