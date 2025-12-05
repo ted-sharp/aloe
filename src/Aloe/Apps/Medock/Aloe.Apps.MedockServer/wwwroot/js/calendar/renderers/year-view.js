@@ -1,13 +1,31 @@
 /**
  * Year View Renderer
  *
- * 年間カレンダー表示（12ヶ月のミニカレンダーを4x3グリッドで表示）
+ * 年間カレンダー表示（12ヶ月のミニカレンダーをレスポンシブグリッドで表示）
+ * - >= 1200px: 4列 x 3行（デスクトップ）
+ * - 768px - 1199px: 3列 x 4行（タブレット）
+ * - < 768px: 2列 x 6行（スマホ縦）
  */
 
 import { getState } from '../state.js';
 import { CONFIG } from '../config.js';
 import { getFirstDayOfMonth, getLastDayOfMonth, isToday } from '../utils/date-utils.js';
 import { renderDayBarChart } from './bar-chart.js';
+
+/**
+ * コンテナ幅に基づいてグリッドレイアウトを決定
+ * @param {number} width - コンテナ幅
+ * @returns {{ cols: number, rows: number }}
+ */
+function getGridLayout(width) {
+    if (width >= 1200) {
+        return { cols: 4, rows: 3 };  // デスクトップ、ウルトラワイド
+    } else if (width >= 768) {
+        return { cols: 3, rows: 4 };  // タブレット、ラップトップ
+    } else {
+        return { cols: 2, rows: 6 };  // スマホ縦画面
+    }
+}
 
 /**
  * 年間カレンダーを描画
@@ -25,11 +43,15 @@ export function renderYearView() {
     layers.interaction.destroyChildren();
 
     const year = currentDate.getFullYear();
-    const cols = 4;
-    const rows = 3;
+
+    // レスポンシブグリッドレイアウトを取得
+    const { cols, rows } = getGridLayout(width);
+
     const monthWidth = width / cols;
     const monthHeight = height / rows;
-    const padding = 10;
+
+    // パディングをコンテナサイズに応じて調整
+    const padding = Math.max(4, Math.min(10, width * 0.01));
 
     for (let month = 0; month < 12; month++) {
         const col = month % cols;
@@ -61,14 +83,22 @@ function renderMonthMiniCalendar(month, x, y, width, height, year) {
     const { layers, dayStats } = state;
     const monthNames = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
 
+    // サイズが小さすぎる場合は描画をスキップ
+    if (width < 20 || height < 20) {
+        return;
+    }
+
     // Month header (クリック可能)
+    const headerHeight = Math.min(22, height / 4);
+    const headerCornerRadius = Math.min(4, width / 2, headerHeight / 2);
+
     const headerBg = new Konva.Rect({
         x: x,
         y: y - 2,
-        width: width,
-        height: 22,
+        width: Math.max(0, width),
+        height: headerHeight,
         fill: 'transparent',
-        cornerRadius: 4
+        cornerRadius: Math.max(0, headerCornerRadius)
     });
     layers.grid.add(headerBg);
 
@@ -213,28 +243,33 @@ function renderMonthMiniCalendar(month, x, y, width, height, year) {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const isHoliday = state.holidays.has(dateStr);
 
+            // セルサイズの安全な計算
+            const safeCellWidth = Math.max(0, cellWidth - 2);
+            const safeCellHeight = Math.max(0, cellHeight - 2);
+            const cellCornerRadius = Math.max(0, Math.min(2, safeCellWidth / 2, safeCellHeight / 2));
+
             // Holiday background (light red, same as Sunday)
-            if (isHoliday && !isToday(dateStr)) {
+            if (isHoliday && !isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
                 const holidayBg = new Konva.Rect({
                     x: cellLeft + 1,
                     y: cellTop + 1,
-                    width: cellWidth - 2,
-                    height: cellHeight - 2,
+                    width: safeCellWidth,
+                    height: safeCellHeight,
                     fill: 'rgba(239, 68, 68, 0.12)',
-                    cornerRadius: 2
+                    cornerRadius: cellCornerRadius
                 });
                 layers.grid.add(holidayBg);
             }
 
             // Today's cell background (bright green rectangle)
-            if (isToday(dateStr)) {
+            if (isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
                 const todayBg = new Konva.Rect({
                     x: cellLeft + 1,
                     y: cellTop + 1,
-                    width: cellWidth - 2,
-                    height: cellHeight - 2,
+                    width: safeCellWidth,
+                    height: safeCellHeight,
                     fill: 'rgba(16, 185, 129, 0.3)',
-                    cornerRadius: 2
+                    cornerRadius: cellCornerRadius
                 });
                 layers.grid.add(todayBg);
             }

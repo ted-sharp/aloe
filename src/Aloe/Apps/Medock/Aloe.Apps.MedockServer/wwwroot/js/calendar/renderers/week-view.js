@@ -283,10 +283,14 @@ function renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, sta
 
         const x = timeColumnWidth + dayIndex * dayWidth + 2;
         const y = headerHeight + startOffset * hourHeight;
-        const w = dayWidth - 4;
-        const h = duration * hourHeight - 2;
+        const w = Math.max(0, dayWidth - 4);
+        const h = Math.max(0, duration * hourHeight - 2);
+
+        // サイズが小さすぎる場合はスキップ
+        if (w < 4 || h < 4) return;
 
         const statusColor = CONFIG.colors.status[appt.status] || CONFIG.colors.status[0];
+        const blockCornerRadius = Math.max(0, Math.min(4, w / 2, h / 2));
 
         // Appointment block
         const block = new Konva.Rect({
@@ -296,7 +300,7 @@ function renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, sta
             height: h,
             fill: statusColor,
             opacity: 0.9,
-            cornerRadius: 4,
+            cornerRadius: blockCornerRadius,
             shadowColor: 'black',
             shadowBlur: 2,
             shadowOpacity: 0.2,

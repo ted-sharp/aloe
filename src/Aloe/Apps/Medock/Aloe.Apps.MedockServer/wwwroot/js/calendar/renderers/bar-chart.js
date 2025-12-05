@@ -46,6 +46,11 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     const state = getState();
     const { layers } = state;
 
+    // セルサイズが小さすぎる場合は描画をスキップ
+    if (cellWidth < 10 || cellHeight < 10) {
+        return;
+    }
+
     // 時間帯枠データを取得
     const stats = state.dayStats.get(dateStr);
     const slots = stats?.slots || null;
@@ -61,16 +66,20 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     // 日付テキスト表示エリア
     const dayTextHeight = CONFIG.font.sizeSmall + 4;
     const barAreaTop = cellTop + dayTextHeight;
-    const barAreaHeight = cellHeight - dayTextHeight - 4; // 下部余白4px
+    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4); // 下部余白4px、負の値を防止
 
-    // 背景矩形
+    // 背景矩形（サイズは最小0を保証）
+    const bgWidth = Math.max(0, cellWidth - 2);
+    const bgHeight = Math.max(0, cellHeight - 2);
+    const bgCornerRadius = Math.min(2, bgWidth / 2, bgHeight / 2); // cornerRadiusは幅/高さの半分以下
+
     const bgRect = new Konva.Rect({
         x: cellLeft + 1,
         y: cellTop + 1,
-        width: cellWidth - 2,
-        height: cellHeight - 2,
+        width: bgWidth,
+        height: bgHeight,
         fill: isDateGrayed ? '#f3f4f6' : CONFIG.colors.slot.background,
-        cornerRadius: 2,
+        cornerRadius: Math.max(0, bgCornerRadius),
         opacity: isDateGrayed ? 0.6 : 1
     });
     layers.content.add(bgRect);
@@ -130,7 +139,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             const ratio = slot.max > 0 ? slot.count / slot.max : 0;
             const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
             const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(ratio);
-            const barHeight = barAreaHeight * ratio;
+            const barHeight = Math.max(0, barAreaHeight * ratio);
 
             // 時刻を解析（例: "08:00-09:00" → 開始時刻 "08:00" → 8.0）
             const startTime = slot.time.split('-')[0]; // "08:00-09:00" → "08:00"
@@ -144,37 +153,41 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 (timeInHours - startHour) / totalHours));
 
             // X座標を時刻に応じて配置
-            const barX = cellLeft + 2 + relativePosition * (barAreaWidth - barWidth);
+            const barX = cellLeft + 2 + relativePosition * Math.max(0, barAreaWidth - barWidth);
             const barY = barAreaTop + barAreaHeight - barHeight;
 
-            // 通常の棒グラフ
-            const bar = new Konva.Rect({
-                x: barX,
-                y: barY,
-                width: barWidth,
-                height: barHeight,
-                fill: slotColor,
-                cornerRadius: 1,
-                opacity: isSlotGrayed ? 0.4 : 1
-            });
-            layers.content.add(bar);
+            // 通常の棒グラフ（高さが0より大きい場合のみ描画）
+            if (barHeight > 0) {
+                const bar = new Konva.Rect({
+                    x: barX,
+                    y: barY,
+                    width: Math.max(1, barWidth),
+                    height: barHeight,
+                    fill: slotColor,
+                    cornerRadius: Math.min(1, barHeight / 2),
+                    opacity: isSlotGrayed ? 0.4 : 1
+                });
+                layers.content.add(bar);
+            }
 
             // フィルター条件の重ね表示（filteredCount > 0 の場合）
             if (slot.filteredCount > 0) {
                 const filteredRatio = slot.max > 0 ? slot.filteredCount / slot.max : 0;
-                const filteredBarHeight = barAreaHeight * filteredRatio;
+                const filteredBarHeight = Math.max(0, barAreaHeight * filteredRatio);
                 const filteredBarY = barAreaTop + barAreaHeight - filteredBarHeight;
 
-                const filterBar = new Konva.Rect({
-                    x: barX,
-                    y: filteredBarY,
-                    width: barWidth,
-                    height: filteredBarHeight,
-                    fill: '#fb923c', // オレンジ色
-                    cornerRadius: 1,
-                    opacity: isSlotGrayed ? 0.4 : 0.7  // グレーアウト時は透明度を下げる
-                });
-                layers.content.add(filterBar);
+                if (filteredBarHeight > 0) {
+                    const filterBar = new Konva.Rect({
+                        x: barX,
+                        y: filteredBarY,
+                        width: Math.max(1, barWidth),
+                        height: filteredBarHeight,
+                        fill: '#fb923c', // オレンジ色
+                        cornerRadius: Math.min(1, filteredBarHeight / 2),
+                        opacity: isSlotGrayed ? 0.4 : 0.7
+                    });
+                    layers.content.add(filterBar);
+                }
             }
         });
     } else {
@@ -183,33 +196,37 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const amRatio = stats.amMax > 0 ? stats.am / stats.amMax : 0;
         const pmRatio = stats.pmMax > 0 ? stats.pm / stats.pmMax : 0;
 
-        const barAreaWidth = cellWidth - 4;
+        const barAreaWidth = Math.max(0, cellWidth - 4);
         const gapWidth = 1;
-        const barWidth = (barAreaWidth - gapWidth) / 2;
+        const barWidth = Math.max(1, (barAreaWidth - gapWidth) / 2);
 
         // AM棒
-        const amBarHeight = barAreaHeight * amRatio;
-        const amBar = new Konva.Rect({
-            x: cellLeft + 2,
-            y: barAreaTop + barAreaHeight - amBarHeight,
-            width: barWidth,
-            height: amBarHeight,
-            fill: getSlotColor(amRatio),
-            cornerRadius: 1
-        });
-        layers.content.add(amBar);
+        const amBarHeight = Math.max(0, barAreaHeight * amRatio);
+        if (amBarHeight > 0 && barWidth > 0) {
+            const amBar = new Konva.Rect({
+                x: cellLeft + 2,
+                y: barAreaTop + barAreaHeight - amBarHeight,
+                width: barWidth,
+                height: amBarHeight,
+                fill: getSlotColor(amRatio),
+                cornerRadius: Math.min(1, amBarHeight / 2, barWidth / 2)
+            });
+            layers.content.add(amBar);
+        }
 
         // PM棒
-        const pmBarHeight = barAreaHeight * pmRatio;
-        const pmBar = new Konva.Rect({
-            x: cellLeft + 2 + barWidth + gapWidth,
-            y: barAreaTop + barAreaHeight - pmBarHeight,
-            width: barWidth,
-            height: pmBarHeight,
-            fill: getSlotColor(pmRatio),
-            cornerRadius: 1
-        });
-        layers.content.add(pmBar);
+        const pmBarHeight = Math.max(0, barAreaHeight * pmRatio);
+        if (pmBarHeight > 0 && barWidth > 0) {
+            const pmBar = new Konva.Rect({
+                x: cellLeft + 2 + barWidth + gapWidth,
+                y: barAreaTop + barAreaHeight - pmBarHeight,
+                width: barWidth,
+                height: pmBarHeight,
+                fill: getSlotColor(pmRatio),
+                cornerRadius: Math.min(1, pmBarHeight / 2, barWidth / 2)
+            });
+            layers.content.add(pmBar);
+        }
     }
 
     // インタラクションエリア

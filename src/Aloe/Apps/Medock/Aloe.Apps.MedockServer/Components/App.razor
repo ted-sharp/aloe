@@ -23,13 +23,22 @@
     <!-- Konva.js for Canvas rendering -->
     <script src="https://cdn.jsdelivr.net/npm/konva@9/konva.min.js"></script>
     
-    <!-- Custom styles for container queries -->
+    <!-- Custom styles for container queries and FAB -->
     <style>
+        /* ルート要素の高さ制約 */
+        html, body {
+            height: 100%;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
         /* コンテナクエリ対応 */
         .responsive-container {
             container-type: inline-size;
         }
-        
+
         /* サイドバー切り替え用コンテナクエリ */
         @@container (min-width: 768px) {
             .sidebar-visible {
@@ -39,13 +48,292 @@
                 display: none !important;
             }
         }
-        
+
         @@container (max-width: 767px) {
             .sidebar-visible {
                 display: none !important;
             }
             .drawer-toggle-btn {
                 display: flex !important;
+            }
+        }
+
+        /* ========================================
+           カレンダーフルスクリーンレイアウト
+           ======================================== */
+
+        /* dvhでフルビューポート */
+        .calendar-fullscreen {
+            height: 100dvh;
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* スマホ縦の場合は縦スクロール許可 */
+        @@container calendar (max-width: 767px) {
+            .calendar-fullscreen {
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+        }
+
+        /* カレンダーコンテナ（コンテナクエリ対応） */
+        .calendar-container {
+            container-type: inline-size;
+            container-name: calendar;
+            height: 100%;
+            width: 100%;
+        }
+
+        /* 年間カレンダーのグリッドレイアウト */
+        .year-grid-container {
+            --year-cols: 4;
+            --year-rows: 3;
+        }
+
+        @@container calendar (max-width: 767px) {
+            .year-grid-container {
+                --year-cols: 2;
+                --year-rows: 6;
+            }
+        }
+
+        @@container calendar (min-width: 768px) and (max-width: 1199px) {
+            .year-grid-container {
+                --year-cols: 3;
+                --year-rows: 4;
+            }
+        }
+
+        @@container calendar (min-width: 1200px) {
+            .year-grid-container {
+                --year-cols: 4;
+                --year-rows: 3;
+            }
+        }
+
+        /* ========================================
+           FAB（Floating Action Button）
+           ======================================== */
+
+        .fab-layer {
+            position: fixed;
+            z-index: 1000;
+        }
+
+        .fab-top-left {
+            top: 1rem;
+            left: 1rem;
+        }
+
+        .fab-top-right {
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .fab-bottom-right {
+            bottom: 1.5rem;
+            right: 1.5rem;
+        }
+
+        /* FABボタン共通スタイル */
+        .fab-btn {
+            min-width: 48px;
+            min-height: 48px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .fab-btn:hover {
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        /* ========================================
+           Bottom Sheet（モバイルナビゲーション）
+           ======================================== */
+
+        .bottom-sheet-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(4px);
+            z-index: 1001;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease-out;
+        }
+
+        .bottom-sheet-backdrop.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            transform: translateY(100%);
+            transition: transform 0.3s ease-out;
+            z-index: 1002;
+            max-height: calc(100dvh - 4rem);
+            overflow-y: auto;
+            border-radius: 1.5rem 1.5rem 0 0;
+        }
+
+        /* スマホでは上部の閉じるスペースを小さく */
+        @@media (max-width: 639px) {
+            .bottom-sheet {
+                max-height: calc(100dvh - 2rem);
+            }
+        }
+
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+
+        .bottom-sheet-handle {
+            width: 3rem;
+            height: 0.375rem;
+            background: var(--fallback-bc,oklch(var(--bc)/0.3));
+            border-radius: 9999px;
+            margin: 0 auto 1rem;
+        }
+
+        /* ========================================
+           Speed Dial（アクションFAB展開）
+           ======================================== */
+
+        .speed-dial-container {
+            display: flex;
+            flex-direction: column-reverse;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+
+        .speed-dial-item {
+            transform: scale(0) translateY(1rem);
+            opacity: 0;
+            transition: all 0.2s ease-out;
+            pointer-events: none;
+        }
+
+        .speed-dial-open .speed-dial-item {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .speed-dial-open .speed-dial-item:nth-child(2) { transition-delay: 30ms; }
+        .speed-dial-open .speed-dial-item:nth-child(3) { transition-delay: 60ms; }
+        .speed-dial-open .speed-dial-item:nth-child(4) { transition-delay: 90ms; }
+        .speed-dial-open .speed-dial-item:nth-child(5) { transition-delay: 120ms; }
+
+        /* Speed Dial tooltipはdaisyUIのtooltipを使用 */
+
+        /* ========================================
+           ミニナビゲーションバー
+           ======================================== */
+
+        .mini-navbar {
+            position: fixed;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            padding: 0.5rem 1rem;
+            background: var(--fallback-b1,oklch(var(--b1)/0.9));
+            backdrop-filter: blur(8px);
+            border-radius: 0 0 1rem 1rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* スマホではFABの間に収まるよう調整 */
+        @@container calendar (max-width: 767px) {
+            .mini-navbar {
+                left: 4rem;
+                right: 4rem;
+                transform: none;
+                border-radius: 0 0 0.75rem 0.75rem;
+            }
+        }
+
+        /* ========================================
+           ボトムシートグリッドメニュー
+           ======================================== */
+
+        .menu-grid {
+            display: grid;
+            gap: 0.75rem;
+            padding: 1rem;
+        }
+
+        /* デフォルト: 3列 */
+        .menu-grid {
+            grid-template-columns: repeat(3, 1fr);
+        }
+
+        /* タブレット: 4列以上 */
+        @@media (min-width: 640px) {
+            .menu-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 1rem;
+            }
+        }
+
+        /* デスクトップ: 横一列 */
+        @@media (min-width: 1024px) {
+            .menu-grid {
+                grid-template-columns: repeat(9, 1fr);
+                max-width: 1000px;
+                margin: 0 auto;
+            }
+        }
+
+        .menu-grid-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 1rem 0.5rem;
+            border-radius: 1rem;
+            background: var(--fallback-b2,oklch(var(--b2)));
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            min-height: 5rem;
+        }
+
+        .menu-grid-item:hover {
+            background: var(--fallback-b3,oklch(var(--b3)));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-grid-item svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .menu-grid-item span {
+            font-size: 0.75rem;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* レスポンシブなアイコンサイズ */
+        @@media (min-width: 640px) {
+            .menu-grid-item {
+                padding: 1.25rem 0.75rem;
+                min-height: 6rem;
+            }
+            .menu-grid-item svg {
+                width: 1.75rem;
+                height: 1.75rem;
+            }
+            .menu-grid-item span {
+                font-size: 0.875rem;
             }
         }
     </style>
@@ -58,7 +346,7 @@
 
 @using Microsoft.AspNetCore.Components.Web
 
-<body class="min-h-screen bg-base-200">
+<body class="h-full w-full overflow-hidden bg-base-200">
     <Routes @rendermode="InteractiveServer" />
     <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>

@@ -88,28 +88,33 @@ export function renderMonthView() {
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const isHoliday = state.holidays.has(dateStr);
 
+            // セルサイズの安全な計算
+            const safeCellWidth = Math.max(0, cellWidth - 2);
+            const safeCellHeight = Math.max(0, cellHeight - 2);
+            const cellCornerRadius = Math.max(0, Math.min(2, safeCellWidth / 2, safeCellHeight / 2));
+
             // Holiday background (light red, same as Sunday)
-            if (isHoliday && !isToday(dateStr)) {
+            if (isHoliday && !isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
                 const holidayBg = new Konva.Rect({
                     x: cellX + 1,
                     y: cellY + 1,
-                    width: cellWidth - 2,
-                    height: cellHeight - 2,
+                    width: safeCellWidth,
+                    height: safeCellHeight,
                     fill: 'rgba(239, 68, 68, 0.12)',
-                    cornerRadius: 2
+                    cornerRadius: cellCornerRadius
                 });
                 layers.grid.add(holidayBg);
             }
 
             // Today's cell background (bright green rectangle)
-            if (isToday(dateStr)) {
+            if (isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
                 const todayBg = new Konva.Rect({
                     x: cellX + 1,
                     y: cellY + 1,
-                    width: cellWidth - 2,
-                    height: cellHeight - 2,
+                    width: safeCellWidth,
+                    height: safeCellHeight,
                     fill: 'rgba(16, 185, 129, 0.3)',
-                    cornerRadius: 2
+                    cornerRadius: cellCornerRadius
                 });
                 layers.grid.add(todayBg);
             }

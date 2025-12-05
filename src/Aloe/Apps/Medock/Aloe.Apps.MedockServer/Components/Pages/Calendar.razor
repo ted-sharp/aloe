@@ -1,5 +1,7 @@
 @page "/calendar"
+@layout CalendarLayout
 @using Aloe.Apps.MedockLib.Services
+@using Aloe.Apps.MedockServer.Components.Layout
 @using Microsoft.AspNetCore.Components.Authorization
 @inject IAppointmentService AppointmentService
 @inject IEquipmentService EquipmentService
@@ -7,162 +9,85 @@
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
-<div class="space-y-4">
-    <!-- ヘッダー -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-            <h1 class="text-3xl font-bold text-base-content">予約カレンダー</h1>
-            <p class="text-base-content/60 mt-1">予約状況を確認・管理できます</p>
-        </div>
-        <div class="flex flex-wrap gap-2">
-            <!-- ビュー切り替え -->
-            <div class="btn-group">
-                <button class="btn @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")" 
-                        @onclick="() => SetView(CalendarViewType.Year)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    年
-                </button>
-                <button class="btn @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")" 
-                        @onclick="() => SetView(CalendarViewType.Month)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    月
-                </button>
-                <button class="btn @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")" 
-                        @onclick="() => SetView(CalendarViewType.Week)">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    週
-                </button>
-            </div>
-            <button class="btn btn-primary" @onclick="OpenNewAppointmentModal">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-                新規予約
+<div class="h-full flex flex-col year-grid-container">
+    <!-- ミニナビゲーションバー -->
+    <div class="mini-navbar flex items-center gap-4">
+        <span class="font-bold text-base-content">@GetCurrentPeriodTitle()</span>
+        <div class="btn-group btn-group-sm">
+            <button class="btn btn-sm @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetView(CalendarViewType.Year)">
+                年
+            </button>
+            <button class="btn btn-sm @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetView(CalendarViewType.Month)">
+                月
+            </button>
+            <button class="btn btn-sm @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetView(CalendarViewType.Week)">
+                週
             </button>
         </div>
     </div>
 
-    <!-- カレンダーナビゲーション -->
-    <div class="card bg-base-100 shadow">
-        <div class="card-body p-4">
-            <div class="flex items-center justify-between">
-                <button class="btn btn-ghost btn-circle" @onclick="PreviousPeriod">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                </button>
-                <div class="text-center">
-                    <h2 class="text-xl font-bold">@GetCurrentPeriodTitle()</h2>
-                    <button class="btn btn-ghost btn-sm" @onclick="GoToToday">今日</button>
-                </div>
-                <button class="btn btn-ghost btn-circle" @onclick="NextPeriod">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 検索フィルター（年間表示の場合のみ表示） -->
-    @if (CurrentView == CalendarViewType.Year)
+    <!-- 検索フィルター（年間表示の場合のみ、トグル表示） -->
+    @if (ShowFilterPanel && CurrentView == CalendarViewType.Year)
     {
-        <SearchFilterPanel @ref="filterPanelRef"
-            AvailableEquipments="@AvailableEquipments"
-            OnFilterApplied="@HandleFilterApplied"
-            OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
+        <div class="absolute top-16 left-4 right-4 z-50">
+            <SearchFilterPanel @ref="filterPanelRef"
+                AvailableEquipments="@AvailableEquipments"
+                OnFilterApplied="@HandleFilterApplied"
+                OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
+        </div>
     }
 
     <!-- カレンダー本体 -->
-    <div class="card bg-base-100 shadow overflow-hidden">
-        <div class="card-body p-2 sm:p-4">
-            @if (CurrentView == CalendarViewType.Year)
-            {
-                <YearView 
-                    CurrentDate="@CurrentDate" 
-                    DayStats="@SampleDayStats"
-                    Holidays="@Holidays"
-                    Height="700px"
-                    OnDateClick="@HandleDateClick"
-                    OnMonthClick="@HandleMonthClick"
-                    OnDateSelect="@HandleDateSelect"
-                    OnDateDoubleClick="@HandleDateDoubleClick"
-                    OnDateRangeSelect="@HandleDateRangeSelect" />
-            }
-            else if (CurrentView == CalendarViewType.Month)
-            {
-                <MonthView 
-                    CurrentDate="@CurrentDate" 
-                    DayStats="@SampleDayStats"
-                    Holidays="@Holidays"
-                    Height="600px"
-                    OnDateClick="@HandleDateClick" />
-            }
-            else
-            {
-                <WeekScheduler 
-                    CurrentDate="@CurrentDate"
-                    WeekDays="@WeekDays"
-                    ShowSlots="@ShowSlots"
-                    Appointments="@SampleAppointments"
-                    DayStats="@SampleDayStats"
-                    Holidays="@Holidays"
-                    Height="600px"
-                    OnDateSelected="@HandleDateClick"
-                    OnAppointmentClicked="@HandleAppointmentClick"
-                    OnCreateRequested="@HandleCreateRequest"
-                    OnWeekDaysChanged="@HandleWeekDaysChanged"
-                    OnShowSlotsChanged="@HandleShowSlotsChanged"
-                    OnAppointmentMoved="@HandleAppointmentMoved" />
-            }
-        </div>
+    <div class="flex-1 overflow-hidden p-2">
+        @if (CurrentView == CalendarViewType.Year)
+        {
+            <YearView
+                CurrentDate="@CurrentDate"
+                DayStats="@SampleDayStats"
+                Holidays="@Holidays"
+                Height="100%"
+                OnDateClick="@HandleDateClick"
+                OnMonthClick="@HandleMonthClick"
+                OnDateSelect="@HandleDateSelect"
+                OnDateDoubleClick="@HandleDateDoubleClick"
+                OnDateRangeSelect="@HandleDateRangeSelect" />
+        }
+        else if (CurrentView == CalendarViewType.Month)
+        {
+            <MonthView
+                CurrentDate="@CurrentDate"
+                DayStats="@SampleDayStats"
+                Holidays="@Holidays"
+                Height="100%"
+                OnDateClick="@HandleDateClick" />
+        }
+        else
+        {
+            <WeekScheduler
+                CurrentDate="@CurrentDate"
+                WeekDays="@WeekDays"
+                ShowSlots="@ShowSlots"
+                Appointments="@SampleAppointments"
+                DayStats="@SampleDayStats"
+                Holidays="@Holidays"
+                Height="100%"
+                OnDateSelected="@HandleDateClick"
+                OnAppointmentClicked="@HandleAppointmentClick"
+                OnCreateRequested="@HandleCreateRequest"
+                OnWeekDaysChanged="@HandleWeekDaysChanged"
+                OnShowSlotsChanged="@HandleShowSlotsChanged"
+                OnAppointmentMoved="@HandleAppointmentMoved" />
+        }
     </div>
-
-    <!-- 凡例 -->
-    @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
-    {
-        <!-- 年間・月間カレンダー用の凡例 -->
-        <CalendarLegend />
-    }
-    else
-    {
-        <!-- 週間スケジューラー用の凡例 -->
-        <div class="card bg-base-100 shadow">
-            <div class="card-body p-4">
-                <h3 class="font-bold mb-2">ステータス凡例</h3>
-                <div class="flex flex-wrap gap-4">
-                    <div class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded bg-warning"></span>
-                        <span class="text-sm">予約</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded bg-info"></span>
-                        <span class="text-sm">待機中</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded bg-success"></span>
-                        <span class="text-sm">来院済み</span>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="w-4 h-4 rounded bg-error"></span>
-                        <span class="text-sm">キャンセル</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    }
 </div>
 
-<!-- 予約モーダル（後で実装） -->
+<!-- 予約モーダル -->
 @if (IsModalOpen)
 {
-    <AppointmentModal 
+    <AppointmentModal
         IsOpen="@IsModalOpen"
         SelectedDate="@ModalDate"
         SelectedTime="@ModalTime"
@@ -172,10 +97,14 @@
 }
 
 @code {
+    [CascadingParameter]
+    private CalendarLayout? Layout { get; set; }
+
     private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     private CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
     private int WeekDays { get; set; } = 7;
     private bool ShowSlots { get; set; } = true;
+    private bool ShowFilterPanel { get; set; } = false;
 
     // Modal state
     private bool IsModalOpen { get; set; } = false;
@@ -187,7 +116,7 @@
     private DateOnly? SelectedDate { get; set; }
     private (DateOnly Start, DateOnly End)? SelectedDateRange { get; set; }
 
-    // サンプルデータ（後で実データに置き換え）
+    // サンプルデータ
     private Dictionary<string, CalendarCanvas.CalendarDayStats> SampleDayStats { get; set; } = new();
     private Dictionary<string, CalendarCanvas.CalendarDayStats> OriginalDayStats { get; set; } = new();
     private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
@@ -207,21 +136,54 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // サンプルデータを生成
         GenerateSampleData();
-
-        // 設備データを動的に取得
         await GenerateFilterOptions();
-
-        // 祝日データを取得
         await LoadHolidaysAsync();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            RegisterLayoutActions();
+        }
+    }
+
+    private void RegisterLayoutActions()
+    {
+        Layout?.RegisterCalendarActions(
+            CurrentView.ToString().ToLower(),
+            async () => { OpenNewAppointmentModal(); await Task.CompletedTask; },
+            async () => { ToggleFilterPanel(); await Task.CompletedTask; },
+            async () => { GoToToday(); await Task.CompletedTask; },
+            async () => { PreviousPeriod(); await Task.CompletedTask; },
+            async () => { NextPeriod(); await Task.CompletedTask; },
+            async (view) => { SetViewFromString(view); await Task.CompletedTask; }
+        );
+    }
+
+    private void ToggleFilterPanel()
+    {
+        ShowFilterPanel = !ShowFilterPanel;
+        StateHasChanged();
+    }
+
+    private void SetViewFromString(string view)
+    {
+        var viewType = view.ToLower() switch
+        {
+            "year" => CalendarViewType.Year,
+            "month" => CalendarViewType.Month,
+            "week" => CalendarViewType.Week,
+            _ => CalendarViewType.Month
+        };
+        SetView(viewType);
     }
 
     private async Task GenerateFilterOptions()
     {
         try
         {
-            // 認証コンテキストからテナントIDを取得
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
 
@@ -231,11 +193,9 @@
                 return;
             }
 
-            // JWTトークンの tenant_id クレームを取得
             var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
             if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
             {
-                Console.WriteLine("警告: tenant_id クレームが見つからないか、パースできません");
                 AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
                 return;
             }
@@ -249,12 +209,11 @@
         }
         catch (Exception ex)
         {
-            // エラーをログして空リストを返す
             Console.WriteLine($"設備データ取得エラー: {ex.Message}");
             AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
         }
     }
-    
+
     private async Task LoadHolidaysAsync()
     {
         try
@@ -262,7 +221,7 @@
             var startDate = new DateOnly(CurrentDate.Year, 1, 1);
             var endDate = new DateOnly(CurrentDate.Year, 12, 31);
             var holidays = await AppointmentService.GetHolidaysAsync(startDate, endDate);
-            
+
             Holidays = holidays.ToDictionary(
                 h => h.Date.ToString("yyyy-MM-dd"),
                 h => h.Name
@@ -270,41 +229,37 @@
         }
         catch (Exception)
         {
-            // 祝日取得に失敗しても動作を続行
             Holidays = new Dictionary<string, string>();
         }
     }
 
     private void GenerateSampleData()
     {
-        var random = new Random(42); // 固定シードで再現性のあるデータ
+        var random = new Random(42);
         var today = DateTime.Today;
         var startDate = new DateTime(today.Year, 1, 1);
         var endDate = new DateTime(today.Year, 12, 31);
 
-        // 時間帯枠の定義
         var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
         var slotMaxes = new[] { 5, 8, 8, 8, 8, 8, 8, 5 };
 
-        // 日別統計を生成
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
             var dateStr = date.ToString("yyyy-MM-dd");
             var dayOfWeek = date.DayOfWeek;
             var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
-            
-            // 時間帯枠ごとのデータを生成
+
             var slots = new List<CalendarCanvas.TimeSlotStats>();
             var amCount = 0;
             var pmCount = 0;
             var amMax = 0;
             var pmMax = 0;
-            
+
             for (var i = 0; i < slotTimes.Length; i++)
             {
                 var max = isWeekend ? Math.Max(1, slotMaxes[i] / 2) : slotMaxes[i];
                 var count = random.Next(0, max + 1);
-                
+
                 slots.Add(new CalendarCanvas.TimeSlotStats
                 {
                     Time = slotTimes[i],
@@ -312,8 +267,7 @@
                     Max = max,
                     IsGrayedOut = false
                 });
-                
-                // AM/PM集計（フォールバック用）
+
                 var hour = int.Parse(slotTimes[i].Split(':')[0]);
                 if (hour < 12)
                 {
@@ -326,7 +280,7 @@
                     pmMax += max;
                 }
             }
-            
+
             var dayStats = new CalendarCanvas.CalendarDayStats
             {
                 AmCount = amCount,
@@ -337,8 +291,7 @@
                 IsGrayedOut = false
             };
             SampleDayStats[dateStr] = dayStats;
-            
-            // オリジナルデータを保存（フィルター解除用）
+
             OriginalDayStats[dateStr] = new CalendarCanvas.CalendarDayStats
             {
                 AmCount = amCount,
@@ -356,7 +309,6 @@
             };
         }
 
-        // 今週の予約を生成
         var weekStart = today.AddDays(-(int)today.DayOfWeek);
         var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲", "高橋 健二" };
         var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF", "○○健保組合" };
@@ -370,7 +322,7 @@
             {
                 var startHour = random.Next(8, 16);
                 var duration = random.Next(1, 3);
-                
+
                 SampleAppointments.Add(new CalendarCanvas.CalendarAppointment
                 {
                     Id = Guid.NewGuid(),
@@ -388,6 +340,8 @@
     private void SetView(CalendarViewType view)
     {
         CurrentView = view;
+        Layout?.UpdateCurrentView(view.ToString().ToLower());
+        RegisterLayoutActions();
     }
 
     private string GetCurrentPeriodTitle()
@@ -396,9 +350,9 @@
         {
             CalendarViewType.Year => $"{CurrentDate.Year}年",
             CalendarViewType.Month => $"{CurrentDate.Year}年{CurrentDate.Month}月",
-            CalendarViewType.Week => WeekDays == 1 
+            CalendarViewType.Week => WeekDays == 1
                 ? $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日"
-                : $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日の週",
+                : $"{CurrentDate.Year}年{CurrentDate.Month}月{CurrentDate.Day}日〜",
             _ => ""
         };
     }
@@ -412,6 +366,7 @@
             CalendarViewType.Week => CurrentDate.AddDays(-WeekDays),
             _ => CurrentDate
         };
+        StateHasChanged();
     }
 
     private void NextPeriod()
@@ -423,65 +378,56 @@
             CalendarViewType.Week => CurrentDate.AddDays(WeekDays),
             _ => CurrentDate
         };
+        StateHasChanged();
     }
 
     private void GoToToday()
     {
         CurrentDate = DateOnly.FromDateTime(DateTime.Today);
+        StateHasChanged();
     }
 
     private void HandleDateClick(DateOnly date)
     {
         CurrentDate = date;
-        // 年→月、月→週へ遷移（旧動作、月間表示では日クリックで週間に遷移）
         if (CurrentView == CalendarViewType.Month)
         {
             CurrentView = CalendarViewType.Week;
             WeekDays = 7;
+            Layout?.UpdateCurrentView("week");
+            RegisterLayoutActions();
         }
     }
 
-    /// <summary>
-    /// 月ヘッダークリック時のハンドラ - 月間表示に切り替え
-    /// </summary>
     private void HandleMonthClick((int Year, int Month) yearMonth)
     {
         CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
         CurrentView = CalendarViewType.Month;
+        Layout?.UpdateCurrentView("month");
+        RegisterLayoutActions();
     }
 
-    /// <summary>
-    /// 日付シングルクリック時のハンドラ - 選択状態にする
-    /// </summary>
     private void HandleDateSelect(DateOnly date)
     {
         SelectedDate = date;
         SelectedDateRange = null;
-        // 年間表示ではビュー切り替えなし、選択のみ
     }
 
-    /// <summary>
-    /// 日付ダブルクリック時のハンドラ - その日のスケジュール表示
-    /// </summary>
     private void HandleDateDoubleClick(DateOnly date)
     {
         CurrentDate = date;
         CurrentView = CalendarViewType.Week;
-        WeekDays = 1; // 1日表示
+        WeekDays = 1;
+        Layout?.UpdateCurrentView("week");
+        RegisterLayoutActions();
     }
 
-    /// <summary>
-    /// 範囲選択時のハンドラ
-    /// </summary>
     private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
     {
         SelectedDate = null;
         SelectedDateRange = range;
     }
 
-    /// <summary>
-    /// フィルター適用時のハンドラ
-    /// </summary>
     private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
         CurrentFilter = filter;
@@ -489,9 +435,6 @@
         StateHasChanged();
     }
 
-    /// <summary>
-    /// リアルタイムフィルター変更時のハンドラ
-    /// </summary>
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
         CurrentFilter = filter;
@@ -499,12 +442,8 @@
         StateHasChanged();
     }
 
-    /// <summary>
-    /// フィルターをカレンダーデータに適用
-    /// </summary>
     private async Task ApplyFilterToStats(SearchFilterPanel.SearchFilter filter)
     {
-        // フィルターが無効な場合はオリジナルに戻す
         if (!filter.IsActive)
         {
             foreach (var kvp in OriginalDayStats)
@@ -530,16 +469,12 @@
             var dateStr = kvp.Key;
             var stats = kvp.Value;
             var date = DateOnly.Parse(dateStr);
-            
-            // 日付レベルのグレーアウト判定
-            var isDateGrayed = false;
 
-            // 曜日フィルター
+            var isDateGrayed = false;
             var dayOfWeek = (int)date.DayOfWeek;
             if (filter.SelectedDays.Any() && !filter.SelectedDays.Contains(dayOfWeek))
                 isDateGrayed = true;
 
-            // 時間帯枠レベルのグレーアウト判定
             var hasAvailableSlot = false;
             if (stats.Slots != null)
             {
@@ -547,20 +482,13 @@
                 {
                     var isSlotGrayed = false;
 
-                    // 特定の時間帯フィルター
                     if (filter.TimeSlots.Any() && !filter.TimeSlots.Contains(slot.Time))
-                    {
                         isSlotGrayed = true;
-                    }
 
-                    // 空き枠数フィルター
                     var availableCapacity = slot.Max - slot.Count;
                     if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
-                    {
                         isSlotGrayed = true;
-                    }
 
-                    // 設備フィルター適用
                     if (filter.EquipIds.Any())
                     {
                         var equipmentFilteredCount = await CalculateEquipmentFilteredCount(date, slot.Time, filter.EquipIds);
@@ -579,13 +507,11 @@
             }
             else
             {
-                // スロットがない場合はAM/PMで判定
                 var amAvailable = stats.AmMax - stats.AmCount;
                 var pmAvailable = stats.PmMax - stats.PmCount;
                 hasAvailableSlot = amAvailable >= filter.RequiredCapacity || pmAvailable >= filter.RequiredCapacity;
             }
 
-            // 日付全体のグレーアウト（条件に合う枠が1つもない場合）
             stats.IsGrayedOut = isDateGrayed || !hasAvailableSlot;
         }
     }
@@ -634,7 +560,6 @@
 
     private void HandleSaveAppointment()
     {
-        // TODO: 保存処理
         CloseModal();
     }
 
@@ -642,26 +567,23 @@
     {
         try
         {
-            // サンプルデータから既存の予約を取得して時間を計算
             var appt = SampleAppointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
             if (appt != null)
             {
-                var duration = appt.EndTime.HasValue && appt.StartTime.HasValue 
-                    ? appt.EndTime.Value - appt.StartTime.Value 
+                var duration = appt.EndTime.HasValue && appt.StartTime.HasValue
+                    ? appt.EndTime.Value - appt.StartTime.Value
                     : TimeSpan.FromHours(1);
                 var newEndTime = moveInfo.NewTime.Add(duration);
-                
-                // 予約時間を更新
+
                 await AppointmentService.UpdateAppointmentAsync(
-                    moveInfo.ApptId, 
+                    moveInfo.ApptId,
                     new UpdateAppointmentDto
                     {
                         Date = moveInfo.NewDate,
                         StartTime = moveInfo.NewTime,
                         EndTime = newEndTime
                     });
-                
-                // サンプルデータも更新（後で実データに置き換え）
+
                 appt.Date = moveInfo.NewDate;
                 appt.StartTime = moveInfo.NewTime;
                 appt.EndTime = newEndTime;
@@ -670,28 +592,23 @@
         }
         catch (Exception ex)
         {
-            // TODO: エラーハンドリング（トースト通知など）
             Console.WriteLine($"予約移動エラー: {ex.Message}");
         }
     }
 
-    /// <summary>
-    /// 設備フィルター適用時の予約数を計算
-    /// </summary>
     private async Task<int> CalculateEquipmentFilteredCount(DateOnly date, string timeSlot, List<Guid> equipIds)
     {
         try
         {
             var stats = await EquipmentService.GetEquipmentStatsAsync(equipIds, date);
 
-            // 指定時間帯にマッチするスロットの合計を集計
             return stats.Sum(s => s.ApptGraph.Slots
                 .Where(slot => slot.Time == timeSlot)
                 .Sum(slot => slot.Count));
         }
         catch
         {
-            return 0; // エラー時は0を返す
+            return 0;
         }
     }
 }
