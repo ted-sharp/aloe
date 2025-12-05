@@ -1,41 +1,34 @@
-@* 右下アクションFAB（Speed Dial） *@
+@* 右下アクションFAB（daisyUI v5 fab-flower） *@
 
-<div class="fab-layer fab-bottom-right">
-    <div class="speed-dial-container @(IsOpen ? "speed-dial-open" : "")">
-        <!-- プライマリFAB -->
-        <button class="btn btn-circle btn-primary btn-lg fab-btn"
-                @onclick="HandlePrimaryClick"
-                aria-label="@(IsOpen ? "メニューを閉じる" : "新規予約")">
-            @if (IsOpen)
-            {
-                <!-- X アイコン -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            }
-            else
-            {
-                <!-- + アイコン -->
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                </svg>
-            }
-        </button>
-
-        <!-- Speed Dialアイテム -->
-        @foreach (var action in GetContextActions())
-        {
-            <div class="speed-dial-item">
-                <div class="tooltip tooltip-left" data-tip="@action.Label">
-                    <button class="btn btn-circle btn-secondary shadow-md"
-                            @onclick="() => ExecuteAction(action)"
-                            aria-label="@action.Label">
-                        @((MarkupString)action.Icon)
-                    </button>
-                </div>
-            </div>
-        }
+<div class="fab fab-flower fab-bottom-right">
+    <!-- メイントリガー: Safariバグ対策でdivを使用 -->
+    <div tabindex="0" role="button" class="btn btn-lg btn-primary btn-circle">
+        <!-- + アイコン -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
     </div>
+
+    <!-- メインアクション（新規予約） -->
+    <button class="fab-main-action btn btn-circle btn-lg btn-success"
+            @onclick="HandleNewAppointment"
+            aria-label="新規予約">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+        </svg>
+    </button>
+
+    <!-- サブアクション（最大4つ） -->
+    @foreach (var action in GetContextActions())
+    {
+        <div class="tooltip tooltip-left" data-tip="@action.Label">
+            <button class="btn btn-lg btn-circle"
+                    @onclick="() => ExecuteAction(action)"
+                    aria-label="@action.Label">
+                @((MarkupString)action.Icon)
+            </button>
+        </div>
+    }
 </div>
 
 @code {
@@ -60,23 +53,13 @@
     [Parameter]
     public EventCallback<string> OnViewChange { get; set; }
 
-    private bool IsOpen { get; set; }
-
-    private void HandlePrimaryClick()
+    private async Task HandleNewAppointment()
     {
-        if (IsOpen)
-        {
-            IsOpen = false;
-        }
-        else
-        {
-            IsOpen = true;
-        }
+        await OnNewAppointment.InvokeAsync();
     }
 
     private async Task ExecuteAction(SpeedDialAction action)
     {
-        IsOpen = false;
         await action.OnClick();
     }
 
@@ -91,40 +74,32 @@
 
         var prevIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>""";
 
-        var nextIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>""";
-
         var weekIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>""";
 
         var monthIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>""";
-
-        var newApptIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>""";
 
         return CurrentView.ToLower() switch
         {
             "year" => new List<SpeedDialAction>
             {
-                new("新規予約", newApptIcon, async () => await OnNewAppointment.InvokeAsync()),
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("フィルター", filterIcon, async () => await OnToggleFilter.InvokeAsync()),
                 new("前年", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
             },
             "month" => new List<SpeedDialAction>
             {
-                new("新規予約", newApptIcon, async () => await OnNewAppointment.InvokeAsync()),
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("週表示", weekIcon, async () => await OnViewChange.InvokeAsync("week")),
                 new("前月", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
             },
             "week" => new List<SpeedDialAction>
             {
-                new("新規予約", newApptIcon, async () => await OnNewAppointment.InvokeAsync()),
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("月表示", monthIcon, async () => await OnViewChange.InvokeAsync("month")),
                 new("前へ", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
             },
             _ => new List<SpeedDialAction>
             {
-                new("新規予約", newApptIcon, async () => await OnNewAppointment.InvokeAsync()),
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
             }
         };

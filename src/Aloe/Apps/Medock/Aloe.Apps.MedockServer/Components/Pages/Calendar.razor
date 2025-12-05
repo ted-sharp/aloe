@@ -2,41 +2,98 @@
 @layout CalendarLayout
 @using Aloe.Apps.MedockLib.Services
 @using Aloe.Apps.MedockServer.Components.Layout
+@using Aloe.Apps.MedockServer.Components.FAB
 @using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @inject IAppointmentService AppointmentService
 @inject IEquipmentService EquipmentService
 @inject AuthenticationStateProvider AuthStateProvider
+@inject AuthService AuthService
+@inject NavigationManager NavigationManager
+@inject ProtectedLocalStorage LocalStorage
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
 <div class="h-full flex flex-col year-grid-container">
-    <!-- ミニナビゲーションバー -->
-    <div class="mini-navbar flex items-center gap-4">
-        <span class="font-bold text-base-content">@GetCurrentPeriodTitle()</span>
-        <div class="btn-group btn-group-sm">
-            <button class="btn btn-sm @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
-                    @onclick="() => SetView(CalendarViewType.Year)">
-                年
+    <!-- ヘッダー行: 左FAB + ナビバー + 右FAB -->
+    <div class="calendar-header flex items-center justify-between px-2 py-1">
+        <!-- 左側: HamburgerFab領域 -->
+        <div class="w-14 flex justify-center">
+            <HamburgerFab @bind-IsDrawerOpen="IsDrawerOpen" />
+        </div>
+
+        <!-- 中央: ナビゲーションバー -->
+        <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm">
+            <!-- 期間移動 -->
+            <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousPeriod" title="前へ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
             </button>
-            <button class="btn btn-sm @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
-                    @onclick="() => SetView(CalendarViewType.Month)">
-                月
+            <span class="font-bold text-base-content text-sm text-center">@GetCurrentPeriodTitle()</span>
+            <button class="btn btn-xs btn-ghost btn-square" @onclick="NextPeriod" title="次へ">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
             </button>
-            <button class="btn btn-sm @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
-                    @onclick="() => SetView(CalendarViewType.Week)">
-                週
+
+            <div class="divider divider-horizontal mx-0"></div>
+
+            <!-- 今日ボタン -->
+            <button class="btn btn-xs btn-ghost px-2" @onclick="GoToToday" title="今日">
+                今日
             </button>
+
+            <!-- フィルターボタン -->
+            <button class="btn btn-xs btn-square @(ShowFilterPanel ? "btn-primary" : "btn-ghost") relative" @onclick="ToggleFilterPanel" title="フィルター">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="badge badge-xs badge-secondary absolute -top-1 -right-1">@ActiveFilterCount</span>
+                }
+            </button>
+
+            <div class="divider divider-horizontal mx-0"></div>
+
+            <!-- ビュー切り替え -->
+            <div class="join">
+                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
+                        @onclick="() => SetView(CalendarViewType.Year)">
+                    年
+                </button>
+                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
+                        @onclick="() => SetView(CalendarViewType.Month)">
+                    月
+                </button>
+                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
+                        @onclick="() => SetView(CalendarViewType.Week)">
+                    週
+                </button>
+            </div>
+        </div>
+
+        <!-- 右側: UserAvatarFab領域 -->
+        <div class="w-14 flex justify-center">
+            <UserAvatarFab UserInitial="@UserInitial"
+                           UserName="@UserName"
+                           UserEmail="@UserEmail"
+                           TenantName="@TenantName"
+                           UserRole="@UserRole"
+                           OnLogout="HandleLogout" />
         </div>
     </div>
 
-    <!-- 検索フィルター（年間表示の場合のみ、トグル表示） -->
-    @if (ShowFilterPanel && CurrentView == CalendarViewType.Year)
+    <!-- 検索フィルター（トグル表示） -->
+    @if (ShowFilterPanel)
     {
         <div class="absolute top-16 left-4 right-4 z-50">
             <SearchFilterPanel @ref="filterPanelRef"
                 AvailableEquipments="@AvailableEquipments"
                 OnFilterApplied="@HandleFilterApplied"
-                OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
+                OnFilterChangedRealtime="@HandleFilterChangedRealtime"
+                OnClose="@CloseFilterPanel" />
         </div>
     }
 
@@ -106,6 +163,28 @@
     private bool ShowSlots { get; set; } = true;
     private bool ShowFilterPanel { get; set; } = false;
 
+    // ドロワー状態（Layoutと連携）
+    private bool _isDrawerOpen;
+    private bool IsDrawerOpen
+    {
+        get => Layout?.IsDrawerOpen ?? _isDrawerOpen;
+        set
+        {
+            _isDrawerOpen = value;
+            if (Layout != null)
+            {
+                Layout.IsDrawerOpen = value;
+            }
+        }
+    }
+
+    // ユーザー情報
+    private string UserInitial { get; set; } = "U";
+    private string UserName { get; set; } = "";
+    private string UserEmail { get; set; } = "";
+    private string TenantName { get; set; } = "";
+    private string UserRole { get; set; } = "";
+
     // Modal state
     private bool IsModalOpen { get; set; } = false;
     private DateOnly? ModalDate { get; set; }
@@ -127,6 +206,13 @@
     private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
     private SearchFilterPanel? filterPanelRef;
 
+    // アクティブなフィルター数（ナビバーのバッジ表示用）
+    private int ActiveFilterCount =>
+        (CurrentFilter?.SelectedDays.Any() == true ? 1 : 0) +
+        (CurrentFilter?.TimeSlots.Any() == true ? 1 : 0) +
+        (CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
+        (CurrentFilter?.EquipIds.Any() == true ? 1 : 0);
+
     private enum CalendarViewType
     {
         Year,
@@ -139,6 +225,74 @@
         GenerateSampleData();
         await GenerateFilterOptions();
         await LoadHolidaysAsync();
+        await LoadUserInfoAsync();
+    }
+
+    private async Task LoadUserInfoAsync()
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                UserName = user.FindFirst("name")?.Value
+                    ?? user.FindFirst("user_name")?.Value
+                    ?? user.Identity.Name
+                    ?? "";
+
+                UserEmail = user.FindFirst("email")?.Value ?? "";
+                TenantName = user.FindFirst("tenant_name")?.Value ?? "";
+
+                var roles = user.FindAll("role").Select(c => c.Value).ToList();
+                UserRole = roles.FirstOrDefault() ?? "";
+
+                if (!string.IsNullOrEmpty(UserName))
+                {
+                    UserInitial = UserName[..1].ToUpper();
+                }
+            }
+        }
+        catch
+        {
+            // ユーザー情報取得失敗時は初期値のまま
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        try
+        {
+            var sessionIdResult = await LocalStorage.GetAsync<string>("session_id");
+            if (sessionIdResult.Success && !string.IsNullOrEmpty(sessionIdResult.Value))
+            {
+                if (Guid.TryParse(sessionIdResult.Value, out var sessionId))
+                {
+                    await AuthService.LogoutAsync(sessionId);
+                }
+            }
+        }
+        catch
+        {
+            // ログアウトAPIの失敗は無視
+        }
+        finally
+        {
+            try
+            {
+                await LocalStorage.DeleteAsync("session_id");
+                await LocalStorage.DeleteAsync("keep_session");
+                await LocalStorage.DeleteAsync("access_token");
+                await LocalStorage.DeleteAsync("remember_user_code");
+            }
+            catch
+            {
+                // ストレージクリア失敗も無視
+            }
+
+            NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -165,6 +319,12 @@
     private void ToggleFilterPanel()
     {
         ShowFilterPanel = !ShowFilterPanel;
+        StateHasChanged();
+    }
+
+    private void CloseFilterPanel()
+    {
+        ShowFilterPanel = false;
         StateHasChanged();
     }
 

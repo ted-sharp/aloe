@@ -1,4 +1,4 @@
-@* 右上ユーザーアバターFAB *@
+@* ユーザーアバターボタン（ヘッダー行内に配置） *@
 
 <!-- バックドロップ（メニュー表示時） -->
 @if (IsMenuOpen)
@@ -9,22 +9,21 @@
     </div>
 }
 
-<div class="fab-layer fab-top-right">
-    <div class="relative">
-        <!-- アバターボタン -->
-        <button class="btn btn-circle avatar placeholder fab-btn z-[1000]"
-                @onclick="ToggleMenu"
-                aria-label="ユーザーメニュー"
-                aria-expanded="@IsMenuOpen">
-            <div class="bg-emerald-500 text-white rounded-full w-12">
-                <span class="text-lg">@UserInitial</span>
-            </div>
-        </button>
+<div class="relative">
+    <!-- アバターボタン -->
+    <button class="btn btn-circle avatar placeholder shadow-md z-[1000]"
+            @onclick="ToggleMenu"
+            aria-label="ユーザーメニュー"
+            aria-expanded="@IsMenuOpen">
+        <div class="bg-emerald-500 text-white rounded-full w-12">
+            <span class="text-lg">@UserInitial</span>
+        </div>
+    </button>
 
-        <!-- ドロップダウンメニュー -->
-        @if (IsMenuOpen)
-        {
-            <div class="absolute right-0 top-14 z-[1001] w-64 bg-base-100 rounded-box shadow-2xl overflow-hidden">
+    <!-- ドロップダウンメニュー -->
+    @if (IsMenuOpen)
+    {
+        <div class="absolute right-0 top-14 z-[1001] w-64 bg-base-100 rounded-box shadow-2xl overflow-hidden">
                 <!-- ユーザー情報ヘッダー -->
                 <div class="p-4 border-b border-base-300 bg-base-200/50">
                     <div class="flex items-center gap-3">
@@ -91,7 +90,6 @@
                 </ul>
             </div>
         }
-    </div>
 </div>
 
 @code {

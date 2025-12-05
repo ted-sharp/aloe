@@ -13,10 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+1+Code:wght@100..700&display=swap" rel="stylesheet">
     
-    <!-- Tailwind CSS Play CDN (must be loaded first) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- daisyUI v4 CDN (more stable than v5) -->
-    <link href="https://cdn.jsdelivr.net/npm/daisyui@4.12.14/dist/full.min.css" rel="stylesheet" type="text/css" />
+    <!-- daisyUI v5 + Tailwind CSS v4 CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@@5" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@@tailwindcss/browser@@4"></script>
     
     <!-- D3.js for calculations -->
     <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
@@ -117,35 +116,12 @@
            FAB（Floating Action Button）
            ======================================== */
 
-        .fab-layer {
-            position: fixed;
-            z-index: 1000;
-        }
-
-        .fab-top-left {
-            top: 1rem;
-            left: 1rem;
-        }
-
-        .fab-top-right {
-            top: 1rem;
-            right: 1rem;
-        }
-
+        /* daisyUI v5のfabコンポーネント用配置 */
         .fab-bottom-right {
+            position: fixed;
             bottom: 1.5rem;
             right: 1.5rem;
-        }
-
-        /* FABボタン共通スタイル */
-        .fab-btn {
-            min-width: 48px;
-            min-height: 48px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .fab-btn:hover {
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
         }
 
         /* ========================================
@@ -201,61 +177,12 @@
         }
 
         /* ========================================
-           Speed Dial（アクションFAB展開）
+           カレンダーヘッダー
            ======================================== */
 
-        .speed-dial-container {
-            display: flex;
-            flex-direction: column-reverse;
-            align-items: flex-end;
-            gap: 0.75rem;
-        }
-
-        .speed-dial-item {
-            transform: scale(0) translateY(1rem);
-            opacity: 0;
-            transition: all 0.2s ease-out;
-            pointer-events: none;
-        }
-
-        .speed-dial-open .speed-dial-item {
-            transform: scale(1) translateY(0);
-            opacity: 1;
-            pointer-events: auto;
-        }
-
-        .speed-dial-open .speed-dial-item:nth-child(2) { transition-delay: 30ms; }
-        .speed-dial-open .speed-dial-item:nth-child(3) { transition-delay: 60ms; }
-        .speed-dial-open .speed-dial-item:nth-child(4) { transition-delay: 90ms; }
-        .speed-dial-open .speed-dial-item:nth-child(5) { transition-delay: 120ms; }
-
-        /* Speed Dial tooltipはdaisyUIのtooltipを使用 */
-
-        /* ========================================
-           ミニナビゲーションバー
-           ======================================== */
-
-        .mini-navbar {
-            position: fixed;
-            top: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            padding: 0.5rem 1rem;
-            background: var(--fallback-b1,oklch(var(--b1)/0.9));
-            backdrop-filter: blur(8px);
-            border-radius: 0 0 1rem 1rem;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        /* スマホではFABの間に収まるよう調整 */
-        @@container calendar (max-width: 767px) {
-            .mini-navbar {
-                left: 4rem;
-                right: 4rem;
-                transform: none;
-                border-radius: 0 0 0.75rem 0.75rem;
-            }
+        .calendar-header {
+            flex-shrink: 0;
+            background: var(--fallback-b2,oklch(var(--b2)));
         }
 
         /* ========================================

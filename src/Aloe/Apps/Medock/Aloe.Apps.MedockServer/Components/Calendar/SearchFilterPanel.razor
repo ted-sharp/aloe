@@ -1,12 +1,12 @@
-@* 
-    SearchFilterPanel - 年間カレンダー用の検索フィルターパネル
+@*
+    SearchFilterPanel - カレンダー用の検索フィルターパネル
     条件に当てはまらない日/時間帯をグレーアウト表示するためのフィルター
 *@
 
 <div class="card bg-base-100 shadow-sm mb-4">
     <div class="card-body p-4">
-        <!-- フィルター展開/折りたたみヘッダー -->
-        <div class="flex items-center justify-between cursor-pointer" @onclick="ToggleExpanded">
+        <!-- ヘッダー: タイトルと閉じるボタン -->
+        <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
@@ -17,138 +17,114 @@
                     <span class="badge badge-primary badge-sm">@ActiveFilterCount</span>
                 }
             </div>
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform @(IsExpanded ? "rotate-180" : "")" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
+            <button class="btn btn-sm btn-ghost btn-square" @onclick="HandleClose" title="閉じる">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
 
-        <!-- アクティブフィルターのバッジ表示 -->
-        @if (!IsExpanded && ActiveFilters.Any())
-        {
-            <div class="flex flex-wrap gap-2 mt-2">
-                @foreach (var filter in ActiveFilters)
-                {
-                    <span class="badge badge-outline gap-1">
-                        @filter
-                        <button class="btn btn-ghost btn-xs p-0" @onclick="() => RemoveFilter(filter)">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </span>
-                }
-            </div>
-        }
+        <div class="divider my-2"></div>
 
         <!-- フィルター詳細パネル -->
-        @if (IsExpanded)
-        {
-            <div class="divider my-2"></div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <!-- 曜日 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">曜日</span>
-                        <div class="flex gap-1">
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllDays">全選択</button>
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllDays">全解除</button>
-                        </div>
-                    </label>
-                    <div class="flex flex-wrap gap-1">
-                        @foreach (var (day, index) in DayNames.Select((d, i) => (d, i)))
-                        {
-                            var dayIndex = index;
-                            <label class="cursor-pointer">
-                                <input type="checkbox" 
-                                       class="checkbox checkbox-xs checkbox-primary hidden peer" 
-                                       checked="@SelectedDays.Contains(dayIndex)"
-                                       @onchange="() => ToggleDay(dayIndex)" />
-                                <span class="badge @(SelectedDays.Contains(dayIndex) ? "badge-primary" : "badge-outline") 
-                                             @(dayIndex == 0 ? "text-error" : dayIndex == 6 ? "text-info" : "")">
-                                    @day
-                                </span>
-                            </label>
-                        }
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 曜日 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">曜日</span>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllDays">全選択</button>
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllDays">全解除</button>
                     </div>
-                </div>
-
-                <!-- 時間帯 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">時間帯</span>
-                        <div class="flex gap-1">
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllTimeSlots">全選択</button>
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllTimeSlots">全解除</button>
-                        </div>
-                    </label>
-                    <div class="flex flex-wrap gap-1">
-                        @foreach (var slot in TimeSlots)
-                        {
-                            <label class="cursor-pointer">
-                                <input type="checkbox"
-                                       class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                       checked="@SelectedTimeSlots.Contains(slot)"
-                                       @onchange="() => ToggleTimeSlot(slot)" />
-                                <span class="badge @(SelectedTimeSlots.Contains(slot) ? "badge-primary" : "badge-outline")">
-                                    @slot
-                                </span>
-                            </label>
-                        }
-                    </div>
-                </div>
-
-                <!-- 必要人数 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">空き枠数</span>
-                    </label>
-                    <div class="flex items-center gap-2">
-                        <input type="number" class="input input-bordered input-sm w-20" 
-                               min="1" max="10"
-                               @bind="RequiredCapacity" @bind:event="oninput" @bind:after="OnFilterChanged" />
-                        <span class="text-sm text-base-content/60">名以上</span>
-                    </div>
-                </div>
-
-                <!-- 設備 -->
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">設備</span>
-                        <div class="flex gap-1">
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllEquipments">全選択</button>
-                            <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllEquipments">全解除</button>
-                        </div>
-                    </label>
-                    <div class="flex flex-wrap gap-1 max-h-40 overflow-y-auto border border-base-300 rounded-lg p-2">
-                        @foreach (var equipment in AvailableEquipments)
-                        {
-                            <label class="cursor-pointer">
-                                <input type="checkbox"
-                                       class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                       checked="@SelectedEquipments.Contains(equipment.Id)"
-                                       @onchange="() => ToggleEquipment(equipment.Id)" />
-                                <span class="badge @(SelectedEquipments.Contains(equipment.Id) ? "badge-primary" : "badge-outline")">
-                                    @equipment.Name
-                                </span>
-                            </label>
-                        }
-                    </div>
+                </label>
+                <div class="flex flex-wrap gap-1">
+                    @foreach (var (day, index) in DayNames.Select((d, i) => (d, i)))
+                    {
+                        var dayIndex = index;
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                   checked="@SelectedDays.Contains(dayIndex)"
+                                   @onchange="() => ToggleDay(dayIndex)" />
+                            <span class="badge @(SelectedDays.Contains(dayIndex) ? "badge-primary" : "badge-outline")
+                                         @(dayIndex == 0 ? "text-error" : dayIndex == 6 ? "text-info" : "")">
+                                @day
+                            </span>
+                        </label>
+                    }
                 </div>
             </div>
 
-            <!-- アクションボタン -->
-            <div class="flex justify-end gap-2 mt-4">
-                <button class="btn btn-ghost btn-sm" @onclick="ClearFilters">
-                    クリア
-                </button>
-                <button class="btn btn-primary btn-sm" @onclick="ApplyFilters">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    検索
-                </button>
+            <!-- 時間帯 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">時間帯</span>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllTimeSlots">全選択</button>
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllTimeSlots">全解除</button>
+                    </div>
+                </label>
+                <div class="flex flex-wrap gap-1">
+                    @foreach (var slot in TimeSlots)
+                    {
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                   checked="@SelectedTimeSlots.Contains(slot)"
+                                   @onchange="() => ToggleTimeSlot(slot)" />
+                            <span class="badge @(SelectedTimeSlots.Contains(slot) ? "badge-primary" : "badge-outline")">
+                                @slot
+                            </span>
+                        </label>
+                    }
+                </div>
             </div>
-        }
+
+            <!-- 必要人数 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">空き枠数</span>
+                </label>
+                <div class="flex items-center gap-2">
+                    <input type="number" class="input input-bordered input-sm w-20"
+                           min="1" max="10"
+                           @bind="RequiredCapacity" @bind:event="oninput" @bind:after="OnFilterChanged" />
+                    <span class="text-sm text-base-content/60">名以上</span>
+                </div>
+            </div>
+
+            <!-- 設備 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">設備</span>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllEquipments">全選択</button>
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllEquipments">全解除</button>
+                    </div>
+                </label>
+                <div class="flex flex-wrap gap-1 max-h-40 overflow-y-auto border border-base-300 rounded-lg p-2">
+                    @foreach (var equipment in AvailableEquipments)
+                    {
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                   checked="@SelectedEquipments.Contains(equipment.Id)"
+                                   @onchange="() => ToggleEquipment(equipment.Id)" />
+                            <span class="badge @(SelectedEquipments.Contains(equipment.Id) ? "badge-primary" : "badge-outline")">
+                                @equipment.Name
+                            </span>
+                        </label>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- クリアボタン -->
+        <div class="flex justify-end mt-4">
+            <button class="btn btn-ghost btn-sm" @onclick="ClearFilters">
+                クリア
+            </button>
+        </div>
     </div>
 </div>
 
@@ -171,8 +147,11 @@
     [Parameter]
     public EventCallback<SearchFilter> OnFilterChangedRealtime { get; set; }
 
-    // UI状態
-    private bool IsExpanded { get; set; } = false;
+    /// <summary>
+    /// パネルを閉じる時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnClose { get; set; }
 
     // フィルター値
     private HashSet<int> SelectedDays { get; set; } = new(); // デフォルト全オフ
@@ -190,36 +169,9 @@
         (RequiredCapacity > 1 ? 1 : 0) +
         (SelectedEquipments.Any() ? 1 : 0);
 
-    private List<string> ActiveFilters
+    private async Task HandleClose()
     {
-        get
-        {
-            var filters = new List<string>();
-            if (SelectedDays.Any())
-            {
-                var days = string.Join("", SelectedDays.OrderBy(d => d).Select(d => DayNames[d]));
-                filters.Add($"曜日: {days}");
-            }
-            if (SelectedTimeSlots.Any())
-            {
-                var times = string.Join(",", SelectedTimeSlots.OrderBy(t => t));
-                filters.Add($"時間: {times}");
-            }
-            if (RequiredCapacity > 1)
-            {
-                filters.Add($"空き: {RequiredCapacity}名以上");
-            }
-            if (SelectedEquipments.Any())
-            {
-                filters.Add($"設備: {SelectedEquipments.Count}件");
-            }
-            return filters;
-        }
-    }
-
-    private void ToggleExpanded()
-    {
-        IsExpanded = !IsExpanded;
+        await OnClose.InvokeAsync();
     }
 
     private void ToggleDay(int dayIndex)
@@ -261,28 +213,6 @@
         OnFilterChanged();
     }
 
-    private void RemoveFilter(string filterText)
-    {
-        // フィルターテキストに基づいてリセット
-        if (filterText.StartsWith("曜日"))
-        {
-            SelectedDays = new();
-        }
-        else if (filterText.StartsWith("時間"))
-        {
-            SelectedTimeSlots.Clear();
-        }
-        else if (filterText.StartsWith("空き"))
-        {
-            RequiredCapacity = 1;
-        }
-        else if (filterText.StartsWith("設備"))
-        {
-            SelectedEquipments.Clear();
-        }
-        OnFilterChanged();
-    }
-
     private void ClearFilters()
     {
         SelectedDays = new();
@@ -290,12 +220,6 @@
         RequiredCapacity = 1;
         SelectedEquipments.Clear();
         OnFilterChanged();
-    }
-
-    private async Task ApplyFilters()
-    {
-        var filter = BuildFilter();
-        await OnFilterApplied.InvokeAsync(filter);
     }
 
     private async void OnFilterChanged()
@@ -381,4 +305,3 @@
             EquipIds.Any();
     }
 }
-

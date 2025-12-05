@@ -1,27 +1,13 @@
 @* カレンダー専用フルスクリーンレイアウト *@
 @inherits LayoutComponentBase
-@using Aloe.Apps.MedockLib.Services
 @using Aloe.Apps.MedockServer.Components.FAB
-@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@inject NavigationManager NavigationManager
-@inject AuthService AuthService
-@inject ProtectedLocalStorage LocalStorage
-@inject AuthenticationStateProvider AuthStateProvider
 
 <div class="calendar-fullscreen calendar-container bg-base-200">
     <CascadingValue Value="this">
         @Body
     </CascadingValue>
 
-    <!-- FABレイヤー -->
-    <HamburgerFab @bind-IsDrawerOpen="IsDrawerOpen" />
-    <UserAvatarFab UserInitial="@UserInitial"
-                   UserName="@UserName"
-                   UserEmail="@UserEmail"
-                   TenantName="@TenantName"
-                   UserRole="@UserRole"
-                   OnLogout="HandleLogout" />
+    <!-- ActionFab（右下固定） -->
     <ActionFab CurrentView="@CurrentView"
                OnNewAppointment="HandleNewAppointment"
                OnToggleFilter="HandleToggleFilter"
@@ -52,52 +38,23 @@
 </div>
 
 @code {
-    private bool IsDrawerOpen { get; set; }
-    private string UserInitial { get; set; } = "U";
-    private string UserName { get; set; } = "";
-    private string UserEmail { get; set; } = "";
-    private string TenantName { get; set; } = "";
-    private string UserRole { get; set; } = "";
+    // ドロワー状態（Calendar.razorから参照される）
+    private bool _isDrawerOpen;
+    public bool IsDrawerOpen
+    {
+        get => _isDrawerOpen;
+        set
+        {
+            if (_isDrawerOpen != value)
+            {
+                _isDrawerOpen = value;
+                StateHasChanged();
+            }
+        }
+    }
 
     // カレンダーからの状態
     public string CurrentView { get; private set; } = "month";
-
-    protected override async Task OnInitializedAsync()
-    {
-        await LoadUserInfoAsync();
-    }
-
-    private async Task LoadUserInfoAsync()
-    {
-        try
-        {
-            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity?.IsAuthenticated == true)
-            {
-                UserName = user.FindFirst("name")?.Value
-                    ?? user.FindFirst("user_name")?.Value
-                    ?? user.Identity.Name
-                    ?? "";
-
-                UserEmail = user.FindFirst("email")?.Value ?? "";
-                TenantName = user.FindFirst("tenant_name")?.Value ?? "";
-
-                var roles = user.FindAll("role").Select(c => c.Value).ToList();
-                UserRole = roles.FirstOrDefault() ?? "";
-
-                if (!string.IsNullOrEmpty(UserName))
-                {
-                    UserInitial = UserName[..1].ToUpper();
-                }
-            }
-        }
-        catch
-        {
-            // ユーザー情報取得失敗時は初期値のまま
-        }
-    }
 
     // カレンダーからのコールバック
     private Func<Task>? _onNewAppointment;
@@ -188,44 +145,6 @@
         if (_onViewChange != null)
         {
             await _onViewChange(view);
-        }
-    }
-
-    private async Task HandleLogout()
-    {
-        try
-        {
-            // セッションIDを取得してログアウトAPIを呼び出す
-            var sessionIdResult = await LocalStorage.GetAsync<string>("session_id");
-            if (sessionIdResult.Success && !string.IsNullOrEmpty(sessionIdResult.Value))
-            {
-                if (Guid.TryParse(sessionIdResult.Value, out var sessionId))
-                {
-                    await AuthService.LogoutAsync(sessionId);
-                }
-            }
-        }
-        catch
-        {
-            // ログアウトAPIの失敗は無視
-        }
-        finally
-        {
-            // ローカルストレージをクリア
-            try
-            {
-                await LocalStorage.DeleteAsync("session_id");
-                await LocalStorage.DeleteAsync("keep_session");
-                await LocalStorage.DeleteAsync("access_token");
-                await LocalStorage.DeleteAsync("remember_user_code");
-            }
-            catch
-            {
-                // ストレージクリア失敗も無視
-            }
-
-            // ログインページにリダイレクト
-            NavigationManager.NavigateTo("/login", forceLoad: true);
         }
     }
 }
