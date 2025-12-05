@@ -172,7 +172,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                     height: filteredBarHeight,
                     fill: '#fb923c', // オレンジ色
                     cornerRadius: 1,
-                    opacity: 0.7
+                    opacity: isSlotGrayed ? 0.4 : 0.7  // グレーアウト時は透明度を下げる
                 });
                 layers.content.add(filterBar);
             }

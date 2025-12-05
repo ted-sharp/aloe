@@ -1,6 +1,7 @@
 @page "/calendar"
 @using Aloe.Apps.MedockLib.Services
 @inject IAppointmentService AppointmentService
+@inject IEquipmentService EquipmentService
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
@@ -71,7 +72,7 @@
     @if (CurrentView == CalendarViewType.Year)
     {
         <SearchFilterPanel @ref="filterPanelRef"
-            AvailableRooms="@AvailableRooms"
+            AvailableEquipments="@AvailableEquipments"
             OnFilterApplied="@HandleFilterApplied"
             OnFilterChangedRealtime="@HandleFilterChangedRealtime" />
     }
@@ -191,7 +192,7 @@
     private Dictionary<string, string> Holidays { get; set; } = new();
 
     // フィルター用データ
-    private List<SearchFilterPanel.FilterItem> AvailableRooms { get; set; } = new();
+    private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
     private SearchFilterPanel? filterPanelRef;
 
@@ -206,30 +207,33 @@
     {
         // サンプルデータを生成
         GenerateSampleData();
-        
-        // 部屋と設備のサンプルデータを生成
-        GenerateFilterOptions();
-        
+
+        // 設備データを動的に取得
+        await GenerateFilterOptions();
+
         // 祝日データを取得
         await LoadHolidaysAsync();
     }
 
-    private void GenerateFilterOptions()
+    private async Task GenerateFilterOptions()
     {
-        // 部屋のサンプルデータ
-        AvailableRooms = new List<SearchFilterPanel.FilterItem>
+        try
         {
-            new() { Id = Guid.NewGuid(), Name = "問診室1" },
-            new() { Id = Guid.NewGuid(), Name = "問診室2" },
-            new() { Id = Guid.NewGuid(), Name = "問診室3" },
-            new() { Id = Guid.NewGuid(), Name = "検査室1" },
-            new() { Id = Guid.NewGuid(), Name = "検査室2" },
-            new() { Id = Guid.NewGuid(), Name = "検査室3" },
-            new() { Id = Guid.NewGuid(), Name = "X線室" },
-            new() { Id = Guid.NewGuid(), Name = "CT室" },
-            new() { Id = Guid.NewGuid(), Name = "MRI室" },
-            new() { Id = Guid.NewGuid(), Name = "内視鏡室" },
-        };
+            // TODO: 認証コンテキストから実際のテナントIDを取得
+            var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // 仮
+
+            var equipments = await EquipmentService.GetEquipmentsByTenantAsync(tenantId);
+            AvailableEquipments = equipments.Select(e => new SearchFilterPanel.FilterItem
+            {
+                Id = e.EquipId,
+                Name = e.EquipName
+            }).ToList();
+        }
+        catch (Exception)
+        {
+            // エラー時は空リスト
+            AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+        }
     }
     
     private async Task LoadHolidaysAsync()
@@ -459,27 +463,27 @@
     /// <summary>
     /// フィルター適用時のハンドラ
     /// </summary>
-    private void HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
+    private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
         CurrentFilter = filter;
-        ApplyFilterToStats(filter);
+        await ApplyFilterToStats(filter);
         StateHasChanged();
     }
 
     /// <summary>
     /// リアルタイムフィルター変更時のハンドラ
     /// </summary>
-    private void HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
+    private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
         CurrentFilter = filter;
-        ApplyFilterToStats(filter);
+        await ApplyFilterToStats(filter);
         StateHasChanged();
     }
 
     /// <summary>
     /// フィルターをカレンダーデータに適用
     /// </summary>
-    private void ApplyFilterToStats(SearchFilterPanel.SearchFilter filter)
+    private async Task ApplyFilterToStats(SearchFilterPanel.SearchFilter filter)
     {
         // フィルターが無効な場合はオリジナルに戻す
         if (!filter.IsActive)
@@ -537,11 +541,11 @@
                         isSlotGrayed = true;
                     }
 
-                    // 部屋フィルター適用
-                    if (filter.RoomIds.Any())
+                    // 設備フィルター適用
+                    if (filter.EquipIds.Any())
                     {
-                        var roomFilteredCount = CalculateRoomFilteredCount(date, slot.Time, filter.RoomIds);
-                        slot.FilteredCount = roomFilteredCount;
+                        var equipmentFilteredCount = await CalculateEquipmentFilteredCount(date, slot.Time, filter.EquipIds);
+                        slot.FilteredCount = equipmentFilteredCount;
                     }
                     else
                     {
@@ -653,20 +657,22 @@
     }
 
     /// <summary>
-    /// 部屋フィルター適用時の予約数を計算
-    /// TODO: 実際のroom_appointment_statsテーブルから取得する実装に置き換え
+    /// 設備フィルター適用時の予約数を計算
     /// </summary>
-    private int CalculateRoomFilteredCount(DateOnly date, string timeSlot, List<Guid> roomIds)
+    private async Task<int> CalculateEquipmentFilteredCount(DateOnly date, string timeSlot, List<Guid> equipIds)
     {
-        // Mock implementation: Return random count for demonstration
-        // XORを使ってオーバーフローを回避
-        var roomHash = 0;
-        foreach (var roomId in roomIds)
+        try
         {
-            roomHash ^= roomId.GetHashCode();
+            var stats = await EquipmentService.GetEquipmentStatsAsync(equipIds, date);
+
+            // 指定時間帯にマッチするスロットの合計を集計
+            return stats.Sum(s => s.ApptGraph.Slots
+                .Where(slot => slot.Time == timeSlot)
+                .Sum(slot => slot.Count));
         }
-        var seed = date.DayNumber ^ timeSlot.GetHashCode() ^ roomHash;
-        var random = new Random(seed);
-        return random.Next(0, 3);  // 0-2件のランダム
+        catch
+        {
+            return 0; // エラー時は0を返す
+        }
     }
 }

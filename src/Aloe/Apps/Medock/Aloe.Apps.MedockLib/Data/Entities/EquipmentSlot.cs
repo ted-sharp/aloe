@@ -1,22 +1,22 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
 /// <summary>
-/// 部屋スロット定義エンティティ
-/// 部屋ごとの予約可能時間帯をJSONBで保持
+/// 設備スロット定義エンティティ
+/// 設備ごとの予約可能時間帯をJSONBで保持
 /// </summary>
-public class RoomSlot : IAuditableEntity
+public class EquipmentSlot : IAuditableEntity
 {
-    /// <summary>部屋スロットID (PK)</summary>
-    public Guid RoomSlotId { get; set; }
+    /// <summary>設備スロットID (PK)</summary>
+    public Guid EquipSlotId { get; set; }
 
-    /// <summary>部屋ID (FK)</summary>
-    public Guid RoomId { get; set; }
+    /// <summary>設備ID (FK)</summary>
+    public Guid EquipId { get; set; }
 
     /// <summary>
-    /// 部屋スロット定義（JSONB）
+    /// 設備スロット定義（JSONB）
     /// 例: { "slots": [{ "time": "08:00", "max": 1, "duration": 30 }, ...] }
     /// </summary>
-    public string RoomSlots { get; set; } = "{}";
+    public string EquipSlots { get; set; } = "{}";
 
     /// <summary>有効フラグ</summary>
     public bool IsActive { get; set; }
@@ -39,6 +39,5 @@ public class RoomSlot : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual Room Room { get; set; } = null!;
+    public virtual Equipment Equipment { get; set; } = null!;
 }
-

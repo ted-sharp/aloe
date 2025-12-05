@@ -27,6 +27,7 @@ builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();

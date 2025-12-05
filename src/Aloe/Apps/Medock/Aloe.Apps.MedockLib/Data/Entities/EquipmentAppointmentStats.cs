@@ -1,16 +1,16 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
 /// <summary>
-/// 部屋予約統計エンティティ
-/// 部屋別・日別の予約状況（時間帯枠ごとの予約数/最大数）をJSONBで保持
+/// 設備予約統計エンティティ
+/// 設備別・日別の予約状況（時間帯枠ごとの予約数/最大数）をJSONBで保持
 /// </summary>
-public class RoomAppointmentStats : IAuditableEntity
+public class EquipmentAppointmentStats : IAuditableEntity
 {
     /// <summary>予約統計ID (PK)</summary>
     public Guid ApptStatId { get; set; }
 
-    /// <summary>部屋ID (FK)</summary>
-    public Guid RoomId { get; set; }
+    /// <summary>設備ID (FK)</summary>
+    public Guid EquipId { get; set; }
 
     /// <summary>予約日</summary>
     public DateOnly ApptDate { get; set; }
@@ -39,5 +39,5 @@ public class RoomAppointmentStats : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual Room Room { get; set; } = null!;
+    public virtual Equipment Equipment { get; set; } = null!;
 }

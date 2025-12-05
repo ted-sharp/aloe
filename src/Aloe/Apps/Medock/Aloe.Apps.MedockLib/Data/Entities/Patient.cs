@@ -68,6 +68,7 @@ public class Patient : IAuditableEntity
     public virtual Tenant Tenant { get; set; } = null!;
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public virtual ICollection<EquipmentAppointment> EquipmentAppointments { get; set; } = new List<EquipmentAppointment>();
 }
 
 
