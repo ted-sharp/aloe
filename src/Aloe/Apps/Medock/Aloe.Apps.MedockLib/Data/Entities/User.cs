@@ -9,16 +9,16 @@ public class User : IAuditableEntity
     public Guid UserId { get; set; }
 
     /// <summary>ログイン用ID</summary>
-    public string UserCode { get; set; } = string.Empty;
+    public string UserCode { get; set; } = String.Empty;
 
     /// <summary>メールアドレス</summary>
-    public string Email { get; set; } = string.Empty;
+    public string Email { get; set; } = String.Empty;
 
     /// <summary>パスワードハッシュ</summary>
-    public string PasswordHash { get; set; } = string.Empty;
+    public string PasswordHash { get; set; } = String.Empty;
 
     /// <summary>パスワードソルト</summary>
-    public string PasswordSalt { get; set; } = string.Empty;
+    public string PasswordSalt { get; set; } = String.Empty;
 
     /// <summary>有効期限</summary>
     public DateTimeOffset ExpiresDate { get; set; } = new DateTimeOffset(9999, 12, 31, 0, 0, 0, TimeSpan.Zero);

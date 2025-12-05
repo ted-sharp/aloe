@@ -30,7 +30,7 @@ public class EquipmentAppointment : IAuditableEntity
     public int ApptStatusCode { get; set; }
 
     /// <summary>予約メモ</summary>
-    public string ApptMemo { get; set; } = string.Empty;
+    public string ApptMemo { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

@@ -57,7 +57,7 @@ public class PasswordHasher
     public (string Hash, string Salt) HashPassword(string password)
     {
         // ランダムなソルトを生成
-        var saltBytes = new byte[SaltSize];
+        var saltBytes = new byte[this.SaltSize];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(saltBytes);
@@ -67,9 +67,9 @@ public class PasswordHasher
         var hashBytes = Rfc2898DeriveBytes.Pbkdf2(
             Encoding.UTF8.GetBytes(password),
             saltBytes,
-            Iterations,
+            this.Iterations,
             HashAlgorithmName.SHA256,
-            HashSize);
+            this.HashSize);
 
         // Base64文字列に変換してハッシュとソルトを返す
         return (Convert.ToBase64String(hashBytes), Convert.ToBase64String(saltBytes));
@@ -89,9 +89,9 @@ public class PasswordHasher
         var hashBytes = Rfc2898DeriveBytes.Pbkdf2(
             Encoding.UTF8.GetBytes(password),
             saltBytes,
-            Iterations,
+            this.Iterations,
             HashAlgorithmName.SHA256,
-            HashSize);
+            this.HashSize);
 
         // ハッシュが一致するかを比較（タイミング攻撃対策として固定時間比較を使用）
         return CryptographicOperations.FixedTimeEquals(hashBytes, Convert.FromBase64String(hash));

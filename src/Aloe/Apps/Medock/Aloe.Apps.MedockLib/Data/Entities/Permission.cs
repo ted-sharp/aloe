@@ -6,13 +6,13 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public class Permission : IAuditableEntity
 {
     /// <summary>パーミッションコード (PK)</summary>
-    public string PermissionCode { get; set; } = string.Empty;
+    public string PermissionCode { get; set; } = String.Empty;
 
     /// <summary>リソースコード (FK)</summary>
-    public string ResourceCode { get; set; } = string.Empty;
+    public string ResourceCode { get; set; } = String.Empty;
 
     /// <summary>操作コード (FK)</summary>
-    public string OperationCode { get; set; } = string.Empty;
+    public string OperationCode { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

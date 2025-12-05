@@ -18,25 +18,25 @@ public class Organization : IAuditableEntity
     public Guid? ParentOrgId { get; set; }
 
     /// <summary>団体コード（病院の番・法人番号）</summary>
-    public string OrgCode { get; set; } = string.Empty;
+    public string OrgCode { get; set; } = String.Empty;
 
     /// <summary>団体名</summary>
-    public string OrgName { get; set; } = string.Empty;
+    public string OrgName { get; set; } = String.Empty;
 
     /// <summary>団体名カタカナ</summary>
-    public string OrgNameKatakana { get; set; } = string.Empty;
+    public string OrgNameKatakana { get; set; } = String.Empty;
 
     /// <summary>団体名カタカナ（互換）</summary>
-    public string OrgNameKatakanaCompat { get; set; } = string.Empty;
+    public string OrgNameKatakanaCompat { get; set; } = String.Empty;
 
     /// <summary>団体表示名</summary>
-    public string OrgNameDisplay { get; set; } = string.Empty;
+    public string OrgNameDisplay { get; set; } = String.Empty;
 
     /// <summary>団体印刷名</summary>
-    public string OrgNamePrint { get; set; } = string.Empty;
+    public string OrgNamePrint { get; set; } = String.Empty;
 
     /// <summary>メモ</summary>
-    public string OrgMemo { get; set; } = string.Empty;
+    public string OrgMemo { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

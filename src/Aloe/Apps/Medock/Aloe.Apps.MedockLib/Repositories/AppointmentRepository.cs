@@ -13,7 +13,7 @@ public class AppointmentRepository
 
     public AppointmentRepository(MedockDbContext context)
     {
-        _context = context;
+        this._context = context;
     }
 
     /// <summary>
@@ -21,7 +21,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<Appointment?> GetByIdAsync(Guid apptId)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -33,7 +33,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<List<Appointment>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -50,7 +50,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<List<Appointment>> GetByFloorAndDateAsync(Guid floorId, DateOnly date)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -66,7 +66,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<List<Appointment>> GetByPatientIdAsync(Guid ptId)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Where(a => !a.IsDeleted && a.PtId == ptId)
@@ -80,7 +80,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<List<Appointment>> GetByOrganizationIdAsync(Guid orgId)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Include(a => a.Floor)
             .Include(a => a.Patient)
             .Where(a => !a.IsDeleted && a.OrgId == orgId)
@@ -94,8 +94,8 @@ public class AppointmentRepository
     /// </summary>
     public async Task AddAsync(Appointment appointment)
     {
-        _context.Appointments.Add(appointment);
-        await _context.SaveChangesAsync();
+        this._context.Appointments.Add(appointment);
+        await this._context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -103,8 +103,8 @@ public class AppointmentRepository
     /// </summary>
     public async Task UpdateAsync(Appointment appointment)
     {
-        _context.Appointments.Update(appointment);
-        await _context.SaveChangesAsync();
+        this._context.Appointments.Update(appointment);
+        await this._context.SaveChangesAsync();
     }
 
     /// <summary>
@@ -112,11 +112,11 @@ public class AppointmentRepository
     /// </summary>
     public async Task DeleteAsync(Guid apptId)
     {
-        var appointment = await _context.Appointments.FindAsync(apptId);
+        var appointment = await this._context.Appointments.FindAsync(apptId);
         if (appointment != null)
         {
             appointment.IsDeleted = true;
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
         }
     }
 
@@ -125,7 +125,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<int> GetCountByDateAsync(DateOnly date)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .CountAsync(a => !a.IsDeleted && a.ApptDate == date);
     }
 
@@ -134,7 +134,7 @@ public class AppointmentRepository
     /// </summary>
     public async Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date)
     {
-        return await _context.Appointments
+        return await this._context.Appointments
             .Where(a => !a.IsDeleted &&
                         a.FloorId == floorId &&
                         a.ApptDate == date)

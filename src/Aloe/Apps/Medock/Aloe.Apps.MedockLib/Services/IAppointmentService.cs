@@ -124,6 +124,6 @@ public class UpdateAppointmentDto
 public class HolidayDto
 {
     public DateOnly Date { get; set; }
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = String.Empty;
 }
 

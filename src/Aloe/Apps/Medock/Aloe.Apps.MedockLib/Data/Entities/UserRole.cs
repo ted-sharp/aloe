@@ -12,7 +12,7 @@ public class UserRole : IAuditableEntity
     public Guid UserId { get; set; }
 
     /// <summary>ロールコード (FK)</summary>
-    public string RoleCode { get; set; } = string.Empty;
+    public string RoleCode { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

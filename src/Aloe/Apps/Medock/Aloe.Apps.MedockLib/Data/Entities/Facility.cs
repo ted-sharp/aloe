@@ -12,13 +12,13 @@ public class Facility : IAuditableEntity
     public Guid TenantId { get; set; }
 
     /// <summary>医療機関コード</summary>
-    public string MedicalInstitutionCode { get; set; } = string.Empty;
+    public string MedicalInstitutionCode { get; set; } = String.Empty;
 
     /// <summary>施設名</summary>
-    public string FacilityName { get; set; } = string.Empty;
+    public string FacilityName { get; set; } = String.Empty;
 
     /// <summary>施設表示名</summary>
-    public string FacilityNameDisplay { get; set; } = string.Empty;
+    public string FacilityNameDisplay { get; set; } = String.Empty;
 
     /// <summary>有効フラグ</summary>
     public bool IsActive { get; set; }

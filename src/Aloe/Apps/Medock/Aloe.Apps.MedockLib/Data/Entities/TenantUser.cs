@@ -15,7 +15,7 @@ public class TenantUser : IAuditableEntity
     public Guid UserId { get; set; }
 
     /// <summary>表示名</summary>
-    public string DisplayName { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>
     public int TenantUserSeq { get; set; }

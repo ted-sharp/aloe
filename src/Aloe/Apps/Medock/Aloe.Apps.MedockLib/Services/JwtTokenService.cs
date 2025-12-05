@@ -25,8 +25,8 @@ public class JwtTokenService
 
     public JwtTokenService(IOptions<JwtSettings> settings)
     {
-        _settings = settings.Value;
-        _signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.SecretKey));
+        this._settings = settings.Value;
+        this._signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._settings.SecretKey));
     }
 
     /// <summary>
@@ -73,10 +73,10 @@ public class JwtTokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(_settings.AccessTokenExpirationMinutes),
-            Issuer = _settings.Issuer,
-            Audience = _settings.Audience,
-            SigningCredentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256Signature)
+            Expires = DateTime.UtcNow.AddMinutes(this._settings.AccessTokenExpirationMinutes),
+            Issuer = this._settings.Issuer,
+            Audience = this._settings.Audience,
+            SigningCredentials = new SigningCredentials(this._signingKey, SecurityAlgorithms.HmacSha256Signature)
         };
 
         var tokenHandler = new JwtSecurityTokenHandler();
@@ -110,9 +110,9 @@ public class JwtTokenService
             ValidateAudience = true,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = _settings.Issuer,
-            ValidAudience = _settings.Audience,
-            IssuerSigningKey = _signingKey,
+            ValidIssuer = this._settings.Issuer,
+            ValidAudience = this._settings.Audience,
+            IssuerSigningKey = this._signingKey,
             ClockSkew = TimeSpan.Zero // 有効期限の猶予なし
         };
 
@@ -132,7 +132,7 @@ public class JwtTokenService
     /// </summary>
     public DateTime GetRefreshTokenExpiration()
     {
-        return DateTime.UtcNow.AddDays(_settings.RefreshTokenExpirationDays);
+        return DateTime.UtcNow.AddDays(this._settings.RefreshTokenExpirationDays);
     }
 }
 

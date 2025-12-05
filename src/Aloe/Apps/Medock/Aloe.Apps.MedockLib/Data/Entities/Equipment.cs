@@ -12,10 +12,10 @@ public class Equipment : IAuditableEntity
     public Guid FloorId { get; set; }
 
     /// <summary>設備名</summary>
-    public string EquipName { get; set; } = string.Empty;
+    public string EquipName { get; set; } = String.Empty;
 
     /// <summary>設備説明</summary>
-    public string EquipDesc { get; set; } = string.Empty;
+    public string EquipDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>
     public int EquipSeq { get; set; }

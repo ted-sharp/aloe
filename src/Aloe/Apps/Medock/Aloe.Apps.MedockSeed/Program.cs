@@ -18,7 +18,7 @@ builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnC
 
 // 接続文字列取得
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-if (string.IsNullOrEmpty(connectionString))
+if (String.IsNullOrEmpty(connectionString))
 {
     Console.WriteLine("[ERROR] Connection string 'DefaultConnection' not found in appsettings.json");
     return 1;
@@ -67,10 +67,10 @@ try
     // 既存データチェック
     Console.WriteLine();
     Console.WriteLine("[INFO] Checking existing seed data...");
-    
+
     var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
     var needsUserSeed = existingAdmin == null;
-    
+
     if (needsUserSeed)
     {
         // Seedデータ投入
@@ -138,14 +138,14 @@ try
     var existingFacility = await context.Facilities.FirstOrDefaultAsync();
     Guid? facilityId = existingFacility?.FacilityId;
     Guid? floorId = null;
-    
+
     if (existingFacility == null)
     {
         var tenantForFacility = await context.Tenants.FirstOrDefaultAsync();
         if (tenantForFacility != null)
         {
             Console.WriteLine("[INFO] Creating facility and floor seed data...");
-            
+
             // 施設作成
             facilityId = Guid.NewGuid();
             var facility = new Facility
@@ -346,15 +346,15 @@ try
         {
             var dayOfWeek = date.DayOfWeek;
             var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
-            
+
             // 時間帯枠ごとのデータを生成
             var slots = new List<object>();
             var totalCount = 0;
             var totalMax = 0;
-            
+
             var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
             var slotMaxes = new[] { 5, 8, 8, 8, 8, 8, 8, 5 };
-            
+
             for (var i = 0; i < slotTimes.Length; i++)
             {
                 var max = isWeekend ? slotMaxes[i] / 2 : slotMaxes[i];
@@ -365,7 +365,7 @@ try
             }
 
             var graphJson = System.Text.Json.JsonSerializer.Serialize(new { slots });
-            
+
             statsList.Add(new AppointmentStats
             {
                 ApptStatId = Guid.NewGuid(),
@@ -379,7 +379,7 @@ try
                 UpdatedAt = DateTimeOffset.UtcNow
             });
         }
-        
+
         context.AppointmentStats.AddRange(statsList);
         Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} days with slot data");
     }
@@ -687,7 +687,7 @@ try
                 var apptDate = DateOnly.FromDateTime(date);
                 var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
                 var slotTime = slotTimes[random.Next(slotTimes.Length)];
-                var apptStart = new DateTime(date.Year, date.Month, date.Day, int.Parse(slotTime.Split(':')[0]), 0, 0, DateTimeKind.Utc);
+                var apptStart = new DateTime(date.Year, date.Month, date.Day, Int32.Parse(slotTime.Split(':')[0]), 0, 0, DateTimeKind.Utc);
                 var apptEnd = apptStart.AddMinutes(60);
 
                 appointments.Add(new Appointment
@@ -798,7 +798,7 @@ try
                 var apptDate = DateOnly.FromDateTime(date);
                 var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
                 var slotTime = slotTimes[random.Next(slotTimes.Length)];
-                var apptStart = new DateTime(date.Year, date.Month, date.Day, int.Parse(slotTime.Split(':')[0]), 0, 0, DateTimeKind.Utc);
+                var apptStart = new DateTime(date.Year, date.Month, date.Day, Int32.Parse(slotTime.Split(':')[0]), 0, 0, DateTimeKind.Utc);
                 var apptEnd = apptStart.AddMinutes(30);
 
                 equipmentAppointments.Add(new EquipmentAppointment
@@ -1018,10 +1018,10 @@ try
         Console.WriteLine();
         Console.WriteLine("[INFO] No changes to save.");
     }
-    
+
     Console.WriteLine();
     Console.WriteLine("=== Seed completed ===");
-    
+
     if (needsUserSeed)
     {
         Console.WriteLine();

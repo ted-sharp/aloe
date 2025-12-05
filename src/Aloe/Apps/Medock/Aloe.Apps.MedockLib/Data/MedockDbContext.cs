@@ -17,42 +17,42 @@ public class MedockDbContext : DbContext
     }
 
     // 認証系
-    public DbSet<User> Users => Set<User>();
-    public DbSet<Session> Sessions => Set<Session>();
-    public DbSet<Role> Roles => Set<Role>();
-    public DbSet<Permission> Permissions => Set<Permission>();
-    public DbSet<Resource> Resources => Set<Resource>();
-    public DbSet<Operation> Operations => Set<Operation>();
-    public DbSet<UserRole> UserRoles => Set<UserRole>();
-    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<User> Users => this.Set<User>();
+    public DbSet<Session> Sessions => this.Set<Session>();
+    public DbSet<Role> Roles => this.Set<Role>();
+    public DbSet<Permission> Permissions => this.Set<Permission>();
+    public DbSet<Resource> Resources => this.Set<Resource>();
+    public DbSet<Operation> Operations => this.Set<Operation>();
+    public DbSet<UserRole> UserRoles => this.Set<UserRole>();
+    public DbSet<RolePermission> RolePermissions => this.Set<RolePermission>();
 
     // 組織系
-    public DbSet<Tenant> Tenants => Set<Tenant>();
-    public DbSet<TenantUser> TenantUsers => Set<TenantUser>();
-    public DbSet<Facility> Facilities => Set<Facility>();
-    public DbSet<Floor> Floors => Set<Floor>();
-    public DbSet<Equipment> Equipments => Set<Equipment>();
+    public DbSet<Tenant> Tenants => this.Set<Tenant>();
+    public DbSet<TenantUser> TenantUsers => this.Set<TenantUser>();
+    public DbSet<Facility> Facilities => this.Set<Facility>();
+    public DbSet<Floor> Floors => this.Set<Floor>();
+    public DbSet<Equipment> Equipments => this.Set<Equipment>();
 
     // 業務系
-    public DbSet<Patient> Patients => Set<Patient>();
-    public DbSet<Organization> Organizations => Set<Organization>();
-    public DbSet<Appointment> Appointments => Set<Appointment>();
-    public DbSet<AppointmentStats> AppointmentStats => Set<AppointmentStats>();
-    public DbSet<EquipmentAppointment> EquipmentAppointments => Set<EquipmentAppointment>();
-    public DbSet<EquipmentAppointmentStats> EquipmentAppointmentStats => Set<EquipmentAppointmentStats>();
-    public DbSet<AppointmentSlot> AppointmentSlots => Set<AppointmentSlot>();
-    public DbSet<EquipmentSlot> EquipmentSlots => Set<EquipmentSlot>();
+    public DbSet<Patient> Patients => this.Set<Patient>();
+    public DbSet<Organization> Organizations => this.Set<Organization>();
+    public DbSet<Appointment> Appointments => this.Set<Appointment>();
+    public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
+    public DbSet<EquipmentAppointment> EquipmentAppointments => this.Set<EquipmentAppointment>();
+    public DbSet<EquipmentAppointmentStats> EquipmentAppointmentStats => this.Set<EquipmentAppointmentStats>();
+    public DbSet<AppointmentSlot> AppointmentSlots => this.Set<AppointmentSlot>();
+    public DbSet<EquipmentSlot> EquipmentSlots => this.Set<EquipmentSlot>();
 
     // マスタ系
-    public DbSet<Holiday> Holidays => Set<Holiday>();
+    public DbSet<Holiday> Holidays => this.Set<Holiday>();
 
     /// <summary>
     /// 監査情報を設定します。SaveChanges時に自動でCreated/Updatedフィールドに反映されます。
     /// </summary>
     public void SetAuditInfo(Guid userId, Guid sessionId)
     {
-        _currentUserId = userId;
-        _currentSessionId = sessionId;
+        this._currentUserId = userId;
+        this._currentSessionId = sessionId;
     }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -503,13 +503,13 @@ public class MedockDbContext : DbContext
 
     public override int SaveChanges()
     {
-        UpdateAuditFields();
+        this.UpdateAuditFields();
         return base.SaveChanges();
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        UpdateAuditFields();
+        this.UpdateAuditFields();
         return base.SaveChangesAsync(cancellationToken);
     }
 
@@ -517,22 +517,22 @@ public class MedockDbContext : DbContext
     {
         var now = DateTimeOffset.UtcNow;
 
-        foreach (var entry in ChangeTracker.Entries<IAuditableEntity>())
+        foreach (var entry in this.ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedAt = now;
-                entry.Entity.CreatedUserId = _currentUserId;
-                entry.Entity.CreatedSessionId = _currentSessionId;
+                entry.Entity.CreatedUserId = this._currentUserId;
+                entry.Entity.CreatedSessionId = this._currentSessionId;
                 entry.Entity.UpdatedAt = now;
-                entry.Entity.UpdatedUserId = _currentUserId;
-                entry.Entity.UpdatedSessionId = _currentSessionId;
+                entry.Entity.UpdatedUserId = this._currentUserId;
+                entry.Entity.UpdatedSessionId = this._currentSessionId;
             }
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = now;
-                entry.Entity.UpdatedUserId = _currentUserId;
-                entry.Entity.UpdatedSessionId = _currentSessionId;
+                entry.Entity.UpdatedUserId = this._currentUserId;
+                entry.Entity.UpdatedSessionId = this._currentSessionId;
             }
         }
     }

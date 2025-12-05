@@ -15,7 +15,7 @@ public class AuthController : ControllerBase
 
     public AuthController(AuthService authService)
     {
-        _authService = authService;
+        this._authService = authService;
     }
 
     /// <summary>
@@ -25,10 +25,10 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var clientEndpoint = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var clientAppName = Request.Headers.UserAgent.ToString();
+        var clientEndpoint = this.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+        var clientAppName = this.Request.Headers.UserAgent.ToString();
 
-        var result = await _authService.LoginAsync(
+        var result = await this._authService.LoginAsync(
             request.UserCode,
             request.Password,
             clientAppName,
@@ -36,10 +36,10 @@ public class AuthController : ControllerBase
 
         if (!result.IsSuccess)
         {
-            return Unauthorized(new { message = result.ErrorMessage });
+            return this.Unauthorized(new { message = result.ErrorMessage });
         }
 
-        return Ok(new LoginResponse
+        return this.Ok(new LoginResponse
         {
             AccessToken = result.AccessToken!,
             RefreshToken = result.RefreshToken!,
@@ -60,14 +60,14 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
     {
-        var result = await _authService.RefreshTokenAsync(request.UserId, request.RefreshToken);
+        var result = await this._authService.RefreshTokenAsync(request.UserId, request.RefreshToken);
 
         if (!result.IsSuccess)
         {
-            return Unauthorized(new { message = result.ErrorMessage });
+            return this.Unauthorized(new { message = result.ErrorMessage });
         }
 
-        return Ok(new RefreshResponse
+        return this.Ok(new RefreshResponse
         {
             AccessToken = result.AccessToken!,
             RefreshToken = result.RefreshToken!,
@@ -82,14 +82,14 @@ public class AuthController : ControllerBase
     [Authorize]
     public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
     {
-        var success = await _authService.LogoutAsync(request.SessionId);
+        var success = await this._authService.LogoutAsync(request.SessionId);
 
         if (!success)
         {
-            return BadRequest(new { message = "Logout failed" });
+            return this.BadRequest(new { message = "Logout failed" });
         }
 
-        return Ok(new { message = "Logged out successfully" });
+        return this.Ok(new { message = "Logged out successfully" });
     }
 }
 

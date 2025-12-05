@@ -18,9 +18,9 @@ public class AuthService
         PasswordHasher passwordHasher,
         JwtTokenService jwtTokenService)
     {
-        _context = context;
-        _passwordHasher = passwordHasher;
-        _jwtTokenService = jwtTokenService;
+        this._context = context;
+        this._passwordHasher = passwordHasher;
+        this._jwtTokenService = jwtTokenService;
     }
 
     /// <summary>
@@ -29,7 +29,7 @@ public class AuthService
     public async Task<AuthResult> LoginAsync(string userCode, string password, string clientAppName, string clientEndpoint)
     {
         // ユーザーを検索
-        var user = await _context.Users
+        var user = await this._context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .Include(u => u.TenantUsers)
@@ -47,7 +47,7 @@ public class AuthService
         }
 
         // パスワード検証
-        if (!_passwordHasher.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
+        if (!this._passwordHasher.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
         {
             // 失敗回数を増加
             user.LoginFailureAttempts++;
@@ -59,7 +59,7 @@ public class AuthService
                 user.LockedUntilAt = DateTimeOffset.UtcNow.AddMinutes(15);
             }
 
-            await _context.SaveChangesAsync();
+            await this._context.SaveChangesAsync();
             return AuthResult.Failed("Invalid credentials");
         }
 
@@ -78,9 +78,9 @@ public class AuthService
             ClientEndpoint = clientEndpoint,
             LoginAt = DateTimeOffset.UtcNow
         };
-        _context.Sessions.Add(session);
+        this._context.Sessions.Add(session);
 
-        await _context.SaveChangesAsync();
+        await this._context.SaveChangesAsync();
 
         // ロール一覧を取得
         var roles = user.UserRoles
@@ -93,14 +93,14 @@ public class AuthService
         var tenantId = tenantUser?.TenantId;
 
         // トークン生成
-        var accessToken = _jwtTokenService.GenerateAccessToken(
+        var accessToken = this._jwtTokenService.GenerateAccessToken(
             user.UserId,
             user.UserCode,
             user.Email,
             tenantId,
             roles);
-        var refreshToken = _jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpiration = _jwtTokenService.GetRefreshTokenExpiration();
+        var refreshToken = this._jwtTokenService.GenerateRefreshToken();
+        var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
 
         return AuthResult.Success(
             accessToken,
@@ -121,7 +121,7 @@ public class AuthService
     {
         // TODO: リフレッシュトークンの検証ロジックを実装
         // 現在は簡易実装として、ユーザーが存在すれば新しいトークンを発行
-        var user = await _context.Users
+        var user = await this._context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .Include(u => u.TenantUsers)
@@ -140,14 +140,14 @@ public class AuthService
         var tenantUser = user.TenantUsers.FirstOrDefault(tu => !tu.IsDeleted);
         var tenantId = tenantUser?.TenantId;
 
-        var accessToken = _jwtTokenService.GenerateAccessToken(
+        var accessToken = this._jwtTokenService.GenerateAccessToken(
             user.UserId,
             user.UserCode,
             user.Email,
             tenantId,
             roles);
-        var newRefreshToken = _jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpiration = _jwtTokenService.GetRefreshTokenExpiration();
+        var newRefreshToken = this._jwtTokenService.GenerateRefreshToken();
+        var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
 
         return AuthResult.Success(
             accessToken,
@@ -166,7 +166,7 @@ public class AuthService
     /// </summary>
     public async Task<bool> LogoutAsync(Guid sessionId)
     {
-        var session = await _context.Sessions.FindAsync(sessionId);
+        var session = await this._context.Sessions.FindAsync(sessionId);
         if (session == null || session.LogoutAt.HasValue)
         {
             return false;
@@ -174,13 +174,13 @@ public class AuthService
 
         session.LogoutAt = DateTimeOffset.UtcNow;
 
-        var user = await _context.Users.FindAsync(session.UserId);
+        var user = await this._context.Users.FindAsync(session.UserId);
         if (user != null)
         {
             user.LastLogoutAt = DateTimeOffset.UtcNow;
         }
 
-        await _context.SaveChangesAsync();
+        await this._context.SaveChangesAsync();
         return true;
     }
 }

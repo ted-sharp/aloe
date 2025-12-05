@@ -12,13 +12,13 @@ public class Floor : IAuditableEntity
     public Guid FacilityId { get; set; }
 
     /// <summary>フロアコード</summary>
-    public string FloorCode { get; set; } = string.Empty;
+    public string FloorCode { get; set; } = String.Empty;
 
     /// <summary>フロア名</summary>
-    public string FloorName { get; set; } = string.Empty;
+    public string FloorName { get; set; } = String.Empty;
 
     /// <summary>フロア説明</summary>
-    public string FloorDesc { get; set; } = string.Empty;
+    public string FloorDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>
     public int FloorSeq { get; set; }

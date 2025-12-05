@@ -12,13 +12,13 @@ public class Session
     public Guid UserId { get; set; }
 
     /// <summary>ユーザー表示名</summary>
-    public string UserDisplayName { get; set; } = string.Empty;
+    public string UserDisplayName { get; set; } = String.Empty;
 
     /// <summary>クライアントアプリ名（バージョン含む）</summary>
-    public string ClientAppName { get; set; } = string.Empty;
+    public string ClientAppName { get; set; } = String.Empty;
 
     /// <summary>クライアントエンドポイント（IP, Port含む）</summary>
-    public string ClientEndpoint { get; set; } = string.Empty;
+    public string ClientEndpoint { get; set; } = String.Empty;
 
     /// <summary>ログイン日時</summary>
     public DateTimeOffset LoginAt { get; set; }

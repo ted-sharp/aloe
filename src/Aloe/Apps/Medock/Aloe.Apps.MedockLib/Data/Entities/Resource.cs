@@ -6,7 +6,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public class Resource : IAuditableEntity
 {
     /// <summary>リソースコード (PK)</summary>
-    public string ResourceCode { get; set; } = string.Empty;
+    public string ResourceCode { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

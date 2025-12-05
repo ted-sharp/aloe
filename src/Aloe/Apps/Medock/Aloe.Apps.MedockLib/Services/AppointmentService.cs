@@ -19,13 +19,13 @@ public class AppointmentService : IAppointmentService
 
     public AppointmentService(MedockDbContext context)
     {
-        _context = context;
+        this._context = context;
     }
 
     /// <inheritdoc />
     public async Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate)
     {
-        var appointments = await _context.Appointments
+        var appointments = await this._context.Appointments
             .Where(a => !a.IsDeleted &&
                         a.ApptDate.HasValue &&
                         a.ApptDate >= startDate &&
@@ -56,7 +56,7 @@ public class AppointmentService : IAppointmentService
         foreach (var appt in appointments)
         {
             if (!appt.ApptDate.HasValue) continue;
-            
+
             var dateStr = appt.ApptDate.Value.ToString("yyyy-MM-dd");
             if (!result.TryGetValue(dateStr, out var stats)) continue;
 
@@ -88,7 +88,7 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<List<AppointmentDto>> GetAppointmentsAsync(DateOnly startDate, DateOnly endDate)
     {
-        var appointments = await _context.Appointments
+        var appointments = await this._context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Organization)
             .Include(a => a.Floor)
@@ -106,7 +106,7 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> GetAppointmentAsync(Guid apptId)
     {
-        var appointment = await _context.Appointments
+        var appointment = await this._context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Organization)
             .Include(a => a.Floor)
@@ -122,11 +122,11 @@ public class AppointmentService : IAppointmentService
         {
             ApptId = Guid.NewGuid(),
             ApptDate = dto.Date,
-            ApptStartAt = dto.StartTime.HasValue 
-                ? dto.Date.ToDateTime(dto.StartTime.Value) 
+            ApptStartAt = dto.StartTime.HasValue
+                ? dto.Date.ToDateTime(dto.StartTime.Value)
                 : null,
-            ApptEndAt = dto.EndTime.HasValue 
-                ? dto.Date.ToDateTime(dto.EndTime.Value) 
+            ApptEndAt = dto.EndTime.HasValue
+                ? dto.Date.ToDateTime(dto.EndTime.Value)
                 : null,
             PtId = dto.PatientId,
             OrgId = dto.OrganizationId,
@@ -137,18 +137,18 @@ public class AppointmentService : IAppointmentService
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        _context.Appointments.Add(appointment);
-        await _context.SaveChangesAsync();
+        this._context.Appointments.Add(appointment);
+        await this._context.SaveChangesAsync();
 
         // 関連データを読み込んで返す
-        return await GetAppointmentAsync(appointment.ApptId) 
+        return await this.GetAppointmentAsync(appointment.ApptId)
                ?? throw new InvalidOperationException("Failed to create appointment");
     }
 
     /// <inheritdoc />
     public async Task<AppointmentDto?> UpdateAppointmentAsync(Guid apptId, UpdateAppointmentDto dto)
     {
-        var appointment = await _context.Appointments.FindAsync(apptId);
+        var appointment = await this._context.Appointments.FindAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return null;
@@ -191,15 +191,15 @@ public class AppointmentService : IAppointmentService
 
         appointment.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await this._context.SaveChangesAsync();
 
-        return await GetAppointmentAsync(apptId);
+        return await this.GetAppointmentAsync(apptId);
     }
 
     /// <inheritdoc />
     public async Task<bool> DeleteAppointmentAsync(Guid apptId)
     {
-        var appointment = await _context.Appointments.FindAsync(apptId);
+        var appointment = await this._context.Appointments.FindAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return false;
@@ -208,14 +208,14 @@ public class AppointmentService : IAppointmentService
         appointment.IsDeleted = true;
         appointment.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await _context.SaveChangesAsync();
+        await this._context.SaveChangesAsync();
         return true;
     }
 
     /// <inheritdoc />
     public async Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate)
     {
-        var holidays = await _context.Holidays
+        var holidays = await this._context.Holidays
             .Where(h => !h.IsDeleted &&
                         h.HolidayDate >= startDate &&
                         h.HolidayDate <= endDate)
@@ -236,11 +236,11 @@ public class AppointmentService : IAppointmentService
         {
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(DateTime.Today),
-            StartTime = appointment.ApptStartAt.HasValue 
-                ? TimeOnly.FromDateTime(appointment.ApptStartAt.Value) 
+            StartTime = appointment.ApptStartAt.HasValue
+                ? TimeOnly.FromDateTime(appointment.ApptStartAt.Value)
                 : null,
-            EndTime = appointment.ApptEndAt.HasValue 
-                ? TimeOnly.FromDateTime(appointment.ApptEndAt.Value) 
+            EndTime = appointment.ApptEndAt.HasValue
+                ? TimeOnly.FromDateTime(appointment.ApptEndAt.Value)
                 : null,
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,

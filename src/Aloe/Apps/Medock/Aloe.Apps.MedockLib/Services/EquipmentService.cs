@@ -13,7 +13,7 @@ public class EquipmentService : IEquipmentService
 
     public EquipmentService(MedockDbContext context)
     {
-        _context = context;
+        this._context = context;
     }
 
     /// <summary>
@@ -22,7 +22,7 @@ public class EquipmentService : IEquipmentService
     public async Task<List<EquipmentDto>> GetEquipmentsByTenantAsync(Guid tenantId)
     {
         // Tenant → Facility → Floor → Equipment の関連を辿る
-        return await _context.Equipments
+        return await this._context.Equipments
             .Include(e => e.Floor)
                 .ThenInclude(f => f!.Facility)
             .Where(e => !e.IsDeleted
@@ -48,7 +48,7 @@ public class EquipmentService : IEquipmentService
     public async Task<List<EquipmentAppointmentStatsDto>> GetEquipmentStatsAsync(
         List<Guid> equipIds, DateOnly date)
     {
-        var stats = await _context.EquipmentAppointmentStats
+        var stats = await this._context.EquipmentAppointmentStats
             .Where(s => equipIds.Contains(s.EquipId)
                 && s.ApptDate == date
                 && !s.IsDeleted)
@@ -60,7 +60,7 @@ public class EquipmentService : IEquipmentService
             ApptDate = s.ApptDate,
             ApptCount = s.ApptCount,
             ApptMax = s.ApptMax,
-            ApptGraph = DeserializeApptGraph(s.ApptGraph)
+            ApptGraph = this.DeserializeApptGraph(s.ApptGraph)
         }).ToList();
     }
 
@@ -71,7 +71,7 @@ public class EquipmentService : IEquipmentService
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(apptGraphJson))
+            if (String.IsNullOrWhiteSpace(apptGraphJson))
             {
                 return new EquipmentApptGraphData();
             }

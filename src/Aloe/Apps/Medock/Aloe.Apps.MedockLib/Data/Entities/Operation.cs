@@ -6,7 +6,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public class Operation : IAuditableEntity
 {
     /// <summary>操作コード (PK)</summary>
-    public string OperationCode { get; set; } = string.Empty;
+    public string OperationCode { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     public bool IsDeleted { get; set; }

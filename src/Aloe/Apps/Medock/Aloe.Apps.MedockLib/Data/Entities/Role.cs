@@ -6,13 +6,13 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public class Role : IAuditableEntity
 {
     /// <summary>ロールコード (PK)</summary>
-    public string RoleCode { get; set; } = string.Empty;
+    public string RoleCode { get; set; } = String.Empty;
 
     /// <summary>ロール名</summary>
-    public string RoleName { get; set; } = string.Empty;
+    public string RoleName { get; set; } = String.Empty;
 
     /// <summary>ロール説明</summary>
-    public string RoleDesc { get; set; } = string.Empty;
+    public string RoleDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>
     public int RoleSeq { get; set; }

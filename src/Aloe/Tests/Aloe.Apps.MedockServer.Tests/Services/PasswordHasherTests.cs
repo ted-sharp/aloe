@@ -104,7 +104,7 @@ public class PasswordHasherTests
     {
         // Arrange
         var hasher = PasswordHasher.Default;
-        var password = string.Empty;
+        var password = String.Empty;
 
         // Act
         var (hash, salt) = hasher.HashPassword(password);

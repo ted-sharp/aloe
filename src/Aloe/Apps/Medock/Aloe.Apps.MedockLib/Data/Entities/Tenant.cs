@@ -9,7 +9,7 @@ public class Tenant : IAuditableEntity
     public Guid TenantId { get; set; }
 
     /// <summary>テナント名</summary>
-    public string TenantName { get; set; } = string.Empty;
+    public string TenantName { get; set; } = String.Empty;
 
     /// <summary>有効フラグ</summary>
     public bool IsActive { get; set; }

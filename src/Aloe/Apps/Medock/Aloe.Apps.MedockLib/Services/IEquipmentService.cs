@@ -25,8 +25,8 @@ public interface IEquipmentService
 public class EquipmentDto
 {
     public Guid EquipId { get; set; }
-    public string EquipName { get; set; } = string.Empty;
-    public string EquipDesc { get; set; } = string.Empty;
+    public string EquipName { get; set; } = String.Empty;
+    public string EquipDesc { get; set; } = String.Empty;
     public int EquipSeq { get; set; }
 }
 
@@ -56,7 +56,7 @@ public class EquipmentApptGraphData
 public class EquipmentTimeSlot
 {
     /// <summary>時間スロット名（"08:00", "09:00" または "AM", "PM"など）</summary>
-    public string Time { get; set; } = string.Empty;
+    public string Time { get; set; } = String.Empty;
 
     /// <summary>予約数</summary>
     public int Count { get; set; }
