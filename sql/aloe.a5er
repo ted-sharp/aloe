@@ -59,6 +59,7 @@ DefaultIndexName=%0:s_IX%1:d
 DefaultFkName=%0:s_FK%1:d
 SqlSeparator=0
 UpperCaseKeyword=1
+CreateOrder=Dependent
 ShowTag=1
 ShowCommonAttributes=0
 BugFixEntityWidth=0
@@ -474,11 +475,11 @@ Page=APPT
 Left=100
 Top=2500
 Field="holiday_date","holiday_date","@DATE","NOT NULL",0,"CURRENT_DATE","",$000000FF,""
-Field="holiday_name","holiday_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="holiday_name","holiday_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251127211542
+ModifiedDateTime=20251205185847
 Position="APPT",100,2500
 ZOrder=180
 
@@ -532,24 +533,24 @@ Position="APPT",100,100
 ZOrder=201
 
 [Entity]
-PName=rooms
-LName=rooms
+PName=equipments
+LName=equipments
 Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
 Left=100
 Top=1500
-Field="room_id","room_id","UUID","NOT NULL",0,"","",$000028FF,""
+Field="equip_id","equip_id","UUID","NOT NULL",0,"","",$000028FF,""
 Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="room_name","room_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="room_desc","room_desc","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="room_seq","room_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="equip_name","equip_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="equip_desc","equip_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="equip_seq","equip_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Index==0,floor_id
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251127211353
+ModifiedDateTime=20251205195200
 Position="APPT",100,1500
 ZOrder=217
 
@@ -570,14 +571,14 @@ Field="appt_date","appt_date","@DATE",,,"","未定がある",$000099FF,""
 Field="appt_start_at","appt_start_at","@DATETIME",,,"","時間未定がある",$FFFFFFFF,""
 Field="appt_end_at","appt_end_at","@DATETIME",,,"","時間未定がある",$FFFFFFFF,""
 Field="appt_status_code","appt_status_code","@INT","NOT NULL",,"0","仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル",$FFFFFFFF,""
-Field="appt_memo","appt_memo","@VARCHAR(1000)","NOT NULL",,"``","",$FFFFFFFF,""
+Field="appt_memo","appt_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Index==0,floor_id,appt_date
 Index==0,org_id
 Index==0,pt_id
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251204220806
+ModifiedDateTime=20251205201939
 Position="APPT",1500,100
 ZOrder=221
 
@@ -1475,26 +1476,26 @@ TermPos2=R
 ZOrder=300
 
 [Entity]
-PName=room_slots
-LName=room_slots
+PName=equipment_slots
+LName=equipment_slots
 Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=300
+Left=200
 Top=2000
-Field="room_slot_id","room_slot_id","UUID","NOT NULL",0,"","",$000028FF,""
-Field="room_id","room_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="room_slots","room_slots","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+Field="equip_slot_id","equip_slot_id","UUID","NOT NULL",0,"","",$000028FF,""
+Field="equip_id","equip_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="equip_slots","equip_slots","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
 Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","期限内の古い方から順に適用していく",$FFFFFFFF,""
 Field="active_to","active_to","@DATE","NOT NULL",,"\q9999-12-31\q","排他",$FFFFFFFF,""
-Index==0,room_id
+Index==0,equip_id
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251127212307
-Position="APPT",300,2000
+ModifiedDateTime=20251205194704
+Position="APPT",200,2000
 ZOrder=301
 
 [Relation]
@@ -1520,42 +1521,42 @@ ZOrder=303
 
 [Relation]
 Entity1=floors
-Entity2=rooms
+Entity2=equipments
 RelationType1=2
 RelationType2=3
 Fields1=floor_id
 Fields2=floor_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,1446,5720,1845,R,R,""
+Position="APPT",0,1446,5720,1408,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
 Bar1=145
 Bar2=572
-Bar3=184
+Bar3=141
 TermPos1=R
 TermPos2=R
 ZOrder=304
 
 [Relation]
-Entity1=rooms
-Entity2=room_slots
+Entity1=equipments
+Entity2=equipment_slots
 RelationType1=2
 RelationType2=3
-Fields1=room_id
-Fields2=room_id
+Fields1=equip_id
+Fields2=equip_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,5467,4445,1667,R,R,""
+Position="APPT",0,2770,4445,1646,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=547
+Bar1=277
 Bar2=444
-Bar3=167
+Bar3=165
 TermPos1=R
 TermPos2=R
 ZOrder=306
@@ -1715,40 +1716,40 @@ TermPos2=R
 ZOrder=314
 
 [Entity]
-PName=room_appointments
-LName=room_appointments
+PName=equipment_appointments
+LName=equipment_appointments
 Comment=
 TableInnerOption=
 TableOption=
-Page=appt
+Page=APPT
 Left=1500
 Top=1500
-Field="room_appt_id","room_appt_id","UUID","NOT NULL",0,"","",$000028FF,""
-Field="room_id","room_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="equip_appt_id","equip_appt_id","UUID","NOT NULL",0,"","",$000028FF,""
+Field="equip_id","equip_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="org_id","org_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="pt_id","pt_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_date","appt_date","@DATE",,,"","未定がある",$000099FF,""
 Field="appt_start_at","appt_start_at","@DATETIME",,,"","時間未定がある",$FFFFFFFF,""
 Field="appt_end_at","appt_end_at","@DATETIME",,,"","時間未定がある",$FFFFFFFF,""
 Field="appt_status_code","appt_status_code","@INT","NOT NULL",,"0","仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル",$FFFFFFFF,""
-Field="appt_memo","appt_memo","@VARCHAR(1000)","NOT NULL",,"``","",$FFFFFFFF,""
-Index==0,appt_date
+Field="appt_memo","appt_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Index==0,equip_id,appt_date
 Index==0,org_id
 Index==0,pt_id
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251204223437
-Position="appt",1500,1500
+ModifiedDateTime=20251205201931
+Position="APPT",1500,1500
 ZOrder=316
 
 [Relation]
-Entity1=rooms
-Entity2=room_appointments
+Entity1=equipments
+Entity2=equipment_appointments
 RelationType1=2
 RelationType2=3
-Fields1=room_id
-Fields2=room_id
+Fields1=equip_id
+Fields2=equip_id
 Cardinarity1=
 Cardinarity2=
 Position="APPT",0,1987,5557,1104,R,R,""
@@ -1765,46 +1766,46 @@ TermPos2=R
 ZOrder=317
 
 [Entity]
-PName=room_appointment_stats
-LName=room_appointment_stats
+PName=equipment_appointment_stats
+LName=equipment_appointment_stats
 Comment=
 TableInnerOption=
 TableOption=
-Page=appt
+Page=APPT
 Left=1500
 Top=2100
-Field="room_appt_stat_id","appt_stat_id","UUID","NOT NULL",0,"","",$000028FF,""
-Field="room_id","room_id","UUID","NOT NULL",,"","",$000000FF,""
+Field="equip_appt_stat_id","equip_appt_stat_id","UUID","NOT NULL",0,"","",$000028FF,""
+Field="equip_id","equip_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000000FF,""
 Field="appt_count","appt_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="appt_max","appt_max","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="appt_graph","appt_graph","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
-Index==1,room_id,appt_date
+Index==1,equip_id,appt_date
 IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251204224005
-Position="appt",1500,2100
+ModifiedDateTime=20251205194805
+Position="APPT",1500,2100
 ZOrder=318
 
 [Relation]
-Entity1=rooms
-Entity2=room_appointment_stats
+Entity1=equipments
+Entity2=equipment_appointment_stats
 RelationType1=2
 RelationType2=3
-Fields1=room_id
-Fields2=room_id
+Fields1=equip_id
+Fields2=equip_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,3966,4134,1675,R,R,""
+Position="APPT",0,3966,1193,1675,R,R,""
 Dependence=0
 Caption=
 PName=
 ModifiedDateTime=20251204224143
 LineMode=0
 Bar1=397
-Bar2=413
+Bar2=119
 Bar3=168
 TermPos1=R
 TermPos2=R
@@ -1812,7 +1813,7 @@ ZOrder=319
 
 [Relation]
 Entity1=organizations
-Entity2=room_appointments
+Entity2=equipment_appointments
 RelationType1=2
 RelationType2=3
 Fields1=org_id
@@ -1827,20 +1828,21 @@ PName=
 LineMode=0
 Bar1=619
 Bar2=381
-Bar3=544
+Bar3=458
 TermPos1=R
-TermPos2=L
+TermPos2=R
 ZOrder=320
 
 [Relation]
 Entity1=patients
-Entity2=room_appointments
+Entity2=equipment_appointments
 RelationType1=2
 RelationType2=3
 Fields1=pt_id
 Fields2=pt_id
 Cardinarity1=
 Cardinarity2=
+Position="ORG_PT",0,6186,3814,8612,R,R,""
 Position="APPT",0,6186,3814,7643,R,L,""
 Dependence=0
 Caption=

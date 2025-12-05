@@ -1,25 +1,25 @@
 
--- Šg’£‹@”\‚ð—LŒø‰»
+-- æ­£è¦åŒ–æ‹¡å¼µæ©Ÿèƒ½ã®ä½œæˆ
 CREATE EXTENSION IF NOT EXISTS unaccent;
 
--- ƒgƒŠƒK[ŠÖ”‚Ìì¬
+-- ãƒˆãƒªã‚¬ãƒ¼é–¢æ•°ã®ä½œæˆ
 CREATE OR REPLACE FUNCTION fn_update_normalized_katakana()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- INSERT ‚Ìê‡‚ÍA–³ðŒ‚Å³‹K‰»‚ðs‚¤
+  -- INSERT ã®å ´åˆã¯ã€å¿…ãšæ­£è¦åŒ–ã‚’å®Ÿè¡Œ
   IF (TG_OP = 'INSERT') THEN
-    NEW.pt_full_name_katakana_normalized := fn_normalize_katakana(NEW.pt_full_name_katakana);
-  
-  -- UPDATE ‚Ìê‡‚ÍA•ÏX‚ª‚ ‚Á‚½ê‡‚Ì‚Ý³‹K‰»‚ðs‚¤
-  ELSIF (TG_OP = 'UPDATE' AND NEW.pt_full_name_katakana IS DISTINCT FROM OLD.pt_full_name_katakana) THEN
-    NEW.pt_full_name_katakana_normalized := fn_normalize_katakana(NEW.pt_full_name_katakana);
+    NEW.pt_name_katakana_compat := fn_normalize_katakana(NEW.pt_name_katakana);
+
+  -- UPDATE ã®å ´åˆã¯ã€å¤‰æ›´ã•ã‚ŒãŸå ´åˆã®ã¿æ­£è¦åŒ–ã‚’å®Ÿè¡Œ
+  ELSIF (TG_OP = 'UPDATE' AND NEW.pt_name_katakana IS DISTINCT FROM OLD.pt_name_katakana) THEN
+    NEW.pt_name_katakana_compat := fn_normalize_katakana(NEW.pt_name_katakana);
   END IF;
 
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
--- ³‹K‰»ˆ——p‚Ì•â•ŠÖ”
+-- æ­£è¦åŒ–å‡¦ç†ç”¨ã®é–¢æ•°
 CREATE OR REPLACE FUNCTION fn_normalize_katakana(input TEXT)
 RETURNS TEXT AS $$
 DECLARE
@@ -27,27 +27,27 @@ DECLARE
 BEGIN
   normalized_text := input;
 
-  -- ‚Ð‚ç‚ª‚È‚ðƒJƒ^ƒJƒi‚É•ÏŠ·
-  normalized_text := translate(normalized_text, 
-                               '‚Ÿ‚ ‚¡‚¢‚£‚¤‚¥‚¦‚§‚¨‚©‚ª‚«‚¬‚­‚®‚¯‚°‚±‚²‚³‚´‚µ‚¶‚·‚¸‚¹‚º‚»‚¼‚½‚¾‚¿‚À‚Á‚Â‚Ã‚Ä‚Å‚Æ‚Ç‚È‚É‚Ê‚Ë‚Ì‚Í‚Î‚Ï‚Ð‚Ñ‚Ò‚Ó‚Ô‚Õ‚Ö‚×‚Ø‚Ù‚Ú‚Û‚Ü‚Ý‚Þ‚ß‚à‚á‚â‚ã‚ä‚å‚æ‚ç‚è‚é‚ê‚ë‚ì‚í‚î‚ï‚ð‚ñƒ”??',
-                               'ƒ@ƒAƒCƒBƒCƒDƒEƒFƒGƒHƒIƒJƒKƒLƒMƒNƒOƒPƒQƒRƒSƒTƒUƒVƒWƒXƒYƒZƒ[ƒ\ƒ]ƒ^ƒ_ƒ`ƒaƒbƒcƒdƒeƒfƒgƒhƒiƒjƒkƒlƒmƒnƒoƒpƒqƒrƒsƒtƒuƒvƒwƒxƒyƒzƒ{ƒ|ƒ}ƒ~ƒ€ƒƒ‚ƒƒƒ„ƒ…ƒ†ƒ‡ƒˆƒ‰ƒŠƒ‹ƒŒƒƒŽƒƒƒ‘ƒ’ƒ“ƒ”ƒ•ƒ–');
-                               
-  -- ”¼ŠpƒJƒ^ƒJƒi‚ð‘SŠp‚É•ÏŠ·
-  normalized_text := translate(normalized_text, '±²³´µ¶·¸¹º»¼½¾¿ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜ¦Ý', 'ƒAƒCƒEƒGƒIƒJƒLƒNƒPƒRƒTƒVƒXƒZƒ\ƒ^ƒ`ƒcƒeƒgƒiƒjƒkƒlƒmƒnƒqƒtƒwƒzƒ}ƒ~ƒ€ƒƒ‚ƒ„ƒ†ƒˆƒ‰ƒŠƒ‹ƒŒƒƒƒ’ƒ“');
-  
-  -- ”¼ŠpƒXƒy[ƒX‚ð‘SŠpƒXƒy[ƒX‚É“ˆê
-  normalized_text := replace(normalized_text, ' ', '@');
+  -- ã²ã‚‰ãŒãªã‚’ã‚«ã‚¿ã‚«ãƒŠã«å¤‰æ›
+  normalized_text := translate(normalized_text,
+                               'ãã‚ãƒã„ã…ã†ã‡ãˆã‰ãŠã‹ãŒããŽããã‘ã’ã“ã”ã•ãŒã—ã˜ã™ãšã›ãœããžãŸã ã¡ã¢ã¤ã¥ã¦ã§ã¨ã©ãªã«ã¬ã­ã®ã¯ã°ã±ã²ã³ã´ãµã¶ã·ã¸ã¹ãºã»ã¼ã½ã¾ã¿ã‚€ã‚ã‚‚ã‚„ã‚†ã‚ˆã‚‰ã‚Šã‚‹ã‚Œã‚ã‚ã‚’ã‚“',
+                               'ã‚¡ã‚¢ã‚£ã‚¤ã‚¥ã‚¦ã‚§ã‚¨ã‚©ã‚ªã‚«ã‚¬ã‚­ã‚®ã‚¯ã‚°ã‚±ã‚²ã‚³ã‚´ã‚µã‚¬ã‚·ã‚¸ã‚¹ã‚ºã‚»ã‚¼ã‚½ã‚¾ã‚¿ãƒ€ãƒãƒ‚ãƒ„ãƒ…ãƒ†ãƒ‡ãƒˆãƒ‰ãƒŠãƒ‹ãƒŒãƒãƒŽãƒãƒãƒ‘ãƒ’ãƒ“ãƒ”ãƒ•ãƒ–ãƒ—ãƒ˜ãƒ™ãƒšãƒ›ãƒœãƒãƒžãƒŸãƒ ãƒ¡ãƒ¢ãƒ¤ãƒ¦ãƒ¨ãƒ©ãƒªãƒ«ãƒ¬ãƒ­ãƒ¯ãƒ²ãƒ³');
 
-  -- ƒAƒNƒZƒ“ƒg‹L†‚Ìœ‹Ž
+  -- åŠè§’ã‚«ã‚¿ã‚«ãƒŠã‚’å…¨è§’ã«å¤‰æ›
+  normalized_text := translate(normalized_text, 'ï½¦ï½§ï½¨ï½©ï½ªï½«ï½¬ï½­ï½®ï½¯ï½°ï½±ï½³ï½´ï½µï½¶ï½·ï½¸ï½ºï½»ï½¼ï½½ï½¾ï¾€ï¾‚ï¾ƒï¾…ï¾†ï¾‡ï¾ˆï¾Šï¾‹ï¾Œï¾ï¾ï¾ï¾‘ï¾’ï¾“ï¾”ï¾•ï¾—ï¾˜ï¾™ï¾šï¾œï¾ï¾Ÿï¾ž', 'ãƒ²ã‚¡ã‚£ã‚¥ã‚§ã‚©ãƒ£ãƒ¥ãƒ§ãƒƒãƒ¼ã‚¢ã‚¦ã‚¨ã‚ªã‚«ã‚­ã‚¯ã‚³ã‚µã‚·ã‚¹ã‚»ã‚¿ãƒ„ãƒ†ãƒŠãƒ‹ãƒŒãƒãƒãƒ’ãƒ•ãƒ˜ãƒžãƒŸãƒ ãƒ¡ãƒ¢ãƒ¤ãƒ¦ãƒ©ãƒªãƒ«ãƒ¬ãƒ¯ãƒ³ãƒ—ãƒœ');
+
+  -- åŠè§’ã‚¹ãƒšãƒ¼ã‚¹ã‚’å…¨è§’ã‚¹ãƒšãƒ¼ã‚¹ã«ç½®æ›
+  normalized_text := replace(normalized_text, ' ', 'ã€€');
+
+  -- ã‚¢ã‚¯ã‚»ãƒ³ãƒˆè¨˜å·ã®å‰Šé™¤
   normalized_text := unaccent(normalized_text);
 
   RETURN normalized_text;
 END;
 $$ LANGUAGE plpgsql;
 
--- ƒgƒŠƒK[‚Ìì¬
-DROP TRIGGER IF EXISTS patents_TRG_before_normalize ON patients;
-CREATE TRIGGER patents_TRG_before_normalize
+-- ãƒˆãƒªã‚¬ãƒ¼ã®ä½œæˆ
+DROP TRIGGER IF EXISTS patients_TRG_before_normalize ON patients;
+CREATE TRIGGER patients_TRG_before_normalize
 BEFORE INSERT OR UPDATE ON patients
 FOR EACH ROW
 EXECUTE FUNCTION fn_update_normalized_katakana();
