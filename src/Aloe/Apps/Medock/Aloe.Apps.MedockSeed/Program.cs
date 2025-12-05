@@ -68,6 +68,38 @@ try
     Console.WriteLine();
     Console.WriteLine("[INFO] Checking existing seed data...");
 
+    // テナント確認（存在しなければ作成）
+    var existingTenant = await context.Tenants.FirstOrDefaultAsync();
+    Guid tenantId;
+
+    if (existingTenant == null)
+    {
+        Console.WriteLine("[INFO] Creating tenant seed data...");
+        tenantId = Guid.NewGuid();
+        var tenant = new Tenant
+        {
+            TenantId = tenantId,
+            TenantName = "デモテナント",
+            IsActive = true,
+            ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        };
+        context.Tenants.Add(tenant);
+        Console.WriteLine($"  [+] Tenant: {tenant.TenantName} ({tenant.TenantId})");
+    }
+    else
+    {
+        tenantId = existingTenant.TenantId;
+        Console.WriteLine("[SKIP] Tenant already exists.");
+    }
+
+    // ユーザー確認
     var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
     var needsUserSeed = existingAdmin == null;
 
@@ -77,22 +109,7 @@ try
         Console.WriteLine("[INFO] Creating user seed data...");
         Console.WriteLine();
 
-        // 1. テナント作成
-        var tenantId = Guid.NewGuid();
-        var tenant = new Tenant
-        {
-            TenantId = tenantId,
-            TenantName = "デモテナント",
-            IsActive = true,
-            ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
-            IsDeleted = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
-        context.Tenants.Add(tenant);
-        Console.WriteLine($"  [+] Tenant: {tenant.TenantName} ({tenant.TenantId})");
-
-        // 2. ユーザー作成（パスワードハッシュ化）
+        // ユーザー作成（パスワードハッシュ化）
         var userId = Guid.NewGuid();
         var (hash, salt) = passwordHasher.HashPassword("admin");
         var user = new User
@@ -105,7 +122,11 @@ try
             IsSystemAdmin = true,
             IsDeleted = false,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
         };
         context.Users.Add(user);
         Console.WriteLine($"  [+] User: {user.UserCode} ({user.UserId})");
@@ -113,7 +134,7 @@ try
         Console.WriteLine($"      Password: admin (hashed)");
         Console.WriteLine($"      IsSystemAdmin: {user.IsSystemAdmin}");
 
-        // 3. テナントユーザー作成（紐付け）
+        // テナントユーザー作成（紐付け）
         var tenantUser = new TenantUser
         {
             TenantUserId = Guid.NewGuid(),
@@ -124,67 +145,76 @@ try
             IsTenantAdmin = true,
             IsDeleted = false,
             CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
         };
         context.TenantUsers.Add(tenantUser);
-        Console.WriteLine($"  [+] TenantUser: {tenantUser.DisplayName} (Tenant: {tenant.TenantName})");
+        Console.WriteLine($"  [+] TenantUser: {tenantUser.DisplayName} (TenantId: {tenantId})");
     }
     else
     {
         Console.WriteLine("[SKIP] Admin user already exists. Skipping user seed.");
     }
 
-    // 4. 施設・フロア・部屋・設備データ作成
+    // 施設・フロア・設備データ作成
     var existingFacility = await context.Facilities.FirstOrDefaultAsync();
     Guid? facilityId = existingFacility?.FacilityId;
     Guid? floorId = null;
 
     if (existingFacility == null)
     {
-        var tenantForFacility = await context.Tenants.FirstOrDefaultAsync();
-        if (tenantForFacility != null)
+        Console.WriteLine("[INFO] Creating facility and floor seed data...");
+
+        // 施設作成
+        facilityId = Guid.NewGuid();
+        var facility = new Facility
         {
-            Console.WriteLine("[INFO] Creating facility and floor seed data...");
+            FacilityId = facilityId.Value,
+            TenantId = tenantId,
+            MedicalInstitutionCode = "1234567890",
+            FacilityName = "アロエ健診センター",
+            FacilityNameDisplay = "アロエ健診センター",
+            IsActive = true,
+            ActiveFrom = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        };
+        context.Facilities.Add(facility);
+        Console.WriteLine($"  [+] Facility: {facility.FacilityName} (TenantId: {tenantId})");
 
-            // 施設作成
-            facilityId = Guid.NewGuid();
-            var facility = new Facility
-            {
-                FacilityId = facilityId.Value,
-                TenantId = tenantForFacility.TenantId,
-                MedicalInstitutionCode = "1234567890",
-                FacilityName = "アロエ健診センター",
-                FacilityNameDisplay = "アロエ健診センター",
-                IsActive = true,
-                ActiveFrom = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
-                IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
-            };
-            context.Facilities.Add(facility);
-            Console.WriteLine($"  [+] Facility: {facility.FacilityName}");
-
-            // フロア作成
-            floorId = Guid.NewGuid();
-            var floor = new Floor
-            {
-                FloorId = floorId.Value,
-                FacilityId = facilityId.Value,
-                FloorCode = "1F",
-                FloorName = "1階（健診フロア）",
-                FloorDesc = "一般健診・人間ドック",
-                FloorSeq = 1,
-                IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
-            };
-            context.Floors.Add(floor);
-            Console.WriteLine($"  [+] Floor: {floor.FloorName}");
-        }
+        // フロア作成
+        floorId = Guid.NewGuid();
+        var floor = new Floor
+        {
+            FloorId = floorId.Value,
+            FacilityId = facilityId.Value,
+            FloorCode = "1F",
+            FloorName = "1階（健診フロア）",
+            FloorDesc = "一般健診・人間ドック",
+            FloorSeq = 1,
+            IsDeleted = false,
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        };
+        context.Floors.Add(floor);
+        Console.WriteLine($"  [+] Floor: {floor.FloorName} (FacilityId: {facilityId})");
     }
     else
     {
         Console.WriteLine("[SKIP] Facility already exists.");
+        facilityId = existingFacility.FacilityId;
         floorId = (await context.Floors.FirstOrDefaultAsync())?.FloorId;
     }
 
@@ -216,6 +246,10 @@ try
             equipment.IsDeleted = false;
             equipment.CreatedAt = DateTimeOffset.UtcNow;
             equipment.UpdatedAt = DateTimeOffset.UtcNow;
+            equipment.CreatedUserId = Guid.Empty;
+            equipment.CreatedSessionId = Guid.Empty;
+            equipment.UpdatedUserId = Guid.Empty;
+            equipment.UpdatedSessionId = Guid.Empty;
         }
         context.Equipments.AddRange(equipments);
         Console.WriteLine($"  [+] Equipments: {equipments.Count} entries");
@@ -275,7 +309,11 @@ try
                         ApptGraph = graphJson,
                         IsDeleted = false,
                         CreatedAt = DateTimeOffset.UtcNow,
-                        UpdatedAt = DateTimeOffset.UtcNow
+                        UpdatedAt = DateTimeOffset.UtcNow,
+                        CreatedUserId = Guid.Empty,
+                        CreatedSessionId = Guid.Empty,
+                        UpdatedUserId = Guid.Empty,
+                        UpdatedSessionId = Guid.Empty
                     });
                 }
             }

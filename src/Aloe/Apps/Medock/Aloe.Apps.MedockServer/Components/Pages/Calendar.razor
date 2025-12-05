@@ -1,7 +1,9 @@
 @page "/calendar"
 @using Aloe.Apps.MedockLib.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @inject IAppointmentService AppointmentService
 @inject IEquipmentService EquipmentService
+@inject AuthenticationStateProvider AuthStateProvider
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
@@ -219,8 +221,24 @@
     {
         try
         {
-            // TODO: 認証コンテキストから実際のテナントIDを取得
-            var tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001"); // 仮
+            // 認証コンテキストからテナントIDを取得
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (!user.Identity?.IsAuthenticated ?? false)
+            {
+                AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+                return;
+            }
+
+            // JWTトークンの tenant_id クレームを取得
+            var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
+            if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
+            {
+                Console.WriteLine("警告: tenant_id クレームが見つからないか、パースできません");
+                AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+                return;
+            }
 
             var equipments = await EquipmentService.GetEquipmentsByTenantAsync(tenantId);
             AvailableEquipments = equipments.Select(e => new SearchFilterPanel.FilterItem
@@ -229,9 +247,10 @@
                 Name = e.EquipName
             }).ToList();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // エラー時は空リスト
+            // エラーをログして空リストを返す
+            Console.WriteLine($"設備データ取得エラー: {ex.Message}");
             AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
         }
     }
