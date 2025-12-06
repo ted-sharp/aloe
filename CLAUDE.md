@@ -80,6 +80,11 @@ This runs:
 
 ### Building & Running
 
+**ソリューションファイル (.NET 10 slnx形式):**
+```
+src/Aloe/Aloe.slnx  ← これを使う
+```
+
 **Run the seed data generator:**
 ```bash
 dotnet run --project src/Aloe/Apps/Medock/Aloe.Apps.MedockSeed
@@ -92,7 +97,7 @@ dotnet run --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
 
 **Build all projects:**
 ```bash
-dotnet build src/Aloe/Apps/Medock/Aloe.Apps.MedockServer.sln
+dotnet build src/Aloe/Aloe.slnx
 ```
 
 ### Testing
