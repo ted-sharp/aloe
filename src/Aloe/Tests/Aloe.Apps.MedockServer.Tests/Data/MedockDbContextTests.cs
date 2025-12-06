@@ -123,7 +123,6 @@ public class MedockDbContextTests
             context.Organizations.Add(new Organization
             {
                 OrgId = orgId,
-                TenantId = tenantId,
                 FacilityId = facilityId,
                 OrgCode = "ORG001",
                 OrgName = "Test Organization"
@@ -133,7 +132,6 @@ public class MedockDbContextTests
             context.Patients.Add(new Patient
             {
                 PtId = ptId,
-                TenantId = tenantId,
                 FacilityId = facilityId,
                 PtCode = "PT001",
                 PtName = "Test Patient",

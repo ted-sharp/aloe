@@ -134,29 +134,65 @@ try
         Console.WriteLine($"      Password: admin (hashed)");
         Console.WriteLine($"      IsSystemAdmin: {user.IsSystemAdmin}");
 
-        // テナントユーザー作成（紐付け）
-        var tenantUser = new TenantUser
+        // 施設が既に存在する場合は、施設ユーザーも作成
+        var existingFacilityForUser = await context.Facilities.FirstOrDefaultAsync();
+        if (existingFacilityForUser != null)
         {
-            TenantUserId = Guid.NewGuid(),
-            TenantId = tenantId,
-            UserId = userId,
-            DisplayName = "管理者",
-            TenantUserSeq = 1,
-            IsTenantAdmin = true,
-            IsDeleted = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow,
-            CreatedUserId = Guid.Empty,
-            CreatedSessionId = Guid.Empty,
-            UpdatedUserId = Guid.Empty,
-            UpdatedSessionId = Guid.Empty
-        };
-        context.TenantUsers.Add(tenantUser);
-        Console.WriteLine($"  [+] TenantUser: {tenantUser.DisplayName} (TenantId: {tenantId})");
+            var facilityUser = new FacilityUser
+            {
+                FacilityUserId = Guid.NewGuid(),
+                FacilityId = existingFacilityForUser.FacilityId,
+                UserId = userId,
+                DisplayName = "管理者",
+                FacilityUserSeq = 1,
+                IsFacilityAdmin = true,
+                PermissionLevel = "full",
+                IsDeleted = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedUserId = Guid.Empty,
+                CreatedSessionId = Guid.Empty,
+                UpdatedUserId = Guid.Empty,
+                UpdatedSessionId = Guid.Empty
+            };
+            context.FacilityUsers.Add(facilityUser);
+            Console.WriteLine($"  [+] FacilityUser: {facilityUser.DisplayName} (FacilityId: {existingFacilityForUser.FacilityId})");
+        }
     }
     else
     {
         Console.WriteLine("[SKIP] Admin user already exists. Skipping user seed.");
+    }
+
+    // FacilityUser確認（adminユーザーが存在するが、施設ユーザーが存在しない場合）
+    var adminUser = existingAdmin ?? await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
+    var existingFacilityUser = await context.FacilityUsers.AnyAsync();
+    if (adminUser != null && !existingFacilityUser)
+    {
+        var firstFacility = await context.Facilities.FirstOrDefaultAsync();
+        if (firstFacility != null)
+        {
+            Console.WriteLine("[INFO] Creating facility user for existing admin...");
+            var facilityUser = new FacilityUser
+            {
+                FacilityUserId = Guid.NewGuid(),
+                FacilityId = firstFacility.FacilityId,
+                UserId = adminUser.UserId,
+                DisplayName = "管理者",
+                FacilityUserSeq = 1,
+                IsFacilityAdmin = true,
+                PermissionLevel = "full",
+                IsDeleted = false,
+                CreatedAt = DateTimeOffset.UtcNow,
+                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedUserId = Guid.Empty,
+                CreatedSessionId = Guid.Empty,
+                UpdatedUserId = Guid.Empty,
+                UpdatedSessionId = Guid.Empty
+            };
+            context.FacilityUsers.Add(facilityUser);
+            Console.WriteLine($"  [+] FacilityUser: {facilityUser.DisplayName} (FacilityId: {firstFacility.FacilityId})");
+        }
     }
 
     // 施設・フロア・設備データ作成
@@ -498,7 +534,6 @@ try
                 new()
                 {
                     OrgId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     ParentOrgId = null,
                     OrgCode = "ORG001",
@@ -512,7 +547,6 @@ try
                 new()
                 {
                     OrgId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     ParentOrgId = null,
                     OrgCode = "ORG002",
@@ -526,7 +560,6 @@ try
                 new()
                 {
                     OrgId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     ParentOrgId = null,
                     OrgCode = "ORG003",
@@ -540,7 +573,6 @@ try
                 new()
                 {
                     OrgId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     ParentOrgId = null,
                     OrgCode = "ORG004",
@@ -589,7 +621,6 @@ try
                 {
                     PtId = Guid.NewGuid(),
                     CanonicalPtId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0001",
@@ -608,7 +639,6 @@ try
                 {
                     PtId = Guid.NewGuid(),
                     CanonicalPtId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0002",
@@ -627,7 +657,6 @@ try
                 {
                     PtId = Guid.NewGuid(),
                     CanonicalPtId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0003",
@@ -646,7 +675,6 @@ try
                 {
                     PtId = Guid.NewGuid(),
                     CanonicalPtId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0004",
@@ -665,7 +693,6 @@ try
                 {
                     PtId = Guid.NewGuid(),
                     CanonicalPtId = Guid.NewGuid(),
-                    TenantId = tenant.TenantId,
                     FacilityId = facilityId.Value,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0005",

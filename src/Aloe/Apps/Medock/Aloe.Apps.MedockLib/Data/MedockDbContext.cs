@@ -28,8 +28,8 @@ public class MedockDbContext : DbContext
 
     // 組織系
     public DbSet<Tenant> Tenants => this.Set<Tenant>();
-    public DbSet<TenantUser> TenantUsers => this.Set<TenantUser>();
     public DbSet<Facility> Facilities => this.Set<Facility>();
+    public DbSet<FacilityUser> FacilityUsers => this.Set<FacilityUser>();
     public DbSet<Floor> Floors => this.Set<Floor>();
     public DbSet<Equipment> Equipments => this.Set<Equipment>();
 
@@ -62,22 +62,6 @@ public class MedockDbContext : DbContext
         // User
         modelBuilder.Entity<User>(entity =>
         {
-            entity.ToTable("users");
-            entity.HasKey(e => e.UserId);
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.UserCode).HasColumnName("user_code").HasMaxLength(100);
-            entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(254);
-            entity.Property(e => e.PasswordHash).HasColumnName("password_hash").HasMaxLength(255);
-            entity.Property(e => e.PasswordSalt).HasColumnName("password_salt").HasMaxLength(64);
-            entity.Property(e => e.ExpiresDate).HasColumnName("expires_date");
-            entity.Property(e => e.LoginSuccessCount).HasColumnName("login_success_count");
-            entity.Property(e => e.LoginFailureCount).HasColumnName("login_failure_count");
-            entity.Property(e => e.LoginFailureAttempts).HasColumnName("login_failure_attempts");
-            entity.Property(e => e.LockedUntilAt).HasColumnName("locked_until_at");
-            entity.Property(e => e.LastLoginAt).HasColumnName("last_login_at");
-            entity.Property(e => e.LastLogoutAt).HasColumnName("last_logout_at");
-            entity.Property(e => e.IsSystemAdmin).HasColumnName("is_system_admin");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
         });
 
@@ -203,28 +187,6 @@ public class MedockDbContext : DbContext
             ConfigureAuditableEntity(entity);
         });
 
-        // TenantUser
-        modelBuilder.Entity<TenantUser>(entity =>
-        {
-            entity.ToTable("tenant_users");
-            entity.HasKey(e => e.TenantUserId);
-            entity.Property(e => e.TenantUserId).HasColumnName("tenant_user_id");
-            entity.Property(e => e.TenantId).HasColumnName("tenant_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(100);
-            entity.Property(e => e.TenantUserSeq).HasColumnName("tenant_user_seq");
-            entity.Property(e => e.IsTenantAdmin).HasColumnName("is_tenant_admin");
-            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
-            ConfigureAuditableEntity(entity);
-
-            entity.HasOne(e => e.Tenant)
-                .WithMany(t => t.TenantUsers)
-                .HasForeignKey(e => e.TenantId);
-            entity.HasOne(e => e.User)
-                .WithMany(u => u.TenantUsers)
-                .HasForeignKey(e => e.UserId);
-        });
-
         // Facility
         modelBuilder.Entity<Facility>(entity =>
         {
@@ -244,6 +206,29 @@ public class MedockDbContext : DbContext
             entity.HasOne(e => e.Tenant)
                 .WithMany(t => t.Facilities)
                 .HasForeignKey(e => e.TenantId);
+        });
+
+        // FacilityUser
+        modelBuilder.Entity<FacilityUser>(entity =>
+        {
+            entity.ToTable("facility_users");
+            entity.HasKey(e => e.FacilityUserId);
+            entity.Property(e => e.FacilityUserId).HasColumnName("facility_user_id");
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(200);
+            entity.Property(e => e.FacilityUserSeq).HasColumnName("facility_user_seq");
+            entity.Property(e => e.IsFacilityAdmin).HasColumnName("is_facility_admin");
+            entity.Property(e => e.PermissionLevel).HasColumnName("permission_level").HasMaxLength(50);
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Facility)
+                .WithMany(f => f.FacilityUsers)
+                .HasForeignKey(e => e.FacilityId);
+            entity.HasOne(e => e.User)
+                .WithMany(u => u.FacilityUsers)
+                .HasForeignKey(e => e.UserId);
         });
 
         // Floor
@@ -290,7 +275,6 @@ public class MedockDbContext : DbContext
             entity.HasKey(e => e.PtId);
             entity.Property(e => e.PtId).HasColumnName("pt_id");
             entity.Property(e => e.CanonicalPtId).HasColumnName("canonical_pt_id");
-            entity.Property(e => e.TenantId).HasColumnName("tenant_id");
             entity.Property(e => e.FacilityId).HasColumnName("facility_id");
             entity.Property(e => e.PrimaryOrgId).HasColumnName("primary_org_id");
             entity.Property(e => e.PtCode).HasColumnName("pt_code").HasMaxLength(100);
@@ -307,9 +291,6 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
 
-            entity.HasOne(e => e.Tenant)
-                .WithMany(t => t.Patients)
-                .HasForeignKey(e => e.TenantId);
             entity.HasOne(e => e.Facility)
                 .WithMany(f => f.Patients)
                 .HasForeignKey(e => e.FacilityId);
@@ -321,7 +302,6 @@ public class MedockDbContext : DbContext
             entity.ToTable("organizations");
             entity.HasKey(e => e.OrgId);
             entity.Property(e => e.OrgId).HasColumnName("org_id");
-            entity.Property(e => e.TenantId).HasColumnName("tenant_id");
             entity.Property(e => e.FacilityId).HasColumnName("facility_id");
             entity.Property(e => e.ParentOrgId).HasColumnName("parent_org_id");
             entity.Property(e => e.OrgCode).HasColumnName("org_code").HasMaxLength(13);
@@ -334,9 +314,6 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
 
-            entity.HasOne(e => e.Tenant)
-                .WithMany(t => t.Organizations)
-                .HasForeignKey(e => e.TenantId);
             entity.HasOne(e => e.Facility)
                 .WithMany(f => f.Organizations)
                 .HasForeignKey(e => e.FacilityId);

@@ -42,7 +42,6 @@ public class TenantEntityTests
         var tenant = new Tenant();
 
         // Assert
-        tenant.TenantUsers.Should().NotBeNull();
         tenant.Facilities.Should().NotBeNull();
     }
 }

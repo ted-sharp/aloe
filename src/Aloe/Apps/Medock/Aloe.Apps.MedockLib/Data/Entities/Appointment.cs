@@ -1,46 +1,26 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
-/// <summary>
-/// 予約エンティティ
-/// </summary>
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+[Table("appointments")]
 public class Appointment : IAuditableEntity
 {
-    /// <summary>予約ID (PK)</summary>
-    public Guid ApptId { get; set; }
-
-    /// <summary>フロアID (FK)</summary>
-    public Guid FloorId { get; set; }
-
-    /// <summary>団体ID (FK)</summary>
-    public Guid OrgId { get; set; }
-
-    /// <summary>患者ID (FK)</summary>
-    public Guid PtId { get; set; }
-
-    /// <summary>予約日（日付のみ予約がある）</summary>
-    public DateOnly? ApptDate { get; set; }
-
-    /// <summary>予約開始日時（時間枠予約がある）</summary>
-    public DateTime? ApptStartAt { get; set; }
-
-    /// <summary>予約終了日時（時間枠予約がある）</summary>
-    public DateTime? ApptEndAt { get; set; }
-
-    /// <summary>予約ステータスコード（仮置、予約、来院済み、診察完了、キャンセル、医師キャンセル）</summary>
-    public int ApptStatusCode { get; set; }
-
-    /// <summary>削除フラグ</summary>
-    public bool IsDeleted { get; set; }
-
-    // IAuditableEntity
-    public DateTimeOffset CreatedAt { get; set; }
-    public Guid CreatedUserId { get; set; }
-    public Guid CreatedSessionId { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
-    public Guid UpdatedUserId { get; set; }
-    public Guid UpdatedSessionId { get; set; }
-
-    // Navigation Properties
+    [Key][Column("appt_id")] public Guid ApptId { get; set; }
+    [Column("floor_id")][ForeignKey("Floor")] public Guid FloorId { get; set; }
+    [Column("org_id")][ForeignKey("Organization")] public Guid OrgId { get; set; }
+    [Column("pt_id")][ForeignKey("Patient")] public Guid PtId { get; set; }
+    [Column("appt_date")] public DateOnly? ApptDate { get; set; }
+    [Column("appt_start_at")] public DateTime? ApptStartAt { get; set; }
+    [Column("appt_end_at")] public DateTime? ApptEndAt { get; set; }
+    [Column("appt_status_code")] public int ApptStatusCode { get; set; }
+    [Column("is_deleted")] public bool IsDeleted { get; set; }
+    [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
+    [Column("created_user_id")] public Guid CreatedUserId { get; set; }
+    [Column("created_session_id")] public Guid CreatedSessionId { get; set; }
+    [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+    [Column("updated_user_id")] public Guid UpdatedUserId { get; set; }
+    [Column("updated_session_id")] public Guid UpdatedSessionId { get; set; }
     public virtual Floor Floor { get; set; } = null!;
     public virtual Organization Organization { get; set; } = null!;
     public virtual Patient Patient { get; set; } = null!;

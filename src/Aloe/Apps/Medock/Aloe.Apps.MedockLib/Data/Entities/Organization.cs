@@ -1,56 +1,31 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 /// <summary>
 /// 団体エンティティ
 /// </summary>
+[Table("organizations")]
 public class Organization : IAuditableEntity
 {
-    /// <summary>団体ID (PK)</summary>
-    public Guid OrgId { get; set; }
-
-    /// <summary>テナントID (FK)</summary>
-    public Guid TenantId { get; set; }
-
-    /// <summary>施設ID (FK)</summary>
-    public Guid FacilityId { get; set; }
-
-    /// <summary>親団体ID</summary>
-    public Guid? ParentOrgId { get; set; }
-
-    /// <summary>団体コード（病院の番・法人番号）</summary>
-    public string OrgCode { get; set; } = String.Empty;
-
-    /// <summary>団体名</summary>
-    public string OrgName { get; set; } = String.Empty;
-
-    /// <summary>団体名カタカナ</summary>
-    public string OrgNameKatakana { get; set; } = String.Empty;
-
-    /// <summary>団体名カタカナ（互換）</summary>
-    public string OrgNameKatakanaCompat { get; set; } = String.Empty;
-
-    /// <summary>団体表示名</summary>
-    public string OrgNameDisplay { get; set; } = String.Empty;
-
-    /// <summary>団体印刷名</summary>
-    public string OrgNamePrint { get; set; } = String.Empty;
-
-    /// <summary>メモ</summary>
-    public string OrgMemo { get; set; } = String.Empty;
-
-    /// <summary>削除フラグ</summary>
-    public bool IsDeleted { get; set; }
-
-    // IAuditableEntity
-    public DateTimeOffset CreatedAt { get; set; }
-    public Guid CreatedUserId { get; set; }
-    public Guid CreatedSessionId { get; set; }
-    public DateTimeOffset UpdatedAt { get; set; }
-    public Guid UpdatedUserId { get; set; }
-    public Guid UpdatedSessionId { get; set; }
-
-    // Navigation Properties
-    public virtual Tenant Tenant { get; set; } = null!;
+    [Key][Column("org_id")] public Guid OrgId { get; set; }
+    [Column("facility_id")][ForeignKey("Facility")] public Guid FacilityId { get; set; }
+    [Column("parent_org_id")] public Guid? ParentOrgId { get; set; }
+    [Column("org_code")][MaxLength(100)] public string OrgCode { get; set; } = String.Empty;
+    [Column("org_name")][MaxLength(200)] public string OrgName { get; set; } = String.Empty;
+    [Column("org_name_katakana")][MaxLength(200)] public string OrgNameKatakana { get; set; } = String.Empty;
+    [Column("org_name_katakana_compat")][MaxLength(200)] public string OrgNameKatakanaCompat { get; set; } = String.Empty;
+    [Column("org_name_display")][MaxLength(200)] public string OrgNameDisplay { get; set; } = String.Empty;
+    [Column("org_name_print")][MaxLength(200)] public string OrgNamePrint { get; set; } = String.Empty;
+    [Column("org_memo")][MaxLength(500)] public string OrgMemo { get; set; } = String.Empty;
+    [Column("is_deleted")] public bool IsDeleted { get; set; }
+    [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
+    [Column("created_user_id")] public Guid CreatedUserId { get; set; }
+    [Column("created_session_id")] public Guid CreatedSessionId { get; set; }
+    [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+    [Column("updated_user_id")] public Guid UpdatedUserId { get; set; }
+    [Column("updated_session_id")] public Guid UpdatedSessionId { get; set; }
     public virtual Facility Facility { get; set; } = null!;
     public virtual Organization? ParentOrganization { get; set; }
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();

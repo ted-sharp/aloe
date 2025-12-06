@@ -26,6 +26,7 @@ builder.Services.AddDbContext<MedockDbContext>(options =>
 builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 

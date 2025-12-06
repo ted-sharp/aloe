@@ -15,7 +15,13 @@ namespace Aloe.Apps.MedockLib.Services;
 /// - sub: ユーザーID
 /// - preferred_username: ユーザーコード
 /// - email: メールアドレス
+/// - display_name: 表示名（カスタムクレーム）
 /// - tenant_id: テナントID（カスタムクレーム）
+/// - tenant_name: テナント名（カスタムクレーム）
+/// - facility_id: 施設ID（カスタムクレーム）
+/// - facility_name: 施設名（カスタムクレーム）
+/// - is_system_admin: システム管理者フラグ（カスタムクレーム）
+/// - is_tenant_admin: テナント管理者フラグ（カスタムクレーム）
 /// - roles: ロール（カスタムクレーム）
 /// </remarks>
 public class JwtTokenService
@@ -32,39 +38,54 @@ public class JwtTokenService
     /// <summary>
     /// アクセストークンを生成します。
     /// </summary>
-    /// <param name="userId">ユーザーID</param>
-    /// <param name="userCode">ユーザーコード（ログインID）</param>
-    /// <param name="email">メールアドレス</param>
-    /// <param name="tenantId">テナントID（オプション）</param>
-    /// <param name="roles">ロール一覧（オプション）</param>
+    /// <param name="tokenParams">トークン生成パラメータ</param>
     /// <returns>JWTアクセストークン</returns>
-    public string GenerateAccessToken(
-        Guid userId,
-        string userCode,
-        string email,
-        Guid? tenantId = null,
-        IEnumerable<string>? roles = null)
+    public string GenerateAccessToken(TokenGenerationParams tokenParams)
     {
         var claims = new List<Claim>
         {
             // OIDC標準クレーム
-            new("sub", userId.ToString()),
-            new("preferred_username", userCode),
-            new("email", email),
+            new("sub", tokenParams.UserId.ToString()),
+            new("preferred_username", tokenParams.UserCode),
+            new("email", tokenParams.Email),
             new("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        // テナントID（カスタムクレーム）
-        if (tenantId.HasValue)
+        // 表示名
+        if (!String.IsNullOrEmpty(tokenParams.DisplayName))
         {
-            claims.Add(new Claim("tenant_id", tenantId.Value.ToString()));
+            claims.Add(new Claim("display_name", tokenParams.DisplayName));
         }
 
-        // ロール（カスタムクレーム）
-        if (roles != null)
+        // テナント情報（カスタムクレーム）
+        if (tokenParams.TenantId.HasValue)
         {
-            foreach (var role in roles)
+            claims.Add(new Claim("tenant_id", tokenParams.TenantId.Value.ToString()));
+        }
+        if (!String.IsNullOrEmpty(tokenParams.TenantName))
+        {
+            claims.Add(new Claim("tenant_name", tokenParams.TenantName));
+        }
+
+        // 施設情報（カスタムクレーム）
+        if (tokenParams.FacilityId.HasValue)
+        {
+            claims.Add(new Claim("facility_id", tokenParams.FacilityId.Value.ToString()));
+        }
+        if (!String.IsNullOrEmpty(tokenParams.FacilityName))
+        {
+            claims.Add(new Claim("facility_name", tokenParams.FacilityName));
+        }
+
+        // 管理者フラグ
+        claims.Add(new Claim("is_system_admin", tokenParams.IsSystemAdmin.ToString().ToLower()));
+        claims.Add(new Claim("is_facility_admin", tokenParams.IsFacilityAdmin.ToString().ToLower()));
+
+        // ロール（カスタムクレーム）
+        if (tokenParams.Roles != null)
+        {
+            foreach (var role in tokenParams.Roles)
             {
                 claims.Add(new Claim("roles", role));
             }
@@ -134,6 +155,24 @@ public class JwtTokenService
     {
         return DateTime.UtcNow.AddDays(this._settings.RefreshTokenExpirationDays);
     }
+}
+
+/// <summary>
+/// トークン生成パラメータ
+/// </summary>
+public class TokenGenerationParams
+{
+    public Guid UserId { get; init; }
+    public string UserCode { get; init; } = "";
+    public string Email { get; init; } = "";
+    public string DisplayName { get; init; } = "";
+    public Guid? TenantId { get; init; }
+    public string? TenantName { get; init; }
+    public Guid? FacilityId { get; init; }
+    public string? FacilityName { get; init; }
+    public bool IsSystemAdmin { get; init; }
+    public bool IsFacilityAdmin { get; init; }
+    public IEnumerable<string>? Roles { get; init; }
 }
 
 

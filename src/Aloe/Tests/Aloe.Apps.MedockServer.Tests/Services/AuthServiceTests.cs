@@ -45,7 +45,7 @@ public class AuthServiceTests : IDisposable
         this._context.Dispose();
     }
 
-    private async Task<(User user, Tenant tenant)> SeedTestUserAsync(string userCode = "testuser", string password = "testpass")
+    private async Task<(User user, Facility facility)> SeedTestUserAsync(string userCode = "testuser", string password = "testpass")
     {
         var (hash, salt) = this._passwordHasher.HashPassword(password);
 
@@ -59,6 +59,20 @@ public class AuthServiceTests : IDisposable
             UpdatedAt = DateTimeOffset.UtcNow
         };
         this._context.Tenants.Add(tenant);
+
+        var facility = new Facility
+        {
+            FacilityId = Guid.NewGuid(),
+            TenantId = tenant.TenantId,
+            MedicalInstitutionCode = "1234567890",
+            FacilityName = "テスト施設",
+            FacilityNameDisplay = "テスト施設",
+            IsActive = true,
+            ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
+            CreatedAt = DateTimeOffset.UtcNow,
+            UpdatedAt = DateTimeOffset.UtcNow
+        };
+        this._context.Facilities.Add(facility);
 
         var user = new User
         {
@@ -74,28 +88,30 @@ public class AuthServiceTests : IDisposable
         };
         this._context.Users.Add(user);
 
-        var tenantUser = new TenantUser
+        var facilityUser = new FacilityUser
         {
-            TenantUserId = Guid.NewGuid(),
-            TenantId = tenant.TenantId,
+            FacilityUserId = Guid.NewGuid(),
+            FacilityId = facility.FacilityId,
             UserId = user.UserId,
             DisplayName = "テストユーザー",
-            IsTenantAdmin = false,
+            FacilityUserSeq = 1,
+            IsFacilityAdmin = false,
+            PermissionLevel = "full",
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };
-        this._context.TenantUsers.Add(tenantUser);
+        this._context.FacilityUsers.Add(facilityUser);
 
         await this._context.SaveChangesAsync();
 
-        return (user, tenant);
+        return (user, facility);
     }
 
     [Fact]
     public async Task LoginAsync_WithValidCredentials_ShouldSucceed()
     {
         // Arrange
-        var (user, tenant) = await this.SeedTestUserAsync("admin", "admin");
+        var (user, facility) = await this.SeedTestUserAsync("admin", "admin");
 
         // Act
         var result = await this._authService.LoginAsync("admin", "admin", "TestApp", "127.0.0.1");
@@ -106,7 +122,7 @@ public class AuthServiceTests : IDisposable
         result.RefreshToken.Should().NotBeNullOrEmpty();
         result.UserId.Should().Be(user.UserId);
         result.UserCode.Should().Be("admin");
-        result.TenantId.Should().Be(tenant.TenantId);
+        result.FacilityId.Should().Be(facility.FacilityId);
         result.SessionId.Should().NotBeNull();
     }
 

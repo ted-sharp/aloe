@@ -77,11 +77,16 @@
         <!-- 右側: UserAvatarFab領域 -->
         <div class="w-14 flex justify-center">
             <UserAvatarFab UserInitial="@UserInitial"
-                           UserName="@UserName"
+                           DisplayName="@DisplayName"
                            UserEmail="@UserEmail"
                            TenantName="@TenantName"
+                           FacilityName="@FacilityName"
                            UserRole="@UserRole"
-                           OnLogout="HandleLogout" />
+                           CurrentFacilityId="@CurrentFacilityId"
+                           HasMultipleFacilities="@HasMultipleFacilities"
+                           AvailableFacilities="@AvailableFacilities"
+                           OnLogout="HandleLogout"
+                           OnFacilitySwitch="HandleFacilitySwitch" />
         </div>
     </div>
 
@@ -180,10 +185,14 @@
 
     // ユーザー情報
     private string UserInitial { get; set; } = "U";
-    private string UserName { get; set; } = "";
+    private string DisplayName { get; set; } = "";
     private string UserEmail { get; set; } = "";
     private string TenantName { get; set; } = "";
+    private string FacilityName { get; set; } = "";
     private string UserRole { get; set; } = "";
+    private Guid? CurrentFacilityId { get; set; }
+    private bool HasMultipleFacilities { get; set; }
+    private List<FacilityInfo>? AvailableFacilities { get; set; }
 
     // Modal state
     private bool IsModalOpen { get; set; } = false;
@@ -237,20 +246,34 @@
 
             if (user.Identity?.IsAuthenticated == true)
             {
-                UserName = user.FindFirst("name")?.Value
-                    ?? user.FindFirst("user_name")?.Value
+                // 基本情報をJWTクレームから取得
+                DisplayName = user.FindFirst("display_name")?.Value
+                    ?? user.FindFirst("preferred_username")?.Value
                     ?? user.Identity.Name
                     ?? "";
 
                 UserEmail = user.FindFirst("email")?.Value ?? "";
                 TenantName = user.FindFirst("tenant_name")?.Value ?? "";
+                FacilityName = user.FindFirst("facility_name")?.Value ?? "";
 
-                var roles = user.FindAll("role").Select(c => c.Value).ToList();
+                var roles = user.FindAll("roles").Select(c => c.Value).ToList();
                 UserRole = roles.FirstOrDefault() ?? "";
 
-                if (!string.IsNullOrEmpty(UserName))
+                if (Guid.TryParse(user.FindFirst("facility_id")?.Value, out var facilityId))
                 {
-                    UserInitial = UserName[..1].ToUpper();
+                    CurrentFacilityId = facilityId;
+                }
+
+                if (!string.IsNullOrEmpty(DisplayName))
+                {
+                    UserInitial = DisplayName[..1].ToUpper();
+                }
+
+                // 施設一覧を取得（複数施設対応）
+                if (Guid.TryParse(user.FindFirst("sub")?.Value, out var userId))
+                {
+                    AvailableFacilities = await AuthService.GetAccessibleFacilitiesAsync(userId);
+                    HasMultipleFacilities = AvailableFacilities.Count > 1;
                 }
             }
         }
@@ -292,6 +315,34 @@
             }
 
             NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+    }
+
+    private async Task HandleFacilitySwitch(Guid facilityId)
+    {
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdClaim = authState.User.FindFirst("sub")?.Value;
+
+            if (string.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return;
+            }
+
+            var result = await AuthService.SwitchFacilityAsync(userId, facilityId);
+            if (result.IsSuccess)
+            {
+                // 新しいトークンを保存
+                await LocalStorage.SetAsync("access_token", result.AccessToken!);
+
+                // ページをリロードして新しいトークンを反映
+                NavigationManager.NavigateTo("/calendar", forceLoad: true);
+            }
+        }
+        catch
+        {
+            // 施設切替失敗時は何もしない
         }
     }
 

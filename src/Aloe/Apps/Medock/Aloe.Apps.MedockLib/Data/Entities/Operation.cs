@@ -1,22 +1,36 @@
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
 /// <summary>
 /// 操作エンティティ
 /// </summary>
+[Table("operations")]
 public class Operation : IAuditableEntity
 {
     /// <summary>操作コード (PK)</summary>
+    [Key]
+    [Column("operation_code")]
+    [MaxLength(10)]
     public string OperationCode { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
+    [Column("is_deleted")]
     public bool IsDeleted { get; set; }
 
     // IAuditableEntity
+    [Column("created_at")]
     public DateTimeOffset CreatedAt { get; set; }
+    [Column("created_user_id")]
     public Guid CreatedUserId { get; set; }
+    [Column("created_session_id")]
     public Guid CreatedSessionId { get; set; }
+    [Column("updated_at")]
     public DateTimeOffset UpdatedAt { get; set; }
+    [Column("updated_user_id")]
     public Guid UpdatedUserId { get; set; }
+    [Column("updated_session_id")]
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
