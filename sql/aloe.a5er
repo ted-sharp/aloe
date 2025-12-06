@@ -11,6 +11,8 @@ MaxEntityRowShow=1000
 ReadOnlyRecommend=0
 Page=user
 PageInfo="user",4,"A3Landscape",$FFFFFF
+Page=fac
+PageInfo="fac",4,"A3Landscape",$FFFFFF
 Page=org_pt
 PageInfo="org_pt",4,"A3Landscape",$FFFFFF
 Page=appt
@@ -175,10 +177,9 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=ORG_PT
-Left=1000
-Top=1000
+Left=500
+Top=100
 Field="org_id","org_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="parent_org_id","parent_org_id","UUID",,,"","",$000099FF,""
 Field="org_code","org_code","@VARCHAR(13)","NOT NULL",,"\q\q","病院採番や法人番号",$000000FF,""
@@ -190,14 +191,13 @@ Field="org_name_print","org_name_print","@VARCHAR(100)","NOT NULL",,"\q\q","",$F
 Field="org_memo","org_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Index==1,facility_id,org_code
 IndexOption=WHERE is_deleted = FALSE
-Index==0,tenant_id,facility_id
 Index==0,parent_org_id
 IndexOption=WHERE parent_org_id IS NOT NULL
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251204220123
-Position="ORG_PT",1000,1000
+ModifiedDateTime=20251206182929
+Position="ORG_PT",500,100
 ZOrder=27
 
 [Entity]
@@ -207,11 +207,10 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=ORG_PT
-Left=300
-Top=2000
+Left=500
+Top=1600
 Field="pt_id","pt_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="canonical_pt_id","canonical_pt_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","名寄せ検索用",$000099FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="primary_org_id","primary_org_id","UUID","NOT NULL",,"\q00000000-0000-0000-0000-000000000000\q","",$000099FF,""
 Field="pt_code","pt_code","@VARCHAR(100)","NOT NULL",,"\q\q","",$000000FF,""
@@ -230,14 +229,13 @@ IndexOption=WHERE is_deleted = FALSE
 Index==1,facility_id,karte_code
 IndexOption=WHERE is_deleted = FALSE
 Index==0,canonical_pt_id
-Index==0,tenant_id,facility_id
 Index==0,primary_org_id
 Index==0,birth_date
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251204220218
-Position="ORG_PT",300,2000
+ModifiedDateTime=20251206181910
+Position="ORG_PT",500,1600
 ZOrder=28
 
 [Entity]
@@ -247,8 +245,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=3000
-Top=1300
+Left=2500
+Top=1600
 Field="role_permission_code","role_permission_code","@VARCHAR(32)","NOT NULL",0,"\q\q","",$000028FF,""
 Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"","",$000000FF,""
 Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",,"","",$000000FF,""
@@ -258,7 +256,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251127203831
-Position="USER",3000,1300
+Position="USER",2500,1600
 ZOrder=31
 
 [Entity]
@@ -268,8 +266,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=2000
-Top=1300
+Left=100
+Top=1500
 Field="role_code","role_code","@VARCHAR(10)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="role_name","role_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="role_desc","role_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -278,7 +276,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251127210344
-Position="USER",2000,1300
+Position="USER",100,1500
 ZOrder=32
 
 [Entity]
@@ -288,8 +286,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=2000
-Top=1900
+Left=1400
+Top=2000
 Field="permission_code","permission_code","@VARCHAR(21)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="resource_code","resource_code","@VARCHAR(10)","NOT NULL",,"","",$000000FF,""
 Field="operation_code","operation_code","@VARCHAR(10)","NOT NULL",,"","",$000000FF,""
@@ -299,7 +297,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251127203810
-Position="USER",2000,1900
+Position="USER",1400,2000
 ZOrder=30
 
 [Entity]
@@ -309,8 +307,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=1000
-Top=400
+Left=100
+Top=600
 Field="user_id","user_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
 Field="user_code","user_code","@VARCHAR(100)","NOT NULL",,"","ログイン用ID",$000028FF,""
 Field="email","email","@VARCHAR(254)","NOT NULL",,"","メールアドレスも併用",$000028FF,""
@@ -332,31 +330,8 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251202183630
-Position="USER",1000,400
+Position="USER",100,600
 ZOrder=29
-
-[Entity]
-PName=policies
-LName=policies
-Comment=
-TableInnerOption=
-TableOption=
-Page=USER
-Left=100
-Top=100
-Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",0,"\q\q","",$000000FF,""
-Field="policy_name","policy_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="policy_desc","policy_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="data_type","data_type","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="policy_seq","policy_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
-EffectMode=Gradation
-Color=$000000
-BkColor=$D1D1FF
-ModifiedDateTime=20251122182314
-Position="USER",100,100
-ZOrder=44
 
 [Entity]
 PName=organization_addresses
@@ -365,8 +340,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=ORG_PT
-Left=3000
-Top=1000
+Left=2500
+Top=100
 Field="org_adr_id","org_adr_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="org_id","org_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="adr_type_code","adr_type_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
@@ -392,7 +367,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251127213154
-Position="ORG_PT",3000,1000
+Position="ORG_PT",2500,100
 ZOrder=48
 
 [Entity]
@@ -402,8 +377,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=ORG_PT
-Left=1500
-Top=1800
+Left=500
+Top=900
 Field="org_member_id","org_member_id","UUID","NOT NULL",0,"","",$000000FF,""
 Field="org_id","org_id","UUID","NOT NULL",,"","複数回同じ会社もありえる",$000099FF,""
 Field="pt_id","pt_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -417,7 +392,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251127211104
-Position="ORG_PT",1500,1800
+Position="ORG_PT",500,900
 ZOrder=58
 
 [Entity]
@@ -427,7 +402,7 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=2000
+Left=100
 Top=100
 Field="preference_code","preference_code","@VARCHAR(100)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="preference_name","preference_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -440,7 +415,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251122182333
-Position="USER",2000,100
+Position="USER",100,100
 ZOrder=59
 
 [Entity]
@@ -450,8 +425,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=3000
-Top=400
+Left=1500
+Top=100
 Field="user_preference_id","user_preference_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
 Field="user_id","user_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="preference_code","preference_code","@VARCHAR(100)","NOT NULL",,"","",$000000FF,""
@@ -462,7 +437,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251127203544
-Position="USER",3000,400
+Position="USER",1500,100
 ZOrder=60
 
 [Entity]
@@ -606,60 +581,14 @@ Position="APPT",300,600
 ZOrder=228
 
 [Entity]
-PName=tenants
-LName=tenants
-Comment=
-TableInnerOption=
-TableOption=
-Page=USER
-Left=100
-Top=1300
-Field="tenant_id","tenant_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
-Field="tenant_name","tenant_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
-Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
-Field="active_to","active_to","@DATE",,,"","",$FFFFFFFF,""
-EffectMode=Gradation
-Color=$000000
-BkColor=$D1D1FF
-ModifiedDateTime=20251127004042
-Position="USER",100,1300,713,600
-ZOrder=245
-
-[Entity]
-PName=tenant_users
-LName=tenant_users
-Comment=
-TableInnerOption=
-TableOption=
-Page=USER
-Left=1000
-Top=1300
-Field="tenant_user_id","tenant_user_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000028FF,""
-Field="user_id","user_id","UUID","NOT NULL",,"","",$000028FF,""
-Field="display_name","display_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="tenant_user_seq","tenant_user_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="is_tenant_admin","is_tenant_admin","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
-Index==1,tenant_id,user_id
-IndexOption=WHERE is_deleted = FALSE
-Index==0,user_id
-EffectMode=None
-Color=$000000
-BkColor=$FFFFFF
-ModifiedDateTime=20251127210245
-Position="USER",1000,1300
-ZOrder=248
-
-[Entity]
 PName=resources
 LName=resources
 Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=1000
-Top=1900
+Left=100
+Top=2000
 Field="resource_code","resource_code","@VARCHAR(10)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="resource_name","resource_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="resource_desc","resource_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -669,7 +598,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251122155533
-Position="USER",1000,1900
+Position="USER",100,2000
 ZOrder=249
 
 [Entity]
@@ -679,8 +608,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=1000
-Top=2300
+Left=100
+Top=2500
 Field="operation_code","operation_code","@VARCHAR(10)","NOT NULL",0,"\q\q","",$000000FF,""
 Field="operation_name","operation_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="operation_desc","operation_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -690,52 +619,8 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251122182255
-Position="USER",1000,2300
+Position="USER",100,2500
 ZOrder=250
-
-[Relation]
-Entity1=tenants
-Entity2=tenant_users
-RelationType1=2
-RelationType2=3
-Fields1=tenant_id
-Fields2=tenant_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,2499,7318,4919,R,R,""
-Dependence=0
-Caption=
-PName=
-ModifiedDateTime=20251120211044
-LineMode=0
-Bar1=250
-Bar2=732
-Bar3=492
-TermPos1=R
-TermPos2=R
-ZOrder=251
-
-[Relation]
-Entity1=users
-Entity2=tenant_users
-RelationType1=2
-RelationType2=3
-Fields1=user_id
-Fields2=user_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,1129,5649,1290,R,R,""
-Dependence=0
-Caption=
-PName=
-ModifiedDateTime=20251120211100
-LineMode=0
-Bar1=113
-Bar2=565
-Bar3=129
-TermPos1=R
-TermPos2=R
-ZOrder=252
 
 [Relation]
 Entity1=resources
@@ -767,13 +652,13 @@ Fields1=operation_code
 Fields2=operation_code
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,2486,3914,6610,R,R,""
+Position="USER",0,1991,6052,6614,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=249
-Bar2=391
+Bar1=199
+Bar2=605
 Bar3=661
 TermPos1=R
 TermPos2=R
@@ -786,8 +671,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=2000
-Top=900
+Left=1500
+Top=1100
 Field="user_role_id","user_role_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="user_id","user_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="role_code","role_code","@VARCHAR(10)","NOT NULL",,"","",$000000FF,""
@@ -798,7 +683,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251127210332
-Position="USER",2000,900
+Position="USER",1500,1100
 ZOrder=262
 
 [Relation]
@@ -810,14 +695,14 @@ Fields1=role_code
 Fields2=role_code
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,2457,5468,3276,R,R,""
+Position="USER",0,7431,5468,3346,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=246
+Bar1=743
 Bar2=547
-Bar3=328
+Bar3=335
 TermPos1=R
 TermPos2=R
 ZOrder=263
@@ -831,14 +716,14 @@ Fields1=permission_code
 Fields2=permission_code
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,3315,3207,6596,R,R,""
+Position="USER",0,3315,5937,6645,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
 Bar1=332
-Bar2=321
-Bar3=660
+Bar2=594
+Bar3=664
 TermPos1=R
 TermPos2=R
 ZOrder=264
@@ -852,14 +737,14 @@ Fields1=role_code
 Fields2=role_code
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,1471,5014,1312,R,R,""
+Position="USER",0,2483,5821,6641,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=147
-Bar2=501
-Bar3=131
+Bar1=248
+Bar2=582
+Bar3=664
 TermPos1=R
 TermPos2=R
 ZOrder=266
@@ -871,7 +756,7 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=USER
-Left=3000
+Left=1500
 Top=700
 Field="user_id","user_id","UUID","NOT NULL",0,"","",$000000FF,""
 Field="permission_codes","permission_codes","@VARCHAR(21)[]","NOT NULL",,"\q{}\q","",$000099FF,""
@@ -881,72 +766,8 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251122192321
-Position="USER",3000,700
+Position="USER",1500,700
 ZOrder=267
-
-[Entity]
-PName=tenant_policies
-LName=tenant_policies
-Comment=
-TableInnerOption=
-TableOption=
-Page=USER
-Left=1000
-Top=100
-Field="tenant_policy_id","tenant_policy_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000000FF,""
-Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",,"","",$000000FF,""
-Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Index==1,tenant_id,policy_code
-IndexOption=WHERE is_deleted = FALSE
-EffectMode=None
-Color=$000000
-BkColor=$FFFFFF
-ModifiedDateTime=20251127203510
-Position="USER",1000,100
-ZOrder=270
-
-[Relation]
-Entity1=policies
-Entity2=tenant_policies
-RelationType1=2
-RelationType2=3
-Fields1=policy_code
-Fields2=policy_code
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,1429,5028,2501,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=143
-Bar2=503
-Bar3=250
-TermPos1=R
-TermPos2=R
-ZOrder=271
-
-[Relation]
-Entity1=tenants
-Entity2=tenant_policies
-RelationType1=2
-RelationType2=3
-Fields1=tenant_id
-Fields2=tenant_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",2,823,4630,4975,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=2
-Bar1=82
-Bar2=463
-Bar3=498
-TermPos1=R
-TermPos2=R
-ZOrder=272
 
 [Relation]
 Entity1=users
@@ -957,14 +778,14 @@ Fields1=user_id
 Fields2=user_id
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,1515,5075,4924,R,R,""
+Position="USER",0,770,5134,7318,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=152
-Bar2=508
-Bar3=492
+Bar1=77
+Bar2=513
+Bar3=732
 TermPos1=R
 TermPos2=R
 ZOrder=273
@@ -978,13 +799,13 @@ Fields1=preference_code
 Fields2=preference_code
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,1429,4435,2504,R,R,""
+Position="USER",0,1429,5933,2501,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
 Bar1=143
-Bar2=444
+Bar2=593
 Bar3=250
 TermPos1=R
 TermPos2=R
@@ -999,14 +820,14 @@ Fields1=user_id
 Fields2=user_id
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,8326,5098,3271,R,R,""
+Position="USER",0,8342,4125,3340,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=833
-Bar2=510
-Bar3=327
+Bar1=834
+Bar2=412
+Bar3=334
 TermPos1=R
 TermPos2=R
 ZOrder=278
@@ -1020,13 +841,13 @@ Fields1=user_id
 Fields2=user_id
 Cardinarity1=
 Cardinarity2=
-Position="USER",0,5281,9168,3199,R,R,""
+Position="USER",0,2253,5086,3201,R,R,""
 Dependence=1
 Caption=
 PName=
 LineMode=0
-Bar1=528
-Bar2=917
+Bar1=225
+Bar2=509
 Bar3=320
 TermPos1=R
 TermPos2=R
@@ -1039,8 +860,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=ORG_PT
-Left=3000
-Top=2000
+Left=2500
+Top=1600
 Field="pt_adr_id","pt_adr_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="pt_id","pt_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="adr_type_code","adr_type_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
@@ -1066,70 +887,8 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251127213208
-Position="ORG_PT",3000,2000
+Position="ORG_PT",2500,1600
 ZOrder=283
-
-[Entity]
-PName=facilities
-LName=facilities
-Comment=
-TableInnerOption=
-TableOption=
-Page=ORG_PT
-Left=300
-Top=100
-Field="facility_id","facility_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="medical_institution_code","medical_institution_code","@VARCHAR(10)","NOT NULL",,"\q\q","医療機関コード",$FFFFFFFF,""
-Field="facility_name","facility_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="facility_name_display","facility_name_display","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
-Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
-Field="active_to","active_to","@DATE",,,"","",$FFFFFFFF,""
-Index==0,tenant_id
-EffectMode=Gradation
-Color=$000000
-BkColor=$D1D1FF
-ModifiedDateTime=20251127210351
-Position="ORG_PT",300,100
-ZOrder=284
-
-[Entity]
-PName=facility_addresses
-LName=facility_addresses
-Comment=
-TableInnerOption=
-TableOption=
-Page=ORG_PT
-Left=1500
-Top=100
-Field="facility_adr_id","facility_adr_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="adr_type_code","adr_type_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="postal_code","postal_code","@VARCHAR(7)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="adr1","adr1","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="adr2","adr2","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="adr3","adr3","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="attention_name","attention_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="tel","tel","@VARCHAR(20)","NOT NULL",,"\q\q","",$000099FF,""
-Field="tel2","tel2","@VARCHAR(20)","NOT NULL",,"\q\q","",$000099FF,""
-Field="fax","fax","@VARCHAR(20)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="email","email","@VARCHAR(255)","NOT NULL",,"\q\q","",$000099FF,""
-Field="adr_memo","adr_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="adr_seq","adr_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Index==0,facility_id
-Index==0,tel
-IndexOption=WHERE tel <> \q\q
-Index==0,tel2
-IndexOption=WHERE tel2 <> \q\q
-Index==0,email
-IndexOption=WHERE email <> \q\q
-EffectMode=None
-Color=$000000
-BkColor=$FFFFFF
-ModifiedDateTime=20251204215455
-Position="ORG_PT",1500,100
-ZOrder=285
 
 [Entity]
 PName=patient_insurance_cards
@@ -1216,136 +975,6 @@ Position="INSUR",500,700
 ZOrder=288
 
 [Relation]
-Entity1=facilities
-Entity2=facility_addresses
-RelationType1=2
-RelationType2=3
-Fields1=facility_id
-Fields2=facility_id
-Cardinarity1=
-Cardinarity2=
-Position="ORG_PT",0,1250,4259,714,R,R,""
-Dependence=0
-Caption=
-PName=
-ModifiedDateTime=20251127190804
-LineMode=0
-Bar1=125
-Bar2=426
-Bar3=71
-TermPos1=R
-TermPos2=R
-ZOrder=289
-
-[Relation]
-Entity1=tenants
-Entity2=facilities
-RelationType1=2
-RelationType2=3
-Fields1=tenant_id
-Fields2=tenant_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,6688,8109,1123,R,R,""
-Position="ORG_PT",0,1399,8601,1667,R,L,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=669
-Bar2=811
-Bar3=112
-TermPos1=R
-TermPos2=R
-ZOrder=290
-
-[Relation]
-Entity1=tenants
-Entity2=organizations
-RelationType1=2
-RelationType2=3
-Fields1=tenant_id
-Fields2=tenant_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,7482,5421,4925,R,R,""
-Position="ORG_PT",0,4579,5421,902,R,L,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=748
-Bar2=542
-Bar3=492
-TermPos1=R
-TermPos2=R
-ZOrder=291
-
-[Relation]
-Entity1=tenants
-Entity2=patients
-RelationType1=2
-RelationType2=3
-Fields1=tenant_id
-Fields2=tenant_id
-Cardinarity1=
-Cardinarity2=
-Position="USER",0,8319,8003,1123,R,R,""
-Position="ORG_PT",0,1997,8003,622,R,L,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=832
-Bar2=800
-Bar3=112
-TermPos1=R
-TermPos2=R
-ZOrder=292
-
-[Relation]
-Entity1=facilities
-Entity2=organizations
-RelationType1=2
-RelationType2=3
-Fields1=facility_id
-Fields2=facility_id
-Cardinarity1=
-Cardinarity2=
-Position="ORG_PT",0,8539,5479,960,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=854
-Bar2=548
-Bar3=96
-TermPos1=R
-TermPos2=R
-ZOrder=293
-
-[Relation]
-Entity1=facilities
-Entity2=patients
-RelationType1=2
-RelationType2=3
-Fields1=facility_id
-Fields2=facility_id
-Cardinarity1=
-Cardinarity2=
-Position="ORG_PT",0,1061,3864,972,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=106
-Bar2=386
-Bar3=97
-TermPos1=R
-TermPos2=R
-ZOrder=294
-
-[Relation]
 Entity1=organizations
 Entity2=organization_addresses
 RelationType1=2
@@ -1354,13 +983,13 @@ Fields1=org_id
 Fields2=org_id
 Cardinarity1=
 Cardinarity2=
-Position="ORG_PT",0,902,5552,709,R,R,""
+Position="ORG_PT",0,1000,5552,714,R,R,""
 Dependence=0
 Caption=
 PName=
 ModifiedDateTime=20251127190819
 LineMode=0
-Bar1=90
+Bar1=100
 Bar2=555
 Bar3=71
 TermPos1=R
@@ -1376,15 +1005,15 @@ Fields1=pt_id
 Fields2=pt_id
 Cardinarity1=
 Cardinarity2=
-Position="ORG_PT",0,6155,5752,7034,R,R,""
+Position="ORG_PT",0,669,5752,717,R,R,""
 Dependence=0
 Caption=
 PName=
 ModifiedDateTime=20251127190827
 LineMode=0
-Bar1=616
+Bar1=67
 Bar2=575
-Bar3=703
+Bar3=72
 TermPos1=R
 TermPos2=R
 ZOrder=296
@@ -1398,12 +1027,12 @@ Fields1=org_id
 Fields2=org_id
 Cardinarity1=
 Cardinarity2=
-Position="ORG_PT",0,5728,4934,1354,R,R,""
+Position="ORG_PT",0,959,4934,1353,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=573
+Bar1=96
 Bar2=493
 Bar3=135
 TermPos1=R
@@ -1419,14 +1048,14 @@ Fields1=pt_id
 Fields2=pt_id
 Cardinarity1=
 Cardinarity2=
-Position="ORG_PT",0,622,4312,6165,R,R,""
+Position="ORG_PT",0,983,3897,1354,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=62
-Bar2=431
-Bar3=616
+Bar1=98
+Bar2=390
+Bar3=135
 TermPos1=R
 TermPos2=R
 ZOrder=298
@@ -1850,7 +1479,331 @@ PName=
 LineMode=0
 Bar1=619
 Bar2=381
-Bar3=764
+Bar3=861
+TermPos1=R
+TermPos2=R
+ZOrder=321
+
+[Entity]
+PName=facility_policies
+LName=facility_policies
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=100
+Top=1400
+Field="facility_policy_id","facility_policy_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
+Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",,"","",$000000FF,""
+Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Index==1,facility_id,policy_code
+IndexOption=WHERE is_deleted = FALSE
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20251206182240
+Position="FAC",100,1400
+ZOrder=327
+
+[Entity]
+PName=tenants
+LName=tenants
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=100
+Top=100
+Field="tenant_id","tenant_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
+Field="tenant_name","tenant_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
+Field="active_to","active_to","@DATE",,,"","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20251127004042
+Position="FAC",100,100
+ZOrder=326
+
+[Entity]
+PName=policies
+LName=policies
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=100
+Top=2000
+Field="policy_code","policy_code","@VARCHAR(100)","NOT NULL",0,"\q\q","",$000000FF,""
+Field="policy_name","policy_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="policy_desc","policy_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="data_type","data_type","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="policy_value","policy_value","@VARCHAR(10)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="policy_seq","policy_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20251122182314
+Position="FAC",100,2000
+ZOrder=325
+
+[Entity]
+PName=facility_users
+LName=facility_users
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=1500
+Top=1800
+Field="facility_user_id","facility_user_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000028FF,""
+Field="user_id","user_id","UUID","NOT NULL",,"","",$000028FF,""
+Field="display_name","display_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="facility_user_seq","facility_user_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==1,facility_id,user_id
+IndexOption=WHERE is_deleted = FALSE
+Index==0,user_id
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20251206185324
+Position="FAC",1500,1800
+ZOrder=336
+
+[Relation]
+Entity1=facilities
+Entity2=facility_users
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,3674,7829,1946,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=367
+Bar2=783
+Bar3=195
+TermPos1=R
+TermPos2=R
+ZOrder=337
+
+[Relation]
+Entity1=users
+Entity2=facility_users
+RelationType1=2
+RelationType2=3
+Fields1=user_id
+Fields2=user_id
+Cardinarity1=
+Cardinarity2=
+Position="USER",0,4570,5430,3329,R,R,""
+Position="FAC",0,3138,6862,7884,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=457
+Bar2=543
+Bar3=333
+TermPos1=R
+TermPos2=R
+ZOrder=338
+
+[Entity]
+PName=facilities
+LName=facilities
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=100
+Top=700
+Field="facility_id","facility_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="tenant_id","tenant_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="medical_institution_code","medical_institution_code","@VARCHAR(10)","NOT NULL",,"\q\q","医療機関コード",$FFFFFFFF,""
+Field="facility_name","facility_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="facility_name_display","facility_name_display","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
+Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
+Field="active_to","active_to","@DATE",,,"","",$FFFFFFFF,""
+Index==0,tenant_id
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20251127210351
+Position="FAC",100,700
+ZOrder=333
+
+[Entity]
+PName=facility_addresses
+LName=facility_addresses
+Comment=
+TableInnerOption=
+TableOption=
+Page=FAC
+Left=1500
+Top=700
+Field="facility_adr_id","facility_adr_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="adr_type_code","adr_type_code","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="postal_code","postal_code","@VARCHAR(7)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="adr1","adr1","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="adr2","adr2","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="adr3","adr3","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="attention_name","attention_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="tel","tel","@VARCHAR(20)","NOT NULL",,"\q\q","",$000099FF,""
+Field="tel2","tel2","@VARCHAR(20)","NOT NULL",,"\q\q","",$000099FF,""
+Field="fax","fax","@VARCHAR(20)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="email","email","@VARCHAR(255)","NOT NULL",,"\q\q","",$000099FF,""
+Field="adr_memo","adr_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="adr_seq","adr_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==0,facility_id
+Index==0,tel
+IndexOption=WHERE tel <> \q\q
+Index==0,tel2
+IndexOption=WHERE tel2 <> \q\q
+Index==0,email
+IndexOption=WHERE email <> \q\q
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20251204215455
+Position="FAC",1500,700
+ZOrder=334
+
+[Relation]
+Entity1=facilities
+Entity2=facility_addresses
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1250,4259,714,R,R,""
+Dependence=0
+Caption=
+PName=
+ModifiedDateTime=20251127190804
+LineMode=0
+Bar1=125
+Bar2=426
+Bar3=71
+TermPos1=R
+TermPos2=R
+ZOrder=335
+
+[Relation]
+Entity1=tenants
+Entity2=facilities
+RelationType1=2
+RelationType2=3
+Fields1=tenant_id
+Fields2=tenant_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1418,5867,1078,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=142
+Bar2=587
+Bar3=108
+TermPos1=R
+TermPos2=R
+ZOrder=339
+
+[Relation]
+Entity1=facilities
+Entity2=facility_policies
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1078,5953,1160,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=108
+Bar2=595
+Bar3=116
+TermPos1=R
+TermPos2=R
+ZOrder=340
+
+[Relation]
+Entity1=policies
+Entity2=facility_policies
+RelationType1=2
+RelationType2=3
+Fields1=policy_code
+Fields2=policy_code
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1398,5722,1159,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=140
+Bar2=572
+Bar3=116
+TermPos1=R
+TermPos2=R
+ZOrder=341
+
+[Relation]
+Entity1=facilities
+Entity2=organizations
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,2520,7480,1399,R,R,""
+Position="ORG_PT",0,2520,7480,1000,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=252
+Bar2=748
+Bar3=140
+TermPos1=R
+TermPos2=R
+ZOrder=342
+
+[Relation]
+Entity1=facilities
+Entity2=patients
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,500,9500,1399,R,R,""
+Position="ORG_PT",0,2489,7511,669,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=249
+Bar2=751
+Bar3=67
 TermPos1=R
 TermPos2=L
-ZOrder=321
+ZOrder=343

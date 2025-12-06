@@ -1,15 +1,15 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/05 20:15:04
+-- Date/Time    : 2025/12/06 18:53:35
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
 
 /*
-  << ï¿½ï¿½ï¿½ÓIï¿½I >>
-  BackupToTempTable, RestoreFromTempTableï¿½^ï¿½ï¿½ï¿½ï¿½ï¿½ß‚ï¿½ï¿½tï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä‚ï¿½ï¿½Ü‚ï¿½ï¿½B
-  ï¿½ï¿½ï¿½ï¿½É‚ï¿½ï¿½Adrop table, create table ï¿½ï¿½ï¿½ï¿½fï¿½[ï¿½^ï¿½ï¿½ï¿½cï¿½ï¿½Ü‚ï¿½ï¿½B
-  ï¿½ï¿½ï¿½Ì‹@ï¿½\ï¿½Íˆêï¿½Iï¿½ï¿½ $$TableName ï¿½Ì‚æ‚¤ï¿½Èˆêï¿½eï¿½[ï¿½uï¿½ï¿½ï¿½ï¿½ï¿½ì¬ï¿½ï¿½ï¿½Ü‚ï¿½ï¿½B
-  ï¿½ï¿½ï¿½Ì‹@ï¿½\ï¿½ï¿½ A5:SQL Mk-2ï¿½Å‚Ì‚İ—Lï¿½ï¿½ï¿½Å‚ï¿½ï¿½é‚±ï¿½Æ‚É’ï¿½ï¿½Ó‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½B
+  << ’ˆÓII >>
+  BackupToTempTable, RestoreFromTempTable‹^—–½—ß‚ª•t‰Á‚³‚ê‚Ä‚¢‚Ü‚·B
+  ‚±‚ê‚É‚æ‚èAdrop table, create table Œã‚àƒf[ƒ^‚ªc‚è‚Ü‚·B
+  ‚±‚Ì‹@”\‚Íˆê“I‚É $$TableName ‚Ì‚æ‚¤‚Èˆêƒe[ƒuƒ‹‚ğì¬‚µ‚Ü‚·B
+  ‚±‚Ì‹@”\‚Í A5:SQL Mk-2‚Å‚Ì‚İ—LŒø‚Å‚ ‚é‚±‚Æ‚É’ˆÓ‚µ‚Ä‚­‚¾‚³‚¢B
 */
 
 -- appointment_slots
@@ -286,6 +286,66 @@ CREATE UNIQUE INDEX "facility_addresses_PKI"
 ALTER TABLE "facility_addresses"
   ADD CONSTRAINT "facility_addresses_PKC" PRIMARY KEY ("facility_adr_id");
 
+-- facility_policies
+-- * BackupToTempTable
+DROP TABLE if exists "facility_policies" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "facility_policies" (
+  "facility_policy_id" UUID DEFAULT uuidv7() NOT NULL
+  , "facility_id" UUID NOT NULL
+  , "policy_code" character varying(100) NOT NULL
+  , "policy_value" character varying(10) DEFAULT '' NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "facility_policies_IX1"
+  ON "facility_policies"("facility_id","policy_code") WHERE is_deleted = FALSE;
+
+CREATE UNIQUE INDEX "facility_policies_PKI"
+  ON "facility_policies"("facility_policy_id");
+
+ALTER TABLE "facility_policies"
+  ADD CONSTRAINT "facility_policies_PKC" PRIMARY KEY ("facility_policy_id");
+
+-- facility_users
+-- * BackupToTempTable
+DROP TABLE if exists "facility_users" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "facility_users" (
+  "facility_user_id" UUID DEFAULT uuidv7() NOT NULL
+  , "facility_id" UUID NOT NULL
+  , "user_id" UUID NOT NULL
+  , "display_name" character varying(100) DEFAULT '' NOT NULL
+  , "facility_user_seq" integer DEFAULT 0 NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "facility_users_IX1"
+  ON "facility_users"("facility_id","user_id") WHERE is_deleted = FALSE;
+
+CREATE INDEX "facility_users_IX2"
+  ON "facility_users"("user_id");
+
+CREATE UNIQUE INDEX "facility_users_PKI"
+  ON "facility_users"("facility_user_id");
+
+ALTER TABLE "facility_users"
+  ADD CONSTRAINT "facility_users_PKC" PRIMARY KEY ("facility_user_id");
+
 -- floors
 -- * BackupToTempTable
 DROP TABLE if exists "floors" CASCADE;
@@ -530,7 +590,6 @@ DROP TABLE if exists "organizations" CASCADE;
 -- * RestoreFromTempTable
 CREATE TABLE "organizations" (
   "org_id" UUID DEFAULT uuidv7() NOT NULL
-  , "tenant_id" UUID NOT NULL
   , "facility_id" UUID NOT NULL
   , "parent_org_id" UUID
   , "org_code" character varying(13) DEFAULT '' NOT NULL
@@ -553,9 +612,6 @@ CREATE UNIQUE INDEX "organizations_IX1"
   ON "organizations"("facility_id","org_code") WHERE is_deleted = FALSE;
 
 CREATE INDEX "organizations_IX2"
-  ON "organizations"("tenant_id","facility_id");
-
-CREATE INDEX "organizations_IX3"
   ON "organizations"("parent_org_id") WHERE parent_org_id IS NOT NULL;
 
 CREATE UNIQUE INDEX "organizations_PKI"
@@ -705,7 +761,6 @@ DROP TABLE if exists "patients" CASCADE;
 CREATE TABLE "patients" (
   "pt_id" UUID DEFAULT uuidv7() NOT NULL
   , "canonical_pt_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "tenant_id" UUID NOT NULL
   , "facility_id" UUID NOT NULL
   , "primary_org_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
   , "pt_code" character varying(100) DEFAULT '' NOT NULL
@@ -738,12 +793,9 @@ CREATE INDEX "patients_IX3"
   ON "patients"("canonical_pt_id");
 
 CREATE INDEX "patients_IX4"
-  ON "patients"("tenant_id","facility_id");
-
-CREATE INDEX "patients_IX5"
   ON "patients"("primary_org_id");
 
-CREATE INDEX "patients_IX6"
+CREATE INDEX "patients_IX5"
   ON "patients"("birth_date");
 
 CREATE UNIQUE INDEX "patients_PKI"
@@ -751,6 +803,34 @@ CREATE UNIQUE INDEX "patients_PKI"
 
 ALTER TABLE "patients"
   ADD CONSTRAINT "patients_PKC" PRIMARY KEY ("pt_id");
+
+-- policies
+-- * BackupToTempTable
+DROP TABLE if exists "policies" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "policies" (
+  "policy_code" character varying(100) DEFAULT '' NOT NULL
+  , "policy_name" character varying(100) DEFAULT '' NOT NULL
+  , "policy_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "data_type" character varying(10) DEFAULT '' NOT NULL
+  , "policy_value" character varying(10) DEFAULT '' NOT NULL
+  , "policy_seq" integer DEFAULT 0 NOT NULL
+  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "policies_PKI"
+  ON "policies"("policy_code");
+
+ALTER TABLE "policies"
+  ADD CONSTRAINT "policies_PKC" PRIMARY KEY ("policy_code");
 
 -- role_permissions
 -- * BackupToTempTable
@@ -778,67 +858,6 @@ CREATE UNIQUE INDEX "role_permissions_PKI"
 
 ALTER TABLE "role_permissions"
   ADD CONSTRAINT "role_permissions_PKC" PRIMARY KEY ("role_permission_code");
-
--- tenant_policies
--- * BackupToTempTable
-DROP TABLE if exists "tenant_policies" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "tenant_policies" (
-  "tenant_policy_id" UUID DEFAULT uuidv7() NOT NULL
-  , "tenant_id" UUID NOT NULL
-  , "policy_code" character varying(100) NOT NULL
-  , "policy_value" character varying(10) DEFAULT '' NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE UNIQUE INDEX "tenant_policies_IX1"
-  ON "tenant_policies"("tenant_id","policy_code") WHERE is_deleted = FALSE;
-
-CREATE UNIQUE INDEX "tenant_policies_PKI"
-  ON "tenant_policies"("tenant_policy_id");
-
-ALTER TABLE "tenant_policies"
-  ADD CONSTRAINT "tenant_policies_PKC" PRIMARY KEY ("tenant_policy_id");
-
--- tenant_users
--- * BackupToTempTable
-DROP TABLE if exists "tenant_users" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "tenant_users" (
-  "tenant_user_id" UUID DEFAULT uuidv7() NOT NULL
-  , "tenant_id" UUID NOT NULL
-  , "user_id" UUID NOT NULL
-  , "display_name" character varying(100) DEFAULT '' NOT NULL
-  , "tenant_user_seq" integer DEFAULT 0 NOT NULL
-  , "is_tenant_admin" BOOLEAN DEFAULT FALSE NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE UNIQUE INDEX "tenant_users_IX1"
-  ON "tenant_users"("tenant_id","user_id") WHERE is_deleted = FALSE;
-
-CREATE INDEX "tenant_users_IX2"
-  ON "tenant_users"("user_id");
-
-CREATE UNIQUE INDEX "tenant_users_PKI"
-  ON "tenant_users"("tenant_user_id");
-
-ALTER TABLE "tenant_users"
-  ADD CONSTRAINT "tenant_users_PKC" PRIMARY KEY ("tenant_user_id");
 
 -- user_logs
 -- * BackupToTempTable
@@ -1036,34 +1055,6 @@ CREATE UNIQUE INDEX "permissions_PKI"
 ALTER TABLE "permissions"
   ADD CONSTRAINT "permissions_PKC" PRIMARY KEY ("permission_code");
 
--- policies
--- * BackupToTempTable
-DROP TABLE if exists "policies" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "policies" (
-  "policy_code" character varying(100) DEFAULT '' NOT NULL
-  , "policy_name" character varying(100) DEFAULT '' NOT NULL
-  , "policy_desc" character varying(1000) DEFAULT '' NOT NULL
-  , "data_type" character varying(10) DEFAULT '' NOT NULL
-  , "policy_value" character varying(10) DEFAULT '' NOT NULL
-  , "policy_seq" integer DEFAULT 0 NOT NULL
-  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE UNIQUE INDEX "policies_PKI"
-  ON "policies"("policy_code");
-
-ALTER TABLE "policies"
-  ADD CONSTRAINT "policies_PKC" PRIMARY KEY ("policy_code");
-
 -- preferences
 -- * BackupToTempTable
 DROP TABLE if exists "preferences" CASCADE;
@@ -1260,6 +1251,26 @@ ALTER TABLE "facility_addresses"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "facility_policies"
+  ADD CONSTRAINT "facility_policies_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "facility_policies"
+  ADD CONSTRAINT "facility_policies_FK2" FOREIGN KEY ("policy_code") REFERENCES "policies"("policy_code")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "facility_users"
+  ADD CONSTRAINT "facility_users_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "facility_users"
+  ADD CONSTRAINT "facility_users_FK2" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "organization_addresses"
   ADD CONSTRAINT "organization_addresses_FK1" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
   ON DELETE CASCADE
@@ -1281,12 +1292,7 @@ ALTER TABLE "organization_members"
   ON UPDATE CASCADE;
 
 ALTER TABLE "organizations"
-  ADD CONSTRAINT "organizations_FK1" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("tenant_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "organizations"
-  ADD CONSTRAINT "organizations_FK2" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+  ADD CONSTRAINT "organizations_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1301,12 +1307,7 @@ ALTER TABLE "patient_insurance_cards"
   ON UPDATE CASCADE;
 
 ALTER TABLE "patients"
-  ADD CONSTRAINT "patients_FK1" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("tenant_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "patients"
-  ADD CONSTRAINT "patients_FK2" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+  ADD CONSTRAINT "patients_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1327,26 +1328,6 @@ ALTER TABLE "role_permissions"
 
 ALTER TABLE "role_permissions"
   ADD CONSTRAINT "role_permissions_FK2" FOREIGN KEY ("permission_code") REFERENCES "permissions"("permission_code")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "tenant_policies"
-  ADD CONSTRAINT "tenant_policies_FK1" FOREIGN KEY ("policy_code") REFERENCES "policies"("policy_code")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "tenant_policies"
-  ADD CONSTRAINT "tenant_policies_FK2" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("tenant_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "tenant_users"
-  ADD CONSTRAINT "tenant_users_FK1" FOREIGN KEY ("tenant_id") REFERENCES "tenants"("tenant_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "tenant_users"
-  ADD CONSTRAINT "tenant_users_FK2" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1380,8 +1361,8 @@ COMMENT ON COLUMN "appointment_slots"."appt_slot_id" IS 'appt_slot_id';
 COMMENT ON COLUMN "appointment_slots"."floor_id" IS 'floor_id';
 COMMENT ON COLUMN "appointment_slots"."appt_slots" IS 'appt_slots';
 COMMENT ON COLUMN "appointment_slots"."is_active" IS 'is_active';
-COMMENT ON COLUMN "appointment_slots"."active_from" IS 'active_from:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÌŒÃ‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç‡ï¿½É“Kï¿½pï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "appointment_slots"."active_to" IS 'active_to:ï¿½rï¿½ï¿½';
+COMMENT ON COLUMN "appointment_slots"."active_from" IS 'active_from:ŠúŒÀ“à‚ÌŒÃ‚¢•û‚©‚ç‡‚É“K—p‚µ‚Ä‚¢‚­';
+COMMENT ON COLUMN "appointment_slots"."active_to" IS 'active_to:”r‘¼';
 COMMENT ON COLUMN "appointment_slots"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointment_slots"."created_at" IS 'created_at';
 COMMENT ON COLUMN "appointment_slots"."created_user_id" IS 'created_user_id';
@@ -1410,10 +1391,10 @@ COMMENT ON COLUMN "appointments"."appt_id" IS 'appt_id';
 COMMENT ON COLUMN "appointments"."floor_id" IS 'floor_id';
 COMMENT ON COLUMN "appointments"."org_id" IS 'org_id';
 COMMENT ON COLUMN "appointments"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "appointments"."appt_date" IS 'appt_date:ï¿½ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "appointments"."appt_start_at" IS 'appt_start_at:ï¿½ï¿½ï¿½Ô–ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "appointments"."appt_end_at" IS 'appt_end_at:ï¿½ï¿½ï¿½Ô–ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "appointments"."appt_status_code" IS 'appt_status_code:ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½\ï¿½ï¿½Aï¿½ï¿½ï¿½@ï¿½Ï‚İAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½fï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½';
+COMMENT ON COLUMN "appointments"."appt_date" IS 'appt_date:–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "appointments"."appt_start_at" IS 'appt_start_at:ŠÔ–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "appointments"."appt_end_at" IS 'appt_end_at:ŠÔ–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "appointments"."appt_status_code" IS 'appt_status_code:‰¼‰ŸA—\–ñA—ˆ‰@Ï‚İAŒŸ¸Š®—¹AƒLƒƒƒ“ƒZƒ‹A–³’fƒLƒƒƒ“ƒZƒ‹';
 COMMENT ON COLUMN "appointments"."appt_memo" IS 'appt_memo';
 COMMENT ON COLUMN "appointments"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointments"."created_at" IS 'created_at';
@@ -1443,10 +1424,10 @@ COMMENT ON COLUMN "equipment_appointments"."equip_appt_id" IS 'equip_appt_id';
 COMMENT ON COLUMN "equipment_appointments"."equip_id" IS 'equip_id';
 COMMENT ON COLUMN "equipment_appointments"."org_id" IS 'org_id';
 COMMENT ON COLUMN "equipment_appointments"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "equipment_appointments"."appt_date" IS 'appt_date:ï¿½ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "equipment_appointments"."appt_start_at" IS 'appt_start_at:ï¿½ï¿½ï¿½Ô–ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "equipment_appointments"."appt_end_at" IS 'appt_end_at:ï¿½ï¿½ï¿½Ô–ï¿½ï¿½è‚ªï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "equipment_appointments"."appt_status_code" IS 'appt_status_code:ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½\ï¿½ï¿½Aï¿½ï¿½ï¿½@ï¿½Ï‚İAï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Aï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½ï¿½Aï¿½ï¿½ï¿½fï¿½Lï¿½ï¿½ï¿½ï¿½ï¿½Zï¿½ï¿½';
+COMMENT ON COLUMN "equipment_appointments"."appt_date" IS 'appt_date:–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "equipment_appointments"."appt_start_at" IS 'appt_start_at:ŠÔ–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "equipment_appointments"."appt_end_at" IS 'appt_end_at:ŠÔ–¢’è‚ª‚ ‚é';
+COMMENT ON COLUMN "equipment_appointments"."appt_status_code" IS 'appt_status_code:‰¼‰ŸA—\–ñA—ˆ‰@Ï‚İAŒŸ¸Š®—¹AƒLƒƒƒ“ƒZƒ‹A–³’fƒLƒƒƒ“ƒZƒ‹';
 COMMENT ON COLUMN "equipment_appointments"."appt_memo" IS 'appt_memo';
 COMMENT ON COLUMN "equipment_appointments"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "equipment_appointments"."created_at" IS 'created_at';
@@ -1461,8 +1442,8 @@ COMMENT ON COLUMN "equipment_slots"."equip_slot_id" IS 'equip_slot_id';
 COMMENT ON COLUMN "equipment_slots"."equip_id" IS 'equip_id';
 COMMENT ON COLUMN "equipment_slots"."equip_slots" IS 'equip_slots';
 COMMENT ON COLUMN "equipment_slots"."is_active" IS 'is_active';
-COMMENT ON COLUMN "equipment_slots"."active_from" IS 'active_from:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÌŒÃ‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ç‡ï¿½É“Kï¿½pï¿½ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "equipment_slots"."active_to" IS 'active_to:ï¿½rï¿½ï¿½';
+COMMENT ON COLUMN "equipment_slots"."active_from" IS 'active_from:ŠúŒÀ“à‚ÌŒÃ‚¢•û‚©‚ç‡‚É“K—p‚µ‚Ä‚¢‚­';
+COMMENT ON COLUMN "equipment_slots"."active_to" IS 'active_to:”r‘¼';
 COMMENT ON COLUMN "equipment_slots"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "equipment_slots"."created_at" IS 'created_at';
 COMMENT ON COLUMN "equipment_slots"."created_user_id" IS 'created_user_id';
@@ -1508,6 +1489,33 @@ COMMENT ON COLUMN "facility_addresses"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "facility_addresses"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "facility_addresses"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "facility_policies" IS 'facility_policies';
+COMMENT ON COLUMN "facility_policies"."facility_policy_id" IS 'facility_policy_id';
+COMMENT ON COLUMN "facility_policies"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "facility_policies"."policy_code" IS 'policy_code';
+COMMENT ON COLUMN "facility_policies"."policy_value" IS 'policy_value';
+COMMENT ON COLUMN "facility_policies"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "facility_policies"."created_at" IS 'created_at';
+COMMENT ON COLUMN "facility_policies"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "facility_policies"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "facility_policies"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "facility_policies"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "facility_policies"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "facility_users" IS 'facility_users';
+COMMENT ON COLUMN "facility_users"."facility_user_id" IS 'facility_user_id';
+COMMENT ON COLUMN "facility_users"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "facility_users"."user_id" IS 'user_id';
+COMMENT ON COLUMN "facility_users"."display_name" IS 'display_name';
+COMMENT ON COLUMN "facility_users"."facility_user_seq" IS 'facility_user_seq';
+COMMENT ON COLUMN "facility_users"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "facility_users"."created_at" IS 'created_at';
+COMMENT ON COLUMN "facility_users"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "facility_users"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "facility_users"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "facility_users"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "facility_users"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "floors" IS 'floors';
 COMMENT ON COLUMN "floors"."floor_id" IS 'floor_id';
 COMMENT ON COLUMN "floors"."facility_id" IS 'facility_id';
@@ -1534,10 +1542,10 @@ COMMENT ON COLUMN "holidays"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "holidays"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "holidays"."updated_session_id" IS 'updated_session_id';
 
-COMMENT ON TABLE "insurance_providers" IS 'insurance_providers:ï¿½eï¿½[ï¿½uï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ insurers ï¿½Æ‚ï¿½ï¿½È‚ï¿½ï¿½Ì‚ÍAï¿½ÛŒï¿½ï¿½Ò‚Æ”ï¿½ÛŒï¿½ï¿½Ò‚Ì‹ï¿½Ê‚ğ–¾Šmï¿½É‚ï¿½ï¿½é‚½ï¿½ß‚ï¿½ provider ï¿½Æ‚ï¿½ï¿½ï¿½ï¿½\ï¿½ï¿½ï¿½ï¿½Dï¿½æ‚µï¿½ï¿½ï¿½ï¿½ï¿½ß‚Å‚ï¿½ï¿½B';
+COMMENT ON TABLE "insurance_providers" IS 'insurance_providers:ƒe[ƒuƒ‹–¼‚ğ insurers ‚Æ‚µ‚È‚¢‚Ì‚ÍA•ÛŒ¯Ò‚Æ”í•ÛŒ¯Ò‚Ì‹æ•Ê‚ğ–¾Šm‚É‚·‚é‚½‚ß‚É provider ‚Æ‚¢‚¤•\Œ»‚ğ—Dæ‚µ‚½‚½‚ß‚Å‚·B';
 COMMENT ON COLUMN "insurance_providers"."insurer_id" IS 'insurer_id';
-COMMENT ON COLUMN "insurance_providers"."insurer_type_code" IS 'insurer_type_code:0=None, 1=ï¿½ï¿½ï¿½ï‚¯ï¿½ï¿½ï¿½, 2=ï¿½ï¿½sï¿½@ï¿½ï¿½, 3=ï¿½ï¿½ï¿½Nï¿½ÛŒï¿½ï¿½gï¿½ï¿½, 4=ï¿½ï¿½ï¿½ï¿½, 5=ï¿½ï¿½ï¿½Ì‘ï¿½';
-COMMENT ON COLUMN "insurance_providers"."insurer_code" IS 'insurer_code:ï¿½Â”\ï¿½Å‚ï¿½ï¿½ï¿½Î•ÛŒï¿½ï¿½Ò”Ôï¿½';
+COMMENT ON COLUMN "insurance_providers"."insurer_type_code" IS 'insurer_type_code:0=None, 1=‹¦‰ï‚¯‚ñ‚Û, 2=‘ãs‹@ŠÖ, 3=Œ’N•ÛŒ¯‘g‡, 4=‘•Û, 5=‚»‚Ì‘¼';
+COMMENT ON COLUMN "insurance_providers"."insurer_code" IS 'insurer_code:‰Â”\‚Å‚ ‚ê‚Î•ÛŒ¯Ò”Ô†';
 COMMENT ON COLUMN "insurance_providers"."insurer_name" IS 'insurer_name';
 COMMENT ON COLUMN "insurance_providers"."insurer_short_name" IS 'insurer_short_name';
 COMMENT ON COLUMN "insurance_providers"."insurer_desc" IS 'insurer_desc';
@@ -1576,12 +1584,12 @@ COMMENT ON COLUMN "organization_addresses"."updated_session_id" IS 'updated_sess
 COMMENT ON TABLE "organization_insurances" IS 'organization_insurances';
 COMMENT ON COLUMN "organization_insurances"."org_insurance_id" IS 'org_insurance_id';
 COMMENT ON COLUMN "organization_insurances"."org_id" IS 'org_id';
-COMMENT ON COLUMN "organization_insurances"."is_primary" IS 'is_primary:ï¿½ï¿½ÛŒï¿½';
-COMMENT ON COLUMN "organization_insurances"."insurer_id" IS 'insurer_id:ï¿½ï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "organization_insurances"."insurer_type_code" IS 'insurer_type_code:0=None, 1=ï¿½ï¿½ï¿½ï‚¯ï¿½ï¿½ï¿½, 2=ï¿½ï¿½sï¿½@ï¿½ï¿½, 3=ï¿½ï¿½ï¿½Nï¿½ÛŒï¿½ï¿½gï¿½ï¿½, 4=ï¿½ï¿½ï¿½ï¿½, 5=ï¿½ï¿½ï¿½Ì‘ï¿½';
+COMMENT ON COLUMN "organization_insurances"."is_primary" IS 'is_primary:å•ÛŒ¯';
+COMMENT ON COLUMN "organization_insurances"."insurer_id" IS 'insurer_id:‚ ‚ê‚Î';
+COMMENT ON COLUMN "organization_insurances"."insurer_type_code" IS 'insurer_type_code:0=None, 1=‹¦‰ï‚¯‚ñ‚Û, 2=‘ãs‹@ŠÖ, 3=Œ’N•ÛŒ¯‘g‡, 4=‘•Û, 5=‚»‚Ì‘¼';
 COMMENT ON COLUMN "organization_insurances"."insurer_code" IS 'insurer_code';
 COMMENT ON COLUMN "organization_insurances"."is_active" IS 'is_active';
-COMMENT ON COLUMN "organization_insurances"."deactivated_on" IS 'deactivated_on:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
+COMMENT ON COLUMN "organization_insurances"."deactivated_on" IS 'deactivated_on:–³Œø“ú';
 COMMENT ON COLUMN "organization_insurances"."org_insurance_memo" IS 'org_insurance_memo';
 COMMENT ON COLUMN "organization_insurances"."org_insurance_seq" IS 'org_insurance_seq';
 COMMENT ON COLUMN "organization_insurances"."is_deleted" IS 'is_deleted';
@@ -1595,7 +1603,7 @@ COMMENT ON COLUMN "organization_insurances"."updated_session_id" IS 'updated_ses
 COMMENT ON TABLE "organization_locks" IS 'organization_locks';
 COMMENT ON COLUMN "organization_locks"."org_lock_id" IS 'org_lock_id';
 COMMENT ON COLUMN "organization_locks"."org_id" IS 'org_id';
-COMMENT ON COLUMN "organization_locks"."expiration_at" IS 'expiration_at:NULL ï¿½È‚ç–³ï¿½ï¿½ï¿½ï¿½';
+COMMENT ON COLUMN "organization_locks"."expiration_at" IS 'expiration_at:NULL ‚È‚ç–³ŠúŒÀ';
 COMMENT ON COLUMN "organization_locks"."locked_screen_code" IS 'locked_screen_code';
 COMMENT ON COLUMN "organization_locks"."locked_machin_ipaddr" IS 'locked_machin_ipaddr';
 COMMENT ON COLUMN "organization_locks"."locked_machin_name" IS 'locked_machin_name';
@@ -1616,9 +1624,9 @@ COMMENT ON COLUMN "organization_logs"."actioned_session_id" IS 'actioned_session
 
 COMMENT ON TABLE "organization_members" IS 'organization_members';
 COMMENT ON COLUMN "organization_members"."org_member_id" IS 'org_member_id';
-COMMENT ON COLUMN "organization_members"."org_id" IS 'org_id:ï¿½ï¿½ï¿½ï¿½ï¿½ñ“¯‚ï¿½ï¿½ï¿½Ğ‚ï¿½ï¿½ï¿½ï¿½è‚¦ï¿½ï¿½';
+COMMENT ON COLUMN "organization_members"."org_id" IS 'org_id:•¡”‰ñ“¯‚¶‰ïĞ‚à‚ ‚è‚¦‚é';
 COMMENT ON COLUMN "organization_members"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "organization_members"."personal_code" IS 'personal_code:ï¿½Ğˆï¿½ï¿½Ôï¿½ï¿½Aï¿½wï¿½ï¿½ï¿½Ôï¿½';
+COMMENT ON COLUMN "organization_members"."personal_code" IS 'personal_code:Ğˆõ”Ô†AŠw¶”Ô†';
 COMMENT ON COLUMN "organization_members"."department" IS 'department';
 COMMENT ON COLUMN "organization_members"."is_active" IS 'is_active';
 COMMENT ON COLUMN "organization_members"."deactivated_on" IS 'deactivated_on';
@@ -1633,10 +1641,9 @@ COMMENT ON COLUMN "organization_members"."updated_session_id" IS 'updated_sessio
 
 COMMENT ON TABLE "organizations" IS 'organizations';
 COMMENT ON COLUMN "organizations"."org_id" IS 'org_id';
-COMMENT ON COLUMN "organizations"."tenant_id" IS 'tenant_id';
 COMMENT ON COLUMN "organizations"."facility_id" IS 'facility_id';
 COMMENT ON COLUMN "organizations"."parent_org_id" IS 'parent_org_id';
-COMMENT ON COLUMN "organizations"."org_code" IS 'org_code:ï¿½aï¿½@ï¿½Ì”Ô‚ï¿½@ï¿½lï¿½Ôï¿½';
+COMMENT ON COLUMN "organizations"."org_code" IS 'org_code:•a‰@Ì”Ô‚â–@l”Ô†';
 COMMENT ON COLUMN "organizations"."org_name" IS 'org_name';
 COMMENT ON COLUMN "organizations"."org_name_katakana" IS 'org_name_katakana';
 COMMENT ON COLUMN "organizations"."org_name_katakana_compat" IS 'org_name_katakana_compat';
@@ -1677,21 +1684,21 @@ COMMENT ON COLUMN "patient_addresses"."updated_session_id" IS 'updated_session_i
 COMMENT ON TABLE "patient_insurance_cards" IS 'patient_insurance_cards';
 COMMENT ON COLUMN "patient_insurance_cards"."pt_insur_card_id" IS 'pt_insur_card_id';
 COMMENT ON COLUMN "patient_insurance_cards"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "patient_insurance_cards"."is_primary" IS 'is_primary:ï¿½ï¿½ÛŒï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_id" IS 'insurer_id:ï¿½ï¿½ï¿½ï¿½ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_type_code" IS 'insurer_type_code:0=None, 1=ï¿½ï¿½ï¿½ï‚¯ï¿½ï¿½ï¿½, 2=ï¿½ï¿½sï¿½@ï¿½ï¿½, 3=ï¿½ï¿½ï¿½Nï¿½ÛŒï¿½ï¿½gï¿½ï¿½, 4=ï¿½ï¿½ï¿½ï¿½, 5=ï¿½ï¿½ï¿½Ì‘ï¿½';
+COMMENT ON COLUMN "patient_insurance_cards"."is_primary" IS 'is_primary:å•ÛŒ¯';
+COMMENT ON COLUMN "patient_insurance_cards"."insurer_id" IS 'insurer_id:‚ ‚ê‚Î';
+COMMENT ON COLUMN "patient_insurance_cards"."insurer_type_code" IS 'insurer_type_code:0=None, 1=‹¦‰ï‚¯‚ñ‚Û, 2=‘ãs‹@ŠÖ, 3=Œ’N•ÛŒ¯‘g‡, 4=‘•Û, 5=‚»‚Ì‘¼';
 COMMENT ON COLUMN "patient_insurance_cards"."insurer_code" IS 'insurer_code';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_name" IS 'insurer_name:ï¿½ÛŒï¿½ï¿½Ò–ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code" IS 'insured_code:ï¿½Lï¿½ï¿½ï¿½Aï¿½Ôï¿½ï¿½Aï¿½}ï¿½ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_symbol" IS 'insured_code_symbol:ï¿½Lï¿½ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_number" IS 'insured_code_number:ï¿½Ôï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_branch_number" IS 'insured_code_branch_number:ï¿½}ï¿½ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_person_name" IS 'insured_person_name:ï¿½ï¿½ÛŒï¿½ï¿½Ò–ï¿½';
-COMMENT ON COLUMN "patient_insurance_cards"."self_family_relationship_code" IS 'self_family_relationship_code:ï¿½{ï¿½lï¿½Æ‘ï¿½ï¿½æ•ª(1=Self[ï¿½{ï¿½l], 2=Dependents[ï¿½Æ‘ï¿½])';
-COMMENT ON COLUMN "patient_insurance_cards"."assistance_code" IS 'assistance_code:ï¿½â•ï¿½æ•ª(0=ï¿½ï¿½ï¿½ï¿½0ï¿½ï¿½,Aï¿½Dï¿½ï¿½1ï¿½ï¿½)';
-COMMENT ON COLUMN "patient_insurance_cards"."continuation_code" IS 'continuation_code:ï¿½Cï¿½ÓŒpï¿½ï¿½(0=None, 1=ExtendedCare[ï¿½pï¿½ï¿½ï¿½Ã—{], 2=VoluntaryContinuation[ï¿½Cï¿½ÓŒpï¿½ï¿½])';
+COMMENT ON COLUMN "patient_insurance_cards"."insurer_name" IS 'insurer_name:•ÛŒ¯Ò–¼';
+COMMENT ON COLUMN "patient_insurance_cards"."insured_code" IS 'insured_code:‹L†A”Ô†A}”Ô';
+COMMENT ON COLUMN "patient_insurance_cards"."insured_code_symbol" IS 'insured_code_symbol:‹L†';
+COMMENT ON COLUMN "patient_insurance_cards"."insured_code_number" IS 'insured_code_number:”Ô†';
+COMMENT ON COLUMN "patient_insurance_cards"."insured_code_branch_number" IS 'insured_code_branch_number:}”Ô';
+COMMENT ON COLUMN "patient_insurance_cards"."insured_person_name" IS 'insured_person_name:”í•ÛŒ¯Ò–¼';
+COMMENT ON COLUMN "patient_insurance_cards"."self_family_relationship_code" IS 'self_family_relationship_code:–{l‰Æ‘°‹æ•ª(1=Self[–{l], 2=Dependents[‰Æ‘°])';
+COMMENT ON COLUMN "patient_insurance_cards"."assistance_code" IS 'assistance_code:•â•‹æ•ª(0=‘•Û0Š„,A‘Dˆõ1Š„)';
+COMMENT ON COLUMN "patient_insurance_cards"."continuation_code" IS 'continuation_code:”CˆÓŒp‘±(0=None, 1=ExtendedCare[Œp‘±—Ã—{], 2=VoluntaryContinuation[”CˆÓŒp‘±])';
 COMMENT ON COLUMN "patient_insurance_cards"."is_active" IS 'is_active';
-COMMENT ON COLUMN "patient_insurance_cards"."deactivated_on" IS 'deactivated_on:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
+COMMENT ON COLUMN "patient_insurance_cards"."deactivated_on" IS 'deactivated_on:–³Œø“ú';
 COMMENT ON COLUMN "patient_insurance_cards"."pt_insure_card_memo" IS 'pt_insure_card_memo';
 COMMENT ON COLUMN "patient_insurance_cards"."pt_insure_card_seq" IS 'pt_insure_card_seq';
 COMMENT ON COLUMN "patient_insurance_cards"."is_deleted" IS 'is_deleted';
@@ -1705,7 +1712,7 @@ COMMENT ON COLUMN "patient_insurance_cards"."updated_session_id" IS 'updated_ses
 COMMENT ON TABLE "patient_locks" IS 'patient_locks';
 COMMENT ON COLUMN "patient_locks"."pt_lock_id" IS 'pt_lock_id';
 COMMENT ON COLUMN "patient_locks"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "patient_locks"."expiration_at" IS 'expiration_at:NULL ï¿½È‚ç–³ï¿½ï¿½ï¿½ï¿½';
+COMMENT ON COLUMN "patient_locks"."expiration_at" IS 'expiration_at:NULL ‚È‚ç–³ŠúŒÀ';
 COMMENT ON COLUMN "patient_locks"."locked_screen_code" IS 'locked_screen_code';
 COMMENT ON COLUMN "patient_locks"."locked_machin_ipaddr" IS 'locked_machin_ipaddr';
 COMMENT ON COLUMN "patient_locks"."locked_machin_name" IS 'locked_machin_name';
@@ -1726,18 +1733,17 @@ COMMENT ON COLUMN "patient_logs"."actioned_session_id" IS 'actioned_session_id';
 
 COMMENT ON TABLE "patients" IS 'patients';
 COMMENT ON COLUMN "patients"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "patients"."canonical_pt_id" IS 'canonical_pt_id:ï¿½ï¿½ï¿½ñ‚¹Œï¿½ï¿½ï¿½ï¿½p';
-COMMENT ON COLUMN "patients"."tenant_id" IS 'tenant_id';
+COMMENT ON COLUMN "patients"."canonical_pt_id" IS 'canonical_pt_id:–¼Šñ‚¹ŒŸõ—p';
 COMMENT ON COLUMN "patients"."facility_id" IS 'facility_id';
 COMMENT ON COLUMN "patients"."primary_org_id" IS 'primary_org_id';
 COMMENT ON COLUMN "patients"."pt_code" IS 'pt_code';
 COMMENT ON COLUMN "patients"."karte_code" IS 'karte_code';
 COMMENT ON COLUMN "patients"."pt_name" IS 'pt_name';
-COMMENT ON COLUMN "patients"."pt_name_compat" IS 'pt_name_compat:JISï¿½kï¿½Ş‚Å‘ï¿½ñ…ï¿½ï¿½Ü‚Å‚É‚ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½';
+COMMENT ON COLUMN "patients"."pt_name_compat" IS 'pt_name_compat:JISk‘Ş‚Å‘æ“ñ…€‚Ü‚Å‚É‚µ‚½‚à‚Ì';
 COMMENT ON COLUMN "patients"."pt_name_katakana" IS 'pt_name_katakana';
-COMMENT ON COLUMN "patients"."pt_name_katakana_compat" IS 'pt_name_katakana_compat:ï¿½gï¿½ï¿½ï¿½Kï¿½ÅXï¿½Vï¿½Aï¿½Sï¿½pï¿½ï¿½ï¿½Aï¿½ï¿½Ø‚è•¶ï¿½ï¿½ï¿½Ì“ï¿½ï¿½ï¿½Aunaccent';
-COMMENT ON COLUMN "patients"."pt_maden_name" IS 'pt_maden_name:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì–ï¿½ï¿½ñ‚¹‚È‚Ç‚Ågï¿½p';
-COMMENT ON COLUMN "patients"."pt_alias_name" IS 'pt_alias_name:ï¿½Ê–ï¿½ï¿½Aï¿½Lï¿½ï¿½ï¿½lï¿½Bï¿½ï¿½ï¿½p';
+COMMENT ON COLUMN "patients"."pt_name_katakana_compat" IS 'pt_name_katakana_compat:ƒgƒŠƒK‚ÅXVA‘SŠp‰»A‹æØ‚è•¶š‚Ì“ˆêAunaccent';
+COMMENT ON COLUMN "patients"."pt_maden_name" IS 'pt_maden_name:Œ‹¥Œã‚Ì–¼Šñ‚¹‚È‚Ç‚Åg—p';
+COMMENT ON COLUMN "patients"."pt_alias_name" IS 'pt_alias_name:’Ê–¼A—L–¼l‰B“½—p';
 COMMENT ON COLUMN "patients"."birth_date" IS 'birth_date';
 COMMENT ON COLUMN "patients"."sex_code" IS 'sex_code:0: None, 1: Man, 2: Woman, 9: Unknown';
 COMMENT ON COLUMN "patients"."pt_memo" IS 'pt_memo';
@@ -1748,6 +1754,22 @@ COMMENT ON COLUMN "patients"."created_session_id" IS 'created_session_id';
 COMMENT ON COLUMN "patients"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "patients"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "patients"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "policies" IS 'policies';
+COMMENT ON COLUMN "policies"."policy_code" IS 'policy_code';
+COMMENT ON COLUMN "policies"."policy_name" IS 'policy_name';
+COMMENT ON COLUMN "policies"."policy_desc" IS 'policy_desc';
+COMMENT ON COLUMN "policies"."data_type" IS 'data_type';
+COMMENT ON COLUMN "policies"."policy_value" IS 'policy_value';
+COMMENT ON COLUMN "policies"."policy_seq" IS 'policy_seq';
+COMMENT ON COLUMN "policies"."is_active" IS 'is_active';
+COMMENT ON COLUMN "policies"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "policies"."created_at" IS 'created_at';
+COMMENT ON COLUMN "policies"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "policies"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "policies"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "policies"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "policies"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "role_permissions" IS 'role_permissions';
 COMMENT ON COLUMN "role_permissions"."role_permission_code" IS 'role_permission_code';
@@ -1760,34 +1782,6 @@ COMMENT ON COLUMN "role_permissions"."created_session_id" IS 'created_session_id
 COMMENT ON COLUMN "role_permissions"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "role_permissions"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "role_permissions"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "tenant_policies" IS 'tenant_policies';
-COMMENT ON COLUMN "tenant_policies"."tenant_policy_id" IS 'tenant_policy_id';
-COMMENT ON COLUMN "tenant_policies"."tenant_id" IS 'tenant_id';
-COMMENT ON COLUMN "tenant_policies"."policy_code" IS 'policy_code';
-COMMENT ON COLUMN "tenant_policies"."policy_value" IS 'policy_value';
-COMMENT ON COLUMN "tenant_policies"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "tenant_policies"."created_at" IS 'created_at';
-COMMENT ON COLUMN "tenant_policies"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "tenant_policies"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "tenant_policies"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "tenant_policies"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "tenant_policies"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "tenant_users" IS 'tenant_users';
-COMMENT ON COLUMN "tenant_users"."tenant_user_id" IS 'tenant_user_id';
-COMMENT ON COLUMN "tenant_users"."tenant_id" IS 'tenant_id';
-COMMENT ON COLUMN "tenant_users"."user_id" IS 'user_id';
-COMMENT ON COLUMN "tenant_users"."display_name" IS 'display_name';
-COMMENT ON COLUMN "tenant_users"."tenant_user_seq" IS 'tenant_user_seq';
-COMMENT ON COLUMN "tenant_users"."is_tenant_admin" IS 'is_tenant_admin';
-COMMENT ON COLUMN "tenant_users"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "tenant_users"."created_at" IS 'created_at';
-COMMENT ON COLUMN "tenant_users"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "tenant_users"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "tenant_users"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "tenant_users"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "tenant_users"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "user_logs" IS 'user_logs';
 COMMENT ON COLUMN "user_logs"."user_log_id" IS 'user_log_id';
@@ -1831,17 +1825,17 @@ COMMENT ON COLUMN "user_roles"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "users" IS 'users';
 COMMENT ON COLUMN "users"."user_id" IS 'user_id';
-COMMENT ON COLUMN "users"."user_code" IS 'user_code:ï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ï¿½pID';
-COMMENT ON COLUMN "users"."email" IS 'email:ï¿½ï¿½ï¿½[ï¿½ï¿½ï¿½Aï¿½hï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½ï¿½p';
+COMMENT ON COLUMN "users"."user_code" IS 'user_code:ƒƒOƒCƒ“—pID';
+COMMENT ON COLUMN "users"."email" IS 'email:ƒ[ƒ‹ƒAƒhƒŒƒX‚à•¹—p';
 COMMENT ON COLUMN "users"."password_hash" IS 'password_hash';
 COMMENT ON COLUMN "users"."password_salt" IS 'password_salt';
 COMMENT ON COLUMN "users"."expires_date" IS 'expires_date';
 COMMENT ON COLUMN "users"."login_success_count" IS 'login_success_count';
 COMMENT ON COLUMN "users"."login_failure_count" IS 'login_failure_count';
-COMMENT ON COLUMN "users"."login_failure_attempts" IS 'login_failure_attempts:ï¿½ï¿½ï¿½Oï¿½Cï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åƒï¿½ï¿½Zï¿½bï¿½gï¿½ï¿½ï¿½Ü‚ï¿½';
-COMMENT ON COLUMN "users"."locked_until_at" IS 'locked_until_at:ï¿½ï¿½ï¿½bï¿½Nï¿½ï¿½ï¿½ê‚½ï¿½ï¿½Xï¿½Vï¿½ï¿½ï¿½Ü‚ï¿½ï¿½Aï¿½ï¿½ï¿½bï¿½Nï¿½Ì‘Oï¿½ï¿½lï¿½Æ‚ï¿½ï¿½Ä‚ï¿½ï¿½ï¿½ï¿½Æ•Ûï¿½ï¿½ï¿½ï¿½Ü‚ï¿½';
+COMMENT ON COLUMN "users"."login_failure_attempts" IS 'login_failure_attempts:ƒƒOƒCƒ“¬Œ÷‚ÅƒŠƒZƒbƒg‚µ‚Ü‚·';
+COMMENT ON COLUMN "users"."locked_until_at" IS 'locked_until_at:ƒƒbƒN‚³‚ê‚½‚çXV‚µ‚Ü‚·AƒƒbƒN‚Ì‘O‰ñ’l‚Æ‚µ‚Ä‚¸‚Á‚Æ•Û‚µ‚Ü‚·';
 COMMENT ON COLUMN "users"."last_login_at" IS 'last_login_at';
-COMMENT ON COLUMN "users"."last_logout_at" IS 'last_logout_at:login_atï¿½ï¿½ï¿½Oï¿½ï¿½Tï¿½ï¿½ï¿½ï¿½ï¿½ßï¿½ï¿½ï¿½ï¿½lï¿½Í“ï¿½ï¿½ï¿½ï¿½Æ‚ï¿½ï¿½Ü‚ï¿½ï¿½B';
+COMMENT ON COLUMN "users"."last_logout_at" IS 'last_logout_at:login_at‚æ‚è‘O‚ğ’T‚·‚½‚ß‰Šú’l‚Í“¯‚¶‚Æ‚µ‚Ü‚·B';
 COMMENT ON COLUMN "users"."is_system_admin" IS 'is_system_admin';
 COMMENT ON COLUMN "users"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "users"."created_at" IS 'created_at';
@@ -1854,7 +1848,7 @@ COMMENT ON COLUMN "users"."updated_session_id" IS 'updated_session_id';
 COMMENT ON TABLE "facilities" IS 'facilities';
 COMMENT ON COLUMN "facilities"."facility_id" IS 'facility_id';
 COMMENT ON COLUMN "facilities"."tenant_id" IS 'tenant_id';
-COMMENT ON COLUMN "facilities"."medical_institution_code" IS 'medical_institution_code:ï¿½ï¿½Ã‹@ï¿½ÖƒRï¿½[ï¿½h';
+COMMENT ON COLUMN "facilities"."medical_institution_code" IS 'medical_institution_code:ˆã—Ã‹@ŠÖƒR[ƒh';
 COMMENT ON COLUMN "facilities"."facility_name" IS 'facility_name';
 COMMENT ON COLUMN "facilities"."facility_name_display" IS 'facility_name_display';
 COMMENT ON COLUMN "facilities"."is_active" IS 'is_active';
@@ -1879,22 +1873,6 @@ COMMENT ON COLUMN "permissions"."created_session_id" IS 'created_session_id';
 COMMENT ON COLUMN "permissions"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "permissions"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "permissions"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "policies" IS 'policies';
-COMMENT ON COLUMN "policies"."policy_code" IS 'policy_code';
-COMMENT ON COLUMN "policies"."policy_name" IS 'policy_name';
-COMMENT ON COLUMN "policies"."policy_desc" IS 'policy_desc';
-COMMENT ON COLUMN "policies"."data_type" IS 'data_type';
-COMMENT ON COLUMN "policies"."policy_value" IS 'policy_value';
-COMMENT ON COLUMN "policies"."policy_seq" IS 'policy_seq';
-COMMENT ON COLUMN "policies"."is_active" IS 'is_active';
-COMMENT ON COLUMN "policies"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "policies"."created_at" IS 'created_at';
-COMMENT ON COLUMN "policies"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "policies"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "policies"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "policies"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "policies"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "preferences" IS 'preferences';
 COMMENT ON COLUMN "preferences"."preference_code" IS 'preference_code';
