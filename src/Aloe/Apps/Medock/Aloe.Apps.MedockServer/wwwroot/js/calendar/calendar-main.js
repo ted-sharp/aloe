@@ -8,6 +8,7 @@
 import { CONFIG } from './config.js';
 import { getState, setState, resetState } from './state.js';
 import { dateToString, parseDate } from './utils/date-utils.js';
+import { createModal, hideModal } from './ui/modal.js';
 import { createTooltip, hideTooltip } from './ui/tooltip.js';
 import { createLayers } from './ui/layers.js';
 import { renderYearView } from './renderers/year-view.js';
@@ -44,6 +45,7 @@ function init(containerId, data, options, dotNetRef) {
     setState({ stage });
     createLayers();
     createTooltip();
+    createModal();
 
     // Set initial data
     if (data) {
@@ -195,8 +197,16 @@ function render() {
  */
 function destroy() {
     const state = getState();
+    hideModal();
     hideTooltip();
 
+    // モーダルをDOMから削除
+    const modal = document.getElementById('medock-day-modal');
+    if (modal && modal.parentNode) {
+        modal.parentNode.removeChild(modal);
+    }
+
+    // ツールチップをDOMから削除
     if (state.tooltip && state.tooltip.parentNode) {
         state.tooltip.parentNode.removeChild(state.tooltip);
     }

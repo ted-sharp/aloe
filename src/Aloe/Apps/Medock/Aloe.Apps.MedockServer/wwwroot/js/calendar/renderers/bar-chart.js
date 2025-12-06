@@ -8,7 +8,61 @@
 import { getState, setState } from '../state.js';
 import { CONFIG } from '../config.js';
 import { isToday, isDateInRange } from '../utils/date-utils.js';
-import { showTooltip, hideTooltip } from '../ui/tooltip.js';
+import { showDayModal } from '../ui/modal.js';
+
+/**
+ * モーダル表示用のコンテンツHTMLを生成
+ * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
+ * @param {Array|null} slots - 時間帯枠データ
+ * @param {object} state - カレンダーの状態
+ * @returns {string} HTML文字列
+ */
+function buildModalContent(dateStr, slots, state) {
+    let content = '';
+
+    if (slots && slots.length > 0) {
+        const totalCount = slots.reduce((sum, s) => sum + s.count, 0);
+        const totalMax = slots.reduce((sum, s) => sum + s.max, 0);
+        content += `<p class="text-base mb-2">予約: ${totalCount}/${totalMax}件</p>`;
+
+        // Show room filter summary
+        const hasRoomFilter = slots.some(s => s.filteredCount > 0);
+        if (hasRoomFilter) {
+            const totalFiltered = slots.reduce((sum, s) => sum + (s.filteredCount || 0), 0);
+            content += `<p class="text-warning mb-2">選択部屋: ${totalFiltered}件</p>`;
+        }
+
+        // 時間帯別の予約状況
+        content += '<div class="space-y-3 mt-4">';
+        slots.forEach(s => {
+            const ratio = s.max > 0 ? (s.count / s.max) * 100 : 0;
+            const colorClass = ratio >= 100 ? 'bg-error' : ratio >= 70 ? 'bg-warning' : ratio >= 30 ? 'bg-warning' : 'bg-info';
+
+            // Show room-filtered count in each slot
+            let roomInfo = '';
+            if (s.filteredCount > 0) {
+                roomInfo = ` <span class="text-warning">[部屋:${s.filteredCount}]</span>`;
+            }
+
+            content += `
+                <div>
+                    <div class="flex justify-between text-sm mb-1">
+                        <span>${s.time}</span>
+                        <span>${s.count}/${s.max} (${Math.round(ratio)}%)${roomInfo}</span>
+                    </div>
+                    <progress class="progress ${colorClass} w-full" value="${ratio}" max="100"></progress>
+                </div>
+            `;
+        });
+        content += '</div>';
+    } else {
+        const st = state.dayStats.get(dateStr) || { am: 0, pm: 0 };
+        content += `<p class="text-base">午前: ${st.am}件</p>`;
+        content += `<p class="text-base">午後: ${st.pm}件</p>`;
+    }
+
+    return content;
+}
 
 /**
  * 時間帯枠の充足率から色を取得
@@ -239,58 +293,13 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     });
 
     hitArea.on('mouseenter', function (e) {
-        let tooltipContent = `<strong>${dateStr}</strong><br>`;
-
-        if (slots && slots.length > 0) {
-            const totalCount = slots.reduce((sum, s) => sum + s.count, 0);
-            const totalMax = slots.reduce((sum, s) => sum + s.max, 0);
-            tooltipContent += `予約: ${totalCount}/${totalMax}件<br>`;
-
-            // Show room filter summary
-            const hasRoomFilter = slots.some(s => s.filteredCount > 0);
-            if (hasRoomFilter) {
-                const totalFiltered = slots.reduce((sum, s) => sum + (s.filteredCount || 0), 0);
-                tooltipContent += `<span style="color: #fb923c;">選択部屋: ${totalFiltered}件</span><br>`;
-            }
-            tooltipContent += '<br>';
-
-            // 横棒グラフで表示
-            tooltipContent += '<div style="font-size: 11px;">';
-            slots.forEach(s => {
-                const ratio = s.max > 0 ? (s.count / s.max) * 100 : 0;
-                const color = ratio >= 100 ? '#ef4444' : ratio >= 70 ? '#f97316' : ratio >= 30 ? '#fbbf24' : '#3b82f6';
-
-                // Show room-filtered count in each slot
-                let roomInfo = '';
-                if (s.filteredCount > 0) {
-                    roomInfo = ` <span style="color: #fb923c;">[部屋:${s.filteredCount}]</span>`;
-                }
-
-                tooltipContent += `
-                    <div style="margin-bottom: 6px;">
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-                            <span>${s.time}</span>
-                            <span>${s.count}/${s.max} (${Math.round(ratio)}%)${roomInfo}</span>
-                        </div>
-                        <div style="background: rgba(255,255,255,0.2); height: 8px; border-radius: 4px; overflow: hidden;">
-                            <div style="background: ${color}; height: 100%; width: ${ratio}%; transition: width 0.2s;"></div>
-                        </div>
-                    </div>
-                `;
-            });
-            tooltipContent += '</div>';
-        } else {
-            const st = state.dayStats.get(dateStr) || { am: 0, pm: 0 };
-            tooltipContent += `午前: ${st.am}件<br>午後: ${st.pm}件`;
-        }
-        showTooltip(e.evt.clientX, e.evt.clientY, tooltipContent);
+        // ホバー時は枠線ハイライトのみ（ツールチップは廃止）
         bgRect.stroke(CONFIG.colors.today);
         bgRect.strokeWidth(2);
         layers.content.batchDraw();
     });
 
     hitArea.on('mouseleave', function () {
-        hideTooltip();
         if (!state.isDragging) {
             // ホバー解除後は枠線を削除（今日の日付のみ枠線を残す）
             if (isToday(dateStr)) {
@@ -313,9 +322,9 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
         if (isDoubleClick) {
             setState({ lastClickTime: 0, lastClickDate: null });
-            if (state.dotNetRef) {
-                state.dotNetRef.invokeMethodAsync('OnDateDoubleClicked', dateStr);
-            }
+            // モーダルダイアログを表示
+            const modalContent = buildModalContent(dateStr, slots, state);
+            showDayModal(dateStr, modalContent, state.dotNetRef);
         } else if (isShiftClick && state.selectedDate) {
             const range = { start: state.selectedDate, end: dateStr };
             if (state.dotNetRef) {

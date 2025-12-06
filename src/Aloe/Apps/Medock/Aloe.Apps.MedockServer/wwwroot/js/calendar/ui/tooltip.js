@@ -2,6 +2,7 @@
  * Tooltip Management
  *
  * ホバー時に表示されるツールチップのDOM要素管理
+ * 週表示（week-view）で使用
  */
 
 import { getState, setState } from '../state.js';
