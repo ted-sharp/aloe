@@ -178,6 +178,7 @@ public partial class LoginWindow
 
             this._options.IsUserRemembered = isRemembered;
             this._options.IsPasswordRemembered = isRemembered;
+            this._options.IsLoginSkipped = isRemembered;
             if (isRemembered)
             {
                 this._options.User = this.UserTextBox.Text;
@@ -235,6 +236,10 @@ public partial class LoginWindow
 
         // TODO: Window位置情報ファイルもリセットする
 
+        // IsLoginSkippedもリセットして保存
+        this._options.IsLoginSkipped = false;
+        this.SaveUserOptions();
+
         this.IniRemoveButton.IsEnabled = false;
     }
 
@@ -286,6 +291,11 @@ public partial class LoginWindow
 
             App.Session = result.SessionDto;
             App.User = result.UserDto;
+
+            // ログイン成功時に、Remember meチェックボックスの状態に応じてIsLoginSkippedを設定して保存
+            var isRemembered = this.UserRememberedCheckBox.IsChecked ?? false;
+            this._options.IsLoginSkipped = isRemembered;
+            this.SaveUserOptions();
 
             var window = App.Resolve<ReservationMainWindow>();
             window.Show();

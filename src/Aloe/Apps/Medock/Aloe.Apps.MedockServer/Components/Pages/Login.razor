@@ -1,6 +1,8 @@
 @page "/login"
 @layout LoginLayout
 @using Aloe.Apps.MedockLib.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 @rendermode InteractiveServer
 
@@ -124,6 +126,7 @@
     [Inject] private AuthService AuthService { get; set; } = default!;
     [Inject] private ProtectedLocalStorage LocalStorage { get; set; } = default!;
     [Inject] private UserContextService UserContextService { get; set; } = default!;
+    [Inject] private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [SupplyParameterFromForm]
     private LoginModel loginModel { get; set; } = default!;
@@ -152,12 +155,19 @@
                     StateHasChanged();
                 }
 
-                // KeepSessionが有効ならセッション確認
-                var savedSessionId = await LocalStorage.GetAsync<string>("session_id");
+                // KeepSession: UIに復元
                 var savedKeepSession = await LocalStorage.GetAsync<bool>("keep_session");
+                if (savedKeepSession.Success && savedKeepSession.Value)
+                {
+                    loginModel.KeepSession = true;
+                    StateHasChanged();
+                }
+
+                // KeepSessionが有効ならセッション確認して自動ログイン
+                var savedSessionId = await LocalStorage.GetAsync<string>("session_id");
                 var savedAccessToken = await LocalStorage.GetAsync<string>("access_token");
-                
-                if (savedKeepSession.Success && savedKeepSession.Value && 
+
+                if (savedKeepSession.Success && savedKeepSession.Value &&
                     savedSessionId.Success && !string.IsNullOrEmpty(savedSessionId.Value) &&
                     savedAccessToken.Success && !string.IsNullOrEmpty(savedAccessToken.Value))
                 {
@@ -172,10 +182,33 @@
                         }
                         else
                         {
-                            // 無効なセッションはクリア
+                            // セッション検証失敗 → リフレッシュトークンで更新を試行
+                            var savedRefreshToken = await LocalStorage.GetAsync<string>("refresh_token");
+                            var savedUserId = await LocalStorage.GetAsync<string>("user_id");
+
+                            if (savedRefreshToken.Success && !string.IsNullOrEmpty(savedRefreshToken.Value) &&
+                                savedUserId.Success && Guid.TryParse(savedUserId.Value, out var userId))
+                            {
+                                var refreshResult = await AuthService.RefreshTokenAsync(userId, savedRefreshToken.Value);
+                                if (refreshResult.IsSuccess)
+                                {
+                                    // 新しいトークンを保存して自動遷移
+                                    await LocalStorage.SetAsync("access_token", refreshResult.AccessToken!);
+                                    if (!string.IsNullOrEmpty(refreshResult.RefreshToken))
+                                    {
+                                        await LocalStorage.SetAsync("refresh_token", refreshResult.RefreshToken);
+                                    }
+                                    NavigationManager.NavigateTo("/calendar");
+                                    return;
+                                }
+                            }
+
+                            // リフレッシュも失敗した場合、LocalStorageをクリア
                             await LocalStorage.DeleteAsync("session_id");
                             await LocalStorage.DeleteAsync("keep_session");
                             await LocalStorage.DeleteAsync("access_token");
+                            await LocalStorage.DeleteAsync("refresh_token");
+                            await LocalStorage.DeleteAsync("user_id");
                         }
                     }
                 }
@@ -241,6 +274,21 @@
                 {
                     await LocalStorage.SetAsync("access_token", result.AccessToken);
                 }
+
+                // リフレッシュトークンとユーザーIDを保存（セッション維持用）
+                if (!string.IsNullOrEmpty(result.RefreshToken))
+                {
+                    await LocalStorage.SetAsync("refresh_token", result.RefreshToken);
+                }
+                if (result.UserId.HasValue)
+                {
+                    await LocalStorage.SetAsync("user_id", result.UserId.Value.ToString());
+                }
+
+                // 認証状態を更新
+                // RevalidatingServerAuthenticationStateProviderは自動的に再検証を行うため、
+                // 明示的な通知は不要です。次のGetAuthenticationStateAsync呼び出しで
+                // 新しい認証状態が取得されます。
 
                 // 遷移先を決定（複数施設なら施設選択へ）
                 if (result.UserId.HasValue)

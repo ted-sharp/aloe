@@ -10,6 +10,7 @@ namespace Aloe.Apps.MedockServer.Tests.Services;
 public class AuthServiceTests : IDisposable
 {
     private readonly MedockDbContext _context;
+    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtTokenService _jwtTokenService;
     private readonly AuthService _authService;
@@ -21,6 +22,9 @@ public class AuthServiceTests : IDisposable
             .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
             .Options;
         this._context = new MedockDbContext(options);
+
+        // DbContextFactory (テスト用のシンプルな実装)
+        this._contextFactory = new TestDbContextFactory(this._context);
 
         // PasswordHasher
         this._passwordHasher = PasswordHasher.Default;
@@ -37,7 +41,7 @@ public class AuthServiceTests : IDisposable
         this._jwtTokenService = new JwtTokenService(Options.Create(jwtSettings));
 
         // AuthService
-        this._authService = new AuthService(this._context, this._passwordHasher, this._jwtTokenService);
+        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService);
     }
 
     public void Dispose()
@@ -291,6 +295,24 @@ public class AuthServiceTests : IDisposable
 
         // Assert
         result.Should().BeFalse();
+    }
+
+    /// <summary>
+    /// テスト用のDbContextFactory実装
+    /// </summary>
+    private class TestDbContextFactory : IDbContextFactory<MedockDbContext>
+    {
+        private readonly MedockDbContext _context;
+
+        public TestDbContextFactory(MedockDbContext context)
+        {
+            this._context = context;
+        }
+
+        public MedockDbContext CreateDbContext()
+        {
+            return this._context;
+        }
     }
 }
 

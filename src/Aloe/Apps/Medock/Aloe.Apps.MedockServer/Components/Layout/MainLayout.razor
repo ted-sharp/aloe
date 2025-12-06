@@ -1,11 +1,11 @@
 ﻿@inherits LayoutComponentBase
 @using Aloe.Apps.MedockLib.Services
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
-@using Microsoft.AspNetCore.Http
 @inject NavigationManager NavigationManager
 @inject AuthService AuthService
 @inject ProtectedLocalStorage LocalStorage
-@inject IHttpContextAccessor HttpContextAccessor
+@inject AuthenticationStateProvider AuthenticationStateProvider
 @inject UserContextService UserContextService
 
 <div class="drawer lg:drawer-open responsive-container">
@@ -183,11 +183,13 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // HttpContextからClaimsPrincipalを取得
-        var httpContext = HttpContextAccessor.HttpContext;
-        if (httpContext?.User != null)
+        // AuthenticationStateProviderから認証状態を取得
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity?.IsAuthenticated == true)
         {
-            UserContextService.InitializeFromClaims(httpContext.User);
+            UserContextService.InitializeFromClaims(user);
             userContext = UserContextService.CurrentUser;
 
             // アクセス可能な施設一覧を取得

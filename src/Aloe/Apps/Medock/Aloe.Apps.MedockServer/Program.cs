@@ -2,7 +2,10 @@ using System.Text;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components;
+using Aloe.Apps.MedockServer.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -30,6 +33,10 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
+
+// Add Authentication State Provider
+builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+builder.Services.AddScoped<ProtectedLocalStorage>();
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
