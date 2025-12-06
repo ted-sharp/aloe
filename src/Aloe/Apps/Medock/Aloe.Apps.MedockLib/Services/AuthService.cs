@@ -175,7 +175,7 @@ public class AuthService
         var user = await this.GetUserWithRelationsAsync(userId);
         if (user == null)
         {
-            return new List<FacilityInfo>();
+            return [];
         }
 
         // システム管理者: 全施設

@@ -57,7 +57,7 @@ public class UserContextService
     {
         if (this.CurrentUser == null || this.CurrentUser.UserId == Guid.Empty)
         {
-            return new List<FacilityInfo>();
+            return [];
         }
 
         return await this._authService.GetAccessibleFacilitiesAsync(this.CurrentUser.UserId);
@@ -88,7 +88,7 @@ public record UserContextInfo
     public string FacilityName { get; init; } = "";
     public bool IsSystemAdmin { get; init; }
     public bool IsFacilityAdmin { get; init; }
-    public List<string> Roles { get; init; } = new();
+    public List<string> Roles { get; init; } = [];
 
     /// <summary>
     /// ユーザーのイニシャルを取得します（Avatar表示用）。

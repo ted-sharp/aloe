@@ -102,7 +102,7 @@
     private string CurrentUserName { get; set; } = "システム管理者";
     private bool IsLoading { get; set; } = true;
     private Guid SelectedTenantId { get; set; } = Guid.Empty;
-    private List<TenantInfo> Tenants { get; set; } = new();
+    private List<TenantInfo> Tenants { get; set; } = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -118,27 +118,27 @@
         await Task.Delay(500);
 
         // デモ用データ
-        Tenants = new List<TenantInfo>
-        {
-            new TenantInfo 
-            { 
-                TenantId = Guid.NewGuid(), 
-                TenantName = "○○病院", 
-                Description = "医療施設 - 予約管理" 
+        Tenants =
+        [
+            new TenantInfo
+            {
+                TenantId = Guid.NewGuid(),
+                TenantName = "○○病院",
+                Description = "医療施設 - 予約管理"
             },
-            new TenantInfo 
-            { 
-                TenantId = Guid.NewGuid(), 
-                TenantName = "△△クリニック", 
-                Description = "診療所 - 予約管理" 
+            new TenantInfo
+            {
+                TenantId = Guid.NewGuid(),
+                TenantName = "△△クリニック",
+                Description = "診療所 - 予約管理"
             },
-            new TenantInfo 
-            { 
-                TenantId = Guid.NewGuid(), 
-                TenantName = "□□健診センター", 
-                Description = "健診施設 - 予約管理" 
+            new TenantInfo
+            {
+                TenantId = Guid.NewGuid(),
+                TenantName = "□□健診センター",
+                Description = "健診施設 - 予約管理"
             }
-        };
+        ];
 
         IsLoading = false;
         StateHasChanged();

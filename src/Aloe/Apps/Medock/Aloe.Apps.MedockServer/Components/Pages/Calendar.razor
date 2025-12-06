@@ -400,14 +400,14 @@
 
             if (!user.Identity?.IsAuthenticated ?? false)
             {
-                AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+                AvailableEquipments = [];
                 return;
             }
 
             var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
             if (string.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
             {
-                AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+                AvailableEquipments = [];
                 return;
             }
 
@@ -421,7 +421,7 @@
         catch (Exception ex)
         {
             Console.WriteLine($"設備データ取得エラー: {ex.Message}");
-            AvailableEquipments = new List<SearchFilterPanel.FilterItem>();
+            AvailableEquipments = [];
         }
     }
 
@@ -440,7 +440,7 @@
         }
         catch (Exception)
         {
-            Holidays = new Dictionary<string, string>();
+            Holidays = [];
         }
     }
 

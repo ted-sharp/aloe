@@ -37,7 +37,7 @@ public class AppointmentService : IAppointmentService
             })
             .ToListAsync();
 
-        var result = new Dictionary<string, DayStatsDto>();
+        var result = new Dictionary<string, DayStatsDto>([]);
 
         // 指定期間の全日付を初期化
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -112,7 +112,7 @@ public class AppointmentService : IAppointmentService
             .Include(a => a.Floor)
             .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
 
-        return appointment != null ? MapToDto(appointment) : null;
+        return appointment is not null ? MapToDto(appointment) : null;
     }
 
     /// <inheritdoc />

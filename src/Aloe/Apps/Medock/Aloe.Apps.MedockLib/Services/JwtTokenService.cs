@@ -42,15 +42,15 @@ public class JwtTokenService
     /// <returns>JWTアクセストークン</returns>
     public string GenerateAccessToken(TokenGenerationParams tokenParams)
     {
-        var claims = new List<Claim>
-        {
+        List<Claim> claims =
+        [
             // OIDC標準クレーム
             new("sub", tokenParams.UserId.ToString()),
             new("preferred_username", tokenParams.UserCode),
             new("email", tokenParams.Email),
             new("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
-        };
+        ];
 
         // 表示名
         if (!String.IsNullOrEmpty(tokenParams.DisplayName))

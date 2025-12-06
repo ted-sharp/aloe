@@ -80,28 +80,28 @@
 
         return CurrentView.ToLower() switch
         {
-            "year" => new List<SpeedDialAction>
-            {
+            "year" =>
+            [
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("フィルター", filterIcon, async () => await OnToggleFilter.InvokeAsync()),
                 new("前年", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
-            },
-            "month" => new List<SpeedDialAction>
-            {
+            ],
+            "month" =>
+            [
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("週表示", weekIcon, async () => await OnViewChange.InvokeAsync("week")),
                 new("前月", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
-            },
-            "week" => new List<SpeedDialAction>
-            {
+            ],
+            "week" =>
+            [
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
                 new("月表示", monthIcon, async () => await OnViewChange.InvokeAsync("month")),
                 new("前へ", prevIcon, async () => await OnPreviousPeriod.InvokeAsync()),
-            },
-            _ => new List<SpeedDialAction>
-            {
+            ],
+            _ =>
+            [
                 new("今日", todayIcon, async () => await OnGoToToday.InvokeAsync()),
-            }
+            ]
         };
     }
 }
