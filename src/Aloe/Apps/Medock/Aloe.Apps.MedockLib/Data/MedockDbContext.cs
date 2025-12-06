@@ -219,7 +219,6 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(200);
             entity.Property(e => e.FacilityUserSeq).HasColumnName("facility_user_seq");
             entity.Property(e => e.IsFacilityAdmin).HasColumnName("is_facility_admin");
-            entity.Property(e => e.PermissionLevel).HasColumnName("permission_level").HasMaxLength(50);
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
 

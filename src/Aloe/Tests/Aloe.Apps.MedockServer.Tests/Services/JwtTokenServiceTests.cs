@@ -261,8 +261,7 @@ public class JwtTokenServiceTests
             UserId = Guid.NewGuid(),
             UserCode = "admin",
             Email = "admin@example.com",
-            IsSystemAdmin = true,
-            IsFacilityAdmin = true
+            IsSystemAdmin = true
         };
 
         // Act
@@ -272,6 +271,5 @@ public class JwtTokenServiceTests
 
         // Assert
         jwtToken.Claims.Should().Contain(c => c.Type == "is_system_admin" && c.Value == "true");
-        jwtToken.Claims.Should().Contain(c => c.Type == "is_facility_admin" && c.Value == "true");
     }
 }

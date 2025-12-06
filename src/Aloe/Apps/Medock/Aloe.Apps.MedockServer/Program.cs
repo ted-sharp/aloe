@@ -23,6 +23,7 @@ builder.Services.AddDbContext<MedockDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add Services
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();

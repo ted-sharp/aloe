@@ -42,9 +42,9 @@
                                         </div>
                                         <div class="flex-1 text-left">
                                             <p class="font-medium">@facility.FacilityName</p>
-                                            @if (facility.PermissionLevel != "full")
+                                            @if (facility.IsFacilityAdmin)
                                             {
-                                                <span class="badge badge-xs badge-ghost">@GetPermissionLabel(facility.PermissionLevel)</span>
+                                                <span class="badge badge-xs badge-primary">管理者</span>
                                             }
                                         </div>
                                         @if (isSelected)
@@ -115,15 +115,5 @@
     private async Task HandleBackdropClick()
     {
         await Close();
-    }
-
-    private static string GetPermissionLabel(string permissionLevel)
-    {
-        return permissionLevel switch
-        {
-            "readonly" => "閲覧のみ",
-            "limited" => "一部機能",
-            _ => permissionLevel
-        };
     }
 }

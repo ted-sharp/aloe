@@ -123,6 +123,7 @@
     [Inject] private NavigationManager NavigationManager { get; set; } = default!;
     [Inject] private AuthService AuthService { get; set; } = default!;
     [Inject] private ProtectedLocalStorage LocalStorage { get; set; } = default!;
+    [Inject] private UserContextService UserContextService { get; set; } = default!;
 
     [SupplyParameterFromForm]
     private LoginModel loginModel { get; set; } = default!;
@@ -154,11 +155,29 @@
                 // KeepSessionが有効ならセッション確認
                 var savedSessionId = await LocalStorage.GetAsync<string>("session_id");
                 var savedKeepSession = await LocalStorage.GetAsync<bool>("keep_session");
+                var savedAccessToken = await LocalStorage.GetAsync<string>("access_token");
+                
                 if (savedKeepSession.Success && savedKeepSession.Value && 
-                    savedSessionId.Success && !string.IsNullOrEmpty(savedSessionId.Value))
+                    savedSessionId.Success && !string.IsNullOrEmpty(savedSessionId.Value) &&
+                    savedAccessToken.Success && !string.IsNullOrEmpty(savedAccessToken.Value))
                 {
-                    // 既存セッションがあれば自動遷移
-                    NavigationManager.NavigateTo("/calendar");
+                    // セッション検証
+                    if (Guid.TryParse(savedSessionId.Value, out var sessionId))
+                    {
+                        var validationResult = await AuthService.ValidateSessionAsync(savedAccessToken.Value, sessionId);
+                        if (validationResult.IsValid)
+                        {
+                            // 有効なセッションがあれば自動遷移
+                            NavigationManager.NavigateTo("/calendar");
+                        }
+                        else
+                        {
+                            // 無効なセッションはクリア
+                            await LocalStorage.DeleteAsync("session_id");
+                            await LocalStorage.DeleteAsync("keep_session");
+                            await LocalStorage.DeleteAsync("access_token");
+                        }
+                    }
                 }
             }
             catch
@@ -223,9 +242,25 @@
                     await LocalStorage.SetAsync("access_token", result.AccessToken);
                 }
 
-                // 遷移先を決定（複数テナントならテナント選択へ）
-                // TODO: テナント数チェック
-                NavigationManager.NavigateTo("/calendar");
+                // 遷移先を決定（複数施設なら施設選択へ）
+                if (result.UserId.HasValue)
+                {
+                    var facilities = await AuthService.GetAccessibleFacilitiesAsync(result.UserId.Value);
+                    if (facilities.Count > 1)
+                    {
+                        // 複数施設がある場合は施設選択画面へ
+                        NavigationManager.NavigateTo("/tenant-select");
+                    }
+                    else
+                    {
+                        // 単一施設の場合は直接メイン画面へ
+                        NavigationManager.NavigateTo("/calendar");
+                    }
+                }
+                else
+                {
+                    NavigationManager.NavigateTo("/calendar");
+                }
             }
             else
             {

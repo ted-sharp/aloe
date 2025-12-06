@@ -1,9 +1,12 @@
 ﻿@inherits LayoutComponentBase
 @using Aloe.Apps.MedockLib.Services
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@using Microsoft.AspNetCore.Http
 @inject NavigationManager NavigationManager
 @inject AuthService AuthService
 @inject ProtectedLocalStorage LocalStorage
+@inject IHttpContextAccessor HttpContextAccessor
+@inject UserContextService UserContextService
 
 <div class="drawer lg:drawer-open responsive-container">
     <!-- ドロワートグル（モバイル用） -->
@@ -40,18 +43,18 @@
                     </svg>
                 </label>
                 <!-- ユーザーメニュー -->
-                <div class="dropdown dropdown-end">
-                    <div tabindex="0" role="button" class="btn btn-ghost btn-circle avatar placeholder">
-                        <div class="bg-emerald-500 text-white rounded-full w-10">
-                            <span class="text-lg">U</span>
-                        </div>
-                    </div>
-                    <ul tabindex="0" class="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52">
-                        <li><a href="/profile">プロフィール</a></li>
-                        <li><a href="/settings">設定</a></li>
-                        <li><button @onclick="HandleLogout" class="w-full text-left">ログアウト</button></li>
-                    </ul>
-                </div>
+                <UserAvatarFab
+                    UserInitial="@(userContext?.Initial ?? "U")"
+                    DisplayName="@(userContext?.DisplayName ?? "")"
+                    UserEmail="@(userContext?.Email ?? "")"
+                    TenantName="@(userContext?.TenantName ?? "")"
+                    FacilityName="@(userContext?.FacilityName ?? "")"
+                    UserRole="@(userContext?.IsSystemAdmin == true ? "システム管理者" : userContext?.IsFacilityAdmin == true ? "施設管理者" : "")"
+                    CurrentFacilityId="@userContext?.FacilityId"
+                    HasMultipleFacilities="@hasMultipleFacilities"
+                    AvailableFacilities="@availableFacilities"
+                    OnLogout="HandleLogout"
+                    OnFacilitySwitch="HandleFacilitySwitch" />
             </div>
         </nav>
         
@@ -174,6 +177,58 @@
 </div>
 
 @code {
+    private UserContextInfo? userContext;
+    private bool hasMultipleFacilities;
+    private List<FacilityInfo> availableFacilities = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // HttpContextからClaimsPrincipalを取得
+        var httpContext = HttpContextAccessor.HttpContext;
+        if (httpContext?.User != null)
+        {
+            UserContextService.InitializeFromClaims(httpContext.User);
+            userContext = UserContextService.CurrentUser;
+
+            // アクセス可能な施設一覧を取得
+            if (userContext != null && userContext.UserId != Guid.Empty)
+            {
+                availableFacilities = await UserContextService.GetAccessibleFacilitiesAsync();
+                hasMultipleFacilities = availableFacilities.Count > 1;
+            }
+        }
+    }
+
+    private async Task HandleFacilitySwitch(Guid facilityId)
+    {
+        if (userContext == null || userContext.UserId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            // 施設切り替えAPIを呼び出し
+            var result = await AuthService.SwitchFacilityAsync(userContext.UserId, facilityId);
+            if (result.IsSuccess && !string.IsNullOrEmpty(result.AccessToken))
+            {
+                // 新しいトークンをLocalStorageに保存
+                await LocalStorage.SetAsync("access_token", result.AccessToken);
+                if (result.RefreshToken != null)
+                {
+                    await LocalStorage.SetAsync("refresh_token", result.RefreshToken);
+                }
+
+                // ページをリロードして新しいトークンで認証
+                NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+            }
+        }
+        catch
+        {
+            // エラーは無視（ユーザーに通知する場合はここで処理）
+        }
+    }
+
     private async Task HandleLogout()
     {
         try

@@ -54,7 +54,6 @@ public class AuthController : ControllerBase
             FacilityId = result.FacilityId,
             FacilityName = result.FacilityName ?? "",
             IsSystemAdmin = result.IsSystemAdmin,
-            IsFacilityAdmin = result.IsFacilityAdmin,
             Roles = result.Roles!
         });
     }
@@ -136,7 +135,7 @@ public class AuthController : ControllerBase
                 FacilityName = f.FacilityName,
                 TenantId = f.TenantId,
                 TenantName = f.TenantName,
-                PermissionLevel = f.PermissionLevel
+                IsFacilityAdmin = f.IsFacilityAdmin
             }).ToList()
         });
     }
@@ -181,7 +180,6 @@ public record LoginResponse
     public Guid? FacilityId { get; init; }
     public required string FacilityName { get; init; }
     public required bool IsSystemAdmin { get; init; }
-    public required bool IsFacilityAdmin { get; init; }
     public required string[] Roles { get; init; }
 }
 
@@ -214,5 +212,5 @@ public record FacilityDto
     public required string FacilityName { get; init; }
     public required Guid TenantId { get; init; }
     public required string TenantName { get; init; }
-    public required string PermissionLevel { get; init; }
+    public required bool IsFacilityAdmin { get; init; }
 }

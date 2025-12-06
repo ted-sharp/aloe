@@ -95,8 +95,7 @@ public class AuthServiceTests : IDisposable
             UserId = user.UserId,
             DisplayName = "テストユーザー",
             FacilityUserSeq = 1,
-            IsFacilityAdmin = false,
-            PermissionLevel = "full",
+            IsFacilityAdmin = true,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow
         };

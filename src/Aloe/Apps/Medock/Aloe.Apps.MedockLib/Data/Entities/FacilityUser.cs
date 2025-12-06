@@ -37,11 +37,6 @@ public class FacilityUser : IAuditableEntity
     [Column("is_facility_admin")]
     public bool IsFacilityAdmin { get; set; }
 
-    /// <summary>権限レベル (full, readonly, limited)</summary>
-    [Column("permission_level")]
-    [MaxLength(20)]
-    public string PermissionLevel { get; set; } = "full";
-
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
     public bool IsDeleted { get; set; }

@@ -194,7 +194,6 @@ public class AuthService
                 FacilityName = !String.IsNullOrEmpty(f.FacilityNameDisplay) ? f.FacilityNameDisplay : f.FacilityName,
                 TenantId = f.TenantId,
                 TenantName = f.Tenant.TenantName,
-                PermissionLevel = "full"
             }).OrderBy(f => f.TenantName).ThenBy(f => f.FacilityName).ToList();
         }
 
@@ -209,13 +208,63 @@ public class AuthService
                     : fu.Facility.FacilityName,
                 TenantId = fu.Facility.TenantId,
                 TenantName = fu.Facility.Tenant?.TenantName ?? String.Empty,
-                PermissionLevel = fu.PermissionLevel ?? "full"
             })
             .OrderBy(f => f.TenantName)
             .ThenBy(f => f.FacilityName)
             .ToList();
 
         return facilities;
+    }
+
+    /// <summary>
+    /// セッションを検証します。
+    /// </summary>
+    /// <param name="accessToken">アクセストークン</param>
+    /// <param name="sessionId">セッションID</param>
+    /// <returns>検証結果</returns>
+    public async Task<SessionValidationResult> ValidateSessionAsync(string accessToken, Guid sessionId)
+    {
+        // JWTトークンの検証
+        var principal = this._jwtTokenService.ValidateToken(accessToken);
+        if (principal == null)
+        {
+            return SessionValidationResult.Invalid("Invalid access token");
+        }
+
+        // セッションの存在確認
+        var session = await this._context.Sessions.FindAsync(sessionId);
+        if (session == null)
+        {
+            return SessionValidationResult.Invalid("Session not found");
+        }
+
+        // セッションがログアウト済みかチェック
+        if (session.LogoutAt.HasValue)
+        {
+            return SessionValidationResult.Invalid("Session has been logged out");
+        }
+
+        // ユーザーIDの一致確認
+        var userIdClaim = principal.FindFirst("sub")?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId) || userId != session.UserId)
+        {
+            return SessionValidationResult.Invalid("User ID mismatch");
+        }
+
+        // ユーザーの存在確認
+        var user = await this._context.Users.FindAsync(session.UserId);
+        if (user == null || user.IsDeleted)
+        {
+            return SessionValidationResult.Invalid("User not found or deleted");
+        }
+
+        // アカウントロック確認
+        if (user.LockedUntilAt > DateTimeOffset.UtcNow)
+        {
+            return SessionValidationResult.Invalid("Account is locked");
+        }
+
+        return SessionValidationResult.Valid();
     }
 
     /// <summary>
@@ -422,5 +471,30 @@ public class FacilityInfo
     public string FacilityName { get; init; } = "";
     public Guid TenantId { get; init; }
     public string TenantName { get; init; } = "";
-    public string PermissionLevel { get; init; } = "";
+    public bool IsFacilityAdmin { get; init; }
+}
+
+/// <summary>
+/// セッション検証結果
+/// </summary>
+public class SessionValidationResult
+{
+    public bool IsValid { get; init; }
+    public string? ErrorMessage { get; init; }
+
+    private SessionValidationResult(bool isValid, string? errorMessage = null)
+    {
+        this.IsValid = isValid;
+        this.ErrorMessage = errorMessage;
+    }
+
+    public static SessionValidationResult Valid()
+    {
+        return new SessionValidationResult(true);
+    }
+
+    public static SessionValidationResult Invalid(string errorMessage)
+    {
+        return new SessionValidationResult(false, errorMessage);
+    }
 }

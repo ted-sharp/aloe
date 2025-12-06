@@ -21,7 +21,6 @@ namespace Aloe.Apps.MedockLib.Services;
 /// - facility_id: 施設ID（カスタムクレーム）
 /// - facility_name: 施設名（カスタムクレーム）
 /// - is_system_admin: システム管理者フラグ（カスタムクレーム）
-/// - is_tenant_admin: テナント管理者フラグ（カスタムクレーム）
 /// - roles: ロール（カスタムクレーム）
 /// </remarks>
 public class JwtTokenService
@@ -80,7 +79,6 @@ public class JwtTokenService
 
         // 管理者フラグ
         claims.Add(new Claim("is_system_admin", tokenParams.IsSystemAdmin.ToString().ToLower()));
-        claims.Add(new Claim("is_facility_admin", tokenParams.IsFacilityAdmin.ToString().ToLower()));
 
         // ロール（カスタムクレーム）
         if (tokenParams.Roles != null)
