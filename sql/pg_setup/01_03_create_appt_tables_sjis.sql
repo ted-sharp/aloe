@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/06 18:53:35
+-- Date/Time    : 2025/12/06 21:17:12
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -325,6 +325,7 @@ CREATE TABLE "facility_users" (
   , "user_id" UUID NOT NULL
   , "display_name" character varying(100) DEFAULT '' NOT NULL
   , "facility_user_seq" integer DEFAULT 0 NOT NULL
+  , "is_facility_admin" BOOLEAN DEFAULT FALSE NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -1508,6 +1509,7 @@ COMMENT ON COLUMN "facility_users"."facility_id" IS 'facility_id';
 COMMENT ON COLUMN "facility_users"."user_id" IS 'user_id';
 COMMENT ON COLUMN "facility_users"."display_name" IS 'display_name';
 COMMENT ON COLUMN "facility_users"."facility_user_seq" IS 'facility_user_seq';
+COMMENT ON COLUMN "facility_users"."is_facility_admin" IS 'is_facility_admin';
 COMMENT ON COLUMN "facility_users"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "facility_users"."created_at" IS 'created_at';
 COMMENT ON COLUMN "facility_users"."created_user_id" IS 'created_user_id';
