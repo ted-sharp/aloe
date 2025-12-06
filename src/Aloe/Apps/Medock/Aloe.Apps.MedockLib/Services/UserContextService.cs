@@ -24,6 +24,11 @@ public class UserContextService
     public UserContextInfo? CurrentUser { get; private set; }
 
     /// <summary>
+    /// 現在のセッションID
+    /// </summary>
+    public Guid? CurrentSessionId { get; private set; }
+
+    /// <summary>
     /// JWTクレームからユーザー情報を初期化します。
     /// </summary>
     public void InitializeFromClaims(ClaimsPrincipal principal)
@@ -31,6 +36,7 @@ public class UserContextService
         if (principal.Identity?.IsAuthenticated != true)
         {
             this.CurrentUser = null;
+            this.CurrentSessionId = null;
             return;
         }
 
@@ -48,6 +54,24 @@ public class UserContextService
             IsFacilityAdmin = Boolean.TryParse(principal.FindFirst("is_facility_admin")?.Value, out var isFacilityAdmin) && isFacilityAdmin,
             Roles = principal.FindAll("roles").Select(c => c.Value).ToList()
         };
+
+        // セッションIDを取得（JWTトークンに含まれている場合）
+        if (Guid.TryParse(principal.FindFirst("session_id")?.Value, out var sessionId))
+        {
+            this.CurrentSessionId = sessionId;
+        }
+        else
+        {
+            this.CurrentSessionId = null;
+        }
+    }
+
+    /// <summary>
+    /// セッションIDを設定します（ログイン時に呼び出し）。
+    /// </summary>
+    public void SetSessionId(Guid sessionId)
+    {
+        this.CurrentSessionId = sessionId;
     }
 
     /// <summary>

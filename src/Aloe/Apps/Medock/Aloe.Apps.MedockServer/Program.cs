@@ -18,8 +18,8 @@ builder.Services.AddControllers();
 // Configure JWT Settings
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
-// Add DbContext
-builder.Services.AddDbContext<MedockDbContext>(options =>
+// Add DbContext Factory (Blazor Server では各操作で短命なコンテキストを生成)
+builder.Services.AddDbContextFactory<MedockDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add Services

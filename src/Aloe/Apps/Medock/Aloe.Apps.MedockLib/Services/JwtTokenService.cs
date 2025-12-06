@@ -89,6 +89,12 @@ public class JwtTokenService
             }
         }
 
+        // セッションID（カスタムクレーム）
+        if (tokenParams.SessionId.HasValue)
+        {
+            claims.Add(new Claim("session_id", tokenParams.SessionId.Value.ToString()));
+        }
+
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
@@ -171,6 +177,7 @@ public class TokenGenerationParams
     public bool IsSystemAdmin { get; init; }
     public bool IsFacilityAdmin { get; init; }
     public IEnumerable<string>? Roles { get; init; }
+    public Guid? SessionId { get; init; }
 }
 
 

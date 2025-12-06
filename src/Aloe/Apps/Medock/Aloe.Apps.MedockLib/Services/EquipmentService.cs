@@ -9,11 +9,11 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public class EquipmentService : IEquipmentService
 {
-    private readonly MedockDbContext _context;
+    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
 
-    public EquipmentService(MedockDbContext context)
+    public EquipmentService(IDbContextFactory<MedockDbContext> contextFactory)
     {
-        this._context = context;
+        this._contextFactory = contextFactory;
     }
 
     /// <summary>
@@ -21,8 +21,10 @@ public class EquipmentService : IEquipmentService
     /// </summary>
     public async Task<List<EquipmentDto>> GetEquipmentsByTenantAsync(Guid tenantId)
     {
+        using var context = this._contextFactory.CreateDbContext();
+
         // Tenant → Facility → Floor → Equipment の関連を辿る
-        return await this._context.Equipments
+        return await context.Equipments
             .Include(e => e.Floor)
                 .ThenInclude(f => f!.Facility)
             .Where(e => !e.IsDeleted
@@ -48,7 +50,9 @@ public class EquipmentService : IEquipmentService
     public async Task<List<EquipmentAppointmentStatsDto>> GetEquipmentStatsAsync(
         List<Guid> equipIds, DateOnly date)
     {
-        var stats = await this._context.EquipmentAppointmentStats
+        using var context = this._contextFactory.CreateDbContext();
+
+        var stats = await context.EquipmentAppointmentStats
             .Where(s => equipIds.Contains(s.EquipId)
                 && s.ApptDate == date
                 && !s.IsDeleted)

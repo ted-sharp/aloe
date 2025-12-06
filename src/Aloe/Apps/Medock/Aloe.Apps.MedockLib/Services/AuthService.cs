@@ -9,16 +9,16 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public class AuthService
 {
-    private readonly MedockDbContext _context;
+    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtTokenService _jwtTokenService;
 
     public AuthService(
-        MedockDbContext context,
+        IDbContextFactory<MedockDbContext> contextFactory,
         PasswordHasher passwordHasher,
         JwtTokenService jwtTokenService)
     {
-        this._context = context;
+        this._contextFactory = contextFactory;
         this._passwordHasher = passwordHasher;
         this._jwtTokenService = jwtTokenService;
     }
@@ -28,8 +28,10 @@ public class AuthService
     /// </summary>
     public async Task<AuthResult> LoginAsync(string userCode, string password, string clientAppName, string clientEndpoint)
     {
+        using var context = this._contextFactory.CreateDbContext();
+
         // ユーザーを検索（テナント・施設情報も含む）
-        var user = await this._context.Users
+        var user = await context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .Include(u => u.FacilityUsers)
@@ -61,7 +63,7 @@ public class AuthService
                 user.LockedUntilAt = DateTimeOffset.UtcNow.AddMinutes(15);
             }
 
-            await this._context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             return AuthResult.Failed("Invalid credentials");
         }
 
@@ -71,7 +73,7 @@ public class AuthService
         user.LastLoginAt = DateTimeOffset.UtcNow;
 
         // デフォルト施設を決定
-        var defaultFacility = this.DetermineDefaultFacility(user);
+        var defaultFacility = this.DetermineDefaultFacility(context, user);
 
         // セッション作成
         var displayName = this.GetDisplayName(user, defaultFacility?.FacilityId);
@@ -84,12 +86,12 @@ public class AuthService
             ClientEndpoint = clientEndpoint,
             LoginAt = DateTimeOffset.UtcNow
         };
-        this._context.Sessions.Add(session);
+        context.Sessions.Add(session);
 
-        await this._context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         // トークン生成パラメータ作成
-        var tokenParams = this.CreateTokenParams(user, defaultFacility);
+        var tokenParams = this.CreateTokenParams(user, defaultFacility, session.SessionId);
         var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
         var refreshToken = this._jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
@@ -107,8 +109,10 @@ public class AuthService
     /// </summary>
     public async Task<AuthResult> RefreshTokenAsync(Guid userId, string refreshToken, Guid? facilityId = null)
     {
+        using var context = this._contextFactory.CreateDbContext();
+
         // TODO: リフレッシュトークンの検証ロジックを実装
-        var user = await this.GetUserWithRelationsAsync(userId);
+        var user = await this.GetUserWithRelationsAsync(context, userId);
 
         if (user == null)
         {
@@ -119,11 +123,13 @@ public class AuthService
         Facility? facility = null;
         if (facilityId.HasValue)
         {
-            facility = await this.GetFacilityIfAccessibleAsync(user, facilityId.Value);
+            facility = await this.GetFacilityIfAccessibleAsync(context, user, facilityId.Value);
         }
-        facility ??= this.DetermineDefaultFacility(user);
+        facility ??= this.DetermineDefaultFacility(context, user);
 
-        var tokenParams = this.CreateTokenParams(user, facility);
+        // セッションIDは既存のトークンから取得する必要があるが、ここでは null を設定
+        // 実際の実装では、リフレッシュトークンからセッションIDを取得する必要がある
+        var tokenParams = this.CreateTokenParams(user, facility, null);
         var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
         var newRefreshToken = this._jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
@@ -141,20 +147,23 @@ public class AuthService
     /// </summary>
     public async Task<AuthResult> SwitchFacilityAsync(Guid userId, Guid facilityId)
     {
-        var user = await this.GetUserWithRelationsAsync(userId);
+        using var context = this._contextFactory.CreateDbContext();
+
+        var user = await this.GetUserWithRelationsAsync(context, userId);
         if (user == null)
         {
             return AuthResult.Failed("User not found");
         }
 
         // 施設へのアクセス権限チェック
-        var facility = await this.GetFacilityIfAccessibleAsync(user, facilityId);
+        var facility = await this.GetFacilityIfAccessibleAsync(context, user, facilityId);
         if (facility == null)
         {
             return AuthResult.Failed("Access denied to facility");
         }
 
-        var tokenParams = this.CreateTokenParams(user, facility);
+        // セッションIDは既存のトークンから取得する必要があるが、ここでは null を設定
+        var tokenParams = this.CreateTokenParams(user, facility, null);
         var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
         var refreshToken = this._jwtTokenService.GenerateRefreshToken();
         var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
@@ -172,7 +181,9 @@ public class AuthService
     /// </summary>
     public async Task<List<FacilityInfo>> GetAccessibleFacilitiesAsync(Guid userId)
     {
-        var user = await this.GetUserWithRelationsAsync(userId);
+        using var context = this._contextFactory.CreateDbContext();
+
+        var user = await this.GetUserWithRelationsAsync(context, userId);
         if (user == null)
         {
             return [];
@@ -181,7 +192,7 @@ public class AuthService
         // システム管理者: 全施設
         if (user.IsSystemAdmin)
         {
-            var allFacilities = await this._context.Facilities
+            var allFacilities = await context.Facilities
                 .Include(f => f.Tenant)
                 .Where(f => f.IsActive && !f.IsDeleted && f.Tenant.IsActive && !f.Tenant.IsDeleted)
                 .OrderBy(f => f.Tenant.TenantName)
@@ -224,6 +235,8 @@ public class AuthService
     /// <returns>検証結果</returns>
     public async Task<SessionValidationResult> ValidateSessionAsync(string accessToken, Guid sessionId)
     {
+        using var context = this._contextFactory.CreateDbContext();
+
         // JWTトークンの検証
         var principal = this._jwtTokenService.ValidateToken(accessToken);
         if (principal == null)
@@ -232,7 +245,7 @@ public class AuthService
         }
 
         // セッションの存在確認
-        var session = await this._context.Sessions.FindAsync(sessionId);
+        var session = await context.Sessions.FindAsync(sessionId);
         if (session == null)
         {
             return SessionValidationResult.Invalid("Session not found");
@@ -252,7 +265,7 @@ public class AuthService
         }
 
         // ユーザーの存在確認
-        var user = await this._context.Users.FindAsync(session.UserId);
+        var user = await context.Users.FindAsync(session.UserId);
         if (user == null || user.IsDeleted)
         {
             return SessionValidationResult.Invalid("User not found or deleted");
@@ -272,7 +285,9 @@ public class AuthService
     /// </summary>
     public async Task<bool> LogoutAsync(Guid sessionId)
     {
-        var session = await this._context.Sessions.FindAsync(sessionId);
+        using var context = this._contextFactory.CreateDbContext();
+
+        var session = await context.Sessions.FindAsync(sessionId);
         if (session == null || session.LogoutAt.HasValue)
         {
             return false;
@@ -280,19 +295,19 @@ public class AuthService
 
         session.LogoutAt = DateTimeOffset.UtcNow;
 
-        var user = await this._context.Users.FindAsync(session.UserId);
+        var user = await context.Users.FindAsync(session.UserId);
         if (user != null)
         {
             user.LastLogoutAt = DateTimeOffset.UtcNow;
         }
 
-        await this._context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 
-    private async Task<User?> GetUserWithRelationsAsync(Guid userId)
+    private async Task<User?> GetUserWithRelationsAsync(MedockDbContext context, Guid userId)
     {
-        return await this._context.Users
+        return await context.Users
             .Include(u => u.UserRoles)
             .ThenInclude(ur => ur.Role)
             .Include(u => u.FacilityUsers)
@@ -301,7 +316,7 @@ public class AuthService
             .FirstOrDefaultAsync(u => u.UserId == userId && !u.IsDeleted);
     }
 
-    private Facility? DetermineDefaultFacility(User user)
+    private Facility? DetermineDefaultFacility(MedockDbContext context, User user)
     {
         // 1. 施設ユーザーとして登録されている最初の施設（sequence順）
         var facilityUser = user.FacilityUsers
@@ -317,7 +332,7 @@ public class AuthService
         // 2. システム管理者の場合は最初の有効な施設
         if (user.IsSystemAdmin)
         {
-            return this._context.Facilities
+            return context.Facilities
                 .Include(f => f.Tenant)
                 .Where(f => f.IsActive && !f.IsDeleted && f.Tenant.IsActive && !f.Tenant.IsDeleted)
                 .FirstOrDefault();
@@ -326,9 +341,9 @@ public class AuthService
         return null;
     }
 
-    private async Task<Facility?> GetFacilityIfAccessibleAsync(User user, Guid facilityId)
+    private async Task<Facility?> GetFacilityIfAccessibleAsync(MedockDbContext context, User user, Guid facilityId)
     {
-        var facility = await this._context.Facilities
+        var facility = await context.Facilities
             .Include(f => f.Tenant)
             .FirstOrDefaultAsync(f => f.FacilityId == facilityId && f.IsActive && !f.IsDeleted);
 
@@ -371,7 +386,7 @@ public class AuthService
         return user.UserCode;
     }
 
-    private TokenGenerationParams CreateTokenParams(User user, Facility? facility)
+    private TokenGenerationParams CreateTokenParams(User user, Facility? facility, Guid? sessionId)
     {
         var roles = user.UserRoles
             .Where(ur => !ur.IsDeleted)
@@ -396,7 +411,8 @@ public class AuthService
                 : null,
             IsSystemAdmin = user.IsSystemAdmin,
             IsFacilityAdmin = isFacilityAdmin,
-            Roles = roles
+            Roles = roles,
+            SessionId = sessionId
         };
     }
 }

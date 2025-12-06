@@ -9,7 +9,8 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public class AppointmentService : IAppointmentService
 {
-    private readonly MedockDbContext _context;
+    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
+    private readonly UserContextService _userContextService;
 
     // AM/PM の時間境界
     private const int AmStartHour = 8;
@@ -17,15 +18,20 @@ public class AppointmentService : IAppointmentService
     private const int PmStartHour = 13;
     private const int PmEndHour = 18;
 
-    public AppointmentService(MedockDbContext context)
+    public AppointmentService(
+        IDbContextFactory<MedockDbContext> contextFactory,
+        UserContextService userContextService)
     {
-        this._context = context;
+        this._contextFactory = contextFactory;
+        this._userContextService = userContextService;
     }
 
     /// <inheritdoc />
     public async Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate)
     {
-        var appointments = await this._context.Appointments
+        using var context = this._contextFactory.CreateDbContext();
+
+        var appointments = await context.Appointments
             .Where(a => !a.IsDeleted &&
                         a.ApptDate.HasValue &&
                         a.ApptDate >= startDate &&
@@ -88,7 +94,9 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<List<AppointmentDto>> GetAppointmentsAsync(DateOnly startDate, DateOnly endDate)
     {
-        var appointments = await this._context.Appointments
+        using var context = this._contextFactory.CreateDbContext();
+
+        var appointments = await context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Organization)
             .Include(a => a.Floor)
@@ -106,7 +114,9 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> GetAppointmentAsync(Guid apptId)
     {
-        var appointment = await this._context.Appointments
+        using var context = this._contextFactory.CreateDbContext();
+
+        var appointment = await context.Appointments
             .Include(a => a.Patient)
             .Include(a => a.Organization)
             .Include(a => a.Floor)
@@ -118,6 +128,13 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto dto)
     {
+        using var context = this._contextFactory.CreateDbContext();
+
+        // 監査情報を設定
+        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
+        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
+        context.SetAuditInfo(userId, sessionId);
+
         var appointment = new Appointment
         {
             ApptId = Guid.NewGuid(),
@@ -137,8 +154,8 @@ public class AppointmentService : IAppointmentService
             UpdatedAt = DateTimeOffset.UtcNow
         };
 
-        this._context.Appointments.Add(appointment);
-        await this._context.SaveChangesAsync();
+        context.Appointments.Add(appointment);
+        await context.SaveChangesAsync();
 
         // 関連データを読み込んで返す
         return await this.GetAppointmentAsync(appointment.ApptId)
@@ -148,7 +165,14 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> UpdateAppointmentAsync(Guid apptId, UpdateAppointmentDto dto)
     {
-        var appointment = await this._context.Appointments.FindAsync(apptId);
+        using var context = this._contextFactory.CreateDbContext();
+
+        // 監査情報を設定
+        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
+        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
+        context.SetAuditInfo(userId, sessionId);
+
+        var appointment = await context.Appointments.FindAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return null;
@@ -191,7 +215,7 @@ public class AppointmentService : IAppointmentService
 
         appointment.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await this._context.SaveChangesAsync();
+        await context.SaveChangesAsync();
 
         return await this.GetAppointmentAsync(apptId);
     }
@@ -199,7 +223,14 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<bool> DeleteAppointmentAsync(Guid apptId)
     {
-        var appointment = await this._context.Appointments.FindAsync(apptId);
+        using var context = this._contextFactory.CreateDbContext();
+
+        // 監査情報を設定
+        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
+        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
+        context.SetAuditInfo(userId, sessionId);
+
+        var appointment = await context.Appointments.FindAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return false;
@@ -208,14 +239,16 @@ public class AppointmentService : IAppointmentService
         appointment.IsDeleted = true;
         appointment.UpdatedAt = DateTimeOffset.UtcNow;
 
-        await this._context.SaveChangesAsync();
+        await context.SaveChangesAsync();
         return true;
     }
 
     /// <inheritdoc />
     public async Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate)
     {
-        var holidays = await this._context.Holidays
+        using var context = this._contextFactory.CreateDbContext();
+
+        var holidays = await context.Holidays
             .Where(h => !h.IsDeleted &&
                         h.HolidayDate >= startDate &&
                         h.HolidayDate <= endDate)
