@@ -6,6 +6,16 @@
 <div class="month-view flex flex-col h-full">
     <!-- 月選択ボタンと設備表示スイッチ -->
     <div class="flex items-center gap-2 mb-4 flex-shrink-0">
+        <!-- 今日ボタン -->
+        <button class="btn btn-sm btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="ml-1">今日</span>
+        </button>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
         <span class="text-sm font-medium text-base-content/70">月:</span>
         <div class="btn-group">
             @{
@@ -21,20 +31,6 @@
                     </button>
                 }
             }
-        </div>
-        
-        <div class="divider divider-horizontal mx-2"></div>
-        
-        <!-- 簡易|詳細切り替えボタン -->
-        <div class="join">
-            <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
-                    @onclick="() => HandleSimpleViewChanged(true)">
-                簡易
-            </button>
-            <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
-                    @onclick="() => HandleSimpleViewChanged(false)">
-                詳細
-            </button>
         </div>
         
         <div class="divider divider-horizontal mx-2"></div>
@@ -129,6 +125,12 @@
     [Parameter]
     public EventCallback<bool> OnEquipmentGraphChanged { get; set; }
 
+    /// <summary>
+    /// 今日ボタンクリック時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnGoToToday { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await OnDateClick.InvokeAsync(date);
@@ -153,5 +155,10 @@
     private async Task HandleEquipmentGraphChanged()
     {
         await OnEquipmentGraphChanged.InvokeAsync(ShowEquipmentGraph);
+    }
+
+    private async Task HandleGoToToday()
+    {
+        await OnGoToToday.InvokeAsync();
     }
 }

@@ -8,6 +8,16 @@
 <div class="week-scheduler flex flex-col h-full">
     <!-- 日数切替ボタン -->
     <div class="flex items-center gap-2 mb-4 flex-shrink-0">
+        <!-- 今日ボタン -->
+        <button class="btn btn-sm btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span class="ml-1">今日</span>
+        </button>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
         <span class="text-sm font-medium text-base-content/70">表示日数:</span>
         <div class="btn-group">
             @foreach (var days in DayOptions)
@@ -17,27 +27,6 @@
                     @(days)日
                 </button>
             }
-        </div>
-        
-        <div class="divider divider-horizontal mx-2"></div>
-        
-        <!-- 表示モード切替 -->
-        <span class="text-sm font-medium text-base-content/70">表示:</span>
-        <div class="btn-group">
-            <button class="btn btn-sm @(ShowSlots ? "btn-active btn-primary" : "")"
-                    @onclick="() => SetShowSlots(true)">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                </svg>
-                スロット
-            </button>
-            <button class="btn btn-sm @(!ShowSlots ? "btn-active btn-primary" : "")"
-                    @onclick="() => SetShowSlots(false)">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                </svg>
-                詳細
-            </button>
         </div>
     </div>
 
@@ -157,6 +146,12 @@
     [Parameter]
     public EventCallback<(Guid ApptId, DateOnly NewDate, TimeOnly NewTime)> OnAppointmentMoved { get; set; }
 
+    /// <summary>
+    /// 今日ボタンクリック時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback OnGoToToday { get; set; }
+
     private async Task SetWeekDays(int days)
     {
         WeekDays = days;
@@ -187,6 +182,11 @@
     private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
     {
         await OnAppointmentMoved.InvokeAsync(moveInfo);
+    }
+
+    private async Task HandleGoToToday()
+    {
+        await OnGoToToday.InvokeAsync();
     }
 }
 

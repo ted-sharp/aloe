@@ -39,11 +39,6 @@
 
             <div class="divider divider-horizontal mx-0"></div>
 
-            <!-- 今日ボタン -->
-            <button class="btn btn-xs btn-ghost px-2" @onclick="GoToToday" title="今日">
-                今日
-            </button>
-
             <!-- フィルターボタン -->
             <button class="btn btn-xs btn-square @(ShowFilterPanel ? "btn-primary" : "btn-ghost") relative" @onclick="ToggleFilterPanel" title="フィルター">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,6 +67,36 @@
                     週
                 </button>
             </div>
+
+            <div class="divider divider-horizontal mx-0"></div>
+
+            <!-- 簡易｜詳細切り替え -->
+            @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
+            {
+                <div class="join">
+                    <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleSimpleViewChanged(true)">
+                        簡易
+                    </button>
+                    <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleSimpleViewChanged(false)">
+                        詳細
+                    </button>
+                </div>
+            }
+            else if (CurrentView == CalendarViewType.Week)
+            {
+                <div class="join">
+                    <button class="btn btn-xs join-item @(ShowSlots ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleShowSlotsChanged(true)">
+                        簡易
+                    </button>
+                    <button class="btn btn-xs join-item @(!ShowSlots ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleShowSlotsChanged(false)">
+                        詳細
+                    </button>
+                </div>
+            }
         </div>
 
         <!-- 右側: UserAvatarFab領域 -->
@@ -120,7 +145,8 @@
                 OnDateRangeSelect="@HandleDateRangeSelect"
                 OnYearSelected="@HandleYearSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
+                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged"
+                OnGoToToday="@HandleGoToToday" />
         }
         else if (CurrentView == CalendarViewType.Month)
         {
@@ -135,7 +161,8 @@
                 OnDateDoubleClick="@HandleDateDoubleClick"
                 OnMonthSelected="@HandleMonthSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
+                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged"
+                OnGoToToday="@HandleGoToToday" />
         }
         else
         {
@@ -152,7 +179,8 @@
                 OnCreateRequested="@HandleCreateRequest"
                 OnWeekDaysChanged="@HandleWeekDaysChanged"
                 OnShowSlotsChanged="@HandleShowSlotsChanged"
-                OnAppointmentMoved="@HandleAppointmentMoved" />
+                OnAppointmentMoved="@HandleAppointmentMoved"
+                OnGoToToday="@HandleGoToToday" />
         }
     </div>
 </div>
@@ -824,6 +852,12 @@
     private void HandleShowSlotsChanged(bool showSlots)
     {
         ShowSlots = showSlots;
+        StateHasChanged();
+    }
+
+    private void HandleGoToToday()
+    {
+        GoToToday();
     }
 
     private void OpenNewAppointmentModal()
