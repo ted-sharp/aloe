@@ -111,9 +111,9 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
     const cellHeight = gridHeight / (rows + 1);
 
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
-    const dayHeaderY = opts.dayHeaderStyle === 'large' ? gridTop + 12 : gridTop;
     const dayHeaderFontSize = opts.dayHeaderStyle === 'large' ? CONFIG.font.sizeLarge : CONFIG.font.sizeSmall;
-    const dayHeaderHeight = opts.dayHeaderStyle === 'large' ? headerHeight : cellHeight;
+    const dayHeaderHeight = opts.dayHeaderStyle === 'large' ? headerHeight : Math.min(headerHeight, cellHeight * 0.3);
+    const dayHeaderY = opts.dayHeaderStyle === 'large' ? gridTop + 12 : gridTop + dayHeaderHeight / 2 - dayHeaderFontSize / 2;
 
     for (let i = 0; i < 7; i++) {
         if (opts.dayHeaderStyle === 'large') {
@@ -127,6 +127,18 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
                 strokeWidth: 1
             });
             layers.grid.add(headerBg);
+        } else if (opts.dayHeaderStyle === 'small') {
+            // 年間表示でも枠線を描画
+            const headerBorder = new Konva.Rect({
+                x: x + i * cellWidth,
+                y: gridTop,
+                width: cellWidth,
+                height: dayHeaderHeight,
+                fill: 'transparent',
+                stroke: CONFIG.colors.grid,
+                strokeWidth: 1
+            });
+            layers.grid.add(headerBorder);
         }
 
         const dayHeader = new Konva.Text({
