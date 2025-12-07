@@ -110,6 +110,7 @@
                 CurrentDate="@CurrentDate"
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
+                ShowSimpleView="@ShowSimpleView"
                 ShowEquipmentGraph="@ShowEquipmentGraph"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
@@ -118,6 +119,7 @@
                 OnDateDoubleClick="@HandleDateDoubleClick"
                 OnDateRangeSelect="@HandleDateRangeSelect"
                 OnYearSelected="@HandleYearSelected"
+                OnSimpleViewChanged="@HandleSimpleViewChanged"
                 OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
         }
         else if (CurrentView == CalendarViewType.Month)
@@ -126,11 +128,13 @@
                 CurrentDate="@CurrentDate"
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
+                ShowSimpleView="@ShowSimpleView"
                 ShowEquipmentGraph="@ShowEquipmentGraph"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
                 OnDateDoubleClick="@HandleDateDoubleClick"
                 OnMonthSelected="@HandleMonthSelected"
+                OnSimpleViewChanged="@HandleSimpleViewChanged"
                 OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
         }
         else
@@ -174,6 +178,7 @@
     private int WeekDays { get; set; } = 7;
     private bool ShowSlots { get; set; } = true;
     private bool ShowFilterPanel { get; set; } = false;
+    private bool ShowSimpleView { get; set; } = false;
     private bool ShowEquipmentGraph { get; set; } = false;
 
     // ドロワー状態（Layoutと連携）
@@ -635,6 +640,12 @@
     private void HandleYearSelected(int year)
     {
         CurrentDate = new DateOnly(year, CurrentDate.Month, CurrentDate.Day);
+        StateHasChanged();
+    }
+
+    private void HandleSimpleViewChanged(bool showSimpleView)
+    {
+        ShowSimpleView = showSimpleView;
         StateHasChanged();
     }
 

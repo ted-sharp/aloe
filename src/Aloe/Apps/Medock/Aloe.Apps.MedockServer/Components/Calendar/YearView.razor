@@ -24,6 +24,20 @@
         
         <div class="divider divider-horizontal mx-2"></div>
         
+        <!-- 簡易|詳細切り替えボタン -->
+        <div class="join">
+            <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
+                    @onclick="() => HandleSimpleViewChanged(true)">
+                簡易
+            </button>
+            <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
+                    @onclick="() => HandleSimpleViewChanged(false)">
+                詳細
+            </button>
+        </div>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
         <!-- 設備表示スイッチ -->
         <label class="label cursor-pointer">
             <span class="label-text text-sm mr-2">設備表示</span>
@@ -39,6 +53,7 @@
             CurrentDate="@CurrentDate"
             DayStats="@DayStats"
             Holidays="@Holidays"
+            ShowSimpleView="@ShowSimpleView"
             ShowEquipmentGraph="@ShowEquipmentGraph"
             Height="100%"
             OnDateSelected="@HandleDateSelected"
@@ -67,6 +82,12 @@
     /// </summary>
     [Parameter]
     public Dictionary<string, string>? Holidays { get; set; }
+
+    /// <summary>
+    /// 簡易表示モード（記号表示）を表示するかどうか
+    /// </summary>
+    [Parameter]
+    public bool ShowSimpleView { get; set; } = false;
 
     /// <summary>
     /// 設備折れ線グラフを表示するかどうか
@@ -117,6 +138,12 @@
     public EventCallback<int> OnYearSelected { get; set; }
 
     /// <summary>
+    /// 簡易表示切り替え時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnSimpleViewChanged { get; set; }
+
+    /// <summary>
     /// 設備表示スイッチ変更時のコールバック
     /// </summary>
     [Parameter]
@@ -150,6 +177,12 @@
     private async Task HandleYearSelected(int year)
     {
         await OnYearSelected.InvokeAsync(year);
+    }
+
+    private async Task HandleSimpleViewChanged(bool showSimpleView)
+    {
+        ShowSimpleView = showSimpleView;
+        await OnSimpleViewChanged.InvokeAsync(ShowSimpleView);
     }
 
     private async Task HandleEquipmentGraphChanged()

@@ -138,6 +138,112 @@ function parseTimeSlot(timeStr, startHour, endHour) {
 }
 
 /**
+ * 空き率から記号を決定
+ * @param {number} vacancyRatio - 空き率（0.0 ～ 1.0）
+ * @returns {string} 記号の種類: 'x', 'triangle', 'circle', 'double-circle'
+ */
+function getSymbolFromVacancyRatio(vacancyRatio) {
+    if (vacancyRatio === 0) {
+        return 'x'; // ×（バツ）
+    } else if (vacancyRatio < 0.3) {
+        return 'triangle'; // △（三角）
+    } else if (vacancyRatio < 0.6) {
+        return 'circle'; // ○（丸）
+    } else {
+        return 'double-circle'; // ◎（二重丸）
+    }
+}
+
+/**
+ * 簡易表示モードで記号を描画
+ * @param {number} cellLeft - セルの左端X座標
+ * @param {number} cellTop - セルの上端Y座標
+ * @param {number} cellWidth - セル幅
+ * @param {number} cellHeight - セル高さ
+ * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
+ * @param {string} symbolType - 記号の種類: 'x', 'triangle', 'circle', 'double-circle'
+ * @param {boolean} isDateGrayed - グレーアウトフラグ
+ */
+function renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateStr, symbolType, isDateGrayed) {
+    const state = getState();
+    const { layers } = state;
+
+    // 日付テキストの下、セルの中央に配置
+    const dayTextHeight = CONFIG.font.sizeSmall + 4;
+    const symbolY = cellTop + dayTextHeight + 2;
+    const symbolCenterX = cellLeft + cellWidth / 2;
+    
+    // セルサイズに応じて記号サイズを調整
+    const symbolSize = Math.min(cellWidth * 0.4, cellHeight * 0.3, 12);
+    const opacity = isDateGrayed ? 0.4 : 1;
+
+    switch (symbolType) {
+        case 'x':
+            // ×（バツ）- 赤色
+            const xSymbol = new Konva.Text({
+                x: cellLeft,
+                y: symbolY,
+                width: cellWidth,
+                text: '×',
+                fontSize: symbolSize * 1.2,
+                fontFamily: CONFIG.font.family,
+                fill: '#ef4444', // 赤色
+                align: 'center',
+                opacity: opacity
+            });
+            layers.content.add(xSymbol);
+            break;
+
+        case 'triangle':
+            // △（三角）- 黄色
+            const triangle = new Konva.RegularPolygon({
+                x: symbolCenterX,
+                y: symbolY + symbolSize / 2,
+                sides: 3,
+                radius: symbolSize / 2,
+                fill: '#fbbf24', // 黄色
+                rotation: 180, // 上向きにする
+                opacity: opacity
+            });
+            layers.content.add(triangle);
+            break;
+
+        case 'circle':
+            // ○（丸）- 緑色
+            const circle = new Konva.Circle({
+                x: symbolCenterX,
+                y: symbolY + symbolSize / 2,
+                radius: symbolSize / 2,
+                fill: '#10b981', // 緑色
+                opacity: opacity
+            });
+            layers.content.add(circle);
+            break;
+
+        case 'double-circle':
+            // ◎（二重丸）- 緑色
+            const outerCircle = new Konva.Circle({
+                x: symbolCenterX,
+                y: symbolY + symbolSize / 2,
+                radius: symbolSize / 2,
+                fill: '#10b981', // 緑色
+                opacity: opacity
+            });
+            layers.content.add(outerCircle);
+            
+            const innerCircle = new Konva.Circle({
+                x: symbolCenterX,
+                y: symbolY + symbolSize / 2,
+                radius: symbolSize / 3,
+                fill: '#10b981', // 緑色
+                opacity: opacity
+            });
+            layers.content.add(innerCircle);
+            break;
+    }
+}
+
+/**
  * 棒グラフ形式で日付セルを描画
  * @param {number} cellLeft - セルの左端X座標
  * @param {number} cellTop - セルの上端Y座標
@@ -219,8 +325,61 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         layers.content.add(dayText);
     }
 
-    // 棒グラフ描画（小さなセルの場合はスキップ）
-    if (!isTooSmall && slots && slots.length > 0) {
+    // 簡易表示モードの判定
+    const showSimpleView = state.options?.showSimpleView ?? false;
+
+    // 簡易表示モードの場合
+    if (!isTooSmall && showSimpleView) {
+        // 時間帯枠データから空き率を計算（フィルタ条件を考慮）
+        let overallVacancyRatio = 0;
+        
+        if (slots && slots.length > 0) {
+            // 設備フィルターが有効かどうかを判定
+            const showEquipmentGraph = state.options?.showEquipmentGraph ?? false;
+            const hasEquipmentFilter = showEquipmentGraph && slots.some(s => s.filteredCount > 0);
+            
+            // 全スロットの平均空き率を計算（フィルタ条件を考慮）
+            let totalVacancy = 0;
+            let slotCount = 0;
+            
+            slots.forEach(slot => {
+                // グレーアウトされたスロットは除外
+                if (slot.isGrayedOut || isDateGrayed) {
+                    return;
+                }
+                
+                const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
+                
+                // 設備フィルターが有効な場合はfilteredCountを使用、そうでない場合はcountを使用
+                let count;
+                if (hasEquipmentFilter && slot.filteredCount !== undefined && slot.filteredCount !== null) {
+                    count = slot.filteredCount;
+                } else {
+                    count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+                }
+                
+                const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / max)));
+                totalVacancy += vacancyRatio;
+                slotCount++;
+            });
+            
+            if (slotCount > 0) {
+                overallVacancyRatio = totalVacancy / slotCount;
+            }
+        } else {
+            // フォールバック: AM/PM データから空き率を計算
+            const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
+            const amVacancyRatio = stats.amMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.am / stats.amMax))) : 0;
+            const pmVacancyRatio = stats.pmMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.pm / stats.pmMax))) : 0;
+            overallVacancyRatio = (amVacancyRatio + pmVacancyRatio) / 2;
+        }
+        
+        // 記号を決定して描画
+        const symbolType = getSymbolFromVacancyRatio(overallVacancyRatio);
+        renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateStr, symbolType, isDateGrayed);
+    }
+    // 詳細表示モード（棒グラフ描画）
+    else if (!isTooSmall && slots && slots.length > 0) {
         // 業務時間設定を取得
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
