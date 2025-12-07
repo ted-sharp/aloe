@@ -17,6 +17,13 @@ public interface IEquipmentService
     /// <param name="date">対象日付</param>
     /// <returns>設備別予約統計のリスト</returns>
     Task<List<EquipmentAppointmentStatsDto>> GetEquipmentStatsAsync(List<Guid> equipmentIds, DateOnly date);
+
+    /// <summary>設備別予約統計を期間で取得</summary>
+    /// <param name="equipmentIds">設備IDのリスト</param>
+    /// <param name="startDate">開始日</param>
+    /// <param name="endDate">終了日</param>
+    /// <returns>設備別予約統計のリスト</returns>
+    Task<List<EquipmentAppointmentStatsDto>> GetEquipmentStatsByDateRangeAsync(List<Guid> equipmentIds, DateOnly startDate, DateOnly endDate);
 }
 
 /// <summary>

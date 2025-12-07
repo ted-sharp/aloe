@@ -69,6 +69,31 @@ public class EquipmentService : IEquipmentService
     }
 
     /// <summary>
+    /// 設備別予約統計を期間で取得
+    /// </summary>
+    public async Task<List<EquipmentAppointmentStatsDto>> GetEquipmentStatsByDateRangeAsync(
+        List<Guid> equipIds, DateOnly startDate, DateOnly endDate)
+    {
+        using var context = this._contextFactory.CreateDbContext();
+
+        var stats = await context.EquipmentAppointmentStats
+            .Where(s => equipIds.Contains(s.EquipId)
+                && s.ApptDate >= startDate
+                && s.ApptDate <= endDate
+                && !s.IsDeleted)
+            .ToListAsync();
+
+        return stats.Select(s => new EquipmentAppointmentStatsDto
+        {
+            EquipId = s.EquipId,
+            ApptDate = s.ApptDate,
+            ApptCount = s.ApptCount,
+            ApptMax = s.ApptMax,
+            ApptGraph = this.DeserializeApptGraph(s.ApptGraph)
+        }).ToList();
+    }
+
+    /// <summary>
     /// appt_graph JSONB フィールドをデシリアライズ
     /// </summary>
     private EquipmentApptGraphData DeserializeApptGraph(string apptGraphJson)

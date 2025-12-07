@@ -23,11 +23,41 @@ import { renderWeekView } from './renderers/week-view.js';
  * @param {object} dotNetRef - .NET object reference for callbacks
  */
 function init(containerId, data, options, dotNetRef) {
+    const state = getState();
+    
+    // dotNetRefは常に最新のものを保持（複数のCalendarCanvasインスタンスが存在する場合に対応）
+    console.log('MedockCalendar: init called', { 
+        containerId, 
+        hasDotNetRef: !!dotNetRef,
+        hasExistingStage: !!state.stage,
+        existingContainerId: state.containerId
+    });
+    
     setState({
         containerId,
-        dotNetRef,
-        options: { ...getState().options, ...options }
+        dotNetRef,  // 常に最新のdotNetRefを設定
+        options: { ...state.options, ...options }
     });
+    
+    // 既に初期化されている場合は、データとビューの更新のみ
+    if (state.stage) {
+        console.log('MedockCalendar: Already initialized, updating data and view');
+        // 既存のstageのコンテナを更新（必要に応じて）
+        const container = document.getElementById(containerId);
+        if (container && state.stage.container()?.id !== containerId) {
+            // 新しいコンテナにstageを移動
+            const oldContainer = state.stage.container();
+            if (oldContainer) {
+                oldContainer.innerHTML = '';
+            }
+            state.stage.container(containerId);
+        }
+        // データとビューを更新
+        if (data) {
+            updateData(data);
+        }
+        return;
+    }
 
     const container = document.getElementById(containerId);
     if (!container) {

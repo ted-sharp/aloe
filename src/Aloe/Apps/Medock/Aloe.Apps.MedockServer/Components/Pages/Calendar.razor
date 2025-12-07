@@ -124,7 +124,8 @@
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
                 Height="100%"
-                OnDateClick="@HandleDateClick" />
+                OnDateClick="@HandleDateClick"
+                OnDateDoubleClick="@HandleDateDoubleClick" />
         }
         else
         {
@@ -631,6 +632,7 @@
         WeekDays = 1;
         Layout?.UpdateCurrentView("week");
         RegisterLayoutActions();
+        StateHasChanged();
     }
 
     private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
@@ -675,6 +677,33 @@
             return;
         }
 
+        // 設備条件フィルターが選択されている場合、期間全体のデータを一括取得
+        Dictionary<(DateOnly date, string timeSlot), int>? statsDict = null;
+        if (filter.EquipIds.Any())
+        {
+            // 表示期間を決定
+            var startDate = CurrentView == CalendarViewType.Year
+                ? new DateOnly(CurrentDate.Year, 1, 1)
+                : new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
+            var endDate = CurrentView == CalendarViewType.Year
+                ? new DateOnly(CurrentDate.Year, 12, 31)
+                : new DateOnly(CurrentDate.Year, CurrentDate.Month, DateTime.DaysInMonth(CurrentDate.Year, CurrentDate.Month));
+
+            // 期間内の設備統計を一括取得
+            var equipmentStats = await EquipmentService.GetEquipmentStatsByDateRangeAsync(
+                filter.EquipIds, startDate, endDate);
+
+            // 辞書に変換: (date, timeSlot) -> count (複数設備の合計)
+            statsDict = equipmentStats
+                .SelectMany(s => s.ApptGraph.Slots.Select(slot => new
+                {
+                    Key = (s.ApptDate, slot.Time),
+                    Count = slot.Count
+                }))
+                .GroupBy(x => x.Key)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Count));
+        }
+
         foreach (var kvp in SampleDayStats)
         {
             var dateStr = kvp.Key;
@@ -700,10 +729,11 @@
                     if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
                         isSlotGrayed = true;
 
-                    if (filter.EquipIds.Any())
+                    // 設備条件フィルターのカウントを辞書から取得
+                    if (statsDict != null)
                     {
-                        var equipmentFilteredCount = await CalculateEquipmentFilteredCount(date, slot.Time, filter.EquipIds);
-                        slot.FilteredCount = equipmentFilteredCount;
+                        var key = (date, slot.Time);
+                        slot.FilteredCount = statsDict.TryGetValue(key, out var count) ? count : 0;
                     }
                     else
                     {

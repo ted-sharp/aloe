@@ -9,7 +9,8 @@
     DayStats="@DayStats"
     Holidays="@Holidays"
     Height="@Height"
-    OnDateSelected="@HandleDateSelected" />
+    OnDateSelected="@HandleDateSelected"
+    OnDateDoubleClicked="@HandleDateDoubleClicked" />
 
 @code {
     /// <summary>
@@ -42,8 +43,19 @@
     [Parameter]
     public EventCallback<DateOnly> OnDateClick { get; set; }
 
+    /// <summary>
+    /// 日付ダブルクリック時のコールバック（その日のスケジュール表示）
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateDoubleClick { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await OnDateClick.InvokeAsync(date);
+    }
+
+    private async Task HandleDateDoubleClicked(DateOnly date)
+    {
+        await OnDateDoubleClick.InvokeAsync(date);
     }
 }

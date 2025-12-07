@@ -44,9 +44,15 @@ export function createModal() {
         });
 
         // 週表示へボタンのイベント
-        modal.querySelector('#medock-modal-week-btn').addEventListener('click', () => {
+        modal.querySelector('#medock-modal-week-btn').addEventListener('click', async () => {
             if (currentDotNetRef && currentDateStr) {
-                currentDotNetRef.invokeMethodAsync('OnDateDoubleClicked', currentDateStr);
+                try {
+                    await currentDotNetRef.invokeMethodAsync('OnDateDoubleClicked', currentDateStr);
+                } catch (error) {
+                    console.error('MedockCalendar: Failed to invoke OnDateDoubleClicked', error);
+                }
+            } else {
+                console.warn('MedockCalendar: dotNetRef or dateStr is not set');
             }
             hideModal();
         });
@@ -73,8 +79,18 @@ export function createModal() {
  * @param {object} dotNetRef - .NET object reference for callbacks
  */
 export function showDayModal(dateStr, content, dotNetRef) {
-    const modal = document.getElementById('medock-day-modal');
-    if (!modal) return;
+    console.log('MedockCalendar: showDayModal called', { dateStr, hasContent: !!content, hasDotNetRef: !!dotNetRef });
+    let modal = document.getElementById('medock-day-modal');
+    // モーダルが存在しない場合は作成
+    if (!modal) {
+        console.log('MedockCalendar: Modal not found, creating...');
+        createModal();
+        modal = document.getElementById('medock-day-modal');
+        if (!modal) {
+            console.error('MedockCalendar: Failed to create modal');
+            return;
+        }
+    }
 
     currentDateStr = dateStr;
     currentDotNetRef = dotNetRef;
@@ -91,7 +107,13 @@ export function showDayModal(dateStr, content, dotNetRef) {
     }
 
     // モーダルを表示
-    modal.showModal();
+    console.log('MedockCalendar: Showing modal', { modalExists: !!modal, modalOpen: modal.open });
+    try {
+        modal.showModal();
+        console.log('MedockCalendar: Modal shown successfully', { modalOpen: modal.open });
+    } catch (error) {
+        console.error('MedockCalendar: Failed to show modal', error);
+    }
 }
 
 /**

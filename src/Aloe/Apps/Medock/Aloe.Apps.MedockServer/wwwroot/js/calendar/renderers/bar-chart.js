@@ -87,6 +87,52 @@ export function getSlotColor(ratio) {
 }
 
 /**
+ * 時刻をX座標に変換（セル内の相対位置）
+ * @param {number} timeInHours - 時刻（時間単位、例：8.5 = 8:30）
+ * @param {number} startHour - 業務開始時刻
+ * @param {number} endHour - 業務終了時刻
+ * @param {number} cellLeft - セルの左端X座標
+ * @param {number} barAreaWidth - 棒グラフエリアの幅
+ * @returns {number} X座標
+ */
+function timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth) {
+    const totalHours = endHour - startHour;
+    const relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
+    return cellLeft + 2 + relativePosition * barAreaWidth;
+}
+
+/**
+ * スロットの時刻文字列を時刻（時間単位）に変換
+ * @param {string} timeStr - 時刻文字列（"08:00"、"08:00-09:00"、"AM"、"PM"など）
+ * @param {number} startHour - 業務開始時刻（AM/PMなどの緩いスロット用）
+ * @param {number} endHour - 業務終了時刻（AM/PMなどの緩いスロット用）
+ * @returns {number} 時刻（時間単位）
+ */
+function parseTimeSlot(timeStr, startHour, endHour) {
+    // "08:00-09:00"形式の場合は開始時刻を取得
+    const timePart = timeStr.split('-')[0].trim();
+
+    // "HH:MM"形式の時刻を解析
+    if (timePart.includes(':')) {
+        const parts = timePart.split(':');
+        const hour = parseInt(parts[0], 10);
+        const minute = parts[1] ? parseInt(parts[1], 10) : 0;
+        return hour + minute / 60;
+    }
+
+    // "AM"、"PM"などの緩いスロット
+    const upper = timePart.toUpperCase();
+    if (upper === 'AM') {
+        return startHour + (12 - startHour) / 2; // 午前の中央時刻
+    } else if (upper === 'PM') {
+        return 12 + (endHour - 12) / 2; // 午後の中央時刻
+    }
+
+    // その他の場合は開始時刻を返す
+    return startHour;
+}
+
+/**
  * 棒グラフ形式で日付セルを描画
  * @param {number} cellLeft - セルの左端X座標
  * @param {number} cellTop - セルの上端Y座標
@@ -100,10 +146,8 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     const state = getState();
     const { layers } = state;
 
-    // セルサイズが小さすぎる場合は描画をスキップ
-    if (cellWidth < 10 || cellHeight < 10) {
-        return;
-    }
+    // セルサイズが小さすぎる場合は描画をスキップ（ただし、hitAreaは作成する）
+    const isTooSmall = cellWidth < 10 || cellHeight < 10;
 
     // 時間帯枠データを取得
     const stats = state.dayStats.get(dateStr);
@@ -117,55 +161,61 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         isDateGrayed = stats?.isGrayedOut || false;
     }
 
-    // 日付テキスト表示エリア
+    let bgRect = null; // 小さなセルの場合でもhitAreaで参照できるようにする
+
+    // 日付テキスト表示エリア（小さなセルでも計算しておく）
     const dayTextHeight = CONFIG.font.sizeSmall + 4;
     const barAreaTop = cellTop + dayTextHeight;
     const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4); // 下部余白4px、負の値を防止
 
-    // 背景矩形（サイズは最小0を保証）
-    const bgWidth = Math.max(0, cellWidth - 2);
-    const bgHeight = Math.max(0, cellHeight - 2);
-    const bgCornerRadius = Math.min(2, bgWidth / 2, bgHeight / 2); // cornerRadiusは幅/高さの半分以下
+    // 小さなセルの場合は描画をスキップ
+    if (!isTooSmall) {
 
-    const bgRect = new Konva.Rect({
-        x: cellLeft + 1,
-        y: cellTop + 1,
-        width: bgWidth,
-        height: bgHeight,
-        fill: isDateGrayed ? '#f3f4f6' : CONFIG.colors.slot.background,
-        cornerRadius: Math.max(0, bgCornerRadius),
-        opacity: isDateGrayed ? 0.6 : 1
-    });
-    layers.content.add(bgRect);
+        // 背景矩形（サイズは最小0を保証）
+        const bgWidth = Math.max(0, cellWidth - 2);
+        const bgHeight = Math.max(0, cellHeight - 2);
+        const bgCornerRadius = Math.min(2, bgWidth / 2, bgHeight / 2); // cornerRadiusは幅/高さの半分以下
 
-    // 日付テキスト
-    const dayOfWeek = new Date(dateStr).getDay();
-    let textColor;
-    if (isDateGrayed) {
-        textColor = '#9ca3af';
-    } else if (isHoliday || dayOfWeek === 0) {
-        textColor = CONFIG.colors.weekend.sun;
-    } else if (dayOfWeek === 6) {
-        textColor = CONFIG.colors.weekend.sat;
-    } else {
-        textColor = '#374151';
+        bgRect = new Konva.Rect({
+            x: cellLeft + 1,
+            y: cellTop + 1,
+            width: bgWidth,
+            height: bgHeight,
+            fill: isDateGrayed ? '#f3f4f6' : CONFIG.colors.slot.background,
+            cornerRadius: Math.max(0, bgCornerRadius),
+            opacity: isDateGrayed ? 0.6 : 1
+        });
+        layers.content.add(bgRect);
+
+        // 日付テキスト
+        const dayOfWeek = new Date(dateStr).getDay();
+        let textColor;
+        if (isDateGrayed) {
+            textColor = '#9ca3af';
+        } else if (isHoliday || dayOfWeek === 0) {
+            textColor = CONFIG.colors.weekend.sun;
+        } else if (dayOfWeek === 6) {
+            textColor = CONFIG.colors.weekend.sat;
+        } else {
+            textColor = '#374151';
+        }
+
+        const dayText = new Konva.Text({
+            x: cellLeft + 1,
+            y: cellTop + 2,
+            width: cellWidth - 2,
+            text: String(dayNumber),
+            fontSize: CONFIG.font.sizeSmall,
+            fontFamily: CONFIG.font.family,
+            fill: textColor,
+            align: 'center',
+            wrap: 'none'
+        });
+        layers.content.add(dayText);
     }
 
-    const dayText = new Konva.Text({
-        x: cellLeft + 1,
-        y: cellTop + 2,
-        width: cellWidth - 2,
-        text: String(dayNumber),
-        fontSize: CONFIG.font.sizeSmall,
-        fontFamily: CONFIG.font.family,
-        fill: textColor,
-        align: 'center',
-        wrap: 'none'
-    });
-    layers.content.add(dayText);
-
-    // 棒グラフ描画
-    if (slots && slots.length > 0) {
+    // 棒グラフ描画（小さなセルの場合はスキップ）
+    if (!isTooSmall && slots && slots.length > 0) {
         // 業務時間設定を取得
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
@@ -176,8 +226,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         // AM/PM境界線を描画（12:00の位置）
         const noonHour = 12;
         if (startHour < noonHour && endHour > noonHour) {
-            const noonPosition = (noonHour - startHour) / totalHours;
-            const noonX = cellLeft + 2 + noonPosition * barAreaWidth;
+            const noonX = timeToX(noonHour, startHour, endHour, cellLeft, barAreaWidth);
 
             const noonLine = new Konva.Line({
                 points: [noonX, barAreaTop, noonX, barAreaTop + barAreaHeight],
@@ -189,25 +238,26 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             layers.content.add(noonLine);
         }
 
+        // 設備条件フィルター判定
+        const hasEquipmentFilter = slots.some(s => s.filteredCount > 0);
+
+        // 折れ線グラフ用のポイント配列（設備条件フィルターが選択されている場合）
+        const linePoints = [];
+
         slots.forEach((slot, index) => {
-            const ratio = slot.max > 0 ? slot.count / slot.max : 0;
+            // データの値検証とデフォルト値設定（棒グラフ用）
+            const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+            const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
+            const ratio = count / max;
             const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
             const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(ratio);
             const barHeight = Math.max(0, barAreaHeight * ratio);
 
-            // 時刻を解析（例: "08:00-09:00" → 開始時刻 "08:00" → 8.0）
-            const startTime = slot.time.split('-')[0]; // "08:00-09:00" → "08:00"
-            const timeParts = startTime.split(':');
-            const hour = parseInt(timeParts[0], 10);
-            const minute = timeParts[1] ? parseInt(timeParts[1], 10) : 0;
-            const timeInHours = hour + minute / 60;
+            // スロットの時刻を解析（固定された時間軸に合わせる）
+            const timeInHours = parseTimeSlot(slot.time, startHour, endHour);
 
-            // 業務時間内での相対位置を計算（0.0 ～ 1.0）
-            const relativePosition = Math.max(0, Math.min(1,
-                (timeInHours - startHour) / totalHours));
-
-            // X座標を時刻に応じて配置
-            const barX = cellLeft + 2 + relativePosition * Math.max(0, barAreaWidth - barWidth);
+            // X座標を固定された時間軸上の位置に配置
+            const barX = timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth) - barWidth / 2;
             const barY = barAreaTop + barAreaHeight - barHeight;
 
             // 通常の棒グラフ（高さが0より大きい場合のみ描画）
@@ -223,8 +273,44 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 });
                 layers.content.add(bar);
             }
+
+            // 折れ線グラフ用のポイントを計算（設備条件フィルターが選択されている場合）
+            if (hasEquipmentFilter) {
+                // filteredCountの値検証とデフォルト値設定（maxは棒グラフで既に定義済み）
+                const filteredCount = (slot.filteredCount !== undefined && slot.filteredCount !== null) ? slot.filteredCount : 0;
+
+                // filteredCount / max * 100 で0-100%の割合を計算（100%を超える場合は100%にクランプ）
+                const filteredRatio = Math.min(100, Math.max(0, (filteredCount / max) * 100));
+
+                // デバッグログ（開発時のみ、本番では削除または条件付きで出力）
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.debug(`[折れ線グラフ] ${slot.time}: count=${count}, filteredCount=${filteredCount}, max=${max}, ratio=${(ratio * 100).toFixed(1)}%, filteredRatio=${filteredRatio.toFixed(1)}%`);
+                }
+
+                // Y座標: 0%が下、100%が上（barAreaTop + barAreaHeight - (割合 / 100 * barAreaHeight)）
+                // セルの範囲内に収まるように、barAreaTopからbarAreaTop + barAreaHeightの範囲にクランプ
+                const lineY = Math.max(barAreaTop, Math.min(barAreaTop + barAreaHeight, barAreaTop + barAreaHeight - (filteredRatio / 100 * barAreaHeight)));
+                // X座標は固定された時間軸上の位置（棒グラフと同じ計算式）
+                // セルの範囲内に収まるように、cellLeft + 2からcellLeft + cellWidth - 2の範囲にクランプ
+                const rawLineX = timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth);
+                const lineX = Math.max(cellLeft + 2, Math.min(cellLeft + cellWidth - 2, rawLineX));
+                linePoints.push(lineX, lineY);
+            }
         });
-    } else {
+
+        // 折れ線グラフを描画（設備条件フィルターが選択されている場合、かつポイントが2つ以上ある場合）
+        if (hasEquipmentFilter && linePoints.length >= 4) {
+            const lineGraph = new Konva.Line({
+                points: linePoints,
+                stroke: '#8b5cf6', // 紫系の色
+                strokeWidth: 2,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+            });
+            layers.content.add(lineGraph);
+        }
+    } else if (!isTooSmall) {
         // フォールバック: AM/PM 2本の棒
         const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
         const amRatio = stats.amMax > 0 ? stats.am / stats.amMax : 0;
@@ -274,13 +360,15 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     hitArea.on('mouseenter', function (e) {
         // ホバー時は枠線ハイライトのみ（ツールチップは廃止）
-        bgRect.stroke(CONFIG.colors.today);
-        bgRect.strokeWidth(2);
-        layers.content.batchDraw();
+        if (bgRect) {
+            bgRect.stroke(CONFIG.colors.today);
+            bgRect.strokeWidth(2);
+            layers.content.batchDraw();
+        }
     });
 
     hitArea.on('mouseleave', function () {
-        if (!state.isDragging) {
+        if (!state.isDragging && bgRect) {
             // ホバー解除後は枠線を削除（今日の日付のみ枠線を残す）
             if (isToday(dateStr)) {
                 bgRect.stroke(CONFIG.colors.today);
@@ -290,17 +378,39 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 bgRect.stroke(null);
                 bgRect.strokeWidth(0);
             }
+            layers.content.batchDraw();
         }
-        layers.content.batchDraw();
     });
 
     // クリックハンドラ（ダブルクリック・Shift+クリック対応）
     hitArea.on('click', function (e) {
+        console.log('MedockCalendar: hitArea click event fired', { dateStr, cellWidth, cellHeight });
         const now = Date.now();
         const isDoubleClick = (now - state.lastClickTime < 300) && (state.lastClickDate === dateStr);
         const isShiftClick = e.evt.shiftKey;
+        const isYearView = state.currentView === 'year';
 
+        // 年間カレンダーの場合は日付選択と範囲選択をスキップし、ダブルクリックのみ処理
+        if (isYearView) {
+            if (isDoubleClick) {
+                console.log('MedockCalendar: Double click detected', { dateStr, hasDotNetRef: !!state.dotNetRef });
+                setState({ lastClickTime: 0, lastClickDate: null });
+                // モーダルダイアログを表示
+                const modalContent = buildModalContent(dateStr, slots, state);
+                showDayModal(dateStr, modalContent, state.dotNetRef);
+            } else {
+                // ダブルクリック判定用に時刻と日付を記録
+                setState({
+                    lastClickTime: now,
+                    lastClickDate: dateStr
+                });
+            }
+            return;
+        }
+
+        // 月間カレンダー・週間カレンダーの既存処理
         if (isDoubleClick) {
+            console.log('MedockCalendar: Double click detected', { dateStr, hasDotNetRef: !!state.dotNetRef });
             setState({ lastClickTime: 0, lastClickDate: null });
             // モーダルダイアログを表示
             const modalContent = buildModalContent(dateStr, slots, state);
@@ -319,28 +429,28 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 confirmedDateRange: range.start !== range.end ? range : null
             });
         } else if (state.confirmedDateRange &&
-                   isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end)) {
-            // 範囲選択内の日付をクリックした場合は範囲選択を解除
+            isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end)) {
+            // 範囲選択内の日付をクリックした場合は範囲選択を解除し、その日付を選択
             setState({
-                lastClickTime: 0,
-                lastClickDate: null,
-                selectedDate: null,
+                lastClickTime: now,      // ダブルクリック判定用に時刻を記録
+                lastClickDate: dateStr,
+                selectedDate: dateStr,   // クリックした日付を選択状態にする
                 selectedDateRange: null,
                 confirmedDateRange: null
             });
             if (state.dotNetRef) {
-                state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', null);
+                state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
             }
             // カレンダーを再描画してグレーアウトを解除
             if (window.MedockCalendar) {
                 window.MedockCalendar.render();
             }
         } else {
-            // 同じ日付をクリックした場合は選択解除
+            // 同じ日付をクリックした場合は選択解除（だがダブルクリック判定用に時刻は記録）
             if (state.selectedDate === dateStr) {
                 setState({
-                    lastClickTime: 0,
-                    lastClickDate: null,
+                    lastClickTime: now,  // ダブルクリック判定用に時刻を記録
+                    lastClickDate: dateStr,
                     selectedDate: null,
                     selectedDateRange: null,
                     confirmedDateRange: null
@@ -365,6 +475,10 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     // ドラッグによる範囲選択
     hitArea.on('mousedown', function (e) {
+        // 年間カレンダーの場合はドラッグ処理をスキップ
+        if (state.currentView === 'year') {
+            return;
+        }
         // mousedown では isDragging と dragStartDate のみ設定
         // selectedDateRange は mousemove で実際にドラッグが開始された時に設定
         setState({
@@ -379,6 +493,10 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     });
 
     hitArea.on('mousemove', function () {
+        // 年間カレンダーの場合はドラッグ処理をスキップ
+        if (state.currentView === 'year') {
+            return;
+        }
         if (state.isDragging && state.dragStartDate) {
             // 実際にドラッグが開始された場合のみ selectedDateRange を設定
             setState({ selectedDateRange: { start: state.dragStartDate, end: dateStr } });
