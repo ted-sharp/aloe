@@ -223,26 +223,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 });
                 layers.content.add(bar);
             }
-
-            // フィルター条件の重ね表示（filteredCount > 0 の場合）
-            if (slot.filteredCount > 0) {
-                const filteredRatio = slot.max > 0 ? slot.filteredCount / slot.max : 0;
-                const filteredBarHeight = Math.max(0, barAreaHeight * filteredRatio);
-                const filteredBarY = barAreaTop + barAreaHeight - filteredBarHeight;
-
-                if (filteredBarHeight > 0) {
-                    const filterBar = new Konva.Rect({
-                        x: barX,
-                        y: filteredBarY,
-                        width: Math.max(1, barWidth),
-                        height: filteredBarHeight,
-                        fill: '#fb923c', // オレンジ色
-                        cornerRadius: Math.min(1, filteredBarHeight / 2),
-                        opacity: isSlotGrayed ? 0.4 : 0.7
-                    });
-                    layers.content.add(filterBar);
-                }
-            }
         });
     } else {
         // フォールバック: AM/PM 2本の棒
