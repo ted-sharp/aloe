@@ -238,8 +238,9 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             layers.content.add(noonLine);
         }
 
-        // 設備条件フィルター判定
-        const hasEquipmentFilter = slots.some(s => s.filteredCount > 0);
+        // 設備条件フィルター判定（showEquipmentGraphオプションも考慮）
+        const showEquipmentGraph = state.options?.showEquipmentGraph ?? false;
+        const hasEquipmentFilter = showEquipmentGraph && slots.some(s => s.filteredCount > 0);
 
         // 折れ線グラフ用のポイント配列（設備条件フィルターが選択されている場合）
         const linePoints = [];

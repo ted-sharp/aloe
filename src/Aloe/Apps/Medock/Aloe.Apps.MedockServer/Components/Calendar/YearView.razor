@@ -3,17 +3,51 @@
     12ヶ月分のミニカレンダーを表示し、各日を時間帯枠の円グラフで表示
 *@
 
-<CalendarCanvas 
-    ViewType="year"
-    CurrentDate="@CurrentDate"
-    DayStats="@DayStats"
-    Holidays="@Holidays"
-    Height="@Height"
-    OnDateSelected="@HandleDateSelected"
-    OnMonthClicked="@HandleMonthClicked"
-    OnDateSelectedSingle="@HandleDateSelectedSingle"
-    OnDateDoubleClicked="@HandleDateDoubleClicked"
-    OnDateRangeSelected="@HandleDateRangeSelected" />
+<div class="year-view flex flex-col h-full">
+    <!-- 年選択ボタンと設備表示スイッチ -->
+    <div class="flex items-center gap-2 mb-4 flex-shrink-0">
+        <span class="text-sm font-medium text-base-content/70">年:</span>
+        <div class="btn-group">
+            @{
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                var years = new[] { today.Year - 1, today.Year, today.Year + 1 };
+                foreach (var year in years)
+                {
+                    var isCurrent = year == CurrentDate.Year;
+                    <button class="btn btn-sm @(isCurrent ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleYearSelected(year)">
+                        @(year)年
+                    </button>
+                }
+            }
+        </div>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
+        <!-- 設備表示スイッチ -->
+        <label class="label cursor-pointer">
+            <span class="label-text text-sm mr-2">設備表示</span>
+            <input type="checkbox" class="toggle toggle-primary toggle-sm" 
+                   @bind="ShowEquipmentGraph" @bind:after="HandleEquipmentGraphChanged" />
+        </label>
+    </div>
+
+    <!-- Canvas カレンダー -->
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas 
+            ViewType="year"
+            CurrentDate="@CurrentDate"
+            DayStats="@DayStats"
+            Holidays="@Holidays"
+            ShowEquipmentGraph="@ShowEquipmentGraph"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnMonthClicked="@HandleMonthClicked"
+            OnDateSelectedSingle="@HandleDateSelectedSingle"
+            OnDateDoubleClicked="@HandleDateDoubleClicked"
+            OnDateRangeSelected="@HandleDateRangeSelected" />
+    </div>
+</div>
 
 @code {
     /// <summary>
@@ -33,6 +67,12 @@
     /// </summary>
     [Parameter]
     public Dictionary<string, string>? Holidays { get; set; }
+
+    /// <summary>
+    /// 設備折れ線グラフを表示するかどうか
+    /// </summary>
+    [Parameter]
+    public bool ShowEquipmentGraph { get; set; } = false;
 
     /// <summary>
     /// カレンダーの高さ
@@ -70,6 +110,18 @@
     [Parameter]
     public EventCallback<(DateOnly Start, DateOnly End)> OnDateRangeSelect { get; set; }
 
+    /// <summary>
+    /// 年選択時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<int> OnYearSelected { get; set; }
+
+    /// <summary>
+    /// 設備表示スイッチ変更時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnEquipmentGraphChanged { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await OnDateClick.InvokeAsync(date);
@@ -93,6 +145,16 @@
     private async Task HandleDateRangeSelected((DateOnly Start, DateOnly End) range)
     {
         await OnDateRangeSelect.InvokeAsync(range);
+    }
+
+    private async Task HandleYearSelected(int year)
+    {
+        await OnYearSelected.InvokeAsync(year);
+    }
+
+    private async Task HandleEquipmentGraphChanged()
+    {
+        await OnEquipmentGraphChanged.InvokeAsync(ShowEquipmentGraph);
     }
 }
 

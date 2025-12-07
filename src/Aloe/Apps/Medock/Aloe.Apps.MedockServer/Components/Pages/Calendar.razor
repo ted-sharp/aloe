@@ -14,7 +14,7 @@
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
-<div class="h-full flex flex-col year-grid-container">
+<div class="flex flex-col year-grid-container" style="height: 100dvh;">
     <!-- ヘッダー行: 左FAB + ナビバー + 右FAB -->
     <div class="calendar-header flex items-center justify-between px-2 py-1">
         <!-- 左側: HamburgerFab領域 -->
@@ -110,12 +110,15 @@
                 CurrentDate="@CurrentDate"
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
+                ShowEquipmentGraph="@ShowEquipmentGraph"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
                 OnMonthClick="@HandleMonthClick"
                 OnDateSelect="@HandleDateSelect"
                 OnDateDoubleClick="@HandleDateDoubleClick"
-                OnDateRangeSelect="@HandleDateRangeSelect" />
+                OnDateRangeSelect="@HandleDateRangeSelect"
+                OnYearSelected="@HandleYearSelected"
+                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
         }
         else if (CurrentView == CalendarViewType.Month)
         {
@@ -123,9 +126,12 @@
                 CurrentDate="@CurrentDate"
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
+                ShowEquipmentGraph="@ShowEquipmentGraph"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
-                OnDateDoubleClick="@HandleDateDoubleClick" />
+                OnDateDoubleClick="@HandleDateDoubleClick"
+                OnMonthSelected="@HandleMonthSelected"
+                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged" />
         }
         else
         {
@@ -168,6 +174,7 @@
     private int WeekDays { get; set; } = 7;
     private bool ShowSlots { get; set; } = true;
     private bool ShowFilterPanel { get; set; } = false;
+    private bool ShowEquipmentGraph { get; set; } = false;
 
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
@@ -619,6 +626,24 @@
         RegisterLayoutActions();
     }
 
+    private void HandleMonthSelected((int Year, int Month) yearMonth)
+    {
+        CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        StateHasChanged();
+    }
+
+    private void HandleYearSelected(int year)
+    {
+        CurrentDate = new DateOnly(year, CurrentDate.Month, CurrentDate.Day);
+        StateHasChanged();
+    }
+
+    private void HandleEquipmentGraphChanged(bool showEquipmentGraph)
+    {
+        ShowEquipmentGraph = showEquipmentGraph;
+        StateHasChanged();
+    }
+
     private void HandleDateSelect(DateOnly date)
     {
         SelectedDate = date;
@@ -651,6 +676,13 @@
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
         CurrentFilter = filter;
+        
+        // 設備条件が選択された場合、設備表示スイッチを自動的にONにする
+        if (filter.EquipIds.Any() && !ShowEquipmentGraph)
+        {
+            ShowEquipmentGraph = true;
+        }
+        
         await ApplyFilterToStats(filter);
         StateHasChanged();
     }

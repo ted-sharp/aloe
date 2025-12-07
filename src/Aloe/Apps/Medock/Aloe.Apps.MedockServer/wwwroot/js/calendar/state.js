@@ -23,6 +23,7 @@ let state = {
     options: {
         weekDays: 7,                  // 週表示で表示する日数: 1, 3, 7, 14, 31
         showSlots: true,              // スロット表示モード（true）かアバター表示（false）か
+        showEquipmentGraph: false,     // 設備折れ線グラフを表示するかどうか（月間・年間表示用）
         startHour: 8,                 // 週表示の開始時刻
         endHour: 18                   // 週表示の終了時刻
     },

@@ -191,7 +191,7 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
 
     // グリッド線の描画（年間表示用）
     if (opts.gridStyle === 'minimal') {
-        for (let row = 0; row <= rows; row++) {
+        for (let row = 0; row < rows; row++) {
             for (let col = 0; col < 7; col++) {
                 const cellLeft = x + col * cellWidth;
                 const cellTop = dayGridTop + row * cellHeight;
@@ -215,7 +215,7 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
 
                 if (col > 0) {
                     const vLine = new Konva.Line({
-                        points: [snapToPixel(cellLeft), snapToPixel(dayGridTop), snapToPixel(cellLeft), snapToPixel(dayGridTop + (rows + 1) * cellHeight)],
+                        points: [snapToPixel(cellLeft), snapToPixel(dayGridTop), snapToPixel(cellLeft), snapToPixel(dayGridTop + rows * cellHeight)],
                         stroke: '#e5e7eb',
                         strokeWidth: 1
                     });
@@ -240,6 +240,14 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
                 strokeWidth: 1
             });
             layers.grid.add(headerBottomLine);
+
+            // 最終行の下側のボーダー
+            const bottomLine = new Konva.Line({
+                points: [snapToPixel(x), snapToPixel(dayGridTop + rows * cellHeight), snapToPixel(x + width), snapToPixel(dayGridTop + rows * cellHeight)],
+                stroke: '#e5e7eb',
+                strokeWidth: 1
+            });
+            layers.grid.add(bottomLine);
         }
     }
 

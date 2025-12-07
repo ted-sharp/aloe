@@ -3,14 +3,49 @@
     各日をAM/PM円グラフで表示し、予約状況を視覚化
 *@
 
-<CalendarCanvas 
-    ViewType="month"
-    CurrentDate="@CurrentDate"
-    DayStats="@DayStats"
-    Holidays="@Holidays"
-    Height="@Height"
-    OnDateSelected="@HandleDateSelected"
-    OnDateDoubleClicked="@HandleDateDoubleClicked" />
+<div class="month-view flex flex-col h-full">
+    <!-- 月選択ボタンと設備表示スイッチ -->
+    <div class="flex items-center gap-2 mb-4 flex-shrink-0">
+        <span class="text-sm font-medium text-base-content/70">月:</span>
+        <div class="btn-group">
+            @{
+                var today = DateOnly.FromDateTime(DateTime.Today);
+                var currentMonth = new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
+                for (int i = -1; i <= 6; i++)
+                {
+                    var monthDate = today.AddMonths(i);
+                    var isCurrent = monthDate.Year == currentMonth.Year && monthDate.Month == currentMonth.Month;
+                    <button class="btn btn-sm @(isCurrent ? "btn-active btn-primary" : "")"
+                            @onclick="() => HandleMonthSelected(monthDate.Year, monthDate.Month)">
+                        @(monthDate.Month)月
+                    </button>
+                }
+            }
+        </div>
+        
+        <div class="divider divider-horizontal mx-2"></div>
+        
+        <!-- 設備表示スイッチ -->
+        <label class="label cursor-pointer">
+            <span class="label-text text-sm mr-2">設備表示</span>
+            <input type="checkbox" class="toggle toggle-primary toggle-sm" 
+                   @bind="ShowEquipmentGraph" @bind:after="HandleEquipmentGraphChanged" />
+        </label>
+    </div>
+
+    <!-- Canvas カレンダー -->
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas 
+            ViewType="month"
+            CurrentDate="@CurrentDate"
+            DayStats="@DayStats"
+            Holidays="@Holidays"
+            ShowEquipmentGraph="@ShowEquipmentGraph"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnDateDoubleClicked="@HandleDateDoubleClicked" />
+    </div>
+</div>
 
 @code {
     /// <summary>
@@ -32,6 +67,12 @@
     public Dictionary<string, string>? Holidays { get; set; }
 
     /// <summary>
+    /// 設備折れ線グラフを表示するかどうか
+    /// </summary>
+    [Parameter]
+    public bool ShowEquipmentGraph { get; set; } = false;
+
+    /// <summary>
     /// カレンダーの高さ
     /// </summary>
     [Parameter]
@@ -49,6 +90,18 @@
     [Parameter]
     public EventCallback<DateOnly> OnDateDoubleClick { get; set; }
 
+    /// <summary>
+    /// 月選択時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<(int Year, int Month)> OnMonthSelected { get; set; }
+
+    /// <summary>
+    /// 設備表示スイッチ変更時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<bool> OnEquipmentGraphChanged { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await OnDateClick.InvokeAsync(date);
@@ -57,5 +110,15 @@
     private async Task HandleDateDoubleClicked(DateOnly date)
     {
         await OnDateDoubleClick.InvokeAsync(date);
+    }
+
+    private async Task HandleMonthSelected(int year, int month)
+    {
+        await OnMonthSelected.InvokeAsync((year, month));
+    }
+
+    private async Task HandleEquipmentGraphChanged()
+    {
+        await OnEquipmentGraphChanged.InvokeAsync(ShowEquipmentGraph);
     }
 }

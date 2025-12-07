@@ -59,6 +59,12 @@
     public bool ShowSlots { get; set; } = true;
 
     /// <summary>
+    /// Show equipment line graph (for month/year view)
+    /// </summary>
+    [Parameter]
+    public bool ShowEquipmentGraph { get; set; } = false;
+
+    /// <summary>
     /// Start hour for week/day view
     /// </summary>
     [Parameter]
@@ -137,6 +143,7 @@
     private DateOnly _lastDate;
     private int _lastWeekDays;
     private bool _lastShowSlots;
+    private bool _lastShowEquipmentGraph;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -149,17 +156,19 @@
             _lastDate = CurrentDate;
             _lastWeekDays = WeekDays;
             _lastShowSlots = ShowSlots;
+            _lastShowEquipmentGraph = ShowEquipmentGraph;
         }
         else if (_isInitialized)
         {
             // Check if we need to update the view
-            if (_lastViewType != ViewType || _lastDate != CurrentDate || _lastWeekDays != WeekDays || _lastShowSlots != ShowSlots)
+            if (_lastViewType != ViewType || _lastDate != CurrentDate || _lastWeekDays != WeekDays || _lastShowSlots != ShowSlots || _lastShowEquipmentGraph != ShowEquipmentGraph)
             {
                 await ChangeViewAsync();
                 _lastViewType = ViewType;
                 _lastDate = CurrentDate;
                 _lastWeekDays = WeekDays;
                 _lastShowSlots = ShowSlots;
+                _lastShowEquipmentGraph = ShowEquipmentGraph;
             }
         }
     }
@@ -179,6 +188,7 @@
         {
             weekDays = WeekDays,
             showSlots = ShowSlots,
+            showEquipmentGraph = ShowEquipmentGraph,
             startHour = StartHour,
             endHour = EndHour
         };
@@ -209,13 +219,14 @@
     {
         if (!_isInitialized) return;
 
-        // Update options if weekDays or showSlots changed
-        if (_lastWeekDays != WeekDays || _lastShowSlots != ShowSlots)
+        // Update options if weekDays, showSlots, or showEquipmentGraph changed
+        if (_lastWeekDays != WeekDays || _lastShowSlots != ShowSlots || _lastShowEquipmentGraph != ShowEquipmentGraph)
         {
             var options = new
             {
                 weekDays = WeekDays,
                 showSlots = ShowSlots,
+                showEquipmentGraph = ShowEquipmentGraph,
                 startHour = StartHour,
                 endHour = EndHour
             };

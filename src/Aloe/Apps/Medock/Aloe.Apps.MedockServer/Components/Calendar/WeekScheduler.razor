@@ -5,9 +5,9 @@
     スロット表示と詳細表示の切り替え
 *@
 
-<div class="week-scheduler">
+<div class="week-scheduler flex flex-col h-full">
     <!-- 日数切替ボタン -->
-    <div class="flex items-center gap-2 mb-4">
+    <div class="flex items-center gap-2 mb-4 flex-shrink-0">
         <span class="text-sm font-medium text-base-content/70">表示日数:</span>
         <div class="btn-group">
             @foreach (var days in DayOptions)
@@ -42,21 +42,23 @@
     </div>
 
     <!-- Canvas カレンダー -->
-    <CalendarCanvas 
-        ViewType="week"
-        CurrentDate="@CurrentDate"
-        Appointments="@Appointments"
-        DayStats="@DayStats"
-        Holidays="@Holidays"
-        WeekDays="@WeekDays"
-        ShowSlots="@ShowSlots"
-        StartHour="@StartHour"
-        EndHour="@EndHour"
-        Height="@Height"
-        OnDateSelected="@HandleDateSelected"
-        OnAppointmentClicked="@HandleAppointmentClicked"
-        OnCreateRequested="@HandleCreateRequested"
-        OnAppointmentMoved="@HandleAppointmentMoved" />
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas 
+            ViewType="week"
+            CurrentDate="@CurrentDate"
+            Appointments="@Appointments"
+            DayStats="@DayStats"
+            Holidays="@Holidays"
+            WeekDays="@WeekDays"
+            ShowSlots="@ShowSlots"
+            StartHour="@StartHour"
+            EndHour="@EndHour"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnAppointmentClicked="@HandleAppointmentClicked"
+            OnCreateRequested="@HandleCreateRequested"
+            OnAppointmentMoved="@HandleAppointmentMoved" />
+    </div>
 </div>
 
 @code {
