@@ -29,19 +29,24 @@
                         {
                             @foreach (var slot in DayStats.Slots)
                             {
-                                var ratio = slot.Max > 0 ? (slot.Count / (double)slot.Max) * 100 : 0;
-                                var color = GetBarColor(ratio);
+                                // 空き率を計算（1 - 使用率）
+                                var vacancyRatio = slot.Max > 0 ? (1 - slot.Count / (double)slot.Max) * 100 : 0;
+                                // 空き率が0%より大きい場合のみ表示
+                                if (vacancyRatio > 0)
+                                {
+                                    var color = GetBarColor(vacancyRatio);
 
-                                <div>
-                                    <div class="flex justify-between text-sm mb-1">
-                                        <span class="font-medium">@slot.Time</span>
-                                        <span>@slot.Count/@slot.Max (@Math.Round(ratio)%)</span>
+                                    <div>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span class="font-medium">@slot.Time</span>
+                                            <span>@slot.Count/@slot.Max (空き:@Math.Round(vacancyRatio)%)</span>
+                                        </div>
+                                        <div class="bg-base-200 h-6 rounded overflow-hidden">
+                                            <div class="h-full transition-all"
+                                                 style="width: @(vacancyRatio)%; background-color: @color;"></div>
+                                        </div>
                                     </div>
-                                    <div class="bg-base-200 h-6 rounded overflow-hidden">
-                                        <div class="h-full transition-all"
-                                             style="width: @(ratio)%; background-color: @color;"></div>
-                                    </div>
-                                </div>
+                                }
                             }
                         }
                         else
@@ -72,20 +77,25 @@
                                     <div class="space-y-2">
                                         @foreach (var slot in equipmentStat.ApptGraph.Slots)
                                         {
-                                            var ratio = slot.Max > 0 ? (slot.Count / (double)slot.Max) * 100 : 0;
-                                            var color = GetBarColor(ratio);
-                                            var timeLabel = slot.IsCoarseSlot ? GetCoarseSlotLabel(slot.Time) : slot.Time;
+                                            // 空き率を計算（1 - 使用率）
+                                            var vacancyRatio = slot.Max > 0 ? (1 - slot.Count / (double)slot.Max) * 100 : 0;
+                                            // 空き率が0%より大きい場合のみ表示
+                                            if (vacancyRatio > 0)
+                                            {
+                                                var color = GetBarColor(vacancyRatio);
+                                                var timeLabel = slot.IsCoarseSlot ? GetCoarseSlotLabel(slot.Time) : slot.Time;
 
-                                            <div>
-                                                <div class="flex justify-between text-xs mb-1">
-                                                    <span class="@(slot.IsCoarseSlot ? "font-bold" : "")">@timeLabel</span>
-                                                    <span>@slot.Count/@slot.Max</span>
+                                                <div>
+                                                    <div class="flex justify-between text-xs mb-1">
+                                                        <span class="@(slot.IsCoarseSlot ? "font-bold" : "")">@timeLabel</span>
+                                                        <span>@slot.Count/@slot.Max (空き:@Math.Round(vacancyRatio)%)</span>
+                                                    </div>
+                                                    <div class="bg-base-200 h-4 rounded overflow-hidden">
+                                                        <div class="h-full transition-all"
+                                                             style="width: @(vacancyRatio)%; background-color: @color;"></div>
+                                                    </div>
                                                 </div>
-                                                <div class="bg-base-200 h-4 rounded overflow-hidden">
-                                                    <div class="h-full transition-all"
-                                                         style="width: @(ratio)%; background-color: @color;"></div>
-                                                </div>
-                                            </div>
+                                            }
                                         }
                                     </div>
                                 </div>
@@ -157,15 +167,15 @@
         return AvailableEquipments.FirstOrDefault(e => e.Id == equipId)?.Name ?? "不明";
     }
 
-    private string GetBarColor(double ratio)
+    private string GetBarColor(double vacancyRatio)
     {
-        return ratio switch
+        // 空き率に基づいて色を決定（空きが多い→目立つ色、空きが少ない→目立たない色）
+        return vacancyRatio switch
         {
-            >= 100 => "#ef4444", // 赤 (満杯)
-            >= 70 => "#f97316",  // オレンジ
-            >= 30 => "#fbbf24",  // 黄
-            > 0 => "#22d3ee",    // シアン
-            _ => "#3b82f6"       // 青 (空き)
+            >= 70 => "#10b981",  // 緑 (空きが多い - 目立つ)
+            >= 30 => "#34d399",  // エメラルド (空きあり)
+            > 0 => "#9ca3af",    // グレー (空き少ない - 目立たない)
+            _ => "#6b7280"       // ダークグレー (満杯 - 表示されない想定)
         };
     }
 

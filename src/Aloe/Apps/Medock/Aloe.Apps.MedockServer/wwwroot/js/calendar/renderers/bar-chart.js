@@ -35,8 +35,10 @@ function buildModalContent(dateStr, slots, state) {
         // 時間帯別の予約状況
         content += '<div class="space-y-3 mt-4">';
         slots.forEach(s => {
-            const ratio = s.max > 0 ? (s.count / s.max) * 100 : 0;
-            const colorClass = ratio >= 100 ? 'bg-error' : ratio >= 70 ? 'bg-warning' : ratio >= 30 ? 'bg-warning' : 'bg-info';
+            // 空き率を計算（1 - 使用率）
+            const vacancyRatio = s.max > 0 ? (1 - s.count / s.max) * 100 : 0;
+            // 空き率に基づいて色クラスを決定（空きが多い→緑、空きが少ない→グレー）
+            const colorClass = vacancyRatio >= 70 ? 'bg-success' : vacancyRatio >= 30 ? 'bg-info' : vacancyRatio > 0 ? 'bg-base-300' : '';
 
             // Show room-filtered count in each slot
             let roomInfo = '';
@@ -44,15 +46,18 @@ function buildModalContent(dateStr, slots, state) {
                 roomInfo = ` <span class="text-warning">[部屋:${s.filteredCount}]</span>`;
             }
 
-            content += `
-                <div>
-                    <div class="flex justify-between text-sm mb-1">
-                        <span>${s.time}</span>
-                        <span>${s.count}/${s.max} (${Math.round(ratio)}%)${roomInfo}</span>
+            // 空き率が0%の場合は表示しない
+            if (vacancyRatio > 0) {
+                content += `
+                    <div>
+                        <div class="flex justify-between text-sm mb-1">
+                            <span>${s.time}</span>
+                            <span>${s.count}/${s.max} (空き:${Math.round(vacancyRatio)}%)${roomInfo}</span>
+                        </div>
+                        <progress class="progress ${colorClass} w-full" value="${vacancyRatio}" max="100"></progress>
                     </div>
-                    <progress class="progress ${colorClass} w-full" value="${ratio}" max="100"></progress>
-                </div>
-            `;
+                `;
+            }
         });
         content += '</div>';
     } else {
@@ -65,24 +70,24 @@ function buildModalContent(dateStr, slots, state) {
 }
 
 /**
- * 時間帯枠の充足率から色を取得
- * 空き→青、一部→黄、満杯→赤
- * @param {number} ratio - 充足率（0.0 ～ 1.0）
+ * 時間帯枠の空き率から色を取得
+ * 空きが多い→目立つ色（緑）、空きが少ない→目立たない色（グレー）
+ * @param {number} vacancyRatio - 空き率（0.0 ～ 1.0）
  * @returns {string} カラーコード
  */
-export function getSlotColor(ratio) {
-    if (ratio >= 1.0) {
-        return CONFIG.colors.slot.full; // 満杯 - 赤
-    } else if (ratio >= 0.7) {
-        // 70%以上 - 赤と黄の中間
-        return '#f97316'; // orange
-    } else if (ratio >= 0.3) {
-        return CONFIG.colors.slot.partial; // 一部埋まり - 黄
-    } else if (ratio > 0) {
-        // 30%未満 - 黄と青の中間
-        return '#22d3ee'; // cyan
+export function getSlotColor(vacancyRatio) {
+    if (vacancyRatio >= 0.7) {
+        // 空き率70%以上 - 空きが多い → 目立つ緑色
+        return '#10b981'; // green
+    } else if (vacancyRatio >= 0.3) {
+        // 空き率30-70% - 空きあり → 明るい緑
+        return '#34d399'; // emerald
+    } else if (vacancyRatio > 0) {
+        // 空き率0-30% - 空き少ない → 目立たないグレー
+        return '#9ca3af'; // gray
     } else {
-        return CONFIG.colors.slot.empty; // 空き - 青
+        // 空き率0% - 満杯 → 描画しない（この関数は呼ばれない想定）
+        return '#6b7280'; // dark gray
     }
 }
 
@@ -249,10 +254,12 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             // データの値検証とデフォルト値設定（棒グラフ用）
             const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
             const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
-            const ratio = count / max;
+            // 空き率を計算（1 - 使用率）
+            const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / max)));
             const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
-            const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(ratio);
-            const barHeight = Math.max(0, barAreaHeight * ratio);
+            const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(vacancyRatio);
+            // 空き率に基づいて棒の高さを計算
+            const barHeight = Math.max(0, barAreaHeight * vacancyRatio);
 
             // スロットの時刻を解析（固定された時間軸に合わせる）
             const timeInHours = parseTimeSlot(slot.time, startHour, endHour);
@@ -280,17 +287,17 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 // filteredCountの値検証とデフォルト値設定（maxは棒グラフで既に定義済み）
                 const filteredCount = (slot.filteredCount !== undefined && slot.filteredCount !== null) ? slot.filteredCount : 0;
 
-                // filteredCount / max * 100 で0-100%の割合を計算（100%を超える場合は100%にクランプ）
-                const filteredRatio = Math.min(100, Math.max(0, (filteredCount / max) * 100));
+                // 空き率を計算（1 - 使用率）* 100 で0-100%の割合を計算（100%を超える場合は100%にクランプ）
+                const filteredVacancyRatio = Math.min(100, Math.max(0, (1 - filteredCount / max) * 100));
 
                 // デバッグログ（開発時のみ、本番では削除または条件付きで出力）
                 if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    console.debug(`[折れ線グラフ] ${slot.time}: count=${count}, filteredCount=${filteredCount}, max=${max}, ratio=${(ratio * 100).toFixed(1)}%, filteredRatio=${filteredRatio.toFixed(1)}%`);
+                    console.debug(`[折れ線グラフ] ${slot.time}: count=${count}, filteredCount=${filteredCount}, max=${max}, vacancyRatio=${(vacancyRatio * 100).toFixed(1)}%, filteredVacancyRatio=${filteredVacancyRatio.toFixed(1)}%`);
                 }
 
-                // Y座標: 0%が下、100%が上（barAreaTop + barAreaHeight - (割合 / 100 * barAreaHeight)）
+                // Y座標: 0%が下、100%が上（barAreaTop + barAreaHeight - (空き率 / 100 * barAreaHeight)）
                 // セルの範囲内に収まるように、barAreaTopからbarAreaTop + barAreaHeightの範囲にクランプ
-                const lineY = Math.max(barAreaTop, Math.min(barAreaTop + barAreaHeight, barAreaTop + barAreaHeight - (filteredRatio / 100 * barAreaHeight)));
+                const lineY = Math.max(barAreaTop, Math.min(barAreaTop + barAreaHeight, barAreaTop + barAreaHeight - (filteredVacancyRatio / 100 * barAreaHeight)));
                 // X座標は固定された時間軸上の位置（棒グラフと同じ計算式）
                 // セルの範囲内に収まるように、cellLeft + 2からcellLeft + cellWidth - 2の範囲にクランプ
                 const rawLineX = timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth);
@@ -314,36 +321,37 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     } else if (!isTooSmall) {
         // フォールバック: AM/PM 2本の棒
         const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
-        const amRatio = stats.amMax > 0 ? stats.am / stats.amMax : 0;
-        const pmRatio = stats.pmMax > 0 ? stats.pm / stats.pmMax : 0;
+        // 空き率を計算（1 - 使用率）
+        const amVacancyRatio = stats.amMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.am / stats.amMax))) : 0;
+        const pmVacancyRatio = stats.pmMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.pm / stats.pmMax))) : 0;
 
         const barAreaWidth = Math.max(0, cellWidth - 4);
         const gapWidth = 1;
         const barWidth = Math.max(1, (barAreaWidth - gapWidth) / 2);
 
-        // AM棒
-        const amBarHeight = Math.max(0, barAreaHeight * amRatio);
+        // AM棒（空き率が0より大きい場合のみ描画）
+        const amBarHeight = Math.max(0, barAreaHeight * amVacancyRatio);
         if (amBarHeight > 0 && barWidth > 0) {
             const amBar = new Konva.Rect({
                 x: cellLeft + 2,
                 y: barAreaTop + barAreaHeight - amBarHeight,
                 width: barWidth,
                 height: amBarHeight,
-                fill: getSlotColor(amRatio),
+                fill: getSlotColor(amVacancyRatio),
                 cornerRadius: Math.min(1, amBarHeight / 2, barWidth / 2)
             });
             layers.content.add(amBar);
         }
 
-        // PM棒
-        const pmBarHeight = Math.max(0, barAreaHeight * pmRatio);
+        // PM棒（空き率が0より大きい場合のみ描画）
+        const pmBarHeight = Math.max(0, barAreaHeight * pmVacancyRatio);
         if (pmBarHeight > 0 && barWidth > 0) {
             const pmBar = new Konva.Rect({
                 x: cellLeft + 2 + barWidth + gapWidth,
                 y: barAreaTop + barAreaHeight - pmBarHeight,
                 width: barWidth,
                 height: pmBarHeight,
-                fill: getSlotColor(pmRatio),
+                fill: getSlotColor(pmVacancyRatio),
                 cornerRadius: Math.min(1, pmBarHeight / 2, barWidth / 2)
             });
             layers.content.add(pmBar);
