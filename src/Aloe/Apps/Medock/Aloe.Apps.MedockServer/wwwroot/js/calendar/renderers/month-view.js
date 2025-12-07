@@ -18,6 +18,7 @@ export function renderMonthView() {
     const width = stage.width();
     const height = stage.height();
 
+    layers.background.destroyChildren();
     layers.grid.destroyChildren();
     layers.content.destroyChildren();
     layers.interaction.destroyChildren();
