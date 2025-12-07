@@ -419,23 +419,14 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const endHour = state.options.endHour || 18;
         const totalHours = endHour - startHour;
         const barAreaWidth = cellWidth - 4; // 左右余白2px
-        const barWidth = 3; // 固定幅
-
-        // AM/PM境界線を描画（12:00の位置）
-        const noonHour = 12;
-        if (startHour < noonHour && endHour > noonHour) {
-            const noonX = timeToX(noonHour, startHour, endHour, cellLeft, barAreaWidth);
-
-            const noonLine = new Konva.Line({
-                points: [noonX, barAreaTop, noonX, barAreaTop + barAreaHeight],
-                stroke: '#9ca3af',
-                strokeWidth: 1,
-                dash: [2, 2], // 点線
-                opacity: 0.5
-            });
-            layers.content.add(noonLine);
-        }
-
+        
+        // スロット数に応じて均等に分割して隙間なく配置
+        const slotCount = slots.length;
+        const gapWidth = slotCount > 1 ? 1 : 0; // スロット間の隙間（1px、スロットが1つの場合は隙間なし）
+        const totalGapWidth = gapWidth * (slotCount - 1); // 全隙間の合計
+        const availableWidth = barAreaWidth - totalGapWidth; // 隙間を除いた利用可能な幅
+        const barWidth = Math.max(1, Math.floor(availableWidth / slotCount)); // 各棒グラフの幅（均等分割）
+        
         // 設備条件フィルター判定（showEquipmentGraphオプションも考慮）
         const showEquipmentGraph = state.options?.showEquipmentGraph ?? false;
         const hasEquipmentFilter = showEquipmentGraph && slots.some(s => s.filteredCount > 0);
@@ -454,11 +445,8 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             // 空き率に基づいて棒の高さを計算
             const barHeight = Math.max(0, barAreaHeight * vacancyRatio);
 
-            // スロットの時刻を解析（固定された時間軸に合わせる）
-            const timeInHours = parseTimeSlot(slot.time, startHour, endHour);
-
-            // X座標を固定された時間軸上の位置に配置
-            const barX = timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth) - barWidth / 2;
+            // 均等分割によるX座標計算（隙間を考慮）
+            const barX = cellLeft + 2 + (index * (barWidth + gapWidth));
             const barY = barAreaTop + barAreaHeight - barHeight;
 
             // 通常の棒グラフ（高さが0より大きい場合のみ描画）
@@ -491,10 +479,8 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 // Y座標: 0%が下、100%が上（barAreaTop + barAreaHeight - (空き率 / 100 * barAreaHeight)）
                 // セルの範囲内に収まるように、barAreaTopからbarAreaTop + barAreaHeightの範囲にクランプ
                 const lineY = Math.max(barAreaTop, Math.min(barAreaTop + barAreaHeight, barAreaTop + barAreaHeight - (filteredVacancyRatio / 100 * barAreaHeight)));
-                // X座標は固定された時間軸上の位置（棒グラフと同じ計算式）
-                // セルの範囲内に収まるように、cellLeft + 2からcellLeft + cellWidth - 2の範囲にクランプ
-                const rawLineX = timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth);
-                const lineX = Math.max(cellLeft + 2, Math.min(cellLeft + cellWidth - 2, rawLineX));
+                // X座標は均等分割に合わせて棒グラフの中央位置を使用
+                const lineX = barX + barWidth / 2;
                 linePoints.push(lineX, lineY);
             }
         });
