@@ -26,7 +26,7 @@ public class Equipment : IAuditableEntity
 
     /// <summary>設備説明</summary>
     [Column("equip_desc")]
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string EquipDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>

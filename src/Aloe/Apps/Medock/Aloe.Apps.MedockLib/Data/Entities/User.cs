@@ -24,6 +24,11 @@ public class User : IAuditableEntity
     [MaxLength(254)]
     public string Email { get; set; } = String.Empty;
 
+    /// <summary>表示名</summary>
+    [Column("user_display_name")]
+    [MaxLength(100)]
+    public string UserDisplayName { get; set; } = String.Empty;
+
     /// <summary>パスワードハッシュ</summary>
     [Column("password_hash")]
     [MaxLength(255)]
@@ -35,8 +40,8 @@ public class User : IAuditableEntity
     public string PasswordSalt { get; set; } = String.Empty;
 
     /// <summary>有効期限</summary>
-    [Column("expires_date")]
-    public DateTimeOffset ExpiresDate { get; set; } = new DateTimeOffset(9999, 12, 31, 0, 0, 0, TimeSpan.Zero);
+    [Column("expires_on")]
+    public DateTime ExpiresOn { get; set; } = new DateTime(9999, 12, 31);
 
     /// <summary>ログイン成功回数</summary>
     [Column("login_success_count")]
@@ -85,7 +90,7 @@ public class User : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public virtual ICollection<FacilityUserRole> UserRoles { get; set; } = new List<FacilityUserRole>();
     public virtual ICollection<FacilityUser> FacilityUsers { get; set; } = new List<FacilityUser>();
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 }

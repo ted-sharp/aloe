@@ -23,13 +23,14 @@ public class MedockDbContext : DbContext
     public DbSet<Permission> Permissions => this.Set<Permission>();
     public DbSet<Resource> Resources => this.Set<Resource>();
     public DbSet<Operation> Operations => this.Set<Operation>();
-    public DbSet<UserRole> UserRoles => this.Set<UserRole>();
+    public DbSet<FacilityUserRole> UserRoles => this.Set<FacilityUserRole>();
     public DbSet<RolePermission> RolePermissions => this.Set<RolePermission>();
 
     // 組織系
     public DbSet<Tenant> Tenants => this.Set<Tenant>();
     public DbSet<Facility> Facilities => this.Set<Facility>();
     public DbSet<FacilityUser> FacilityUsers => this.Set<FacilityUser>();
+    public DbSet<FacilityBusinessHours> FacilityBusinessHours => this.Set<FacilityBusinessHours>();
     public DbSet<Floor> Floors => this.Set<Floor>();
     public DbSet<Equipment> Equipments => this.Set<Equipment>();
 
@@ -135,20 +136,20 @@ public class MedockDbContext : DbContext
                 .HasForeignKey(e => e.OperationCode);
         });
 
-        // UserRole
-        modelBuilder.Entity<UserRole>(entity =>
+        // FacilityUserRole
+        modelBuilder.Entity<FacilityUserRole>(entity =>
         {
             entity.ToTable("user_roles");
-            entity.HasKey(e => e.UserRoleId);
-            entity.Property(e => e.UserRoleId).HasColumnName("user_role_id");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.HasKey(e => e.FacilityUserRoleId);
+            entity.Property(e => e.FacilityUserRoleId).HasColumnName("user_role_id");
+            entity.Property(e => e.FacilityUserId).HasColumnName("user_id");
             entity.Property(e => e.RoleCode).HasColumnName("role_code").HasMaxLength(10);
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
 
-            entity.HasOne(e => e.User)
-                .WithMany(u => u.UserRoles)
-                .HasForeignKey(e => e.UserId);
+            entity.HasOne(e => e.FacilityUser)
+                .WithMany(u => u.FacilityUserRoles)
+                .HasForeignKey(e => e.FacilityUserId);
             entity.HasOne(e => e.Role)
                 .WithMany(r => r.UserRoles)
                 .HasForeignKey(e => e.RoleCode);
@@ -230,6 +231,25 @@ public class MedockDbContext : DbContext
                 .HasForeignKey(e => e.UserId);
         });
 
+        // FacilityBusinessHours
+        modelBuilder.Entity<FacilityBusinessHours>(entity =>
+        {
+            entity.ToTable("facility_business_hours");
+            entity.HasKey(e => e.FacilityBusinessHoursId);
+            entity.Property(e => e.FacilityBusinessHoursId).HasColumnName("facility_business_hours_id");
+            entity.Property(e => e.FacilityId).HasColumnName("facility_id");
+            entity.Property(e => e.BusinessHours).HasColumnName("business_hours").HasColumnType("jsonb");
+            entity.Property(e => e.IsActive).HasColumnName("is_active");
+            entity.Property(e => e.ActiveFrom).HasColumnName("active_from");
+            entity.Property(e => e.ActiveTo).HasColumnName("active_to");
+            entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+            ConfigureAuditableEntity(entity);
+
+            entity.HasOne(e => e.Facility)
+                .WithMany(f => f.FacilityBusinessHours)
+                .HasForeignKey(e => e.FacilityId);
+        });
+
         // Floor
         modelBuilder.Entity<Floor>(entity =>
         {
@@ -282,7 +302,7 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.PtNameCompat).HasColumnName("pt_name_compat").HasMaxLength(100);
             entity.Property(e => e.PtNameKatakana).HasColumnName("pt_name_katakana").HasMaxLength(100);
             entity.Property(e => e.PtNameKatakanaCompat).HasColumnName("pt_name_katakana_compat").HasMaxLength(100);
-            entity.Property(e => e.PtMadenName).HasColumnName("pt_maden_name").HasMaxLength(100);
+            entity.Property(e => e.PtMaidenName).HasColumnName("pt_maden_name").HasMaxLength(100);
             entity.Property(e => e.PtAliasName).HasColumnName("pt_alias_name").HasMaxLength(100);
             entity.Property(e => e.BirthDate).HasColumnName("birth_date");
             entity.Property(e => e.SexCode).HasColumnName("sex_code");
@@ -334,6 +354,7 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.ApptStartAt).HasColumnName("appt_start_at");
             entity.Property(e => e.ApptEndAt).HasColumnName("appt_end_at");
             entity.Property(e => e.ApptStatusCode).HasColumnName("appt_status_code");
+            entity.Property(e => e.ApptMemo).HasColumnName("appt_memo").HasMaxLength(1000);
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
 

@@ -4,38 +4,40 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// 施設ユーザー（施設とユーザーの関連）エンティティ
+/// 施設営業時間エンティティ
+/// 施設ごとの営業時間をJSONBで保持
 /// </summary>
-[Table("facility_users")]
-public class FacilityUser : IAuditableEntity
+[Table("facility_business_hours")]
+public class FacilityBusinessHours : IAuditableEntity
 {
-    /// <summary>施設ユーザーID (PK)</summary>
+    /// <summary>施設営業時間ID (PK)</summary>
     [Key]
-    [Column("facility_user_id")]
-    public Guid FacilityUserId { get; set; }
+    [Column("facility_business_hours_id")]
+    public Guid FacilityBusinessHoursId { get; set; }
 
     /// <summary>施設ID (FK)</summary>
     [Column("facility_id")]
     [ForeignKey("Facility")]
     public Guid FacilityId { get; set; }
 
-    /// <summary>ユーザーID (FK)</summary>
-    [Column("user_id")]
-    [ForeignKey("User")]
-    public Guid UserId { get; set; }
+    /// <summary>
+    /// 営業時間定義（JSONB）
+    /// 例: { "monday": { "open": "09:00", "close": "18:00" }, ... }
+    /// </summary>
+    [Column("business_hours")]
+    public string BusinessHours { get; set; } = "{}";
 
-    /// <summary>表示名</summary>
-    [Column("display_name")]
-    [MaxLength(100)]
-    public string DisplayName { get; set; } = String.Empty;
+    /// <summary>有効フラグ</summary>
+    [Column("is_active")]
+    public bool IsActive { get; set; }
 
-    /// <summary>表示順</summary>
-    [Column("facility_user_seq")]
-    public int FacilityUserSeq { get; set; }
+    /// <summary>有効開始日</summary>
+    [Column("active_from")]
+    public DateOnly ActiveFrom { get; set; }
 
-    /// <summary>施設管理者フラグ</summary>
-    [Column("is_facility_admin")]
-    public bool IsFacilityAdmin { get; set; }
+    /// <summary>有効終了日</summary>
+    [Column("active_to")]
+    public DateOnly ActiveTo { get; set; } = new DateOnly(9999, 12, 31);
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -57,6 +59,4 @@ public class FacilityUser : IAuditableEntity
 
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
-    public virtual User User { get; set; } = null!;
-    public virtual ICollection<FacilityUserRole> FacilityUserRoles { get; set; } = new List<FacilityUserRole>();
 }

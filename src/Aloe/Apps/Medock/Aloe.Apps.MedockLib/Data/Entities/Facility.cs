@@ -70,6 +70,7 @@ public class Facility : IAuditableEntity
     public virtual ICollection<Floor> Floors { get; set; } = new List<Floor>();
     public virtual ICollection<Patient> Patients { get; set; } = new List<Patient>();
     public virtual ICollection<Organization> Organizations { get; set; } = new List<Organization>();
+    public virtual ICollection<FacilityBusinessHours> FacilityBusinessHours { get; set; } = new List<FacilityBusinessHours>();
 }
 
 

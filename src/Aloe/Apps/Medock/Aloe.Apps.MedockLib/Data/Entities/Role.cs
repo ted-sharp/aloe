@@ -48,7 +48,7 @@ public class Role : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
+    public virtual ICollection<FacilityUserRole> UserRoles { get; set; } = new List<FacilityUserRole>();
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
 }
 

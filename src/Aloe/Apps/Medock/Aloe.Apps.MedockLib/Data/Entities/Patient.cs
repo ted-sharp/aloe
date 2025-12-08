@@ -60,7 +60,7 @@ public class Patient : IAuditableEntity
     /// <summary>旧姓名（名寄せなどで使用）</summary>
     [Column("pt_maiden_name")]
     [MaxLength(200)]
-    public string PtMadenName { get; set; } = String.Empty;
+    public string PtMaidenName { get; set; } = String.Empty;
 
     /// <summary>別名・芸名（印刷用）</summary>
     [Column("pt_alias_name")]

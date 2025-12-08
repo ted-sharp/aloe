@@ -6,18 +6,18 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// ユーザーロール（ユーザーとロールの関連）エンティティ
 /// </summary>
-[Table("user_roles")]
-public class UserRole : IAuditableEntity
+[Table("facility_user_roles")]
+public class FacilityUserRole : IAuditableEntity
 {
     /// <summary>ユーザーロールID (PK)</summary>
     [Key]
-    [Column("user_role_id")]
-    public Guid UserRoleId { get; set; }
+    [Column("facility_user_role_id")]
+    public Guid FacilityUserRoleId { get; set; }
 
     /// <summary>ユーザーID (FK)</summary>
-    [Column("user_id")]
-    [ForeignKey("User")]
-    public Guid UserId { get; set; }
+    [Column("facility_user_id")]
+    [ForeignKey("FacilityUser")]
+    public Guid FacilityUserId { get; set; }
 
     /// <summary>ロールコード (FK)</summary>
     [Column("role_code")]
@@ -44,7 +44,7 @@ public class UserRole : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual User User { get; set; } = null!;
+    public virtual FacilityUser FacilityUser { get; set; } = null!;
     public virtual Role Role { get; set; } = null!;
 }
 

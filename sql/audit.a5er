@@ -93,30 +93,6 @@ FontColor=$000000
 TextAlign=$0
 
 [Entity]
-PName=sessions
-LName=sessions
-Comment=
-TableInnerOption=
-TableOption=
-Page=AUDIT
-Left=100
-Top=1500
-Field="session_id","session_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
-Field="user_id","user_id","UUID","NOT NULL",,"","",$FFFFFFFF,""
-Field="user_display_name","user_display_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="client_app_name","client_app_name","TEXT","NOT NULL",,"\q\q","バージョン含む",$FFFFFFFF,""
-Field="client_endpoint","client_endpoint","TEXT","NOT NULL",,"\q\q","IPAddr, Port含む",$FFFFFFFF,""
-Field="login_at","login_at","TIMESTAMPTZ","NOT NULL",,"CURRENT_TIMESTAMP","",$FFFFFFFF,""
-Field="logout_at","logout_at","TIMESTAMPTZ",,,"","",$FFFFFFFF,""
-UsingCommonColumns=0
-EffectMode=None
-Color=$000000
-BkColor=$FFFFFF
-ModifiedDateTime=20251201200807
-Position="AUDIT",100,1500
-ZOrder=17
-
-[Entity]
 PName=cache_updates
 LName=cache_updates
 Comment=
