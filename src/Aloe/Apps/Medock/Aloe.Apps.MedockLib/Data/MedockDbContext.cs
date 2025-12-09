@@ -302,7 +302,7 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.PtNameCompat).HasColumnName("pt_name_compat").HasMaxLength(100);
             entity.Property(e => e.PtNameKatakana).HasColumnName("pt_name_katakana").HasMaxLength(100);
             entity.Property(e => e.PtNameKatakanaCompat).HasColumnName("pt_name_katakana_compat").HasMaxLength(100);
-            entity.Property(e => e.PtMaidenName).HasColumnName("pt_maden_name").HasMaxLength(100);
+            entity.Property(e => e.PtMaidenName).HasColumnName("pt_maiden_name").HasMaxLength(100);
             entity.Property(e => e.PtAliasName).HasColumnName("pt_alias_name").HasMaxLength(100);
             entity.Property(e => e.BirthDate).HasColumnName("birth_date");
             entity.Property(e => e.SexCode).HasColumnName("sex_code");
