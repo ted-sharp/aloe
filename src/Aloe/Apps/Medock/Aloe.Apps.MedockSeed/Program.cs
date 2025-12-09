@@ -10,6 +10,9 @@ using Microsoft.Extensions.Logging;
 Console.WriteLine("=== Aloe Medock Seed Tool ===");
 Console.WriteLine();
 
+// DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+
 // ホストビルダーを構築
 var builder = Host.CreateApplicationBuilder(args);
 
