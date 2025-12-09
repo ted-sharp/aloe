@@ -48,3 +48,4 @@ internal static class AppointmentSlotSeeder
     }
 }
 
+

@@ -66,3 +66,4 @@ internal static class EquipmentAppointmentSeeder
     }
 }
 
+
