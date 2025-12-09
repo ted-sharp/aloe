@@ -1,26 +1,29 @@
---==============================================
--- PostgreSQL Šî–{î•ñ‚ÌŠm”F
+ï»¿--==============================================
+-- PostgreSQL åŸºæœ¬æƒ…å ±ã®ç¢ºèª
 --==============================================
 
--- PostgreSQL ƒo[ƒWƒ‡ƒ“‚ÌŠm”F
+-- PostgreSQL ãƒãƒ¼ã‚¸ãƒ§ãƒ³ã®ç¢ºèª
 SELECT version();
 
--- İ’èƒpƒ‰ƒ[ƒ^ˆê——‚ÌŠm”F
+-- ã‚»ãƒƒã‚·ãƒ§ãƒ³ã®ã‚¿ã‚¤ãƒ ã‚¾ãƒ¼ãƒ³ã‚’JSTã«ã™ã‚‹
+SET TIME ZONE 'Asia/Tokyo';
+
+-- è¨­å®šãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ä¸€è¦§ã®ç¢ºèª
 SELECT name, setting, unit, context
 FROM pg_settings
 ORDER BY name;
 
--- •s—vƒf[ƒ^ƒx[ƒX‚ÌDROP•¶ì¬
+-- ä¸è¦ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã®DROPæ–‡ä½œæˆ
 SELECT 'DROP DATABASE ' || datname || ';' as command FROM pg_database WHERE datname LIKE 'aloe%';
 
 --==============================================
--- ƒf[ƒ^ƒx[ƒX‚¨‚æ‚Ñƒe[ƒuƒ‹ƒTƒCƒYŠÖ˜A
+-- ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ãŠã‚ˆã³ãƒ†ãƒ¼ãƒ–ãƒ«ã‚µã‚¤ã‚ºé–¢é€£
 --==============================================
 
--- Œ»İ‚Ìƒf[ƒ^ƒx[ƒXƒTƒCƒY‚ğŠm”F
+-- ç¾åœ¨ã®ãƒ‡ãƒ¼ã‚¿ãƒ™ãƒ¼ã‚¹ã‚µã‚¤ã‚ºã‚’ç¢ºèª
 SELECT pg_size_pretty(pg_database_size(current_database())) AS db_size;
 
--- Šeƒe[ƒuƒ‹‚ÌƒTƒCƒY‚ğŠm”F
+-- å„ãƒ†ãƒ¼ãƒ–ãƒ«ã®ã‚µã‚¤ã‚ºã‚’ç¢ºèª
 SELECT
   relname AS table_name,
   pg_size_pretty(pg_total_relation_size(relid)) AS total_size,
@@ -29,7 +32,7 @@ SELECT
 FROM pg_catalog.pg_statio_user_tables
 ORDER BY pg_total_relation_size(relid) DESC;
 
--- ŠeƒCƒ“ƒfƒbƒNƒX‚ÌƒTƒCƒY‚ğŠm”F
+-- å„ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®ã‚µã‚¤ã‚ºã‚’ç¢ºèª
 SELECT
   relname AS table_name,
   indexrelname AS index_name,
@@ -38,10 +41,10 @@ FROM pg_stat_user_indexes
 ORDER BY pg_relation_size(indexrelid) DESC;
 
 --==============================================
--- ƒCƒ“ƒfƒbƒNƒXg—pó‹µ‚ÌŠm”F
+-- ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ä½¿ç”¨çŠ¶æ³ã®ç¢ºèª
 --==============================================
 
--- ƒe[ƒuƒ‹‚²‚Æ‚ÌƒCƒ“ƒfƒbƒNƒXg—p—¦‚ğŠm”F
+-- ãƒ†ãƒ¼ãƒ–ãƒ«ã”ã¨ã®ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ä½¿ç”¨ç‡ã‚’ç¢ºèª
 SELECT
   relname AS table_name,
   seq_scan,
@@ -53,7 +56,7 @@ SELECT
 FROM pg_stat_user_tables
 ORDER BY index_usage_percent;
 
--- ŠeƒCƒ“ƒfƒbƒNƒX‚Ìg—pó‹µ‚ğŠm”F
+-- å„ã‚¤ãƒ³ãƒ‡ãƒƒã‚¯ã‚¹ã®ä½¿ç”¨çŠ¶æ³ã‚’ç¢ºèª
 SELECT
   schemaname,
   relname AS table_name,
@@ -65,10 +68,10 @@ FROM pg_stat_user_indexes
 ORDER BY table_name, index_name;
 
 --==============================================
--- VACUUM/ANALYZE ŠÖ˜A‚ÌŠm”F
+-- VACUUM/ANALYZE é–¢é€£ã®ç¢ºèª
 --==============================================
 
--- VACUUM‚âANALYZE‚ÌÅIÀs“ú
+-- VACUUMã‚„ANALYZEã®æœ€çµ‚å®Ÿè¡Œæ—¥æ™‚
 SELECT
   relname,
   last_vacuum,
@@ -77,7 +80,7 @@ SELECT
   last_autoanalyze
 FROM pg_stat_user_tables;
 
--- •s—v—Ìˆæidead tuplej‚ÌŠ„‡‚ğŠm”F
+-- ä¸è¦é ˜åŸŸï¼ˆdead tupleï¼‰ã®å‰²åˆã‚’ç¢ºèª
 SELECT
   relname,
   n_live_tup,
@@ -90,16 +93,16 @@ FROM pg_stat_user_tables
 ORDER BY dead_tuple_ratio DESC;
 
 --==============================================
--- Ú‘±‚Æƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“ó‹µ‚ÌŠm”F
+-- æ¥ç¶šã¨ãƒˆãƒ©ãƒ³ã‚¶ã‚¯ã‚·ãƒ§ãƒ³çŠ¶æ³ã®ç¢ºèª
 --==============================================
 
--- Ú‘±”ãŒÀ‚ÆŒ»İ‚ÌÚ‘±”‚ğŠm”F
+-- æ¥ç¶šæ•°ä¸Šé™ã¨ç¾åœ¨ã®æ¥ç¶šæ•°ã‚’ç¢ºèª
 SELECT
   current_setting('max_connections') AS max_connections,
   COUNT(*) AS current_connections
 FROM pg_stat_activity;
 
--- ’·ŠÔÀs’†‚ÌƒNƒGƒŠ‚ğŠm”F
+-- é•·æ™‚é–“å®Ÿè¡Œä¸­ã®ã‚¯ã‚¨ãƒªã‚’ç¢ºèª
 SELECT
   pid,
   age(clock_timestamp(), query_start) AS runtime,
@@ -108,7 +111,7 @@ FROM pg_stat_activity
 WHERE state != 'idle'
 ORDER BY runtime DESC;
 
--- ƒfƒbƒhƒƒbƒN‚â‘Ò‹@ó‘Ô‚É‚ ‚éƒNƒGƒŠ‚ğŠm”F
+-- ãƒ‡ãƒƒãƒ‰ãƒ­ãƒƒã‚¯ã‚„å¾…æ©ŸçŠ¶æ…‹ã«ã‚ã‚‹ã‚¯ã‚¨ãƒªã‚’ç¢ºèª
 SELECT
   pid,
   wait_event_type,
@@ -117,7 +120,7 @@ SELECT
 FROM pg_stat_activity
 WHERE wait_event IS NOT NULL;
 
--- ƒe[ƒuƒ‹ƒƒbƒN‚Ìó‹µ‚ğŠm”F
+-- ãƒ†ãƒ¼ãƒ–ãƒ«ãƒ­ãƒƒã‚¯ã®çŠ¶æ³ã‚’ç¢ºèª
 SELECT
   locktype,
   relation::regclass,
@@ -127,7 +130,7 @@ SELECT
 FROM pg_locks
 WHERE relation IS NOT NULL;
 
--- ’·ŠúŠÔƒRƒ~ƒbƒg‚³‚ê‚Ä‚¢‚È‚¢ƒgƒ‰ƒ“ƒUƒNƒVƒ‡ƒ“‚ğŠm”F
+-- é•·æœŸé–“ã‚³ãƒŸãƒƒãƒˆã•ã‚Œã¦ã„ãªã„ãƒˆãƒ©ãƒ³ã‚¶ã‚¯ã‚·ãƒ§ãƒ³ã‚’ç¢ºèª
 SELECT
   pid,
   age(xact_start) AS duration,

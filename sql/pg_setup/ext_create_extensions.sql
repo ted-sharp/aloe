@@ -5,6 +5,9 @@
 -- shared_preload_libraries = 'pg_stat_statements'
 SHOW shared_preload_libraries;
 
+-- JST(+9)に設定
+ALTER SYSTEM SET TimeZone TO 'Asia/Tokyo';
+
 -- DDLログを記録(CREATE TABLEなどを監視)
 ALTER SYSTEM SET log_statement = 'ddl';
 
