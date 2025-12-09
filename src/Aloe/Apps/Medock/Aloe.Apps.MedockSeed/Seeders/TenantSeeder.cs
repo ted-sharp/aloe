@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class TenantSeeder
 {
-    public static async Task<Guid> SeedAsync(MedockDbContext context)
+    public static async Task<Guid> SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingTenant = await context.Tenants.FirstOrDefaultAsync();
         Guid tenantId;
@@ -20,10 +21,10 @@ internal static class TenantSeeder
                 TenantId = tenantId,
                 TenantName = "デモテナント",
                 IsActive = true,
-                ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
+                ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today),
                 IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now,
                 CreatedUserId = Guid.Empty,
                 CreatedSessionId = Guid.Empty,
                 UpdatedUserId = Guid.Empty,

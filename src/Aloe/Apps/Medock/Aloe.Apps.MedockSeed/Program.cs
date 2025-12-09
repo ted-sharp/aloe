@@ -38,8 +38,9 @@ builder.Services.AddLogging(logging =>
 
 // サービス登録
 builder.Services.AddDbContext<MedockDbContext>(options =>
-    options.UseNpgsql(connectionString));
+    options.UseNpgsql(connectionString), ServiceLifetime.Scoped);
 builder.Services.AddSingleton(_ => PasswordHasher.Default);
+builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
 
 var host = builder.Build();
 
@@ -47,6 +48,7 @@ var host = builder.Build();
 using var scope = host.Services.CreateScope();
 var context = scope.ServiceProvider.GetRequiredService<MedockDbContext>();
 var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
+var dateTimeProvider = scope.ServiceProvider.GetRequiredService<IDateTimeProvider>();
 
 try
 {
@@ -69,33 +71,33 @@ try
     Console.WriteLine("[INFO] Checking existing seed data...");
 
     // テナント・ユーザー関連
-    var tenantId = await TenantSeeder.SeedAsync(context);
-    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher);
+    var tenantId = await TenantSeeder.SeedAsync(context, dateTimeProvider);
+    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider);
 
     // 施設・設備関連
-    var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId);
-    await EquipmentSeeder.SeedAsync(context, floorId);
-    await EquipmentAppointmentStatsSeeder.SeedAsync(context);
+    var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
+    await EquipmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
+    await EquipmentAppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
 
     // 予約スロット・統計関連
-    await AppointmentSlotSeeder.SeedAsync(context, floorId);
-    await AppointmentStatsSeeder.SeedAsync(context, floorId);
+    await AppointmentSlotSeeder.SeedAsync(context, floorId, dateTimeProvider);
+    await AppointmentStatsSeeder.SeedAsync(context, floorId, dateTimeProvider);
 
     // 祝日データ
     await HolidaySeeder.SeedAsync(context);
 
     // 団体・患者関連
-    await OrganizationSeeder.SeedAsync(context, facilityId);
-    await PatientSeeder.SeedAsync(context, facilityId);
+    await OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
     // 予約データ関連
-    await AppointmentSeeder.SeedAsync(context, floorId);
-    await EquipmentSlotSeeder.SeedAsync(context);
-    await EquipmentAppointmentSeeder.SeedAsync(context);
+    await AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
+    await EquipmentSlotSeeder.SeedAsync(context, dateTimeProvider);
+    await EquipmentAppointmentSeeder.SeedAsync(context, dateTimeProvider);
 
     // RBAC関連
-    await ResourceSeeder.SeedAsync(context);
-    await RoleSeeder.SeedAsync(context);
+    await ResourceSeeder.SeedAsync(context, dateTimeProvider);
+    await RoleSeeder.SeedAsync(context, dateTimeProvider);
 
     // 保存（ユーザーまたは祝日のいずれかが追加された場合）
     if (context.ChangeTracker.HasChanges())

@@ -7,7 +7,7 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class UserSeeder
 {
-    public static async Task<bool> SeedAsync(MedockDbContext context, PasswordHasher passwordHasher)
+    public static async Task<bool> SeedAsync(MedockDbContext context, PasswordHasher passwordHasher, IDateTimeProvider dateTimeProvider)
     {
         var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
         var needsUserSeed = existingAdmin == null;
@@ -28,8 +28,8 @@ internal static class UserSeeder
                 PasswordSalt = salt,
                 IsSystemAdmin = true,
                 IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now,
                 CreatedUserId = Guid.Empty,
                 CreatedSessionId = Guid.Empty,
                 UpdatedUserId = Guid.Empty,
@@ -53,8 +53,8 @@ internal static class UserSeeder
                     FacilityUserSeq = 1,
                     IsFacilityAdmin = true,
                     IsDeleted = false,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    UpdatedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = dateTimeProvider.Now,
+                    UpdatedAt = dateTimeProvider.Now,
                     CreatedUserId = Guid.Empty,
                     CreatedSessionId = Guid.Empty,
                     UpdatedUserId = Guid.Empty,
@@ -86,8 +86,8 @@ internal static class UserSeeder
                     FacilityUserSeq = 1,
                     IsFacilityAdmin = true,
                     IsDeleted = false,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    UpdatedAt = DateTimeOffset.UtcNow,
+                    CreatedAt = dateTimeProvider.Now,
+                    UpdatedAt = dateTimeProvider.Now,
                     CreatedUserId = Guid.Empty,
                     CreatedSessionId = Guid.Empty,
                     UpdatedUserId = Guid.Empty,

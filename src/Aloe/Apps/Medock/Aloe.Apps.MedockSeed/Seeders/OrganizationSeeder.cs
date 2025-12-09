@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class OrganizationSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId)
+    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId, IDateTimeProvider dateTimeProvider)
     {
         var existingOrganizations = await context.Organizations.AnyAsync();
         if (!existingOrganizations && facilityId.HasValue)
@@ -74,8 +75,8 @@ internal static class OrganizationSeeder
                 foreach (var org in organizations)
                 {
                     org.IsDeleted = false;
-                    org.CreatedAt = DateTimeOffset.UtcNow;
-                    org.UpdatedAt = DateTimeOffset.UtcNow;
+                    org.CreatedAt = dateTimeProvider.Now;
+                    org.UpdatedAt = dateTimeProvider.Now;
                     org.CreatedUserId = Guid.Empty;
                     org.CreatedSessionId = Guid.Empty;
                     org.UpdatedUserId = Guid.Empty;

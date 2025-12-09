@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class ResourceSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context)
+    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingResources = await context.Resources.AnyAsync();
         if (!existingResources)
@@ -24,8 +25,8 @@ internal static class ResourceSeeder
             foreach (var resource in resources)
             {
                 resource.IsDeleted = false;
-                resource.CreatedAt = DateTimeOffset.UtcNow;
-                resource.UpdatedAt = DateTimeOffset.UtcNow;
+                resource.CreatedAt = dateTimeProvider.Now;
+                resource.UpdatedAt = dateTimeProvider.Now;
                 resource.CreatedUserId = Guid.Empty;
                 resource.CreatedSessionId = Guid.Empty;
                 resource.UpdatedUserId = Guid.Empty;
@@ -47,8 +48,8 @@ internal static class ResourceSeeder
             foreach (var operation in operations)
             {
                 operation.IsDeleted = false;
-                operation.CreatedAt = DateTimeOffset.UtcNow;
-                operation.UpdatedAt = DateTimeOffset.UtcNow;
+                operation.CreatedAt = dateTimeProvider.Now;
+                operation.UpdatedAt = dateTimeProvider.Now;
                 operation.CreatedUserId = Guid.Empty;
                 operation.CreatedSessionId = Guid.Empty;
                 operation.UpdatedUserId = Guid.Empty;

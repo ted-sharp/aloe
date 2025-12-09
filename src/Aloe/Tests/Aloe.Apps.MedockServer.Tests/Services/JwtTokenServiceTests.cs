@@ -11,6 +11,11 @@ namespace Aloe.Apps.MedockServer.Tests.Services;
 /// </summary>
 public class JwtTokenServiceTests
 {
+    private static IDateTimeProvider CreateDateTimeProvider()
+    {
+        return new JstDateTimeProvider();
+    }
+
     private static JwtTokenService CreateService(JwtSettings? settings = null)
     {
         settings ??= new JwtSettings
@@ -21,7 +26,7 @@ public class JwtTokenServiceTests
             AccessTokenExpirationMinutes = 15,
             RefreshTokenExpirationDays = 7
         };
-        return new JwtTokenService(Options.Create(settings));
+        return new JwtTokenService(Options.Create(settings), CreateDateTimeProvider());
     }
 
     private static TokenGenerationParams CreateBasicParams(Guid? userId = null, string userCode = "testuser", string email = "test@example.com")
@@ -93,7 +98,8 @@ public class JwtTokenServiceTests
         var jwtToken = handler.ReadJwtToken(token);
 
         // Assert
-        var expectedExpiration = DateTime.UtcNow.AddMinutes(30);
+        var dateTimeProvider = CreateDateTimeProvider();
+        var expectedExpiration = dateTimeProvider.UtcNow.AddMinutes(30);
         jwtToken.ValidTo.Should().BeCloseTo(expectedExpiration, TimeSpan.FromMinutes(1));
     }
 
@@ -148,26 +154,27 @@ public class JwtTokenServiceTests
     public void ValidateToken_Should_Return_Null_For_Token_With_Wrong_Secret()
     {
         // Arrange - 異なるシークレットキーでトークンを生成
-        var service1 = CreateService(new JwtSettings
+        var dateTimeProvider = CreateDateTimeProvider();
+        var service1 = new JwtTokenService(Options.Create(new JwtSettings
         {
             SecretKey = "OriginalSecretKeyForJwtTokenServiceTesting123!",
             Issuer = "TestIssuer",
             Audience = "TestAudience",
             AccessTokenExpirationMinutes = 15,
             RefreshTokenExpirationDays = 7
-        });
+        }), dateTimeProvider);
         var tokenParams = CreateBasicParams();
         var token = service1.GenerateAccessToken(tokenParams);
 
         // 異なるシークレットキーで検証
-        var service2 = CreateService(new JwtSettings
+        var service2 = new JwtTokenService(Options.Create(new JwtSettings
         {
             SecretKey = "DifferentSecretKeyForJwtTokenServiceTesting!",
             Issuer = "TestIssuer",
             Audience = "TestAudience",
             AccessTokenExpirationMinutes = 15,
             RefreshTokenExpirationDays = 7
-        });
+        }), dateTimeProvider);
 
         // Act
         var principal = service2.ValidateToken(token);

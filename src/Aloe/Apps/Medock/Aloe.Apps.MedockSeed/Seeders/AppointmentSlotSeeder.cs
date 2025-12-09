@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentSlotSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? floorId)
+    public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
         var existingApptSlots = await context.AppointmentSlots.AnyAsync();
         if (!existingApptSlots && floorId.HasValue)
@@ -32,11 +33,11 @@ internal static class AppointmentSlotSeeder
                 FloorId = floorId.Value,
                 ApptSlots = slotsJson,
                 IsActive = true,
-                ActiveFrom = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
+                ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today.AddYears(-1)),
                 ActiveTo = new DateOnly(9999, 12, 31),
                 IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now
             };
             context.AppointmentSlots.Add(apptSlot);
             Console.WriteLine($"  [+] AppointmentSlot: 8 time slots defined");

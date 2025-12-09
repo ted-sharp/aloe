@@ -22,12 +22,15 @@ builder.Services.AddControllers();
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
 
 // Add DbContext Factory (Blazor Server では各操作で短命なコンテキストを生成)
-builder.Services.AddDbContextFactory<MedockDbContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+}, ServiceLifetime.Scoped);
 
 // Add Services
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(PasswordHasher.Default);
+builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<UserContextService>();

@@ -20,10 +20,10 @@ public class Organization : IAuditableEntity
     [Column("org_name_print")][MaxLength(200)] public string OrgNamePrint { get; set; } = String.Empty;
     [Column("org_memo")][MaxLength(500)] public string OrgMemo { get; set; } = String.Empty;
     [Column("is_deleted")] public bool IsDeleted { get; set; }
-    [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
+    [Column("created_at")] public DateTime CreatedAt { get; set; }
     [Column("created_user_id")] public Guid CreatedUserId { get; set; }
     [Column("created_session_id")] public Guid CreatedSessionId { get; set; }
-    [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+    [Column("updated_at")] public DateTime UpdatedAt { get; set; }
     [Column("updated_user_id")] public Guid UpdatedUserId { get; set; }
     [Column("updated_session_id")] public Guid UpdatedSessionId { get; set; }
     public virtual Facility Facility { get; set; } = null!;

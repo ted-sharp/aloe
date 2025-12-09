@@ -1,5 +1,7 @@
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aloe.Apps.MedockLib.Data;
 
@@ -10,10 +12,17 @@ public class MedockDbContext : DbContext
 {
     private Guid _currentUserId;
     private Guid _currentSessionId;
+    private readonly IDateTimeProvider? _dateTimeProvider;
 
     public MedockDbContext(DbContextOptions<MedockDbContext> options)
         : base(options)
     {
+    }
+
+    public MedockDbContext(DbContextOptions<MedockDbContext> options, IServiceProvider serviceProvider)
+        : base(options)
+    {
+        this._dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
     }
 
     // 認証系
@@ -512,7 +521,7 @@ public class MedockDbContext : DbContext
 
     private void UpdateAuditFields()
     {
-        var now = DateTimeOffset.UtcNow;
+        var now = this._dateTimeProvider?.Now ?? DateTime.Now;
 
         foreach (var entry in this.ChangeTracker.Entries<IAuditableEntity>())
         {

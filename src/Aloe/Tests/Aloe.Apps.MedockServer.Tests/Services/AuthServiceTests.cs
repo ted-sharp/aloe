@@ -12,6 +12,7 @@ public class AuthServiceTests : IDisposable
     private readonly MedockDbContext _context;
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly JwtTokenService _jwtTokenService;
     private readonly AuthService _authService;
 
@@ -29,6 +30,9 @@ public class AuthServiceTests : IDisposable
         // PasswordHasher
         this._passwordHasher = PasswordHasher.Default;
 
+        // DateTimeProvider
+        this._dateTimeProvider = new JstDateTimeProvider();
+
         // JwtTokenService
         var jwtSettings = new JwtSettings
         {
@@ -38,10 +42,10 @@ public class AuthServiceTests : IDisposable
             AccessTokenExpirationMinutes = 60,
             RefreshTokenExpirationDays = 7
         };
-        this._jwtTokenService = new JwtTokenService(Options.Create(jwtSettings));
+        this._jwtTokenService = new JwtTokenService(Options.Create(jwtSettings), this._dateTimeProvider);
 
         // AuthService
-        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService);
+        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService, this._dateTimeProvider);
     }
 
     public void Dispose()
@@ -59,8 +63,8 @@ public class AuthServiceTests : IDisposable
             TenantName = "テストテナント",
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = this._dateTimeProvider.UtcNow,
+            UpdatedAt = this._dateTimeProvider.UtcNow
         };
         this._context.Tenants.Add(tenant);
 
@@ -73,8 +77,8 @@ public class AuthServiceTests : IDisposable
             FacilityNameDisplay = "テスト施設",
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = this._dateTimeProvider.UtcNow,
+            UpdatedAt = this._dateTimeProvider.UtcNow
         };
         this._context.Facilities.Add(facility);
 
@@ -87,8 +91,8 @@ public class AuthServiceTests : IDisposable
             PasswordSalt = salt,
             IsSystemAdmin = false,
             IsDeleted = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = this._dateTimeProvider.UtcNow,
+            UpdatedAt = this._dateTimeProvider.UtcNow
         };
         this._context.Users.Add(user);
 
@@ -100,8 +104,8 @@ public class AuthServiceTests : IDisposable
             DisplayName = "テストユーザー",
             FacilityUserSeq = 1,
             IsFacilityAdmin = true,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = this._dateTimeProvider.UtcNow,
+            UpdatedAt = this._dateTimeProvider.UtcNow
         };
         this._context.FacilityUsers.Add(facilityUser);
 
@@ -180,7 +184,7 @@ public class AuthServiceTests : IDisposable
     {
         // Arrange
         var (user, _) = await this.SeedTestUserAsync("lockeduser", "password");
-        user.LockedUntilAt = DateTimeOffset.UtcNow.AddMinutes(15);
+        user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(15);
         await this._context.SaveChangesAsync();
 
         // Act
@@ -235,7 +239,7 @@ public class AuthServiceTests : IDisposable
 
         // Assert
         var updatedUser = await this._context.Users.FindAsync(user.UserId);
-        updatedUser!.LockedUntilAt.Should().BeAfter(DateTimeOffset.UtcNow);
+        updatedUser!.LockedUntilAt.Should().BeAfter(this._dateTimeProvider.UtcNow);
     }
 
     [Fact]

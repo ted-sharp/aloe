@@ -16,10 +16,10 @@ public class Appointment : IAuditableEntity
     [Column("appt_status_code")] public int ApptStatusCode { get; set; }
     [Column("appt_memo")][MaxLength(1000)] public string ApptMemo { get; set; } = String.Empty;
     [Column("is_deleted")] public bool IsDeleted { get; set; }
-    [Column("created_at")] public DateTimeOffset CreatedAt { get; set; }
+    [Column("created_at")] public DateTime CreatedAt { get; set; }
     [Column("created_user_id")] public Guid CreatedUserId { get; set; }
     [Column("created_session_id")] public Guid CreatedSessionId { get; set; }
-    [Column("updated_at")] public DateTimeOffset UpdatedAt { get; set; }
+    [Column("updated_at")] public DateTime UpdatedAt { get; set; }
     [Column("updated_user_id")] public Guid UpdatedUserId { get; set; }
     [Column("updated_session_id")] public Guid UpdatedSessionId { get; set; }
     public virtual Floor Floor { get; set; } = null!;

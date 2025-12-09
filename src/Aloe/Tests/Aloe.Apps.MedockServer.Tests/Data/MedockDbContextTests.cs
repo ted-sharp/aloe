@@ -201,7 +201,7 @@ public class MedockDbContextTests
             user.Should().NotBeNull();
             user!.CreatedUserId.Should().Be(actingUserId);
             user.CreatedSessionId.Should().Be(sessionId);
-            user.CreatedAt.Should().BeCloseTo(DateTimeOffset.UtcNow, TimeSpan.FromSeconds(5));
+            user.CreatedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
         }
     }
 }

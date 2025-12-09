@@ -12,15 +12,18 @@ public class AuthService
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtTokenService _jwtTokenService;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public AuthService(
         IDbContextFactory<MedockDbContext> contextFactory,
         PasswordHasher passwordHasher,
-        JwtTokenService jwtTokenService)
+        JwtTokenService jwtTokenService,
+        IDateTimeProvider dateTimeProvider)
     {
         this._contextFactory = contextFactory;
         this._passwordHasher = passwordHasher;
         this._jwtTokenService = jwtTokenService;
+        this._dateTimeProvider = dateTimeProvider;
     }
 
     /// <summary>
@@ -45,7 +48,7 @@ public class AuthService
         }
 
         // アカウントロック確認
-        if (user.LockedUntilAt > DateTimeOffset.UtcNow)
+        if (user.LockedUntilAt > this._dateTimeProvider.UtcNow)
         {
             return AuthResult.Failed("Account is locked");
         }
@@ -60,7 +63,7 @@ public class AuthService
             // 一定回数失敗でロック
             if (user.LoginFailureAttempts >= 5)
             {
-                user.LockedUntilAt = DateTimeOffset.UtcNow.AddMinutes(15);
+                user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(15);
             }
 
             await context.SaveChangesAsync();
@@ -70,7 +73,7 @@ public class AuthService
         // ログイン成功
         user.LoginFailureAttempts = 0;
         user.LoginSuccessCount++;
-        user.LastLoginAt = DateTimeOffset.UtcNow;
+        user.LastLoginAt = this._dateTimeProvider.UtcNow;
 
         // デフォルト施設を決定
         var defaultFacility = this.DetermineDefaultFacility(context, user);
@@ -84,7 +87,7 @@ public class AuthService
             UserDisplayName = displayName,
             ClientAppName = clientAppName,
             ClientEndpoint = clientEndpoint,
-            LoginAt = DateTimeOffset.UtcNow
+            LoginAt = this._dateTimeProvider.UtcNow
         };
         context.Sessions.Add(session);
 
@@ -272,7 +275,7 @@ public class AuthService
         }
 
         // アカウントロック確認
-        if (user.LockedUntilAt > DateTimeOffset.UtcNow)
+        if (user.LockedUntilAt > this._dateTimeProvider.UtcNow)
         {
             return SessionValidationResult.Invalid("Account is locked");
         }
@@ -293,12 +296,12 @@ public class AuthService
             return false;
         }
 
-        session.LogoutAt = DateTimeOffset.UtcNow;
+        session.LogoutAt = this._dateTimeProvider.UtcNow;
 
         var user = await context.Users.FindAsync(session.UserId);
         if (user != null)
         {
-            user.LastLogoutAt = DateTimeOffset.UtcNow;
+            user.LastLogoutAt = this._dateTimeProvider.UtcNow;
         }
 
         await context.SaveChangesAsync();

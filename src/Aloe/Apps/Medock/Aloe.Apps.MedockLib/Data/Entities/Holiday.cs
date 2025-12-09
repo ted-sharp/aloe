@@ -24,7 +24,7 @@ public class Holiday : IAuditableEntity
 
     /// <summary>作成日時</summary>
     [Column("created_at")]
-    public DateTimeOffset CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>作成ユーザーID</summary>
     [Column("created_user_id")]
@@ -36,7 +36,7 @@ public class Holiday : IAuditableEntity
 
     /// <summary>更新日時</summary>
     [Column("updated_at")]
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
 
     /// <summary>更新ユーザーID</summary>
     [Column("updated_user_id")]

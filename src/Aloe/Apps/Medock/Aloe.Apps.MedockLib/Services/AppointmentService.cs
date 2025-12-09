@@ -11,6 +11,7 @@ public class AppointmentService : IAppointmentService
 {
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly UserContextService _userContextService;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     // AM/PM の時間境界
     private const int AmStartHour = 8;
@@ -20,10 +21,12 @@ public class AppointmentService : IAppointmentService
 
     public AppointmentService(
         IDbContextFactory<MedockDbContext> contextFactory,
-        UserContextService userContextService)
+        UserContextService userContextService,
+        IDateTimeProvider dateTimeProvider)
     {
         this._contextFactory = contextFactory;
         this._userContextService = userContextService;
+        this._dateTimeProvider = dateTimeProvider;
     }
 
     /// <inheritdoc />
@@ -108,7 +111,7 @@ public class AppointmentService : IAppointmentService
             .ThenBy(a => a.ApptStartAt)
             .ToListAsync();
 
-        return appointments.Select(MapToDto).ToList();
+        return appointments.Select(a => this.MapToDto(a)).ToList();
     }
 
     /// <inheritdoc />
@@ -150,8 +153,8 @@ public class AppointmentService : IAppointmentService
             FloorId = dto.FloorId,
             ApptStatusCode = dto.Status,
             IsDeleted = false,
-            CreatedAt = DateTimeOffset.UtcNow,
-            UpdatedAt = DateTimeOffset.UtcNow
+            CreatedAt = this._dateTimeProvider.Now,
+            UpdatedAt = this._dateTimeProvider.Now
         };
 
         context.Appointments.Add(appointment);
@@ -213,7 +216,7 @@ public class AppointmentService : IAppointmentService
             appointment.ApptStatusCode = dto.Status.Value;
         }
 
-        appointment.UpdatedAt = DateTimeOffset.UtcNow;
+        appointment.UpdatedAt = this._dateTimeProvider.Now;
 
         await context.SaveChangesAsync();
 
@@ -237,7 +240,7 @@ public class AppointmentService : IAppointmentService
         }
 
         appointment.IsDeleted = true;
-        appointment.UpdatedAt = DateTimeOffset.UtcNow;
+        appointment.UpdatedAt = this._dateTimeProvider.Now;
 
         await context.SaveChangesAsync();
         return true;
@@ -263,12 +266,12 @@ public class AppointmentService : IAppointmentService
         return holidays;
     }
 
-    private static AppointmentDto MapToDto(Appointment appointment)
+    private AppointmentDto MapToDto(Appointment appointment)
     {
         return new AppointmentDto
         {
             Id = appointment.ApptId,
-            Date = appointment.ApptDate ?? DateOnly.FromDateTime(DateTime.Today),
+            Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
             StartTime = appointment.ApptStartAt.HasValue
                 ? TimeOnly.FromDateTime(appointment.ApptStartAt.Value)
                 : null,

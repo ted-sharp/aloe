@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class EquipmentSlotSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context)
+    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingEquipmentSlots = await context.EquipmentSlots.AnyAsync();
         if (!existingEquipmentSlots)
@@ -41,11 +42,11 @@ internal static class EquipmentSlotSeeder
                         EquipId = equipment.EquipId,
                         EquipSlots = slotsJson,
                         IsActive = true,
-                        ActiveFrom = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
+                        ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today.AddYears(-1)),
                         ActiveTo = new DateOnly(9999, 12, 31),
                         IsDeleted = false,
-                        CreatedAt = DateTimeOffset.UtcNow,
-                        UpdatedAt = DateTimeOffset.UtcNow,
+                        CreatedAt = dateTimeProvider.Now,
+                        UpdatedAt = dateTimeProvider.Now,
                         CreatedUserId = Guid.Empty,
                         CreatedSessionId = Guid.Empty,
                         UpdatedUserId = Guid.Empty,

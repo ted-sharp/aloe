@@ -1,23 +1,24 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class EquipmentAppointmentStatsSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context)
+    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingEquipmentStats = await context.EquipmentAppointmentStats.AnyAsync();
         if (!existingEquipmentStats)
         {
             Console.WriteLine("[INFO] Creating equipment appointment stats seed data...");
-            var equipments = await context.Equipments.Where(e => !e.IsDeleted).ToListAsync();
+                var equipments = await context.Equipments.Where(e => !e.IsDeleted).ToListAsync();
             if (equipments.Any())
             {
                 var random = new Random(42);
-                var startDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(-1));
-                var endDate = DateOnly.FromDateTime(DateTime.Today.AddMonths(2));
+                var startDate = DateOnly.FromDateTime(dateTimeProvider.Today.AddMonths(-1));
+                var endDate = DateOnly.FromDateTime(dateTimeProvider.Today.AddMonths(2));
                 var equipmentStats = new List<EquipmentAppointmentStats>();
 
                 foreach (var equipment in equipments)
@@ -54,8 +55,8 @@ internal static class EquipmentAppointmentStatsSeeder
                             ApptMax = totalMax,
                             ApptGraph = graphJson,
                             IsDeleted = false,
-                            CreatedAt = DateTimeOffset.UtcNow,
-                            UpdatedAt = DateTimeOffset.UtcNow,
+                            CreatedAt = dateTimeProvider.Now,
+                            UpdatedAt = dateTimeProvider.Now,
                             CreatedUserId = Guid.Empty,
                             CreatedSessionId = Guid.Empty,
                             UpdatedUserId = Guid.Empty,

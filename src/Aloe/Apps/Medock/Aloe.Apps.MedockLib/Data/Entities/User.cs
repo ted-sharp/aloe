@@ -57,15 +57,15 @@ public class User : IAuditableEntity
 
     /// <summary>ロック解除日時</summary>
     [Column("locked_until_at")]
-    public DateTimeOffset LockedUntilAt { get; set; } = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+    public DateTime LockedUntilAt { get; set; } = new DateTime(1970, 1, 1, 0, 0, 0);
 
     /// <summary>最終ログイン日時</summary>
     [Column("last_login_at")]
-    public DateTimeOffset LastLoginAt { get; set; }
+    public DateTime LastLoginAt { get; set; }
 
     /// <summary>最終ログアウト日時</summary>
     [Column("last_logout_at")]
-    public DateTimeOffset LastLogoutAt { get; set; }
+    public DateTime LastLogoutAt { get; set; }
 
     /// <summary>システム管理者フラグ</summary>
     [Column("is_system_admin")]
@@ -77,13 +77,13 @@ public class User : IAuditableEntity
 
     // IAuditableEntity
     [Column("created_at")]
-    public DateTimeOffset CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
     [Column("created_user_id")]
     public Guid CreatedUserId { get; set; }
     [Column("created_session_id")]
     public Guid CreatedSessionId { get; set; }
     [Column("updated_at")]
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     [Column("updated_user_id")]
     public Guid UpdatedUserId { get; set; }
     [Column("updated_session_id")]

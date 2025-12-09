@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class FacilitySeeder
 {
-    public static async Task<(Guid? facilityId, Guid? floorId)> SeedAsync(MedockDbContext context, Guid tenantId)
+    public static async Task<(Guid? facilityId, Guid? floorId)> SeedAsync(MedockDbContext context, Guid tenantId, IDateTimeProvider dateTimeProvider)
     {
         var existingFacility = await context.Facilities.FirstOrDefaultAsync();
         Guid? facilityId = existingFacility?.FacilityId;
@@ -25,10 +26,10 @@ internal static class FacilitySeeder
                 FacilityName = "アロエ健診センター",
                 FacilityNameDisplay = "アロエ健診センター",
                 IsActive = true,
-                ActiveFrom = DateOnly.FromDateTime(DateTime.Today.AddYears(-1)),
+                ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today.AddYears(-1)),
                 IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now,
                 CreatedUserId = Guid.Empty,
                 CreatedSessionId = Guid.Empty,
                 UpdatedUserId = Guid.Empty,
@@ -47,8 +48,8 @@ internal static class FacilitySeeder
                 FloorDesc = "一般健診・人間ドック",
                 FloorSeq = 1,
                 IsDeleted = false,
-                CreatedAt = DateTimeOffset.UtcNow,
-                UpdatedAt = DateTimeOffset.UtcNow,
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now,
                 CreatedUserId = Guid.Empty,
                 CreatedSessionId = Guid.Empty,
                 UpdatedUserId = Guid.Empty,

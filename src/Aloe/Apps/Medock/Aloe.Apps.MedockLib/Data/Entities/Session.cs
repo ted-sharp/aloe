@@ -36,11 +36,11 @@ public class Session
 
     /// <summary>ログイン日時</summary>
     [Column("login_at")]
-    public DateTimeOffset LoginAt { get; set; }
+    public DateTime LoginAt { get; set; }
 
     /// <summary>ログアウト日時</summary>
     [Column("logout_at")]
-    public DateTimeOffset? LogoutAt { get; set; }
+    public DateTime? LogoutAt { get; set; }
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;

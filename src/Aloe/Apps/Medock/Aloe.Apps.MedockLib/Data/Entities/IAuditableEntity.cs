@@ -6,7 +6,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public interface IAuditableEntity
 {
     /// <summary>作成日時</summary>
-    DateTimeOffset CreatedAt { get; set; }
+    DateTime CreatedAt { get; set; }
 
     /// <summary>作成ユーザーID</summary>
     Guid CreatedUserId { get; set; }
@@ -15,7 +15,7 @@ public interface IAuditableEntity
     Guid CreatedSessionId { get; set; }
 
     /// <summary>更新日時</summary>
-    DateTimeOffset UpdatedAt { get; set; }
+    DateTime UpdatedAt { get; set; }
 
     /// <summary>更新ユーザーID</summary>
     Guid UpdatedUserId { get; set; }

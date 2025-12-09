@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class EquipmentSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? floorId)
+    public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
         var existingEquipments = await context.Equipments.AnyAsync();
         if (!existingEquipments && floorId.HasValue)
@@ -33,8 +34,8 @@ internal static class EquipmentSeeder
             foreach (var equipment in equipments)
             {
                 equipment.IsDeleted = false;
-                equipment.CreatedAt = DateTimeOffset.UtcNow;
-                equipment.UpdatedAt = DateTimeOffset.UtcNow;
+                equipment.CreatedAt = dateTimeProvider.Now;
+                equipment.UpdatedAt = dateTimeProvider.Now;
                 equipment.CreatedUserId = Guid.Empty;
                 equipment.CreatedSessionId = Guid.Empty;
                 equipment.UpdatedUserId = Guid.Empty;

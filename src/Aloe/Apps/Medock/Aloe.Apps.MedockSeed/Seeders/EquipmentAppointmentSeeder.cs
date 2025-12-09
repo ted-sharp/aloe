@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class EquipmentAppointmentSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context)
+    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingEquipmentAppointments = await context.EquipmentAppointments.AnyAsync();
         if (!existingEquipmentAppointments)
@@ -20,7 +21,7 @@ internal static class EquipmentAppointmentSeeder
             {
                 var equipmentAppointments = new List<EquipmentAppointment>();
                 var random = new Random(42);
-                var startDate = DateTime.Today.AddDays(1);
+                var startDate = dateTimeProvider.Today.AddDays(1);
 
                 for (var i = 0; i < 15; i++)
                 {
@@ -46,8 +47,8 @@ internal static class EquipmentAppointmentSeeder
                         ApptStatusCode = 1,
                         ApptMemo = "設備予約",
                         IsDeleted = false,
-                        CreatedAt = DateTimeOffset.UtcNow,
-                        UpdatedAt = DateTimeOffset.UtcNow,
+                        CreatedAt = dateTimeProvider.Now,
+                        UpdatedAt = dateTimeProvider.Now,
                         CreatedUserId = Guid.Empty,
                         CreatedSessionId = Guid.Empty,
                         UpdatedUserId = Guid.Empty,

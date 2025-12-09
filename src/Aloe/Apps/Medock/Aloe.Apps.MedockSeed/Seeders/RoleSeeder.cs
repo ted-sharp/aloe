@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class RoleSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context)
+    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var existingRoles = await context.Roles.AnyAsync();
         if (!existingRoles)
@@ -25,8 +26,8 @@ internal static class RoleSeeder
             foreach (var role in roles)
             {
                 role.IsDeleted = false;
-                role.CreatedAt = DateTimeOffset.UtcNow;
-                role.UpdatedAt = DateTimeOffset.UtcNow;
+                role.CreatedAt = dateTimeProvider.Now;
+                role.UpdatedAt = dateTimeProvider.Now;
                 role.CreatedUserId = Guid.Empty;
                 role.CreatedSessionId = Guid.Empty;
                 role.UpdatedUserId = Guid.Empty;
@@ -53,8 +54,8 @@ internal static class RoleSeeder
             foreach (var permission in permissions)
             {
                 permission.IsDeleted = false;
-                permission.CreatedAt = DateTimeOffset.UtcNow;
-                permission.UpdatedAt = DateTimeOffset.UtcNow;
+                permission.CreatedAt = dateTimeProvider.Now;
+                permission.UpdatedAt = dateTimeProvider.Now;
                 permission.CreatedUserId = Guid.Empty;
                 permission.CreatedSessionId = Guid.Empty;
                 permission.UpdatedUserId = Guid.Empty;
@@ -96,8 +97,8 @@ internal static class RoleSeeder
             foreach (var rolePermission in rolePermissions)
             {
                 rolePermission.IsDeleted = false;
-                rolePermission.CreatedAt = DateTimeOffset.UtcNow;
-                rolePermission.UpdatedAt = DateTimeOffset.UtcNow;
+                rolePermission.CreatedAt = dateTimeProvider.Now;
+                rolePermission.UpdatedAt = dateTimeProvider.Now;
                 rolePermission.CreatedUserId = Guid.Empty;
                 rolePermission.CreatedSessionId = Guid.Empty;
                 rolePermission.UpdatedUserId = Guid.Empty;

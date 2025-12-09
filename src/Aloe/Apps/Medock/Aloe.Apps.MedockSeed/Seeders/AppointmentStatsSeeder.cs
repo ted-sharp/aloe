@@ -1,20 +1,21 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentStatsSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? floorId)
+    public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
         var existingStats = await context.AppointmentStats.AnyAsync();
         if (!existingStats && floorId.HasValue)
         {
             Console.WriteLine("[INFO] Creating appointment stats seed data (1 year)...");
             var random = new Random(42);
-            var startDate = new DateOnly(DateTime.Today.Year, 1, 1);
-            var endDate = new DateOnly(DateTime.Today.Year, 12, 31);
+            var startDate = new DateOnly(dateTimeProvider.Today.Year, 1, 1);
+            var endDate = new DateOnly(dateTimeProvider.Today.Year, 12, 31);
             var statsList = new List<AppointmentStats>();
 
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
@@ -49,8 +50,8 @@ internal static class AppointmentStatsSeeder
                     ApptMax = totalMax,
                     ApptGraph = graphJson,
                     IsDeleted = false,
-                    CreatedAt = DateTimeOffset.UtcNow,
-                    UpdatedAt = DateTimeOffset.UtcNow
+                    CreatedAt = dateTimeProvider.Now,
+                    UpdatedAt = dateTimeProvider.Now
                 });
             }
 

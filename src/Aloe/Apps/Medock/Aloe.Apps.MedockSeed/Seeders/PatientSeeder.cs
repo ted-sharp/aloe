@@ -1,12 +1,13 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class PatientSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId)
+    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId, IDateTimeProvider dateTimeProvider)
     {
         var existingPatients = await context.Patients.AnyAsync();
         if (!existingPatients && facilityId.HasValue)
@@ -114,8 +115,8 @@ internal static class PatientSeeder
                 foreach (var patient in patients)
                 {
                     patient.IsDeleted = false;
-                    patient.CreatedAt = DateTimeOffset.UtcNow;
-                    patient.UpdatedAt = DateTimeOffset.UtcNow;
+                    patient.CreatedAt = dateTimeProvider.Now;
+                    patient.UpdatedAt = dateTimeProvider.Now;
                     patient.CreatedUserId = Guid.Empty;
                     patient.CreatedSessionId = Guid.Empty;
                     patient.UpdatedUserId = Guid.Empty;

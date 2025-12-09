@@ -45,13 +45,13 @@ public class FacilityBusinessHours : IAuditableEntity
 
     // IAuditableEntity
     [Column("created_at")]
-    public DateTimeOffset CreatedAt { get; set; }
+    public DateTime CreatedAt { get; set; }
     [Column("created_user_id")]
     public Guid CreatedUserId { get; set; }
     [Column("created_session_id")]
     public Guid CreatedSessionId { get; set; }
     [Column("updated_at")]
-    public DateTimeOffset UpdatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
     [Column("updated_user_id")]
     public Guid UpdatedUserId { get; set; }
     [Column("updated_session_id")]

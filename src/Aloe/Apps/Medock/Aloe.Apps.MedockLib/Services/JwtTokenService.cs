@@ -27,11 +27,13 @@ public class JwtTokenService
 {
     private readonly JwtSettings _settings;
     private readonly SymmetricSecurityKey _signingKey;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public JwtTokenService(IOptions<JwtSettings> settings)
+    public JwtTokenService(IOptions<JwtSettings> settings, IDateTimeProvider dateTimeProvider)
     {
         this._settings = settings.Value;
         this._signingKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(this._settings.SecretKey));
+        this._dateTimeProvider = dateTimeProvider;
     }
 
     /// <summary>
@@ -47,7 +49,7 @@ public class JwtTokenService
             new("sub", tokenParams.UserId.ToString()),
             new("preferred_username", tokenParams.UserCode),
             new("email", tokenParams.Email),
-            new("iat", DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
+            new("iat", ((DateTimeOffset)this._dateTimeProvider.UtcNow).ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         ];
 
@@ -98,7 +100,7 @@ public class JwtTokenService
         var tokenDescriptor = new SecurityTokenDescriptor
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddMinutes(this._settings.AccessTokenExpirationMinutes),
+            Expires = this._dateTimeProvider.UtcNow.AddMinutes(this._settings.AccessTokenExpirationMinutes),
             Issuer = this._settings.Issuer,
             Audience = this._settings.Audience,
             SigningCredentials = new SigningCredentials(this._signingKey, SecurityAlgorithms.HmacSha256Signature)
@@ -157,7 +159,7 @@ public class JwtTokenService
     /// </summary>
     public DateTime GetRefreshTokenExpiration()
     {
-        return DateTime.UtcNow.AddDays(this._settings.RefreshTokenExpirationDays);
+        return this._dateTimeProvider.UtcNow.AddDays(this._settings.RefreshTokenExpirationDays);
     }
 }
 
