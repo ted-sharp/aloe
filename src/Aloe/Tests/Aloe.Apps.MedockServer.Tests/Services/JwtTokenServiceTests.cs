@@ -244,7 +244,7 @@ public class JwtTokenServiceTests
             Email = "test@example.com",
             FacilityId = facilityId,
             FacilityName = "テスト施設",
-            DisplayName = "テストユーザー"
+            UserDisplayName = "テストユーザー"
         };
 
         // Act
@@ -255,7 +255,7 @@ public class JwtTokenServiceTests
         // Assert
         jwtToken.Claims.Should().Contain(c => c.Type == "facility_id" && c.Value == facilityId.ToString());
         jwtToken.Claims.Should().Contain(c => c.Type == "facility_name" && c.Value == "テスト施設");
-        jwtToken.Claims.Should().Contain(c => c.Type == "display_name" && c.Value == "テストユーザー");
+        jwtToken.Claims.Should().Contain(c => c.Type == "user_display_name" && c.Value == "テストユーザー");
     }
 
     [Fact]

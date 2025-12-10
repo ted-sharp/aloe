@@ -19,16 +19,3 @@
     }
 </button>
 
-@code {
-    [Parameter]
-    public bool IsDrawerOpen { get; set; }
-
-    [Parameter]
-    public EventCallback<bool> IsDrawerOpenChanged { get; set; }
-
-    private async Task Toggle()
-    {
-        IsDrawerOpen = !IsDrawerOpen;
-        await IsDrawerOpenChanged.InvokeAsync(IsDrawerOpen);
-    }
-}

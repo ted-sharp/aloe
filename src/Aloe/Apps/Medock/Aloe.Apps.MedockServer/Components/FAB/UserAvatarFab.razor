@@ -38,7 +38,7 @@
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold truncate">@DisplayName</p>
+                        <p class="font-semibold truncate">@UserDisplayName</p>
                         <p class="text-sm text-base-content/60 truncate">@UserEmail</p>
                         @if (!string.IsNullOrEmpty(UserRole))
                         {
@@ -128,80 +128,3 @@
         OnClose="@CloseFacilityModal" />
 }
 
-@code {
-    [Parameter]
-    public string UserInitial { get; set; } = "U";
-
-    [Parameter]
-    public string DisplayName { get; set; } = "";
-
-    [Parameter]
-    public string UserEmail { get; set; } = "";
-
-    [Parameter]
-    public string TenantName { get; set; } = "";
-
-    [Parameter]
-    public string FacilityName { get; set; } = "";
-
-    [Parameter]
-    public string UserRole { get; set; } = "";
-
-    [Parameter]
-    public Guid? CurrentFacilityId { get; set; }
-
-    [Parameter]
-    public bool HasMultipleFacilities { get; set; }
-
-    [Parameter]
-    public List<FacilityInfo>? AvailableFacilities { get; set; }
-
-    [Parameter]
-    public EventCallback OnLogout { get; set; }
-
-    [Parameter]
-    public EventCallback<Guid> OnFacilitySwitch { get; set; }
-
-    private bool IsMenuOpen { get; set; }
-    private bool IsDarkMode { get; set; }
-    private bool ShowFacilityModal { get; set; }
-
-    private void ToggleMenu()
-    {
-        IsMenuOpen = !IsMenuOpen;
-    }
-
-    private void CloseMenu()
-    {
-        IsMenuOpen = false;
-    }
-
-    private async Task HandleLogout()
-    {
-        CloseMenu();
-        await OnLogout.InvokeAsync();
-    }
-
-    private async Task ToggleTheme()
-    {
-        // テーマ切り替えはJSInteropで実装
-        await Task.CompletedTask;
-    }
-
-    private void ShowFacilitySelector()
-    {
-        ShowFacilityModal = true;
-        CloseMenu();
-    }
-
-    private void CloseFacilityModal()
-    {
-        ShowFacilityModal = false;
-    }
-
-    private async Task HandleFacilitySwitch(Guid facilityId)
-    {
-        ShowFacilityModal = false;
-        await OnFacilitySwitch.InvokeAsync(facilityId);
-    }
-}

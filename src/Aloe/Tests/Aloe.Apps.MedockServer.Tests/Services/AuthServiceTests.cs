@@ -45,7 +45,7 @@ public class AuthServiceTests : IDisposable
         this._jwtTokenService = new JwtTokenService(Options.Create(jwtSettings), this._dateTimeProvider);
 
         // AuthService
-        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService, this._dateTimeProvider);
+        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService, this._dateTimeProvider, Options.Create(jwtSettings));
     }
 
     public void Dispose()
@@ -101,7 +101,6 @@ public class AuthServiceTests : IDisposable
             FacilityUserId = Guid.NewGuid(),
             FacilityId = facility.FacilityId,
             UserId = user.UserId,
-            DisplayName = "テストユーザー",
             FacilityUserSeq = 1,
             IsFacilityAdmin = true,
             CreatedAt = this._dateTimeProvider.UtcNow,
@@ -121,7 +120,7 @@ public class AuthServiceTests : IDisposable
         var (user, facility) = await this.SeedTestUserAsync("admin", "admin");
 
         // Act
-        var result = await this._authService.LoginAsync("admin", "admin", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("admin", "admin", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.IsSuccess.Should().BeTrue();
@@ -140,7 +139,7 @@ public class AuthServiceTests : IDisposable
         await this.SeedTestUserAsync("admin", "admin");
 
         // Act
-        var result = await this._authService.LoginAsync("wronguser", "admin", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("wronguser", "admin", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -155,7 +154,7 @@ public class AuthServiceTests : IDisposable
         await this.SeedTestUserAsync("admin", "admin");
 
         // Act
-        var result = await this._authService.LoginAsync("admin", "wrongpassword", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("admin", "wrongpassword", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -172,7 +171,7 @@ public class AuthServiceTests : IDisposable
         await this._context.SaveChangesAsync();
 
         // Act
-        var result = await this._authService.LoginAsync("deleteduser", "password", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("deleteduser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -188,7 +187,7 @@ public class AuthServiceTests : IDisposable
         await this._context.SaveChangesAsync();
 
         // Act
-        var result = await this._authService.LoginAsync("lockeduser", "password", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("lockeduser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.IsSuccess.Should().BeFalse();
@@ -203,7 +202,7 @@ public class AuthServiceTests : IDisposable
         var initialCount = user.LoginSuccessCount;
 
         // Act
-        await this._authService.LoginAsync("countuser", "password", "TestApp", "127.0.0.1");
+        await this._authService.LoginAsync("countuser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         var updatedUser = await this._context.Users.FindAsync(user.UserId);
@@ -217,7 +216,7 @@ public class AuthServiceTests : IDisposable
         var (user, _) = await this.SeedTestUserAsync("failuser", "password");
 
         // Act
-        await this._authService.LoginAsync("failuser", "wrongpassword", "TestApp", "127.0.0.1");
+        await this._authService.LoginAsync("failuser", "wrongpassword", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         var updatedUser = await this._context.Users.FindAsync(user.UserId);
@@ -234,7 +233,7 @@ public class AuthServiceTests : IDisposable
         // Act - 5回失敗
         for (int i = 0; i < 5; i++)
         {
-            await this._authService.LoginAsync("lockableuser", "wrongpassword", "TestApp", "127.0.0.1");
+            await this._authService.LoginAsync("lockableuser", "wrongpassword", "TestApp", "127.0.0.1", "TestUserAgent");
         }
 
         // Assert
@@ -251,7 +250,7 @@ public class AuthServiceTests : IDisposable
         await this._context.SaveChangesAsync();
 
         // Act
-        await this._authService.LoginAsync("resetuser", "password", "TestApp", "127.0.0.1");
+        await this._authService.LoginAsync("resetuser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         var updatedUser = await this._context.Users.FindAsync(user.UserId);
@@ -265,14 +264,15 @@ public class AuthServiceTests : IDisposable
         await this.SeedTestUserAsync("sessionuser", "password");
 
         // Act
-        var result = await this._authService.LoginAsync("sessionuser", "password", "TestApp", "127.0.0.1");
+        var result = await this._authService.LoginAsync("sessionuser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Assert
         result.SessionId.Should().NotBeNull();
         var session = await this._context.Sessions.FindAsync(result.SessionId);
         session.Should().NotBeNull();
-        session!.ClientAppName.Should().Be("TestApp");
-        session.ClientEndpoint.Should().Be("127.0.0.1");
+        session!.AppName.Should().Be("TestApp");
+        session.IpAddress.Should().Be("127.0.0.1");
+        session.UserAgent.Should().Be("TestUserAgent");
     }
 
     [Fact]
@@ -280,7 +280,7 @@ public class AuthServiceTests : IDisposable
     {
         // Arrange
         await this.SeedTestUserAsync("logoutuser", "password");
-        var loginResult = await this._authService.LoginAsync("logoutuser", "password", "TestApp", "127.0.0.1");
+        var loginResult = await this._authService.LoginAsync("logoutuser", "password", "TestApp", "127.0.0.1", "TestUserAgent");
 
         // Act
         var logoutResult = await this._authService.LogoutAsync(loginResult.SessionId!.Value);
@@ -288,7 +288,7 @@ public class AuthServiceTests : IDisposable
         // Assert
         logoutResult.Should().BeTrue();
         var session = await this._context.Sessions.FindAsync(loginResult.SessionId);
-        session!.LogoutAt.Should().NotBeNull();
+        session!.RevokedAt.Should().NotBeNull();
     }
 
     [Fact]

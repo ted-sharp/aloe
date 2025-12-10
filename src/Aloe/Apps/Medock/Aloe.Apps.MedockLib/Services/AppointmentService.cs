@@ -125,7 +125,7 @@ public class AppointmentService : IAppointmentService
             .Include(a => a.Floor)
             .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
 
-        return appointment is not null ? MapToDto(appointment) : null;
+        return appointment is not null ? this.MapToDto(appointment) : null;
     }
 
     /// <inheritdoc />

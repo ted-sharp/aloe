@@ -1,0 +1,765 @@
+using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockServer.Components.Layout;
+using Aloe.Apps.MedockServer.Components.FAB;
+using Aloe.Apps.MedockServer.Components.Calendar;
+using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using System.Linq;
+
+namespace Aloe.Apps.MedockServer.Components.Pages;
+
+public partial class Calendar : ComponentBase
+{
+    [CascadingParameter]
+    private CalendarLayout? Layout { get; set; }
+
+    [Inject]
+    private IAppointmentService AppointmentService { get; set; } = default!;
+
+    [Inject]
+    private IEquipmentService EquipmentService { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
+
+    [Inject]
+    private AuthService AuthService { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    [Inject]
+    private ProtectedLocalStorage LocalStorage { get; set; } = default!;
+
+    private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    private CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
+    private int WeekDays { get; set; } = 7;
+    private bool ShowSlots { get; set; } = true;
+    private bool ShowFilterPanel { get; set; } = false;
+    private bool ShowSimpleView { get; set; } = false;
+    private bool ShowEquipmentGraph { get; set; } = false;
+
+    // ドロワー状態（Layoutと連携）
+    private bool _isDrawerOpen;
+    private bool IsDrawerOpen
+    {
+        get => this.Layout?.IsDrawerOpen ?? this._isDrawerOpen;
+        set
+        {
+            this._isDrawerOpen = value;
+            if (this.Layout != null)
+            {
+                this.Layout.IsDrawerOpen = value;
+            }
+        }
+    }
+
+    // ユーザー情報
+    private string UserInitial { get; set; } = "U";
+    private string UserDisplayName { get; set; } = "";
+    private string UserEmail { get; set; } = "";
+    private string TenantName { get; set; } = "";
+    private string FacilityName { get; set; } = "";
+    private string UserRole { get; set; } = "";
+    private Guid? CurrentFacilityId { get; set; }
+    private bool HasMultipleFacilities { get; set; }
+    private List<FacilityInfo>? AvailableFacilities { get; set; }
+
+    // Modal state
+    private bool IsModalOpen { get; set; } = false;
+    private DateOnly? ModalDate { get; set; }
+    private TimeOnly? ModalTime { get; set; }
+    private Guid? SelectedAppointmentId { get; set; }
+
+    // 選択状態
+    private DateOnly? SelectedDate { get; set; }
+    private (DateOnly Start, DateOnly End)? SelectedDateRange { get; set; }
+
+    // サンプルデータ
+    private Dictionary<string, CalendarCanvas.CalendarDayStats> SampleDayStats { get; set; } = new();
+    private Dictionary<string, CalendarCanvas.CalendarDayStats> OriginalDayStats { get; set; } = new();
+    private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
+    private Dictionary<string, string> Holidays { get; set; } = new();
+
+    // フィルター用データ
+    private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
+    private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
+    private SearchFilterPanel? filterPanelRef;
+
+    // アクティブなフィルター数（ナビバーのバッジ表示用）
+    private int ActiveFilterCount =>
+        (this.CurrentFilter?.SelectedDays.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.TimeSlots.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
+        (this.CurrentFilter?.EquipIds.Any() == true ? 1 : 0);
+
+    private enum CalendarViewType
+    {
+        Year,
+        Month,
+        Week
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        this.GenerateSampleData();
+        await this.GenerateFilterOptions();
+        await this.LoadHolidaysAsync();
+        await this.LoadUserInfoAsync();
+    }
+
+    private async Task LoadUserInfoAsync()
+    {
+        try
+        {
+            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                // 基本情報をJWTクレームから取得
+                this.UserDisplayName = user.FindFirst("user_display_name")?.Value
+                    ?? user.FindFirst("preferred_username")?.Value
+                    ?? user.Identity.Name
+                    ?? "";
+
+                this.UserEmail = user.FindFirst("email")?.Value ?? "";
+                this.TenantName = user.FindFirst("tenant_name")?.Value ?? "";
+                this.FacilityName = user.FindFirst("facility_name")?.Value ?? "";
+
+                var roles = user.FindAll("roles").Select(c => c.Value).ToList();
+                this.UserRole = roles.FirstOrDefault() ?? "";
+
+                if (Guid.TryParse(user.FindFirst("facility_id")?.Value, out var facilityId))
+                {
+                    this.CurrentFacilityId = facilityId;
+                }
+
+                if (!String.IsNullOrEmpty(this.UserDisplayName))
+                {
+                    this.UserInitial = this.UserDisplayName[..1].ToUpper();
+                }
+
+                // 施設一覧を取得（複数施設対応）
+                if (Guid.TryParse(user.FindFirst("sub")?.Value, out var userId))
+                {
+                    this.AvailableFacilities = await this.AuthService.GetAccessibleFacilitiesAsync(userId);
+                    this.HasMultipleFacilities = this.AvailableFacilities.Count > 1;
+                }
+            }
+        }
+        catch
+        {
+            // ユーザー情報取得失敗時は初期値のまま
+        }
+    }
+
+    private async Task HandleLogout()
+    {
+        try
+        {
+            var sessionIdResult = await this.LocalStorage.GetAsync<string>("session_id");
+            if (sessionIdResult.Success && !String.IsNullOrEmpty(sessionIdResult.Value))
+            {
+                if (Guid.TryParse(sessionIdResult.Value, out var sessionId))
+                {
+                    await this.AuthService.LogoutAsync(sessionId);
+                }
+            }
+        }
+        catch
+        {
+            // ログアウトAPIの失敗は無視
+        }
+        finally
+        {
+            try
+            {
+                await this.LocalStorage.DeleteAsync("session_id");
+                await this.LocalStorage.DeleteAsync("keep_session");
+                await this.LocalStorage.DeleteAsync("access_token");
+                await this.LocalStorage.DeleteAsync("remember_user_code");
+            }
+            catch
+            {
+                // ストレージクリア失敗も無視
+            }
+
+            this.NavigationManager.NavigateTo("/login", forceLoad: true);
+        }
+    }
+
+    private async Task HandleFacilitySwitch(Guid facilityId)
+    {
+        try
+        {
+            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
+            var userIdClaim = authState.User.FindFirst("sub")?.Value;
+
+            if (String.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
+            {
+                return;
+            }
+
+            var result = await this.AuthService.SwitchFacilityAsync(userId, facilityId);
+            if (result.IsSuccess)
+            {
+                // 新しいトークンを保存
+                await this.LocalStorage.SetAsync("access_token", result.AccessToken!);
+
+                // ページをリロードして新しいトークンを反映
+                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+            }
+        }
+        catch
+        {
+            // 施設切替失敗時は何もしない
+        }
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.RegisterLayoutActions();
+        }
+    }
+
+    private void RegisterLayoutActions()
+    {
+        this.Layout?.RegisterCalendarActions(
+            this.CurrentView.ToString().ToLower(),
+            async () => { this.OpenNewAppointmentModal(); await Task.CompletedTask; },
+            async () => { this.ToggleFilterPanel(); await Task.CompletedTask; },
+            async () => { this.GoToToday(); await Task.CompletedTask; },
+            async () => { this.PreviousPeriod(); await Task.CompletedTask; },
+            async () => { this.NextPeriod(); await Task.CompletedTask; },
+            async (view) => { this.SetViewFromString(view); await Task.CompletedTask; }
+        );
+    }
+
+    private void ToggleFilterPanel()
+    {
+        this.ShowFilterPanel = !this.ShowFilterPanel;
+        this.StateHasChanged();
+    }
+
+    private void CloseFilterPanel()
+    {
+        this.ShowFilterPanel = false;
+        this.StateHasChanged();
+    }
+
+    private void SetViewFromString(string view)
+    {
+        var viewType = view.ToLower() switch
+        {
+            "year" => CalendarViewType.Year,
+            "month" => CalendarViewType.Month,
+            "week" => CalendarViewType.Week,
+            _ => CalendarViewType.Month
+        };
+        this.SetView(viewType);
+    }
+
+    private async Task GenerateFilterOptions()
+    {
+        try
+        {
+            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (!user.Identity?.IsAuthenticated ?? false)
+            {
+                this.AvailableEquipments = [];
+                return;
+            }
+
+            var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
+            if (String.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
+            {
+                this.AvailableEquipments = [];
+                return;
+            }
+
+            var equipments = await this.EquipmentService.GetEquipmentsByTenantAsync(tenantId);
+            this.AvailableEquipments = equipments.Select(e => new SearchFilterPanel.FilterItem
+            {
+                Id = e.EquipId,
+                Name = e.EquipName
+            }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"設備データ取得エラー: {ex.Message}");
+            this.AvailableEquipments = [];
+        }
+    }
+
+    private async Task LoadHolidaysAsync()
+    {
+        try
+        {
+            var startDate = new DateOnly(this.CurrentDate.Year, 1, 1);
+            var endDate = new DateOnly(this.CurrentDate.Year, 12, 31);
+            var holidays = await this.AppointmentService.GetHolidaysAsync(startDate, endDate);
+
+            this.Holidays = holidays.ToDictionary(
+                h => h.Date.ToString("yyyy-MM-dd"),
+                h => h.Name
+            );
+        }
+        catch (Exception)
+        {
+            this.Holidays = [];
+        }
+    }
+
+    private void GenerateSampleData()
+    {
+        var random = new Random(42);
+        var today = DateTime.Today;
+        var startDate = new DateTime(today.Year, 1, 1);
+        var endDate = new DateTime(today.Year, 12, 31);
+
+        var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
+        var slotMaxes = new[] { 5, 8, 8, 8, 8, 8, 8, 5 };
+
+        for (var date = startDate; date <= endDate; date = date.AddDays(1))
+        {
+            var dateStr = date.ToString("yyyy-MM-dd");
+            var dayOfWeek = date.DayOfWeek;
+            var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
+
+            var slots = new List<CalendarCanvas.TimeSlotStats>();
+            var amCount = 0;
+            var pmCount = 0;
+            var amMax = 0;
+            var pmMax = 0;
+
+            for (var i = 0; i < slotTimes.Length; i++)
+            {
+                var max = isWeekend ? Math.Max(1, slotMaxes[i] / 2) : slotMaxes[i];
+                var count = random.Next(0, max + 1);
+
+                slots.Add(new CalendarCanvas.TimeSlotStats
+                {
+                    Time = slotTimes[i],
+                    Count = count,
+                    Max = max,
+                    IsGrayedOut = false
+                });
+
+                var hour = Int32.Parse(slotTimes[i].Split(':')[0]);
+                if (hour < 12)
+                {
+                    amCount += count;
+                    amMax += max;
+                }
+                else
+                {
+                    pmCount += count;
+                    pmMax += max;
+                }
+            }
+
+            var dayStats = new CalendarCanvas.CalendarDayStats
+            {
+                AmCount = amCount,
+                PmCount = pmCount,
+                AmMax = amMax,
+                PmMax = pmMax,
+                Slots = slots,
+                IsGrayedOut = false
+            };
+            this.SampleDayStats[dateStr] = dayStats;
+
+            this.OriginalDayStats[dateStr] = new CalendarCanvas.CalendarDayStats
+            {
+                AmCount = amCount,
+                PmCount = pmCount,
+                AmMax = amMax,
+                PmMax = pmMax,
+                Slots = slots.Select(s => new CalendarCanvas.TimeSlotStats
+                {
+                    Time = s.Time,
+                    Count = s.Count,
+                    Max = s.Max,
+                    IsGrayedOut = false
+                }).ToList(),
+                IsGrayedOut = false
+            };
+        }
+
+        var weekStart = today.AddDays(-(int)today.DayOfWeek);
+        var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲", "高橋 健二" };
+        var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF", "○○健保組合" };
+
+        for (var day = 0; day < 7; day++)
+        {
+            var date = weekStart.AddDays(day);
+            var count = random.Next(3, 8);
+
+            for (var i = 0; i < count; i++)
+            {
+                var startHour = random.Next(8, 16);
+                var duration = random.Next(1, 3);
+
+                this.SampleAppointments.Add(new CalendarCanvas.CalendarAppointment
+                {
+                    Id = Guid.NewGuid(),
+                    Date = DateOnly.FromDateTime(date),
+                    StartTime = new TimeOnly(startHour, 0),
+                    EndTime = new TimeOnly(Math.Min(startHour + duration, 18), 0),
+                    PatientName = names[random.Next(names.Length)],
+                    OrganizationName = orgs[random.Next(orgs.Length)],
+                    Status = random.Next(0, 4)
+                });
+            }
+        }
+    }
+
+    private void SetView(CalendarViewType view)
+    {
+        this.CurrentView = view;
+        this.Layout?.UpdateCurrentView(view.ToString().ToLower());
+        this.RegisterLayoutActions();
+    }
+
+    private string GetCurrentPeriodTitle()
+    {
+        return this.CurrentView switch
+        {
+            CalendarViewType.Year => $"{this.CurrentDate.Year}年",
+            CalendarViewType.Month => $"{this.CurrentDate.Year}年{this.CurrentDate.Month}月",
+            CalendarViewType.Week => this.WeekDays == 1
+                ? $"{this.CurrentDate.Year}年{this.CurrentDate.Month}月{this.CurrentDate.Day}日"
+                : $"{this.CurrentDate.Year}年{this.CurrentDate.Month}月{this.CurrentDate.Day}日〜",
+            _ => ""
+        };
+    }
+
+    private void PreviousPeriod()
+    {
+        this.CurrentDate = this.CurrentView switch
+        {
+            CalendarViewType.Year => this.CurrentDate.AddYears(-1),
+            CalendarViewType.Month => this.CurrentDate.AddMonths(-1),
+            CalendarViewType.Week => this.CurrentDate.AddDays(-this.WeekDays),
+            _ => this.CurrentDate
+        };
+        this.StateHasChanged();
+    }
+
+    private void NextPeriod()
+    {
+        this.CurrentDate = this.CurrentView switch
+        {
+            CalendarViewType.Year => this.CurrentDate.AddYears(1),
+            CalendarViewType.Month => this.CurrentDate.AddMonths(1),
+            CalendarViewType.Week => this.CurrentDate.AddDays(this.WeekDays),
+            _ => this.CurrentDate
+        };
+        this.StateHasChanged();
+    }
+
+    private void GoToToday()
+    {
+        this.CurrentDate = DateOnly.FromDateTime(DateTime.Today);
+        this.StateHasChanged();
+    }
+
+    private void HandleDateClick(DateOnly date)
+    {
+        this.CurrentDate = date;
+        if (this.CurrentView == CalendarViewType.Month)
+        {
+            this.CurrentView = CalendarViewType.Week;
+            this.WeekDays = 7;
+            this.Layout?.UpdateCurrentView("week");
+            this.RegisterLayoutActions();
+        }
+    }
+
+    private void HandleMonthClick((int Year, int Month) yearMonth)
+    {
+        this.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        this.CurrentView = CalendarViewType.Month;
+        this.Layout?.UpdateCurrentView("month");
+        this.RegisterLayoutActions();
+    }
+
+    private void HandleMonthSelected((int Year, int Month) yearMonth)
+    {
+        this.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        this.StateHasChanged();
+    }
+
+    private void HandleYearSelected(int year)
+    {
+        this.CurrentDate = new DateOnly(year, this.CurrentDate.Month, this.CurrentDate.Day);
+        this.StateHasChanged();
+    }
+
+    private void HandleSimpleViewChanged(bool showSimpleView)
+    {
+        this.ShowSimpleView = showSimpleView;
+        this.StateHasChanged();
+    }
+
+    private void HandleEquipmentGraphChanged(bool showEquipmentGraph)
+    {
+        this.ShowEquipmentGraph = showEquipmentGraph;
+        this.StateHasChanged();
+    }
+
+    private void HandleDateSelect(DateOnly date)
+    {
+        this.SelectedDate = date;
+        this.SelectedDateRange = null;
+    }
+
+    private void HandleDateDoubleClick(DateOnly date)
+    {
+        this.CurrentDate = date;
+        this.CurrentView = CalendarViewType.Week;
+        this.WeekDays = 1;
+        this.Layout?.UpdateCurrentView("week");
+        this.RegisterLayoutActions();
+        this.StateHasChanged();
+    }
+
+    private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
+    {
+        this.SelectedDate = null;
+        this.SelectedDateRange = range;
+    }
+
+    private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
+    {
+        this.CurrentFilter = filter;
+        await this.ApplyFilterToStats(filter);
+        this.StateHasChanged();
+    }
+
+    private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
+    {
+        this.CurrentFilter = filter;
+
+        // 設備条件が選択された場合、設備表示スイッチを自動的にONにする
+        if (filter.EquipIds.Any() && !this.ShowEquipmentGraph)
+        {
+            this.ShowEquipmentGraph = true;
+        }
+
+        await this.ApplyFilterToStats(filter);
+        this.StateHasChanged();
+    }
+
+    private async Task ApplyFilterToStats(SearchFilterPanel.SearchFilter filter)
+    {
+        if (!filter.IsActive)
+        {
+            foreach (var kvp in this.OriginalDayStats)
+            {
+                if (this.SampleDayStats.TryGetValue(kvp.Key, out var stats))
+                {
+                    stats.IsGrayedOut = false;
+                    if (stats.Slots != null)
+                    {
+                        foreach (var slot in stats.Slots)
+                        {
+                            slot.IsGrayedOut = false;
+                            slot.FilteredCount = 0;
+                        }
+                    }
+                }
+            }
+            return;
+        }
+
+        // 設備条件フィルターが選択されている場合、期間全体のデータを一括取得
+        Dictionary<(DateOnly date, string timeSlot), int>? statsDict = null;
+        if (filter.EquipIds.Any())
+        {
+            // 表示期間を決定
+            var startDate = this.CurrentView == CalendarViewType.Year
+                ? new DateOnly(this.CurrentDate.Year, 1, 1)
+                : new DateOnly(this.CurrentDate.Year, this.CurrentDate.Month, 1);
+            var endDate = this.CurrentView == CalendarViewType.Year
+                ? new DateOnly(this.CurrentDate.Year, 12, 31)
+                : new DateOnly(this.CurrentDate.Year, this.CurrentDate.Month, DateTime.DaysInMonth(this.CurrentDate.Year, this.CurrentDate.Month));
+
+            // 期間内の設備統計を一括取得
+            var equipmentStats = await this.EquipmentService.GetEquipmentStatsByDateRangeAsync(
+                filter.EquipIds, startDate, endDate);
+
+            // 辞書に変換: (date, timeSlot) -> count (複数設備の合計)
+            statsDict = equipmentStats
+                .SelectMany(s => s.ApptGraph.Slots.Select(slot => new
+                {
+                    Key = (s.ApptDate, slot.Time),
+                    Count = slot.Count
+                }))
+                .GroupBy(x => x.Key)
+                .ToDictionary(g => g.Key, g => g.Sum(x => x.Count));
+        }
+
+        foreach (var kvp in this.SampleDayStats)
+        {
+            var dateStr = kvp.Key;
+            var stats = kvp.Value;
+            var date = DateOnly.Parse(dateStr);
+
+            var isDateGrayed = false;
+            var dayOfWeek = (int)date.DayOfWeek;
+            if (filter.SelectedDays.Any() && !filter.SelectedDays.Contains(dayOfWeek))
+                isDateGrayed = true;
+
+            var hasAvailableSlot = false;
+            if (stats.Slots != null)
+            {
+                foreach (var slot in stats.Slots)
+                {
+                    var isSlotGrayed = false;
+
+                    if (filter.TimeSlots.Any() && !filter.TimeSlots.Contains(slot.Time))
+                        isSlotGrayed = true;
+
+                    var availableCapacity = slot.Max - slot.Count;
+                    if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
+                        isSlotGrayed = true;
+
+                    // 設備条件フィルターのカウントを辞書から取得
+                    if (statsDict != null)
+                    {
+                        var key = (date, slot.Time);
+                        slot.FilteredCount = statsDict.TryGetValue(key, out var count) ? count : 0;
+                    }
+                    else
+                    {
+                        slot.FilteredCount = 0;
+                    }
+
+                    slot.IsGrayedOut = isSlotGrayed || isDateGrayed;
+
+                    if (!slot.IsGrayedOut)
+                        hasAvailableSlot = true;
+                }
+            }
+            else
+            {
+                var amAvailable = stats.AmMax - stats.AmCount;
+                var pmAvailable = stats.PmMax - stats.PmCount;
+                hasAvailableSlot = amAvailable >= filter.RequiredCapacity || pmAvailable >= filter.RequiredCapacity;
+            }
+
+            stats.IsGrayedOut = isDateGrayed || !hasAvailableSlot;
+        }
+    }
+
+    private void HandleAppointmentClick(Guid apptId)
+    {
+        this.SelectedAppointmentId = apptId;
+        this.ModalDate = null;
+        this.ModalTime = null;
+        this.IsModalOpen = true;
+    }
+
+    private void HandleCreateRequest((DateOnly Date, TimeOnly Time) request)
+    {
+        this.SelectedAppointmentId = null;
+        this.ModalDate = request.Date;
+        this.ModalTime = request.Time;
+        this.IsModalOpen = true;
+    }
+
+    private void HandleWeekDaysChanged(int days)
+    {
+        this.WeekDays = days;
+    }
+
+    private void HandleShowSlotsChanged(bool showSlots)
+    {
+        this.ShowSlots = showSlots;
+        this.StateHasChanged();
+    }
+
+    private void HandleGoToToday()
+    {
+        this.GoToToday();
+    }
+
+    private void OpenNewAppointmentModal()
+    {
+        this.SelectedAppointmentId = null;
+        this.ModalDate = this.CurrentDate;
+        this.ModalTime = new TimeOnly(9, 0);
+        this.IsModalOpen = true;
+    }
+
+    private void CloseModal()
+    {
+        this.IsModalOpen = false;
+        this.SelectedAppointmentId = null;
+        this.ModalDate = null;
+        this.ModalTime = null;
+    }
+
+    private void HandleSaveAppointment()
+    {
+        this.CloseModal();
+    }
+
+    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
+    {
+        try
+        {
+            var appt = this.SampleAppointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
+            if (appt != null)
+            {
+                var duration = appt.EndTime.HasValue && appt.StartTime.HasValue
+                    ? appt.EndTime.Value - appt.StartTime.Value
+                    : TimeSpan.FromHours(1);
+                var newEndTime = moveInfo.NewTime.Add(duration);
+
+                await this.AppointmentService.UpdateAppointmentAsync(
+                    moveInfo.ApptId,
+                    new UpdateAppointmentDto
+                    {
+                        Date = moveInfo.NewDate,
+                        StartTime = moveInfo.NewTime,
+                        EndTime = newEndTime
+                    });
+
+                appt.Date = moveInfo.NewDate;
+                appt.StartTime = moveInfo.NewTime;
+                appt.EndTime = newEndTime;
+                this.StateHasChanged();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"予約移動エラー: {ex.Message}");
+        }
+    }
+
+    private async Task<int> CalculateEquipmentFilteredCount(DateOnly date, string timeSlot, List<Guid> equipIds)
+    {
+        try
+        {
+            var stats = await this.EquipmentService.GetEquipmentStatsAsync(equipIds, date);
+
+            return stats.Sum(s => s.ApptGraph.Slots
+                .Where(slot => slot.Time == timeSlot)
+                .Sum(slot => slot.Count));
+        }
+        catch
+        {
+            return 0;
+        }
+    }
+}
+
+

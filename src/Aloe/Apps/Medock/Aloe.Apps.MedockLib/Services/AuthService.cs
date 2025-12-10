@@ -1,6 +1,7 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -13,30 +14,34 @@ public class AuthService
     private readonly PasswordHasher _passwordHasher;
     private readonly JwtTokenService _jwtTokenService;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly JwtSettings _jwtSettings;
 
     public AuthService(
         IDbContextFactory<MedockDbContext> contextFactory,
         PasswordHasher passwordHasher,
         JwtTokenService jwtTokenService,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        IOptions<JwtSettings> jwtSettings)
     {
         this._contextFactory = contextFactory;
         this._passwordHasher = passwordHasher;
         this._jwtTokenService = jwtTokenService;
         this._dateTimeProvider = dateTimeProvider;
+        this._jwtSettings = jwtSettings.Value;
     }
 
     /// <summary>
     /// ログイン処理を行います。
     /// </summary>
-    public async Task<AuthResult> LoginAsync(string userCode, string password, string clientAppName, string clientEndpoint)
+    public async Task<AuthResult> LoginAsync(string userCode, string password, string appName, string ipAddress, string userAgent)
     {
         using var context = this._contextFactory.CreateDbContext();
 
         // ユーザーを検索（テナント・施設情報も含む）
         var user = await context.Users
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
+            .Include(u => u.FacilityUsers)
+            .ThenInclude(fu => fu.FacilityUserRoles)
+            .ThenInclude(fur => fur.Role)
             .Include(u => u.FacilityUsers)
             .ThenInclude(fu => fu.Facility)
             .ThenInclude(f => f.Tenant)
@@ -79,15 +84,20 @@ public class AuthService
         var defaultFacility = this.DetermineDefaultFacility(context, user);
 
         // セッション作成
-        var displayName = this.GetDisplayName(user, defaultFacility?.FacilityId);
+        var issuedAt = this._dateTimeProvider.UtcNow;
+        var expiresAt = issuedAt.AddMinutes(this._jwtSettings.AccessTokenExpirationMinutes);
+
         var session = new Session
         {
             SessionId = Guid.NewGuid(),
             UserId = user.UserId,
-            UserDisplayName = displayName,
-            ClientAppName = clientAppName,
-            ClientEndpoint = clientEndpoint,
-            LoginAt = this._dateTimeProvider.UtcNow
+            UserDisplayName = user.UserDisplayName,
+            IssuedAt = issuedAt,
+            ExpiresAt = expiresAt,
+            RevokedAt = null,
+            IpAddress = ipAddress ?? String.Empty,
+            UserAgent = userAgent ?? String.Empty,
+            AppName = appName ?? String.Empty
         };
         context.Sessions.Add(session);
 
@@ -254,10 +264,16 @@ public class AuthService
             return SessionValidationResult.Invalid("Session not found");
         }
 
-        // セッションがログアウト済みかチェック
-        if (session.LogoutAt.HasValue)
+        // セッションが無効化済みかチェック
+        if (session.RevokedAt.HasValue)
         {
-            return SessionValidationResult.Invalid("Session has been logged out");
+            return SessionValidationResult.Invalid("Session has been revoked");
+        }
+
+        // セッションの有効期限チェック
+        if (session.ExpiresAt < this._dateTimeProvider.UtcNow)
+        {
+            return SessionValidationResult.Invalid("Session has expired");
         }
 
         // ユーザーIDの一致確認
@@ -291,12 +307,12 @@ public class AuthService
         using var context = this._contextFactory.CreateDbContext();
 
         var session = await context.Sessions.FindAsync(sessionId);
-        if (session == null || session.LogoutAt.HasValue)
+        if (session == null || session.RevokedAt.HasValue)
         {
             return false;
         }
 
-        session.LogoutAt = this._dateTimeProvider.UtcNow;
+        session.RevokedAt = this._dateTimeProvider.UtcNow;
 
         var user = await context.Users.FindAsync(session.UserId);
         if (user != null)
@@ -311,8 +327,9 @@ public class AuthService
     private async Task<User?> GetUserWithRelationsAsync(MedockDbContext context, Guid userId)
     {
         return await context.Users
-            .Include(u => u.UserRoles)
-            .ThenInclude(ur => ur.Role)
+            .Include(u => u.FacilityUsers)
+            .ThenInclude(fu => fu.FacilityUserRoles)
+            .ThenInclude(fur => fur.Role)
             .Include(u => u.FacilityUsers)
             .ThenInclude(fu => fu.Facility)
             .ThenInclude(f => f.Tenant)
@@ -363,37 +380,15 @@ public class AuthService
         return null;
     }
 
-    private string GetDisplayName(User user, Guid? facilityId)
-    {
-        // 施設ユーザーの表示名（指定施設がある場合）
-        if (facilityId.HasValue)
-        {
-            var facilityUser = user.FacilityUsers
-                .FirstOrDefault(fu => fu.FacilityId == facilityId && !fu.IsDeleted);
-            if (facilityUser != null && !String.IsNullOrEmpty(facilityUser.DisplayName))
-            {
-                return facilityUser.DisplayName;
-            }
-        }
-
-        // Fallback: 最初の施設ユーザーの表示名
-        var anyFacilityUser = user.FacilityUsers
-            .Where(fu => !fu.IsDeleted)
-            .OrderBy(fu => fu.FacilityUserSeq)
-            .FirstOrDefault();
-        if (anyFacilityUser != null && !String.IsNullOrEmpty(anyFacilityUser.DisplayName))
-        {
-            return anyFacilityUser.DisplayName;
-        }
-
-        return user.UserCode;
-    }
-
     private TokenGenerationParams CreateTokenParams(User user, Facility? facility, Guid? sessionId)
     {
-        var roles = user.UserRoles
-            .Where(ur => !ur.IsDeleted)
-            .Select(ur => ur.RoleCode)
+        // 施設に関連するロールを取得（施設が指定されていない場合は全施設のロール）
+        var roles = user.FacilityUsers
+            .Where(fu => !fu.IsDeleted && (facility == null || fu.FacilityId == facility.FacilityId))
+            .SelectMany(fu => fu.FacilityUserRoles)
+            .Where(fur => !fur.IsDeleted)
+            .Select(fur => fur.RoleCode)
+            .Distinct()
             .ToArray();
 
         // 施設管理者かチェック
@@ -405,7 +400,7 @@ public class AuthService
             UserId = user.UserId,
             UserCode = user.UserCode,
             Email = user.Email,
-            DisplayName = this.GetDisplayName(user, facility?.FacilityId),
+            UserDisplayName = user.UserDisplayName,
             TenantId = facility?.TenantId,
             TenantName = facility?.Tenant?.TenantName,
             FacilityId = facility?.FacilityId,
@@ -460,7 +455,7 @@ public class AuthResult
             UserId = tokenParams.UserId,
             UserCode = tokenParams.UserCode,
             Email = tokenParams.Email,
-            DisplayName = tokenParams.DisplayName,
+            DisplayName = tokenParams.UserDisplayName,
             TenantId = tokenParams.TenantId,
             TenantName = tokenParams.TenantName,
             FacilityId = tokenParams.FacilityId,

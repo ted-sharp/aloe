@@ -21,26 +21,34 @@ public class Session
 
     /// <summary>ユーザー表示名</summary>
     [Column("user_display_name")]
-    [MaxLength(100)]
     public string UserDisplayName { get; set; } = String.Empty;
 
-    /// <summary>クライアントアプリ名（バージョン含む）</summary>
-    [Column("client_app_name")]
+    /// <summary>発行日時</summary>
+    [Column("issued_at")]
+    public DateTime IssuedAt { get; set; }
+
+    /// <summary>有効期限</summary>
+    [Column("expires_at")]
+    public DateTime ExpiresAt { get; set; }
+
+    /// <summary>無効化日時</summary>
+    [Column("revoked_at")]
+    public DateTime? RevokedAt { get; set; }
+
+    /// <summary>IPアドレス</summary>
+    [Column("ip_address")]
+    [MaxLength(256)]
+    public string IpAddress { get; set; } = String.Empty;
+
+    /// <summary>ユーザーエージェント</summary>
+    [Column("user_agent")]
+    [MaxLength(512)]
+    public string UserAgent { get; set; } = String.Empty;
+
+    /// <summary>アプリ名</summary>
+    [Column("app_name")]
     [MaxLength(100)]
-    public string ClientAppName { get; set; } = String.Empty;
-
-    /// <summary>クライアントエンドポイント（IP, Port含む）</summary>
-    [Column("client_endpoint")]
-    [MaxLength(100)]
-    public string ClientEndpoint { get; set; } = String.Empty;
-
-    /// <summary>ログイン日時</summary>
-    [Column("login_at")]
-    public DateTime LoginAt { get; set; }
-
-    /// <summary>ログアウト日時</summary>
-    [Column("logout_at")]
-    public DateTime? LogoutAt { get; set; }
+    public string AppName { get; set; } = String.Empty;
 
     // Navigation Properties
     public virtual User User { get; set; } = null!;

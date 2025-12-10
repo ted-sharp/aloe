@@ -25,14 +25,16 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
-        var clientEndpoint = this.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var clientAppName = this.Request.Headers.UserAgent.ToString();
+        var ipAddress = this.HttpContext.Connection.RemoteIpAddress?.ToString() ?? String.Empty;
+        var userAgent = this.Request.Headers.UserAgent.ToString();
+        var appName = "MedockServer";
 
         var result = await this._authService.LoginAsync(
             request.UserCode,
             request.Password,
-            clientAppName,
-            clientEndpoint);
+            appName,
+            ipAddress,
+            userAgent);
 
         if (!result.IsSuccess)
         {

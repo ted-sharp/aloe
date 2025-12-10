@@ -54,9 +54,9 @@ public class JwtTokenService
         ];
 
         // 表示名
-        if (!String.IsNullOrEmpty(tokenParams.DisplayName))
+        if (!String.IsNullOrEmpty(tokenParams.UserDisplayName))
         {
-            claims.Add(new Claim("display_name", tokenParams.DisplayName));
+            claims.Add(new Claim("display_name", tokenParams.UserDisplayName));
         }
 
         // テナント情報（カスタムクレーム）
@@ -171,7 +171,7 @@ public class TokenGenerationParams
     public Guid UserId { get; init; }
     public string UserCode { get; init; } = "";
     public string Email { get; init; } = "";
-    public string DisplayName { get; init; } = "";
+    public string UserDisplayName { get; init; } = "";
     public Guid? TenantId { get; init; }
     public string? TenantName { get; init; }
     public Guid? FacilityId { get; init; }

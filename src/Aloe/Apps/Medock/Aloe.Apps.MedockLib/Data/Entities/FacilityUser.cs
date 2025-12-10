@@ -24,11 +24,6 @@ public class FacilityUser : IAuditableEntity
     [ForeignKey("User")]
     public Guid UserId { get; set; }
 
-    /// <summary>表示名</summary>
-    [Column("display_name")]
-    [MaxLength(100)]
-    public string DisplayName { get; set; } = String.Empty;
-
     /// <summary>表示順</summary>
     [Column("facility_user_seq")]
     public int FacilityUserSeq { get; set; }

@@ -45,7 +45,7 @@ public class UserContextService
             UserId = Guid.TryParse(principal.FindFirst("sub")?.Value, out var userId) ? userId : Guid.Empty,
             UserCode = principal.FindFirst("preferred_username")?.Value ?? "",
             Email = principal.FindFirst("email")?.Value ?? "",
-            DisplayName = principal.FindFirst("display_name")?.Value ?? "",
+            UserDisplayName = principal.FindFirst("user_display_name")?.Value ?? "",
             TenantId = Guid.TryParse(principal.FindFirst("tenant_id")?.Value, out var tenantId) ? tenantId : null,
             TenantName = principal.FindFirst("tenant_name")?.Value ?? "",
             FacilityId = Guid.TryParse(principal.FindFirst("facility_id")?.Value, out var facilityId) ? facilityId : null,
@@ -105,7 +105,7 @@ public record UserContextInfo
     public Guid UserId { get; init; }
     public string UserCode { get; init; } = "";
     public string Email { get; init; } = "";
-    public string DisplayName { get; init; } = "";
+    public string UserDisplayName { get; init; } = "";
     public Guid? TenantId { get; init; }
     public string TenantName { get; init; } = "";
     public Guid? FacilityId { get; init; }
@@ -117,7 +117,7 @@ public record UserContextInfo
     /// <summary>
     /// ユーザーのイニシャルを取得します（Avatar表示用）。
     /// </summary>
-    public string Initial => String.IsNullOrEmpty(this.DisplayName)
+    public string Initial => String.IsNullOrEmpty(this.UserDisplayName)
         ? (String.IsNullOrEmpty(this.UserCode) ? "?" : this.UserCode[..1].ToUpper())
-        : this.DisplayName[..1].ToUpper();
+        : this.UserDisplayName[..1].ToUpper();
 }

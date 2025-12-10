@@ -14,15 +14,10 @@ public class MedockDbContext : DbContext
     private Guid _currentSessionId;
     private readonly IDateTimeProvider? _dateTimeProvider;
 
-    public MedockDbContext(DbContextOptions<MedockDbContext> options)
+    public MedockDbContext(DbContextOptions<MedockDbContext> options, IServiceProvider? serviceProvider = null)
         : base(options)
     {
-    }
-
-    public MedockDbContext(DbContextOptions<MedockDbContext> options, IServiceProvider serviceProvider)
-        : base(options)
-    {
-        this._dateTimeProvider = serviceProvider.GetService<IDateTimeProvider>();
+        this._dateTimeProvider = serviceProvider?.GetService<IDateTimeProvider>();
     }
 
     // 認証系
@@ -83,10 +78,12 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.SessionId).HasColumnName("session_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserDisplayName).HasColumnName("user_display_name");
-            entity.Property(e => e.ClientAppName).HasColumnName("client_app_name");
-            entity.Property(e => e.ClientEndpoint).HasColumnName("client_endpoint");
-            entity.Property(e => e.LoginAt).HasColumnName("login_at");
-            entity.Property(e => e.LogoutAt).HasColumnName("logout_at");
+            entity.Property(e => e.IssuedAt).HasColumnName("issued_at");
+            entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
+            entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
+            entity.Property(e => e.IpAddress).HasColumnName("ip_address").HasMaxLength(256);
+            entity.Property(e => e.UserAgent).HasColumnName("user_agent").HasMaxLength(512);
+            entity.Property(e => e.AppName).HasColumnName("app_name").HasMaxLength(100);
 
             entity.HasOne(e => e.User)
                 .WithMany(u => u.Sessions)
@@ -148,10 +145,10 @@ public class MedockDbContext : DbContext
         // FacilityUserRole
         modelBuilder.Entity<FacilityUserRole>(entity =>
         {
-            entity.ToTable("user_roles");
+            entity.ToTable("facility_user_roles");
             entity.HasKey(e => e.FacilityUserRoleId);
             entity.Property(e => e.FacilityUserRoleId).HasColumnName("user_role_id");
-            entity.Property(e => e.FacilityUserId).HasColumnName("user_id");
+            entity.Property(e => e.FacilityUserId).HasColumnName("facility_user_id");
             entity.Property(e => e.RoleCode).HasColumnName("role_code").HasMaxLength(10);
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
             ConfigureAuditableEntity(entity);
@@ -226,7 +223,6 @@ public class MedockDbContext : DbContext
             entity.Property(e => e.FacilityUserId).HasColumnName("facility_user_id");
             entity.Property(e => e.FacilityId).HasColumnName("facility_id");
             entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.DisplayName).HasColumnName("display_name").HasMaxLength(200);
             entity.Property(e => e.FacilityUserSeq).HasColumnName("facility_user_seq");
             entity.Property(e => e.IsFacilityAdmin).HasColumnName("is_facility_admin");
             entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");

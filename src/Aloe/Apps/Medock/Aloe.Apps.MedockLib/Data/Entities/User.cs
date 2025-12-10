@@ -90,7 +90,6 @@ public class User : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual ICollection<FacilityUserRole> UserRoles { get; set; } = new List<FacilityUserRole>();
     public virtual ICollection<FacilityUser> FacilityUsers { get; set; } = new List<FacilityUser>();
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
 }

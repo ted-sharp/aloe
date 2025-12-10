@@ -24,6 +24,7 @@ internal static class UserSeeder
                 UserId = userId,
                 UserCode = "admin",
                 Email = "admin@example.com",
+                UserDisplayName = "システム管理者",
                 PasswordHash = hash,
                 PasswordSalt = salt,
                 IsSystemAdmin = true,
@@ -36,7 +37,7 @@ internal static class UserSeeder
                 UpdatedSessionId = Guid.Empty
             };
             context.Users.Add(user);
-            Console.WriteLine($"  [+] User: {user.UserCode} ({user.UserId})");
+            Console.WriteLine($"  [+] User: {user.UserDisplayName} - {user.UserCode} ({user.UserId})");
             Console.WriteLine($"      Email: {user.Email}");
             Console.WriteLine($"      Password: admin (hashed)");
             Console.WriteLine($"      IsSystemAdmin: {user.IsSystemAdmin}");
@@ -49,7 +50,6 @@ internal static class UserSeeder
                     FacilityUserId = Guid.NewGuid(),
                     FacilityId = existingFacilityForUser.FacilityId,
                     UserId = userId,
-                    DisplayName = "管理者",
                     FacilityUserSeq = 1,
                     IsFacilityAdmin = true,
                     IsDeleted = false,
@@ -61,7 +61,7 @@ internal static class UserSeeder
                     UpdatedSessionId = Guid.Empty
                 };
                 context.FacilityUsers.Add(facilityUser);
-                Console.WriteLine($"  [+] FacilityUser: {facilityUser.DisplayName} (FacilityId: {existingFacilityForUser.FacilityId})");
+                Console.WriteLine($"  [+] FacilityUser: UserId: {userId} (FacilityId: {existingFacilityForUser.FacilityId})");
             }
         }
         else
@@ -82,7 +82,6 @@ internal static class UserSeeder
                     FacilityUserId = Guid.NewGuid(),
                     FacilityId = firstFacility.FacilityId,
                     UserId = adminUser.UserId,
-                    DisplayName = "管理者",
                     FacilityUserSeq = 1,
                     IsFacilityAdmin = true,
                     IsDeleted = false,
@@ -94,7 +93,7 @@ internal static class UserSeeder
                     UpdatedSessionId = Guid.Empty
                 };
                 context.FacilityUsers.Add(facilityUser);
-                Console.WriteLine($"  [+] FacilityUser: {facilityUser.DisplayName} (FacilityId: {firstFacility.FacilityId})");
+                Console.WriteLine($"  [+] FacilityUser: UserId: {facilityUser.UserId} (FacilityId: {firstFacility.FacilityId})");
             }
         }
 

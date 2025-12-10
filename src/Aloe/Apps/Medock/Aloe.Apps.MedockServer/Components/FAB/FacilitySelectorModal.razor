@@ -1,5 +1,4 @@
 @* 施設選択モーダル *@
-@using Aloe.Apps.MedockLib.Services
 
 <!-- モーダルバックドロップ -->
 <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[2000] flex items-center justify-center p-4"
@@ -76,44 +75,3 @@
         </div>
     </div>
 </div>
-
-@code {
-    [Parameter]
-    public List<FacilityInfo>? Facilities { get; set; }
-
-    [Parameter]
-    public Guid? CurrentFacilityId { get; set; }
-
-    [Parameter]
-    public EventCallback<Guid> OnSelect { get; set; }
-
-    [Parameter]
-    public EventCallback OnClose { get; set; }
-
-    private Dictionary<string, List<FacilityInfo>>? GroupedFacilities =>
-        Facilities?.GroupBy(f => f.TenantName)
-            .OrderBy(g => g.Key)
-            .ToDictionary(g => g.Key, g => g.OrderBy(f => f.FacilityName).ToList());
-
-    private async Task SelectFacility(Guid facilityId)
-    {
-        if (facilityId != CurrentFacilityId)
-        {
-            await OnSelect.InvokeAsync(facilityId);
-        }
-        else
-        {
-            await Close();
-        }
-    }
-
-    private async Task Close()
-    {
-        await OnClose.InvokeAsync();
-    }
-
-    private async Task HandleBackdropClick()
-    {
-        await Close();
-    }
-}

@@ -13,7 +13,7 @@ internal static class EquipmentAppointmentStatsSeeder
         if (!existingEquipmentStats)
         {
             Console.WriteLine("[INFO] Creating equipment appointment stats seed data...");
-                var equipments = await context.Equipments.Where(e => !e.IsDeleted).ToListAsync();
+            var equipments = await context.Equipments.Where(e => !e.IsDeleted).ToListAsync();
             if (equipments.Any())
             {
                 var random = new Random(42);
