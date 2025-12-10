@@ -28,7 +28,8 @@ export const CONFIG = {
         grayout: 'rgba(128, 128, 128, 0.5)'
     },
     font: {
-        family: '"M PLUS 1 Code", system-ui, -apple-system, sans-serif',
+        family: '"M PLUS Rounded 1c", system-ui, -apple-system, sans-serif',
+        numberFamily: '"Playwrite Norge", cursive',
         sizeSmall: 10,
         sizeMedium: 12,
         sizeLarge: 14

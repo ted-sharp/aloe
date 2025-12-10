@@ -140,7 +140,7 @@ export function renderWeekView() {
             width: dayWidth,
             text: `${date.getMonth() + 1}/${date.getDate()}`,
             fontSize: CONFIG.font.sizeLarge,
-            fontFamily: CONFIG.font.family,
+            fontFamily: CONFIG.font.numberFamily,
             fontStyle: isToday(date) ? 'bold' : 'normal',
             fill: dayOfWeek === 0 ? CONFIG.colors.weekend.sun :
                 dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151',
@@ -160,7 +160,7 @@ export function renderWeekView() {
             y: y + 5,
             text: `${String(hour).padStart(2, '0')}:00`,
             fontSize: CONFIG.font.sizeMedium,
-            fontFamily: CONFIG.font.family,
+            fontFamily: CONFIG.font.numberFamily,
             fill: '#6b7280'
         });
         layers.grid.add(timeLabel);

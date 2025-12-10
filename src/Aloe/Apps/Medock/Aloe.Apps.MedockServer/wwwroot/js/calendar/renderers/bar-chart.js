@@ -268,7 +268,7 @@ function renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateSt
             width: cellWidth,
             text: `${vacancyPercent}%`,
             fontSize: textFontSize,
-            fontFamily: CONFIG.font.family,
+            fontFamily: CONFIG.font.numberFamily,
             fill: isDateGrayed ? '#9ca3af' : '#6b7280',
             align: 'center',
             opacity: opacity
@@ -351,7 +351,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             width: cellWidth - 2,
             text: String(dayNumber),
             fontSize: CONFIG.font.sizeSmall,
-            fontFamily: CONFIG.font.family,
+            fontFamily: CONFIG.font.numberFamily,
             fill: textColor,
             align: 'center',
             wrap: 'none'
