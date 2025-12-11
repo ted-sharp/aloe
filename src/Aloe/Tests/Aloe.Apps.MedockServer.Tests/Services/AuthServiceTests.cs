@@ -13,7 +13,6 @@ public class AuthServiceTests : IDisposable
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
     private readonly IDateTimeProvider _dateTimeProvider;
-    private readonly JwtTokenService _jwtTokenService;
     private readonly AuthService _authService;
 
     public AuthServiceTests()
@@ -33,19 +32,15 @@ public class AuthServiceTests : IDisposable
         // DateTimeProvider
         this._dateTimeProvider = new JstDateTimeProvider();
 
-        // JwtTokenService
-        var jwtSettings = new JwtSettings
+        // CookieSettings
+        var cookieSettings = new CookieSettings
         {
-            Issuer = "TestIssuer",
-            Audience = "TestAudience",
-            SecretKey = "ThisIsAVeryLongSecretKeyForTestingPurposesOnly12345",
-            AccessTokenExpirationMinutes = 60,
-            RefreshTokenExpirationDays = 7
+            ExpireTimeSpanMinutes = 15,
+            SlidingExpiration = true
         };
-        this._jwtTokenService = new JwtTokenService(Options.Create(jwtSettings), this._dateTimeProvider);
 
         // AuthService
-        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._jwtTokenService, this._dateTimeProvider, Options.Create(jwtSettings));
+        this._authService = new AuthService(this._contextFactory, this._passwordHasher, this._dateTimeProvider, Options.Create(cookieSettings));
     }
 
     public void Dispose()
@@ -124,12 +119,11 @@ public class AuthServiceTests : IDisposable
 
         // Assert
         result.IsSuccess.Should().BeTrue();
-        result.AccessToken.Should().NotBeNullOrEmpty();
-        result.RefreshToken.Should().NotBeNullOrEmpty();
         result.UserId.Should().Be(user.UserId);
         result.UserCode.Should().Be("admin");
         result.FacilityId.Should().Be(facility.FacilityId);
         result.SessionId.Should().NotBeNull();
+        result.RefreshTokenExpiration.Should().NotBeNull();
     }
 
     [Fact]
@@ -144,7 +138,6 @@ public class AuthServiceTests : IDisposable
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorMessage.Should().Be("Invalid credentials");
-        result.AccessToken.Should().BeNull();
     }
 
     [Fact]
@@ -159,7 +152,6 @@ public class AuthServiceTests : IDisposable
         // Assert
         result.IsSuccess.Should().BeFalse();
         result.ErrorMessage.Should().Be("Invalid credentials");
-        result.AccessToken.Should().BeNull();
     }
 
     [Fact]

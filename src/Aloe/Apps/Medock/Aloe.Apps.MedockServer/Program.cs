@@ -4,11 +4,13 @@ using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components;
 using Aloe.Apps.MedockServer.Services;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 
 // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -22,8 +24,22 @@ builder.Services.AddRazorComponents()
 // Add Controllers
 builder.Services.AddControllers();
 
-// Configure JWT Settings
-builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection(JwtSettings.SectionName));
+// Add HttpClient for server-side components to call API
+// Blazor Serverでサーバー側コンポーネントから同じサーバーのAPIを呼び出す場合の設定
+builder.Services.AddHttpClient();
+builder.Services.AddScoped(sp =>
+{
+    var httpClientFactory = sp.GetRequiredService<IHttpClientFactory>();
+    var httpClient = httpClientFactory.CreateClient();
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+
+    httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
+
+    return httpClient;
+});
+
+// Configure Cookie Settings
+builder.Services.Configure<CookieSettings>(builder.Configuration.GetSection(CookieSettings.SectionName));
 
 // Add DbContext Factory (Blazor Server では各操作で短命なコンテキストを生成)
 builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
@@ -45,7 +61,6 @@ builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
-builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
@@ -55,30 +70,24 @@ builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<ProtectedLocalStorage>();
 
-// Configure JWT Authentication
-var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>();
-if (jwtSettings != null)
-{
-    builder.Services.AddAuthentication(options =>
+// Configure Cookie Authentication
+var cookieSettings = builder.Configuration.GetSection(CookieSettings.SectionName).Get<CookieSettings>() ?? new CookieSettings();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
     {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    })
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtSettings.Issuer,
-            ValidAudience = jwtSettings.Audience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
-            ClockSkew = TimeSpan.Zero
-        };
+        options.Cookie.Name = "MedockAuth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+            ? CookieSecurePolicy.SameAsRequest
+            : CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(cookieSettings.ExpireTimeSpanMinutes ?? 15);
+        options.SlidingExpiration = cookieSettings.SlidingExpiration ?? true;
+        options.LoginPath = "/login";
+        options.LogoutPath = "/api/auth/logout";
+        options.AccessDeniedPath = "/login";
     });
-}
 
 builder.Services.AddAuthorization();
 

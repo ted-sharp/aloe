@@ -18,7 +18,7 @@ public interface IUserContextService
     Guid? CurrentSessionId { get; }
 
     /// <summary>
-    /// JWTクレームからユーザー情報を初期化します。
+    /// 認証クレームからユーザー情報を初期化します。
     /// </summary>
     void InitializeFromClaims(ClaimsPrincipal principal);
 

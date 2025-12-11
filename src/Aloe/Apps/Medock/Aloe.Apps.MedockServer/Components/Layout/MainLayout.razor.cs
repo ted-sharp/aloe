@@ -55,18 +55,11 @@ public partial class MainLayout : LayoutComponentBase
 
         try
         {
-            // 施設切り替えAPIを呼び出し
+            // 施設切り替えAPIを呼び出し（クッキーが自動的に更新される）
             var result = await this.AuthService.SwitchFacilityAsync(this.userContext.UserId, facilityId);
-            if (result.IsSuccess && !String.IsNullOrEmpty(result.AccessToken))
+            if (result.IsSuccess)
             {
-                // 新しいトークンをLocalStorageに保存
-                await this.LocalStorage.SetAsync("access_token", result.AccessToken);
-                if (result.RefreshToken != null)
-                {
-                    await this.LocalStorage.SetAsync("refresh_token", result.RefreshToken);
-                }
-
-                // ページをリロードして新しいトークンで認証
+                // ページをリロードして新しい認証状態を反映
                 this.NavigationManager.NavigateTo(this.NavigationManager.Uri, forceLoad: true);
             }
         }
@@ -80,37 +73,32 @@ public partial class MainLayout : LayoutComponentBase
     {
         try
         {
-            // セッションIDを取得してログアウトAPIを呼び出す
-            var sessionIdResult = await this.LocalStorage.GetAsync<string>("session_id");
-            if (sessionIdResult.Success && !String.IsNullOrEmpty(sessionIdResult.Value))
+            // ログアウトAPIを呼び出す（クッキーが自動的に削除される）
+            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
+            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
             {
-                if (Guid.TryParse(sessionIdResult.Value, out var sessionId))
-                {
-                    await this.AuthService.LogoutAsync(sessionId);
-                }
+                await this.AuthService.LogoutAsync(sessionId);
             }
         }
         catch
         {
-            // ログアウトAPIの失敗は無視（ローカルデータはクリアする）
+            // ログアウトAPIの失敗は無視
         }
         finally
         {
-            // ローカルストレージをクリア
+            // ローカルストレージをクリア（remember_user_codeとkeep_sessionは残す）
             try
             {
-                await this.LocalStorage.DeleteAsync("session_id");
                 await this.LocalStorage.DeleteAsync("keep_session");
-                await this.LocalStorage.DeleteAsync("access_token");
-                await this.LocalStorage.DeleteAsync("remember_user_code");
             }
             catch
             {
                 // ストレージクリア失敗も無視
             }
 
-            // ログインページにリダイレクト
-            this.NavigationManager.NavigateTo("/login", forceLoad: true);
+            // ログアウトAPIエンドポイントを呼び出してクッキーを削除
+            this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
         }
     }
 }

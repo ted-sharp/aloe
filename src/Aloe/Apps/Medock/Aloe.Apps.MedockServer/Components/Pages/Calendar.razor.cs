@@ -4,7 +4,6 @@ using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using System.Linq;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
@@ -28,9 +27,6 @@ public partial class Calendar : ComponentBase
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
-
-    [Inject]
-    private ProtectedLocalStorage LocalStorage { get; set; } = default!;
 
     private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     private CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
@@ -118,7 +114,7 @@ public partial class Calendar : ComponentBase
 
             if (user.Identity?.IsAuthenticated == true)
             {
-                // 基本情報をJWTクレームから取得
+                // 基本情報をクレームから取得
                 this.UserDisplayName = user.FindFirst("user_display_name")?.Value
                     ?? user.FindFirst("preferred_username")?.Value
                     ?? user.Identity.Name
@@ -159,13 +155,12 @@ public partial class Calendar : ComponentBase
     {
         try
         {
-            var sessionIdResult = await this.LocalStorage.GetAsync<string>("session_id");
-            if (sessionIdResult.Success && !String.IsNullOrEmpty(sessionIdResult.Value))
+            // セッションIDをクレームから取得してログアウトAPIを呼び出す
+            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
+            var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
+            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
             {
-                if (Guid.TryParse(sessionIdResult.Value, out var sessionId))
-                {
-                    await this.AuthService.LogoutAsync(sessionId);
-                }
+                await this.AuthService.LogoutAsync(sessionId);
             }
         }
         catch
@@ -174,19 +169,8 @@ public partial class Calendar : ComponentBase
         }
         finally
         {
-            try
-            {
-                await this.LocalStorage.DeleteAsync("session_id");
-                await this.LocalStorage.DeleteAsync("keep_session");
-                await this.LocalStorage.DeleteAsync("access_token");
-                await this.LocalStorage.DeleteAsync("remember_user_code");
-            }
-            catch
-            {
-                // ストレージクリア失敗も無視
-            }
-
-            this.NavigationManager.NavigateTo("/login", forceLoad: true);
+            // ログアウトAPIエンドポイントを呼び出してクッキーを削除
+            this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
         }
     }
 
@@ -205,10 +189,7 @@ public partial class Calendar : ComponentBase
             var result = await this.AuthService.SwitchFacilityAsync(userId, facilityId);
             if (result.IsSuccess)
             {
-                // 新しいトークンを保存
-                await this.LocalStorage.SetAsync("access_token", result.AccessToken!);
-
-                // ページをリロードして新しいトークンを反映
+                // ページをリロードして新しい認証状態を反映
                 this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
             }
         }

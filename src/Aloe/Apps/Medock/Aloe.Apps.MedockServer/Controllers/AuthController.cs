@@ -1,4 +1,7 @@
+using System.Security.Claims;
 using Aloe.Apps.MedockLib.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -41,11 +44,62 @@ public class AuthController : ControllerBase
             return this.Unauthorized(new { message = result.ErrorMessage });
         }
 
+        // クレームを作成
+        var claims = new List<Claim>
+        {
+            new Claim("sub", result.UserId!.Value.ToString()),
+            new Claim("user_code", result.UserCode!),
+            new Claim("email", result.Email!),
+            new Claim("preferred_username", result.UserCode!),
+            new Claim(ClaimTypes.Name, result.UserCode!),
+            new Claim(ClaimTypes.Email, result.Email!),
+            new Claim("user_display_name", result.DisplayName ?? ""),
+            new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
+            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
+        };
+
+        if (result.SessionId.HasValue)
+        {
+            claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
+        }
+
+        if (result.TenantId.HasValue)
+        {
+            claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
+            claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
+        }
+
+        if (result.FacilityId.HasValue)
+        {
+            claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
+            claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
+        }
+
+        if (result.Roles != null)
+        {
+            foreach (var role in result.Roles)
+            {
+                claims.Add(new Claim("roles", role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        // KeepSessionフラグに基づいて認証プロパティを設定
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = request.KeepSession,
+            ExpiresUtc = request.KeepSession
+                ? result.RefreshTokenExpiration?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(30)
+                : null // KeepSessionがfalseの場合はセッションクッキー（ブラウザを閉じると無効）
+        };
+
+        await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+
         return this.Ok(new LoginResponse
         {
-            AccessToken = result.AccessToken!,
-            RefreshToken = result.RefreshToken!,
-            RefreshTokenExpiration = result.RefreshTokenExpiration!.Value,
             SessionId = result.SessionId!.Value,
             UserId = result.UserId!.Value,
             UserCode = result.UserCode!,
@@ -67,17 +121,66 @@ public class AuthController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
     {
-        var result = await this._authService.RefreshTokenAsync(request.UserId, request.RefreshToken, request.FacilityId);
+        var result = await this._authService.RefreshTokenAsync(request.UserId, request.FacilityId);
 
         if (!result.IsSuccess)
         {
             return this.Unauthorized(new { message = result.ErrorMessage });
         }
 
+        // クレームを作成
+        var claims = new List<Claim>
+        {
+            new Claim("sub", request.UserId.ToString()),
+            new Claim("user_code", result.UserCode ?? ""),
+            new Claim("email", result.Email ?? ""),
+            new Claim("preferred_username", result.UserCode ?? ""),
+            new Claim(ClaimTypes.Name, result.UserCode ?? ""),
+            new Claim(ClaimTypes.Email, result.Email ?? ""),
+            new Claim("user_display_name", result.DisplayName ?? ""),
+            new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
+            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
+        };
+
+        if (result.SessionId.HasValue)
+        {
+            claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
+        }
+
+        if (result.TenantId.HasValue)
+        {
+            claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
+            claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
+        }
+
+        if (result.FacilityId.HasValue)
+        {
+            claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
+            claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
+        }
+
+        if (result.Roles != null)
+        {
+            foreach (var role in result.Roles)
+            {
+                claims.Add(new Claim("roles", role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = result.RefreshTokenExpiration?.ToUniversalTime()
+        };
+
+        await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+
         return this.Ok(new RefreshResponse
         {
-            AccessToken = result.AccessToken!,
-            RefreshToken = result.RefreshToken!,
             RefreshTokenExpiration = result.RefreshTokenExpiration!.Value
         });
     }
@@ -102,10 +205,46 @@ public class AuthController : ControllerBase
             return this.BadRequest(new { message = result.ErrorMessage });
         }
 
+        // 既存のクレームを取得して更新
+        var existingClaims = this.User.Claims.ToList();
+        var claims = new List<Claim>();
+
+        // 既存のクレームをコピー（facility_idとfacility_name以外）
+        foreach (var claim in existingClaims)
+        {
+            if (claim.Type != "facility_id" && claim.Type != "facility_name" &&
+                claim.Type != "tenant_id" && claim.Type != "tenant_name")
+            {
+                claims.Add(claim);
+            }
+        }
+
+        // 施設情報を更新
+        if (result.TenantId.HasValue)
+        {
+            claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
+            claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
+        }
+
+        if (result.FacilityId.HasValue)
+        {
+            claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
+            claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
+        }
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        var authProperties = new AuthenticationProperties
+        {
+            IsPersistent = true,
+            ExpiresUtc = result.RefreshTokenExpiration?.ToUniversalTime()
+        };
+
+        await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
+
         return this.Ok(new SwitchFacilityResponse
         {
-            AccessToken = result.AccessToken!,
-            RefreshToken = result.RefreshToken!,
             RefreshTokenExpiration = result.RefreshTokenExpiration!.Value,
             FacilityId = result.FacilityId!.Value,
             FacilityName = result.FacilityName!,
@@ -146,14 +285,29 @@ public class AuthController : ControllerBase
     /// ログアウト
     /// </summary>
     [HttpPost("logout")]
+    [HttpGet("logout")]
     [Authorize]
-    public async Task<IActionResult> Logout([FromBody] LogoutRequest request)
+    public async Task<IActionResult> Logout([FromBody] LogoutRequest? request = null)
     {
-        var success = await this._authService.LogoutAsync(request.SessionId);
-
-        if (!success)
+        // セッションIDをクレームから取得（リクエストボディがなくてもクレームから取得可能）
+        var sessionIdClaim = this.User.FindFirst("session_id")?.Value;
+        if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
         {
-            return this.BadRequest(new { message = "Logout failed" });
+            await this._authService.LogoutAsync(sessionId);
+        }
+        else if (request != null)
+        {
+            // リクエストボディからセッションIDを取得（フォールバック）
+            await this._authService.LogoutAsync(request.SessionId);
+        }
+
+        // クッキーを削除
+        await this.HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+        // GETリクエストの場合はログインページにリダイレクト
+        if (this.HttpContext.Request.Method == "GET")
+        {
+            return this.Redirect("/login");
         }
 
         return this.Ok(new { message = "Logged out successfully" });
@@ -161,17 +315,14 @@ public class AuthController : ControllerBase
 }
 
 // Request DTOs
-public record LoginRequest(string UserCode, string Password);
-public record RefreshRequest(Guid UserId, string RefreshToken, Guid? FacilityId = null);
+public record LoginRequest(string UserCode, string Password, bool KeepSession = false);
+public record RefreshRequest(Guid UserId, Guid? FacilityId = null);
 public record SwitchFacilityRequest(Guid FacilityId);
 public record LogoutRequest(Guid SessionId);
 
 // Response DTOs
 public record LoginResponse
 {
-    public required string AccessToken { get; init; }
-    public required string RefreshToken { get; init; }
-    public required DateTime RefreshTokenExpiration { get; init; }
     public required Guid SessionId { get; init; }
     public required Guid UserId { get; init; }
     public required string UserCode { get; init; }
@@ -187,15 +338,11 @@ public record LoginResponse
 
 public record RefreshResponse
 {
-    public required string AccessToken { get; init; }
-    public required string RefreshToken { get; init; }
     public required DateTime RefreshTokenExpiration { get; init; }
 }
 
 public record SwitchFacilityResponse
 {
-    public required string AccessToken { get; init; }
-    public required string RefreshToken { get; init; }
     public required DateTime RefreshTokenExpiration { get; init; }
     public required Guid FacilityId { get; init; }
     public required string FacilityName { get; init; }

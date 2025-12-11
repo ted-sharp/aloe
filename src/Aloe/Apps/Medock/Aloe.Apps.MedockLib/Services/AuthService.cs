@@ -12,22 +12,19 @@ public class AuthService : IAuthService
 {
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
-    private readonly IJwtTokenService _jwtTokenService;
     private readonly IDateTimeProvider _dateTimeProvider;
-    private readonly JwtSettings _jwtSettings;
+    private readonly CookieSettings _cookieSettings;
 
     public AuthService(
         IDbContextFactory<MedockDbContext> contextFactory,
         PasswordHasher passwordHasher,
-        IJwtTokenService jwtTokenService,
         IDateTimeProvider dateTimeProvider,
-        IOptions<JwtSettings> jwtSettings)
+        IOptions<CookieSettings> cookieSettings)
     {
         this._contextFactory = contextFactory;
         this._passwordHasher = passwordHasher;
-        this._jwtTokenService = jwtTokenService;
         this._dateTimeProvider = dateTimeProvider;
-        this._jwtSettings = jwtSettings.Value;
+        this._cookieSettings = cookieSettings.Value;
     }
 
     /// <summary>
@@ -85,7 +82,9 @@ public class AuthService : IAuthService
 
         // セッション作成
         var issuedAt = this._dateTimeProvider.UtcNow;
-        var expiresAt = issuedAt.AddMinutes(this._jwtSettings.AccessTokenExpirationMinutes);
+        var expireMinutes = this._cookieSettings.ExpireTimeSpanMinutes ?? 15;
+        var expiresAt = issuedAt.AddMinutes(expireMinutes);
+        var refreshTokenExpiration = issuedAt.AddDays(7); // デフォルト7日間
 
         var session = new Session
         {
@@ -103,33 +102,49 @@ public class AuthService : IAuthService
 
         await context.SaveChangesAsync();
 
-        // トークン生成パラメータ作成
-        var tokenParams = this.CreateTokenParams(user, defaultFacility, session.SessionId);
-        var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
-        var refreshToken = this._jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
+        // 施設に関連するロールを取得
+        var roles = user.FacilityUsers
+            .Where(fu => !fu.IsDeleted && (defaultFacility == null || fu.FacilityId == defaultFacility.FacilityId))
+            .SelectMany(fu => fu.FacilityUserRoles)
+            .Where(fur => !fur.IsDeleted)
+            .Select(fur => fur.RoleCode)
+            .Distinct()
+            .ToArray();
+
+        // 施設管理者かチェック
+        var isFacilityAdmin = defaultFacility != null && user.FacilityUsers
+            .Any(fu => fu.FacilityId == defaultFacility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
 
         return AuthResult.Success(
-            accessToken,
-            refreshToken,
             refreshTokenExpiration,
             session.SessionId,
-            tokenParams);
+            user.UserId,
+            user.UserCode,
+            user.Email,
+            user.UserDisplayName,
+            defaultFacility?.TenantId,
+            defaultFacility?.Tenant?.TenantName,
+            defaultFacility?.FacilityId,
+            defaultFacility != null
+                ? (!String.IsNullOrEmpty(defaultFacility.FacilityNameDisplay) ? defaultFacility.FacilityNameDisplay : defaultFacility.FacilityName)
+                : null,
+            user.IsSystemAdmin,
+            isFacilityAdmin,
+            roles);
     }
 
     /// <summary>
-    /// リフレッシュトークンを使用してアクセストークンを更新します。
+    /// クッキー認証を更新します。
     /// </summary>
-    public async Task<AuthResult> RefreshTokenAsync(Guid userId, string refreshToken, Guid? facilityId = null)
+    public async Task<AuthResult> RefreshTokenAsync(Guid userId, Guid? facilityId = null)
     {
         using var context = this._contextFactory.CreateDbContext();
 
-        // TODO: リフレッシュトークンの検証ロジックを実装
         var user = await this.GetUserWithRelationsAsync(context, userId);
 
         if (user == null)
         {
-            return AuthResult.Failed("Invalid refresh token");
+            return AuthResult.Failed("User not found");
         }
 
         // 施設IDが指定されていれば使用、なければデフォルト
@@ -140,19 +155,37 @@ public class AuthService : IAuthService
         }
         facility ??= this.DetermineDefaultFacility(context, user);
 
-        // セッションIDは既存のトークンから取得する必要があるが、ここでは null を設定
-        // 実際の実装では、リフレッシュトークンからセッションIDを取得する必要がある
-        var tokenParams = this.CreateTokenParams(user, facility, null);
-        var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
-        var newRefreshToken = this._jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
+        // 施設に関連するロールを取得
+        var roles = user.FacilityUsers
+            .Where(fu => !fu.IsDeleted && (facility == null || fu.FacilityId == facility.FacilityId))
+            .SelectMany(fu => fu.FacilityUserRoles)
+            .Where(fur => !fur.IsDeleted)
+            .Select(fur => fur.RoleCode)
+            .Distinct()
+            .ToArray();
+
+        // 施設管理者かチェック
+        var isFacilityAdmin = facility != null && user.FacilityUsers
+            .Any(fu => fu.FacilityId == facility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
+
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7); // デフォルト7日間
 
         return AuthResult.Success(
-            accessToken,
-            newRefreshToken,
             refreshTokenExpiration,
             null,
-            tokenParams);
+            user.UserId,
+            user.UserCode,
+            user.Email,
+            user.UserDisplayName,
+            facility?.TenantId,
+            facility?.Tenant?.TenantName,
+            facility?.FacilityId,
+            facility != null
+                ? (!String.IsNullOrEmpty(facility.FacilityNameDisplay) ? facility.FacilityNameDisplay : facility.FacilityName)
+                : null,
+            user.IsSystemAdmin,
+            isFacilityAdmin,
+            roles);
     }
 
     /// <summary>
@@ -175,18 +208,35 @@ public class AuthService : IAuthService
             return AuthResult.Failed("Access denied to facility");
         }
 
-        // セッションIDは既存のトークンから取得する必要があるが、ここでは null を設定
-        var tokenParams = this.CreateTokenParams(user, facility, null);
-        var accessToken = this._jwtTokenService.GenerateAccessToken(tokenParams);
-        var refreshToken = this._jwtTokenService.GenerateRefreshToken();
-        var refreshTokenExpiration = this._jwtTokenService.GetRefreshTokenExpiration();
+        // 施設に関連するロールを取得
+        var roles = user.FacilityUsers
+            .Where(fu => !fu.IsDeleted && fu.FacilityId == facility.FacilityId)
+            .SelectMany(fu => fu.FacilityUserRoles)
+            .Where(fur => !fur.IsDeleted)
+            .Select(fur => fur.RoleCode)
+            .Distinct()
+            .ToArray();
+
+        // 施設管理者かチェック
+        var isFacilityAdmin = user.FacilityUsers
+            .Any(fu => fu.FacilityId == facility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
+
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7); // デフォルト7日間
 
         return AuthResult.Success(
-            accessToken,
-            refreshToken,
             refreshTokenExpiration,
             null,
-            tokenParams);
+            user.UserId,
+            user.UserCode,
+            user.Email,
+            user.UserDisplayName,
+            facility.TenantId,
+            facility.Tenant?.TenantName,
+            facility.FacilityId,
+            !String.IsNullOrEmpty(facility.FacilityNameDisplay) ? facility.FacilityNameDisplay : facility.FacilityName,
+            user.IsSystemAdmin,
+            isFacilityAdmin,
+            roles);
     }
 
     /// <summary>
@@ -243,19 +293,11 @@ public class AuthService : IAuthService
     /// <summary>
     /// セッションを検証します。
     /// </summary>
-    /// <param name="accessToken">アクセストークン</param>
     /// <param name="sessionId">セッションID</param>
     /// <returns>検証結果</returns>
-    public async Task<SessionValidationResult> ValidateSessionAsync(string accessToken, Guid sessionId)
+    public async Task<SessionValidationResult> ValidateSessionAsync(Guid sessionId)
     {
         using var context = this._contextFactory.CreateDbContext();
-
-        // JWTトークンの検証
-        var principal = this._jwtTokenService.ValidateToken(accessToken);
-        if (principal == null)
-        {
-            return SessionValidationResult.Invalid("Invalid access token");
-        }
 
         // セッションの存在確認
         var session = await context.Sessions.FindAsync(sessionId);
@@ -274,13 +316,6 @@ public class AuthService : IAuthService
         if (session.ExpiresAt < this._dateTimeProvider.UtcNow)
         {
             return SessionValidationResult.Invalid("Session has expired");
-        }
-
-        // ユーザーIDの一致確認
-        var userIdClaim = principal.FindFirst("sub")?.Value;
-        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId) || userId != session.UserId)
-        {
-            return SessionValidationResult.Invalid("User ID mismatch");
         }
 
         // ユーザーの存在確認
@@ -379,40 +414,6 @@ public class AuthService : IAuthService
 
         return null;
     }
-
-    private TokenGenerationParams CreateTokenParams(User user, Facility? facility, Guid? sessionId)
-    {
-        // 施設に関連するロールを取得（施設が指定されていない場合は全施設のロール）
-        var roles = user.FacilityUsers
-            .Where(fu => !fu.IsDeleted && (facility == null || fu.FacilityId == facility.FacilityId))
-            .SelectMany(fu => fu.FacilityUserRoles)
-            .Where(fur => !fur.IsDeleted)
-            .Select(fur => fur.RoleCode)
-            .Distinct()
-            .ToArray();
-
-        // 施設管理者かチェック
-        var isFacilityAdmin = facility != null && user.FacilityUsers
-            .Any(fu => fu.FacilityId == facility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
-
-        return new TokenGenerationParams
-        {
-            UserId = user.UserId,
-            UserCode = user.UserCode,
-            Email = user.Email,
-            UserDisplayName = user.UserDisplayName,
-            TenantId = facility?.TenantId,
-            TenantName = facility?.Tenant?.TenantName,
-            FacilityId = facility?.FacilityId,
-            FacilityName = facility != null
-                ? (!String.IsNullOrEmpty(facility.FacilityNameDisplay) ? facility.FacilityNameDisplay : facility.FacilityName)
-                : null,
-            IsSystemAdmin = user.IsSystemAdmin,
-            IsFacilityAdmin = isFacilityAdmin,
-            Roles = roles,
-            SessionId = sessionId
-        };
-    }
 }
 
 /// <summary>
@@ -422,8 +423,6 @@ public class AuthResult
 {
     public bool IsSuccess { get; init; }
     public string? ErrorMessage { get; init; }
-    public string? AccessToken { get; init; }
-    public string? RefreshToken { get; init; }
     public DateTime? RefreshTokenExpiration { get; init; }
     public Guid? SessionId { get; init; }
     public Guid? UserId { get; init; }
@@ -439,30 +438,36 @@ public class AuthResult
     public string[]? Roles { get; init; }
 
     public static AuthResult Success(
-        string accessToken,
-        string refreshToken,
         DateTime refreshTokenExpiration,
         Guid? sessionId,
-        TokenGenerationParams tokenParams)
+        Guid userId,
+        string userCode,
+        string email,
+        string userDisplayName,
+        Guid? tenantId,
+        string? tenantName,
+        Guid? facilityId,
+        string? facilityName,
+        bool isSystemAdmin,
+        bool isFacilityAdmin,
+        string[] roles)
     {
         return new AuthResult
         {
             IsSuccess = true,
-            AccessToken = accessToken,
-            RefreshToken = refreshToken,
             RefreshTokenExpiration = refreshTokenExpiration,
             SessionId = sessionId,
-            UserId = tokenParams.UserId,
-            UserCode = tokenParams.UserCode,
-            Email = tokenParams.Email,
-            DisplayName = tokenParams.UserDisplayName,
-            TenantId = tokenParams.TenantId,
-            TenantName = tokenParams.TenantName,
-            FacilityId = tokenParams.FacilityId,
-            FacilityName = tokenParams.FacilityName,
-            IsSystemAdmin = tokenParams.IsSystemAdmin,
-            IsFacilityAdmin = tokenParams.IsFacilityAdmin,
-            Roles = tokenParams.Roles?.ToArray()
+            UserId = userId,
+            UserCode = userCode,
+            Email = email,
+            DisplayName = userDisplayName,
+            TenantId = tenantId,
+            TenantName = tenantName ?? "",
+            FacilityId = facilityId,
+            FacilityName = facilityName ?? "",
+            IsSystemAdmin = isSystemAdmin,
+            IsFacilityAdmin = isFacilityAdmin,
+            Roles = roles
         };
     }
 

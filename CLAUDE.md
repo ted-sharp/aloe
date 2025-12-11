@@ -10,7 +10,7 @@ Aloe Medock is a medical reservation management system built with Blazor Server,
 - .NET 10 / C# 14
 - Blazor Server (interactive server-side rendering)
 - PostgreSQL 18+ with EF Core
-- JWT authentication (custom OIDC-compliant)
+- Cookie authentication
 - Tailwind CSS + daisyUI (via CDN, no Node.js)
 - Canvas-based calendar rendering (D3.js + Konva.js planned)
 
@@ -51,8 +51,7 @@ src/Aloe/
 - Soft deletes via `is_deleted` flag
 
 **Authentication:**
-- JWT bearer tokens with custom implementation
-- OIDC-compliant token structure
+- Cookie authentication with ASP.NET Core
 - Support for Issue, Refresh, Revoke operations
 - Session tracking with `sessions` table
 
@@ -138,10 +137,10 @@ entity.Property(e => e.UserCode).HasColumnName("user_code").HasMaxLength(100);
 
 ### Authentication Flow
 
-1. Login via `AuthService.LoginAsync()` returns JWT tokens
+1. Login via `AuthService.LoginAsync()` creates a session
 2. Session created in `sessions` table with `session_id`
-3. Access token contains: `user_id`, `user_code`, `email`, `tenant_id`, `roles`
-4. Refresh token stored separately for token renewal
+3. Cookie authentication with claims: `user_id`, `user_code`, `email`, `tenant_id`, `roles`
+4. Session refresh via `RefreshTokenAsync()` updates cookie expiration
 5. Account lockout after 5 failed attempts (15 minutes)
 
 ### Audit Tracking
@@ -200,7 +199,7 @@ For closed network deployments, self-host M PLUS 1 Code font:
 2. **Audit Info:** Call `SetAuditInfo()` before any SaveChanges if you need audit tracking
 3. **Soft Deletes:** Use `is_deleted` flag, never hard delete
 4. **Tenant Context:** Always filter by `tenant_id` for multi-tenant queries
-5. **JWT Configuration:** Ensure `JwtSettings` section exists in `appsettings.json`
+5. **Cookie Configuration:** Ensure `CookieSettings` section exists in `appsettings.json`
 6. **Connection Strings:** Use User Secrets for sensitive config in development
 
 ## User Secrets
@@ -209,7 +208,6 @@ For local development with sensitive data:
 ```bash
 dotnet user-secrets init --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
 dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Database=medock;..." --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
-dotnet user-secrets set "JwtSettings:SecretKey" "your-secret-key" --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
 ```
 
 ## Test-Driven Development Approach

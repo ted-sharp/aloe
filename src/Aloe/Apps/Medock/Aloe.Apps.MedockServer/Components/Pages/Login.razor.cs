@@ -2,6 +2,7 @@ using Aloe.Apps.MedockLib.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.JSInterop;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -12,6 +13,9 @@ public partial class Login : ComponentBase
 
     [Inject]
     private IAuthService AuthService { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Inject]
     private ProtectedLocalStorage LocalStorage { get; set; } = default!;
@@ -25,9 +29,25 @@ public partial class Login : ComponentBase
     [SupplyParameterFromForm]
     private LoginModel loginModel { get; set; } = default!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
         this.loginModel ??= new LoginModel();
+
+        // 認証状態を確認して自動ログイン（最優先で実行）
+        try
+        {
+            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
+            if (authState.User.Identity?.IsAuthenticated == true)
+            {
+                // 既に認証済みの場合は自動遷移
+                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+                return;
+            }
+        }
+        catch
+        {
+            // 認証状態チェック失敗は無視（ログイン画面を表示）
+        }
     }
 
     private bool IsLoading { get; set; } = false;
@@ -56,56 +76,6 @@ public partial class Login : ComponentBase
                     this.loginModel.KeepSession = true;
                     this.StateHasChanged();
                 }
-
-                // KeepSessionが有効ならセッション確認して自動ログイン
-                var savedSessionId = await this.LocalStorage.GetAsync<string>("session_id");
-                var savedAccessToken = await this.LocalStorage.GetAsync<string>("access_token");
-
-                if (savedKeepSession.Success && savedKeepSession.Value &&
-                    savedSessionId.Success && !String.IsNullOrEmpty(savedSessionId.Value) &&
-                    savedAccessToken.Success && !String.IsNullOrEmpty(savedAccessToken.Value))
-                {
-                    // セッション検証
-                    if (Guid.TryParse(savedSessionId.Value, out var sessionId))
-                    {
-                        var validationResult = await this.AuthService.ValidateSessionAsync(savedAccessToken.Value, sessionId);
-                        if (validationResult.IsValid)
-                        {
-                            // 有効なセッションがあれば自動遷移
-                            this.NavigationManager.NavigateTo("/calendar");
-                        }
-                        else
-                        {
-                            // セッション検証失敗 → リフレッシュトークンで更新を試行
-                            var savedRefreshToken = await this.LocalStorage.GetAsync<string>("refresh_token");
-                            var savedUserId = await this.LocalStorage.GetAsync<string>("user_id");
-
-                            if (savedRefreshToken.Success && !String.IsNullOrEmpty(savedRefreshToken.Value) &&
-                                savedUserId.Success && Guid.TryParse(savedUserId.Value, out var userId))
-                            {
-                                var refreshResult = await this.AuthService.RefreshTokenAsync(userId, savedRefreshToken.Value);
-                                if (refreshResult.IsSuccess)
-                                {
-                                    // 新しいトークンを保存して自動遷移
-                                    await this.LocalStorage.SetAsync("access_token", refreshResult.AccessToken!);
-                                    if (!String.IsNullOrEmpty(refreshResult.RefreshToken))
-                                    {
-                                        await this.LocalStorage.SetAsync("refresh_token", refreshResult.RefreshToken);
-                                    }
-                                    this.NavigationManager.NavigateTo("/calendar");
-                                    return;
-                                }
-                            }
-
-                            // リフレッシュも失敗した場合、LocalStorageをクリア
-                            await this.LocalStorage.DeleteAsync("session_id");
-                            await this.LocalStorage.DeleteAsync("keep_session");
-                            await this.LocalStorage.DeleteAsync("access_token");
-                            await this.LocalStorage.DeleteAsync("refresh_token");
-                            await this.LocalStorage.DeleteAsync("user_id");
-                        }
-                    }
-                }
             }
             catch
             {
@@ -129,96 +99,69 @@ public partial class Login : ComponentBase
                 return;
             }
 
-            this.DebugMessage = $"Attempting login for: {this.loginModel.UserCode}";
-            this.StateHasChanged();
-
-            // AuthServiceでログイン
-            // Blazorサーバー側ではHttpContextに直接アクセスできないため、固定値を設定
-            var result = await this.AuthService.LoginAsync(
-                this.loginModel.UserCode,
-                this.loginModel.Password,
-                "MedockServer",
-                String.Empty, // IPアドレスはサーバー側で取得できない
-                "Blazor Server"); // UserAgent
-
-            if (result.IsSuccess)
+            // RememberMe: ユーザーIDを保存
+            if (this.loginModel.RememberMe)
             {
-                // RememberMe: ユーザーIDを保存
-                if (this.loginModel.RememberMe)
-                {
-                    await this.LocalStorage.SetAsync("remember_user_code", this.loginModel.UserCode);
-                }
-                else
-                {
-                    await this.LocalStorage.DeleteAsync("remember_user_code");
-                }
+                await this.LocalStorage.SetAsync("remember_user_code", this.loginModel.UserCode);
+            }
+            else
+            {
+                await this.LocalStorage.DeleteAsync("remember_user_code");
+            }
 
-                // KeepSession: セッション情報を保存
-                if (this.loginModel.KeepSession && result.SessionId.HasValue)
-                {
-                    await this.LocalStorage.SetAsync("session_id", result.SessionId.Value.ToString());
-                    await this.LocalStorage.SetAsync("keep_session", true);
-                }
-                else
-                {
-                    await this.LocalStorage.DeleteAsync("session_id");
-                    await this.LocalStorage.DeleteAsync("keep_session");
-                }
+            // KeepSession: UI状態を保存
+            if (this.loginModel.KeepSession)
+            {
+                await this.LocalStorage.SetAsync("keep_session", true);
+            }
+            else
+            {
+                await this.LocalStorage.DeleteAsync("keep_session");
+            }
 
-                // アクセストークンを保存
-                if (!String.IsNullOrEmpty(result.AccessToken))
-                {
-                    await this.LocalStorage.SetAsync("access_token", result.AccessToken);
-                }
+            // JavaScript interopを使ってクライアント側からAPIを呼び出す
+            // 重要な点: HttpOnlyクッキーは正しく設定されます
+            // - Set-Cookieヘッダーはサーバー（AuthController）から返される
+            // - ブラウザがSet-Cookieヘッダーを処理してクッキーを保存する
+            // - HttpOnly属性が含まれているため、JavaScriptからは読み取れない
+            // - これはJavaScript interopとは無関係で、サーバー側の設定（Program.cs）で制御される
+            var loginRequest = new
+            {
+                UserCode = this.loginModel.UserCode,
+                Password = this.loginModel.Password,
+                KeepSession = this.loginModel.KeepSession
+            };
 
-                // リフレッシュトークンとユーザーIDを保存（セッション維持用）
-                if (!String.IsNullOrEmpty(result.RefreshToken))
-                {
-                    await this.LocalStorage.SetAsync("refresh_token", result.RefreshToken);
-                }
-                if (result.UserId.HasValue)
-                {
-                    await this.LocalStorage.SetAsync("user_id", result.UserId.Value.ToString());
-                }
+            var loginResponse = await this.JSRuntime.InvokeAsync<LoginResponse?>("loginApi.login", loginRequest);
 
-                // 認証状態を更新
-                // RevalidatingServerAuthenticationStateProviderは自動的に再検証を行うため、
-                // 明示的な通知は不要です。次のGetAuthenticationStateAsync呼び出しで
-                // 新しい認証状態が取得されます。
+            if (loginResponse != null && loginResponse.SessionId != Guid.Empty)
+            {
+                // UserContextServiceにセッションIDを設定
+                this.UserContextService.SetSessionId(loginResponse.SessionId);
 
                 // 遷移先を決定（複数施設なら施設選択へ）
-                if (result.UserId.HasValue)
+                var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(loginResponse.UserId);
+                if (facilities.Count > 1)
                 {
-                    var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(result.UserId.Value);
-                    if (facilities.Count > 1)
-                    {
-                        // 複数施設がある場合は施設選択画面へ
-                        this.NavigationManager.NavigateTo("/tenant-select");
-                    }
-                    else
-                    {
-                        // 単一施設の場合は直接メイン画面へ
-                        this.NavigationManager.NavigateTo("/calendar");
-                    }
+                    // 複数施設がある場合は施設選択画面へ
+                    this.NavigationManager.NavigateTo("/tenant-select");
                 }
                 else
                 {
+                    // 単一施設の場合は直接メイン画面へ
                     this.NavigationManager.NavigateTo("/calendar");
                 }
             }
             else
             {
-                this.ErrorMessage = result.ErrorMessage ?? "ログインに失敗しました。";
-                this.DebugMessage = $"Login failed: {result.ErrorMessage}";
+                this.ErrorMessage = "ログインに失敗しました。";
+                this.DebugMessage = "Login failed";
             }
         }
         catch (Exception ex)
         {
             this.ErrorMessage = "ログイン処理中にエラーが発生しました。";
             this.DebugMessage = $"Exception: {ex.Message}";
-        }
-        finally
-        {
             this.IsLoading = false;
             this.StateHasChanged();
         }
@@ -230,6 +173,22 @@ public partial class Login : ComponentBase
         public string Password { get; set; } = String.Empty;
         public bool RememberMe { get; set; } = false;
         public bool KeepSession { get; set; } = false;
+    }
+
+    // JavaScript interop用のレスポンスクラス
+    private class LoginResponse
+    {
+        public Guid SessionId { get; set; }
+        public Guid UserId { get; set; }
+        public string UserCode { get; set; } = String.Empty;
+        public string Email { get; set; } = String.Empty;
+        public string DisplayName { get; set; } = String.Empty;
+        public Guid? TenantId { get; set; }
+        public string TenantName { get; set; } = String.Empty;
+        public Guid? FacilityId { get; set; }
+        public string FacilityName { get; set; } = String.Empty;
+        public bool IsSystemAdmin { get; set; }
+        public string[] Roles { get; set; } = Array.Empty<string>();
     }
 }
 

@@ -11,9 +11,9 @@ public interface IAuthService
     Task<AuthResult> LoginAsync(string userCode, string password, string appName, string ipAddress, string userAgent);
 
     /// <summary>
-    /// リフレッシュトークンを使用してアクセストークンを更新します。
+    /// クッキー認証を更新します。
     /// </summary>
-    Task<AuthResult> RefreshTokenAsync(Guid userId, string refreshToken, Guid? facilityId = null);
+    Task<AuthResult> RefreshTokenAsync(Guid userId, Guid? facilityId = null);
 
     /// <summary>
     /// 施設を切り替えて新しいトークンを発行します。
@@ -28,7 +28,7 @@ public interface IAuthService
     /// <summary>
     /// セッションを検証します。
     /// </summary>
-    Task<SessionValidationResult> ValidateSessionAsync(string accessToken, Guid sessionId);
+    Task<SessionValidationResult> ValidateSessionAsync(Guid sessionId);
 
     /// <summary>
     /// ログアウト処理を行います。

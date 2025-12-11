@@ -6,7 +6,7 @@ namespace Aloe.Apps.MedockLib.Services;
 /// ユーザーコンテキストを管理するサービス
 /// </summary>
 /// <remarks>
-/// JWTトークンのクレームからユーザー情報を抽出し、
+/// 認証クレームからユーザー情報を抽出し、
 /// コンポーネント間で共有可能な形式で保持します。
 /// </remarks>
 public class UserContextService : IUserContextService
@@ -49,7 +49,7 @@ public class UserContextService : IUserContextService
             Roles = principal.FindAll("roles").Select(c => c.Value).ToList()
         };
 
-        // セッションIDを取得（JWTトークンに含まれている場合）
+        // セッションIDを取得（クレームに含まれている場合）
         if (Guid.TryParse(principal.FindFirst("session_id")?.Value, out var sessionId))
         {
             this.CurrentSessionId = sessionId;

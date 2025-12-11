@@ -2,8 +2,6 @@ using Aloe.Apps.MedockLib.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.AspNetCore.Http;
-using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -14,9 +12,6 @@ public partial class TenantSelect : ComponentBase
 
     [Inject]
     private IAuthService AuthService { get; set; } = default!;
-
-    [Inject]
-    private ProtectedLocalStorage LocalStorage { get; set; } = default!;
 
     [Inject]
     private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
@@ -59,29 +54,6 @@ public partial class TenantSelect : ComponentBase
             {
                 this.Facilities = await this.UserContextService.GetAccessibleFacilitiesAsync();
             }
-            else
-            {
-                // ユーザー情報が取得できない場合は、LocalStorageからアクセストークンを取得してユーザーIDを抽出
-                var accessTokenResult = await this.LocalStorage.GetAsync<string>("access_token");
-                if (accessTokenResult.Success && !String.IsNullOrEmpty(accessTokenResult.Value))
-                {
-                    // JWTトークンからユーザーIDを直接抽出（簡易的な方法）
-                    try
-                    {
-                        var handler = new JwtSecurityTokenHandler();
-                        var jsonToken = handler.ReadJwtToken(accessTokenResult.Value);
-                        var userIdClaim = jsonToken.Claims.FirstOrDefault(c => c.Type == "sub");
-                        if (userIdClaim != null && Guid.TryParse(userIdClaim.Value, out var userId))
-                        {
-                            this.Facilities = await this.AuthService.GetAccessibleFacilitiesAsync(userId);
-                        }
-                    }
-                    catch
-                    {
-                        // トークンパース失敗は無視
-                    }
-                }
-            }
         }
         catch
         {
@@ -109,17 +81,10 @@ public partial class TenantSelect : ComponentBase
 
         try
         {
-            // 施設切り替えAPIを呼び出し
+            // 施設切り替えAPIを呼び出し（クッキーが自動的に更新される）
             var result = await this.AuthService.SwitchFacilityAsync(this.userContext.UserId, this.SelectedFacilityId);
-            if (result.IsSuccess && !String.IsNullOrEmpty(result.AccessToken))
+            if (result.IsSuccess)
             {
-                // 新しいトークンをLocalStorageに保存
-                await this.LocalStorage.SetAsync("access_token", result.AccessToken);
-                if (result.RefreshToken != null)
-                {
-                    await this.LocalStorage.SetAsync("refresh_token", result.RefreshToken);
-                }
-
                 // メイン画面に遷移
                 this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
             }

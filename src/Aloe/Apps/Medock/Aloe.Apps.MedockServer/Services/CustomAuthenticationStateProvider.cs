@@ -1,29 +1,25 @@
 using System.Security.Claims;
-using Aloe.Apps.MedockLib.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Aloe.Apps.MedockServer.Services;
 
 /// <summary>
 /// カスタム認証状態プロバイダー
-/// LocalStorageからJWTトークンを取得して認証状態を管理します。
+/// HttpContextから認証情報を取得して認証状態を管理します。
 /// </summary>
 public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticationStateProvider
 {
-    private readonly ProtectedLocalStorage _localStorage;
-    private readonly IJwtTokenService _jwtTokenService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
 
     public CustomAuthenticationStateProvider(
         ILoggerFactory loggerFactory,
-        ProtectedLocalStorage localStorage,
-        IJwtTokenService jwtTokenService)
+        IHttpContextAccessor httpContextAccessor)
         : base(loggerFactory)
     {
-        this._localStorage = localStorage;
-        this._jwtTokenService = jwtTokenService;
+        this._httpContextAccessor = httpContextAccessor;
     }
 
     /// <summary>
@@ -34,77 +30,36 @@ public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticatio
     /// <summary>
     /// 認証状態を取得します。
     /// </summary>
-    public override async Task<AuthenticationState> GetAuthenticationStateAsync()
+    public override Task<AuthenticationState> GetAuthenticationStateAsync()
     {
-        try
-        {
-            // LocalStorageからaccess_tokenを取得
-            var tokenResult = await this._localStorage.GetAsync<string>("access_token");
+        var httpContext = this._httpContextAccessor.HttpContext;
+        var user = httpContext?.User ?? new ClaimsPrincipal(new ClaimsIdentity());
 
-            if (!tokenResult.Success || String.IsNullOrEmpty(tokenResult.Value))
-            {
-                // トークンが存在しない場合は未認証状態を返す
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            }
-
-            // JWTトークンを検証
-            var principal = this._jwtTokenService.ValidateToken(tokenResult.Value);
-
-            if (principal == null)
-            {
-                // トークンが無効な場合は未認証状態を返す
-                return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-            }
-
-            // 認証済み状態を返す
-            return new AuthenticationState(principal);
-        }
-        catch
-        {
-            // エラーが発生した場合は未認証状態を返す
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity()));
-        }
+        return Task.FromResult(new AuthenticationState(user));
     }
 
     /// <summary>
     /// 認証状態を再検証します。
     /// </summary>
-    protected override async Task<bool> ValidateAuthenticationStateAsync(
+    protected override Task<bool> ValidateAuthenticationStateAsync(
         AuthenticationState authenticationState,
         CancellationToken cancellationToken)
     {
-        try
+        var httpContext = this._httpContextAccessor.HttpContext;
+        var currentUser = httpContext?.User;
+
+        // 認証されていない場合は無効
+        if (currentUser == null || currentUser.Identity?.IsAuthenticated != true)
         {
-            // LocalStorageからaccess_tokenを取得
-            var tokenResult = await this._localStorage.GetAsync<string>("access_token");
-
-            if (!tokenResult.Success || String.IsNullOrEmpty(tokenResult.Value))
-            {
-                // トークンが存在しない場合は無効
-                return false;
-            }
-
-            // JWTトークンを検証
-            var principal = this._jwtTokenService.ValidateToken(tokenResult.Value);
-
-            if (principal == null)
-            {
-                // トークンが無効な場合は無効
-                return false;
-            }
-
-            // 現在の認証状態と比較
-            var currentUserId = authenticationState.User.FindFirst("sub")?.Value;
-            var newUserId = principal.FindFirst("sub")?.Value;
-
-            // ユーザーIDが一致する場合は有効
-            return currentUserId == newUserId;
+            return Task.FromResult(false);
         }
-        catch
-        {
-            // エラーが発生した場合は無効
-            return false;
-        }
+
+        // 現在の認証状態と比較
+        var currentUserId = authenticationState.User.FindFirst("sub")?.Value;
+        var newUserId = currentUser.FindFirst("sub")?.Value;
+
+        // ユーザーIDが一致する場合は有効
+        return Task.FromResult(currentUserId == newUserId);
     }
 }
 
