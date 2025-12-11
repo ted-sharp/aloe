@@ -26,6 +26,9 @@ public partial class Calendar : ComponentBase
     private IAuthService AuthService { get; set; } = default!;
 
     [Inject]
+    private IFacilityService FacilityService { get; set; } = default!;
+
+    [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
 
     private DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
@@ -78,6 +81,11 @@ public partial class Calendar : ComponentBase
     private List<CalendarCanvas.CalendarAppointment> SampleAppointments { get; set; } = new();
     private Dictionary<string, string> Holidays { get; set; } = new();
 
+    // 営業時間
+    private BusinessHoursDto? BusinessHours { get; set; }
+    private int StartHour { get; set; } = 8;
+    private int EndHour { get; set; } = 18;
+
     // フィルター用データ
     private List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     private SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
@@ -99,10 +107,11 @@ public partial class Calendar : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        await this.LoadUserInfoAsync();
+        await this.LoadBusinessHoursAsync();
         this.GenerateSampleData();
         await this.GenerateFilterOptions();
         await this.LoadHolidaysAsync();
-        await this.LoadUserInfoAsync();
     }
 
     private async Task LoadUserInfoAsync()
@@ -190,6 +199,7 @@ public partial class Calendar : ComponentBase
             if (result.IsSuccess)
             {
                 // ページをリロードして新しい認証状態を反映
+                // リロード時にOnInitializedAsyncが呼ばれ、新しい施設IDで営業時間が取得される
                 this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
             }
         }
@@ -278,6 +288,33 @@ public partial class Calendar : ComponentBase
         }
     }
 
+    private async Task LoadBusinessHoursAsync()
+    {
+        try
+        {
+            if (this.CurrentFacilityId.HasValue)
+            {
+                this.BusinessHours = await this.FacilityService.GetBusinessHoursAsync(
+                    this.CurrentFacilityId.Value,
+                    this.CurrentDate);
+
+                // StartHour/EndHourを設定
+                this.StartHour = this.BusinessHours.StartHour;
+                this.EndHour = this.BusinessHours.EndHour;
+            }
+            else
+            {
+                // デフォルト値を使用
+                this.BusinessHours = new BusinessHoursDto();
+            }
+        }
+        catch (Exception)
+        {
+            // エラー時はデフォルト値を使用
+            this.BusinessHours = new BusinessHoursDto();
+        }
+    }
+
     private async Task LoadHolidaysAsync()
     {
         try
@@ -304,8 +341,37 @@ public partial class Calendar : ComponentBase
         var startDate = new DateTime(today.Year, 1, 1);
         var endDate = new DateTime(today.Year, 12, 31);
 
-        var slotTimes = new[] { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
-        var slotMaxes = new[] { 5, 8, 8, 8, 8, 8, 8, 5 };
+        // 営業時間からslotTimesを生成
+        var businessHours = this.BusinessHours ?? new BusinessHoursDto();
+        var startTime = businessHours.GetStartTimeOnly();
+        var endTime = businessHours.GetEndTimeOnly();
+        var lunchStartTime = businessHours.GetLunchStartTimeOnly();
+        var lunchEndTime = businessHours.GetLunchEndTimeOnly();
+
+        // 営業時間内の時間スロットを生成（1時間単位）
+        var slotTimes = new List<string>();
+        var currentTime = startTime;
+        while (currentTime < endTime)
+        {
+            // 昼休み時間をスキップ
+            if (currentTime >= lunchStartTime && currentTime < lunchEndTime)
+            {
+                currentTime = currentTime.AddHours(1);
+                continue;
+            }
+
+            slotTimes.Add(currentTime.ToString("HH:mm"));
+            currentTime = currentTime.AddHours(1);
+        }
+
+        // slotTimesが空の場合はデフォルト値を使用
+        if (slotTimes.Count == 0)
+        {
+            slotTimes = new List<string> { "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00", "17:00" };
+        }
+
+        // slotMaxesはslotTimesの数に合わせて生成（デフォルト8）
+        var slotMaxes = slotTimes.Select(_ => 8).ToArray();
 
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
@@ -319,7 +385,7 @@ public partial class Calendar : ComponentBase
             var amMax = 0;
             var pmMax = 0;
 
-            for (var i = 0; i < slotTimes.Length; i++)
+            for (var i = 0; i < slotTimes.Count; i++)
             {
                 var max = isWeekend ? Math.Max(1, slotMaxes[i] / 2) : slotMaxes[i];
                 var count = random.Next(0, max + 1);
@@ -332,16 +398,27 @@ public partial class Calendar : ComponentBase
                     IsGrayedOut = false
                 });
 
-                var hour = Int32.Parse(slotTimes[i].Split(':')[0]);
-                if (hour < 12)
+                // 営業時間に基づいてAM/PMを判定
+                var slotTime = TimeOnly.Parse(slotTimes[i]);
+                var lunchStart = businessHours.GetLunchStartTimeOnly();
+                var lunchEnd = businessHours.GetLunchEndTimeOnly();
+
+                // 昼休み時間はAMにカウント
+                if (slotTime < lunchStart)
                 {
                     amCount += count;
                     amMax += max;
                 }
-                else
+                else if (slotTime >= lunchEnd)
                 {
                     pmCount += count;
                     pmMax += max;
+                }
+                else
+                {
+                    // 昼休み時間内はAMにカウント
+                    amCount += count;
+                    amMax += max;
                 }
             }
 
@@ -384,15 +461,17 @@ public partial class Calendar : ComponentBase
 
             for (var i = 0; i < count; i++)
             {
-                var startHour = random.Next(8, 16);
+                // 営業時間内でランダムに開始時間を選択
+                var startHour = random.Next(businessHours.StartHour, businessHours.EndHour);
                 var duration = random.Next(1, 3);
+                var endHour = Math.Min(startHour + duration, businessHours.EndHour);
 
                 this.SampleAppointments.Add(new CalendarCanvas.CalendarAppointment
                 {
                     Id = Guid.NewGuid(),
                     Date = DateOnly.FromDateTime(date),
                     StartTime = new TimeOnly(startHour, 0),
-                    EndTime = new TimeOnly(Math.Min(startHour + duration, 18), 0),
+                    EndTime = new TimeOnly(endHour, 0),
                     PatientName = names[random.Next(names.Length)],
                     OrganizationName = orgs[random.Next(orgs.Length)],
                     Status = random.Next(0, 4)

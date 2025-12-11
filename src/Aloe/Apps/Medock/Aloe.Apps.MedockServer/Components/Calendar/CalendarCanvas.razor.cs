@@ -81,6 +81,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public int EndHour { get; set; } = 18;
 
     /// <summary>
+    /// 営業時間情報（昼休み時間帯の縦ライン描画用）
+    /// </summary>
+    [Parameter]
+    public BusinessHoursDto? BusinessHours { get; set; }
+
+    /// <summary>
     /// Height of the canvas container
     /// </summary>
     [Parameter]
@@ -190,7 +196,47 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     private async Task InitializeCalendarAsync()
     {
+        // ES Moduleの読み込み完了を待つ
+        var maxRetries = 50;
+        var retryDelay = 100; // 100ms
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                var isReady = await this.JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined'");
+                if (isReady)
+                {
+                    break;
+                }
+            }
+            catch
+            {
+                // エラーは無視してリトライ
+            }
+
+            if (i < maxRetries - 1)
+            {
+                await Task.Delay(retryDelay);
+            }
+            else
+            {
+                // 最終的に読み込まれなかった場合はエラーをログに出力
+                Console.WriteLine("Warning: MedockCalendar module not loaded after retries");
+                return;
+            }
+        }
+
         var data = this.BuildDataObject();
+        var businessHoursData = this.BusinessHours != null
+            ? new
+            {
+                startTime = this.BusinessHours.StartTime,
+                endTime = this.BusinessHours.EndTime,
+                lunchStartTime = this.BusinessHours.LunchStartTime,
+                lunchEndTime = this.BusinessHours.LunchEndTime
+            }
+            : null;
+
         var options = new
         {
             weekDays = this.WeekDays,
@@ -198,7 +244,8 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             showSimpleView = this.ShowSimpleView,
             showEquipmentGraph = this.ShowEquipmentGraph,
             startHour = this.StartHour,
-            endHour = this.EndHour
+            endHour = this.EndHour,
+            businessHours = businessHoursData
         };
 
         await this.JSRuntime.InvokeVoidAsync(
@@ -230,6 +277,16 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
         // Update options if weekDays, showSlots, showSimpleView, or showEquipmentGraph changed
         if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView || this._lastShowEquipmentGraph != this.ShowEquipmentGraph)
         {
+            var businessHoursData = this.BusinessHours != null
+                ? new
+                {
+                    startTime = this.BusinessHours.StartTime,
+                    endTime = this.BusinessHours.EndTime,
+                    lunchStartTime = this.BusinessHours.LunchStartTime,
+                    lunchEndTime = this.BusinessHours.LunchEndTime
+                }
+                : null;
+
             var options = new
             {
                 weekDays = this.WeekDays,
@@ -237,7 +294,8 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
                 showSimpleView = this.ShowSimpleView,
                 showEquipmentGraph = this.ShowEquipmentGraph,
                 startHour = this.StartHour,
-                endHour = this.EndHour
+                endHour = this.EndHour,
+                businessHours = businessHoursData
             };
             await this.JSRuntime.InvokeVoidAsync("MedockCalendar.setOptions", options);
         }

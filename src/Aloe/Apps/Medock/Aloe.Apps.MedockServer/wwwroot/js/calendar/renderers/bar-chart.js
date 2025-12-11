@@ -298,6 +298,9 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     const stats = state.dayStats.get(dateStr);
     const slots = stats?.slots || null;
 
+    // 営業時間情報を取得（昼休み時間帯の縦ライン描画用、関数全体で使用）
+    const businessHours = state.options?.businessHours;
+
     // グレーアウト判定: confirmedDateRange がある場合は範囲外をグレーアウト
     let isDateGrayed = false;
     if (state.confirmedDateRange) {
@@ -420,6 +423,18 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const totalHours = endHour - startHour;
         const barAreaWidth = cellWidth - 4; // 左右余白2px
         
+        // 昼休み時間を解析
+        let lunchStartHour = null;
+        let lunchEndHour = null;
+        if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+            const parseTime = (timeStr) => {
+                const parts = timeStr.split(':');
+                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+            };
+            lunchStartHour = parseTime(businessHours.lunchStartTime);
+            lunchEndHour = parseTime(businessHours.lunchEndTime);
+        }
+        
         // スロット数に応じて均等に分割して隙間なく配置
         const slotCount = slots.length;
         const gapWidth = slotCount > 1 ? 1 : 0; // スロット間の隙間（1px、スロットが1つの場合は隙間なし）
@@ -497,6 +512,37 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             });
             layers.content.add(lineGraph);
         }
+
+        // 昼休み時間帯の縦ラインを描画（月間・年間ビューの場合）
+        if (lunchStartHour !== null && lunchEndHour !== null && (state.currentView === 'month' || state.currentView === 'year')) {
+            // 昼休み開始時刻と終了時刻をX座標に変換
+            const timeToX = (timeInHours) => {
+                const totalHours = endHour - startHour;
+                const relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
+                return cellLeft + 2 + relativePosition * barAreaWidth;
+            };
+
+            const lunchStartX = timeToX(lunchStartHour);
+            const lunchEndX = timeToX(lunchEndHour);
+
+            // 昼休み開始時刻の縦ライン
+            const lunchStartLine = new Konva.Line({
+                points: [lunchStartX, barAreaTop, lunchStartX, barAreaTop + barAreaHeight],
+                stroke: '#d1d5db', // グレー
+                strokeWidth: 1,
+                opacity: 0.8
+            });
+            layers.content.add(lunchStartLine);
+
+            // 昼休み終了時刻の縦ライン
+            const lunchEndLine = new Konva.Line({
+                points: [lunchEndX, barAreaTop, lunchEndX, barAreaTop + barAreaHeight],
+                stroke: '#d1d5db', // グレー
+                strokeWidth: 1,
+                opacity: 0.8
+            });
+            layers.content.add(lunchEndLine);
+        }
     } else if (!isTooSmall) {
         // フォールバック: AM/PM 2本の棒
         const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
@@ -507,6 +553,16 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const barAreaWidth = Math.max(0, cellWidth - 4);
         const gapWidth = 1;
         const barWidth = Math.max(1, (barAreaWidth - gapWidth) / 2);
+
+        // 昼休み時間を解析（フォールバック用、既に取得済みの場合はスキップ）
+        if (lunchStartHour === null && lunchEndHour === null && businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+            const parseTime = (timeStr) => {
+                const parts = timeStr.split(':');
+                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+            };
+            lunchStartHour = parseTime(businessHours.lunchStartTime);
+            lunchEndHour = parseTime(businessHours.lunchEndTime);
+        }
 
         // AM棒（空き率が0より大きい場合のみ描画）
         const amBarHeight = Math.max(0, barAreaHeight * amVacancyRatio);
@@ -534,6 +590,41 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 cornerRadius: Math.min(1, pmBarHeight / 2, barWidth / 2)
             });
             layers.content.add(pmBar);
+        }
+
+        // 昼休み時間帯の縦ラインを描画（月間・年間ビューの場合、スロットがない場合でも表示）
+        if (lunchStartHour !== null && lunchEndHour !== null && (state.currentView === 'month' || state.currentView === 'year')) {
+            // 業務時間設定を取得
+            const startHour = state.options.startHour || 8;
+            const endHour = state.options.endHour || 18;
+
+            // 昼休み開始時刻と終了時刻をX座標に変換
+            const timeToX = (timeInHours) => {
+                const totalHours = endHour - startHour;
+                const relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
+                return cellLeft + 2 + relativePosition * barAreaWidth;
+            };
+
+            const lunchStartX = timeToX(lunchStartHour);
+            const lunchEndX = timeToX(lunchEndHour);
+
+            // 昼休み開始時刻の縦ライン
+            const lunchStartLine = new Konva.Line({
+                points: [lunchStartX, barAreaTop, lunchStartX, barAreaTop + barAreaHeight],
+                stroke: '#d1d5db', // グレー
+                strokeWidth: 1,
+                opacity: 0.8
+            });
+            layers.content.add(lunchStartLine);
+
+            // 昼休み終了時刻の縦ライン
+            const lunchEndLine = new Konva.Line({
+                points: [lunchEndX, barAreaTop, lunchEndX, barAreaTop + barAreaHeight],
+                stroke: '#d1d5db', // グレー
+                strokeWidth: 1,
+                opacity: 0.8
+            });
+            layers.content.add(lunchEndLine);
         }
     }
 

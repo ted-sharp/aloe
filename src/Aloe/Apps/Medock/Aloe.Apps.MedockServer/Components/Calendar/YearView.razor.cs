@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Aloe.Apps.MedockLib.Services;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -33,6 +34,12 @@ public partial class YearView : ComponentBase
     /// </summary>
     [Parameter]
     public bool ShowEquipmentGraph { get; set; } = false;
+
+    /// <summary>
+    /// 営業時間情報（昼休み時間帯の縦ライン描画用）
+    /// </summary>
+    [Parameter]
+    public BusinessHoursDto? BusinessHours { get; set; }
 
     /// <summary>
     /// カレンダーの高さ
