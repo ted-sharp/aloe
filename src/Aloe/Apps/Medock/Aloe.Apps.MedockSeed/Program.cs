@@ -79,6 +79,7 @@ try
 
     // 施設・設備関連
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
+    await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
     await EquipmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
     await EquipmentAppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
 
