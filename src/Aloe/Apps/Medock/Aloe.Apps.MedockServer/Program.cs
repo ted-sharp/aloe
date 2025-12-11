@@ -1,5 +1,6 @@
 using System.Text;
 using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components;
 using Aloe.Apps.MedockServer.Services;
@@ -29,6 +30,16 @@ builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 }, ServiceLifetime.Scoped);
+
+// Add DbContext (リポジトリで使用)
+builder.Services.AddDbContext<MedockDbContext>((services, options) =>
+{
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+}, ServiceLifetime.Scoped);
+
+// Add Repositories
+builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 
 // Add Services
 builder.Services.AddHttpContextAccessor();

@@ -1,6 +1,5 @@
-using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
-using Microsoft.EntityFrameworkCore;
+using Aloe.Apps.MedockLib.Repositories;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -9,7 +8,8 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public class AppointmentService : IAppointmentService
 {
-    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
+    private readonly IAppointmentRepository _appointmentRepository;
+    private readonly IHolidayRepository _holidayRepository;
     private readonly UserContextService _userContextService;
     private readonly IDateTimeProvider _dateTimeProvider;
 
@@ -20,11 +20,13 @@ public class AppointmentService : IAppointmentService
     private const int PmEndHour = 18;
 
     public AppointmentService(
-        IDbContextFactory<MedockDbContext> contextFactory,
+        IAppointmentRepository appointmentRepository,
+        IHolidayRepository holidayRepository,
         UserContextService userContextService,
         IDateTimeProvider dateTimeProvider)
     {
-        this._contextFactory = contextFactory;
+        this._appointmentRepository = appointmentRepository;
+        this._holidayRepository = holidayRepository;
         this._userContextService = userContextService;
         this._dateTimeProvider = dateTimeProvider;
     }
@@ -32,19 +34,7 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
-        var appointments = await context.Appointments
-            .Where(a => !a.IsDeleted &&
-                        a.ApptDate.HasValue &&
-                        a.ApptDate >= startDate &&
-                        a.ApptDate <= endDate)
-            .Select(a => new
-            {
-                a.ApptDate,
-                a.ApptStartAt
-            })
-            .ToListAsync();
+        var appointments = await this._appointmentRepository.GetForDayStatsAsync(startDate, endDate);
 
         var result = new Dictionary<string, DayStatsDto>([]);
 
@@ -62,15 +52,15 @@ public class AppointmentService : IAppointmentService
         }
 
         // 予約を集計
-        foreach (var appt in appointments)
+        foreach (var (apptDate, apptStartAt) in appointments)
         {
-            if (!appt.ApptDate.HasValue) continue;
+            if (!apptDate.HasValue) continue;
 
-            var dateStr = appt.ApptDate.Value.ToString("yyyy-MM-dd");
+            var dateStr = apptDate.Value.ToString("yyyy-MM-dd");
             if (!result.TryGetValue(dateStr, out var stats)) continue;
 
             // 時間から AM/PM を判定
-            var hour = appt.ApptStartAt?.Hour ?? AmStartHour;
+            var hour = apptStartAt?.Hour ?? AmStartHour;
             if (hour >= AmStartHour && hour < AmEndHour)
             {
                 stats.AmCount++;
@@ -97,46 +87,24 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<List<AppointmentDto>> GetAppointmentsAsync(DateOnly startDate, DateOnly endDate)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
-        var appointments = await context.Appointments
-            .Include(a => a.Patient)
-            .Include(a => a.Organization)
-            .Include(a => a.Floor)
-            .Where(a => !a.IsDeleted &&
-                        a.ApptDate.HasValue &&
-                        a.ApptDate >= startDate &&
-                        a.ApptDate <= endDate)
-            .OrderBy(a => a.ApptDate)
-            .ThenBy(a => a.ApptStartAt)
-            .ToListAsync();
-
+        var appointments = await this._appointmentRepository.GetByDateRangeAsync(startDate, endDate);
         return appointments.Select(a => this.MapToDto(a)).ToList();
     }
 
     /// <inheritdoc />
     public async Task<AppointmentDto?> GetAppointmentAsync(Guid apptId)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
-        var appointment = await context.Appointments
-            .Include(a => a.Patient)
-            .Include(a => a.Organization)
-            .Include(a => a.Floor)
-            .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
-
+        var appointment = await this._appointmentRepository.GetByIdAsync(apptId);
         return appointment is not null ? this.MapToDto(appointment) : null;
     }
 
     /// <inheritdoc />
     public async Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto dto)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
         // 監査情報を設定
         var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
         var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        context.SetAuditInfo(userId, sessionId);
+        this._appointmentRepository.SetAuditInfo(userId, sessionId);
 
         var appointment = new Appointment
         {
@@ -157,8 +125,7 @@ public class AppointmentService : IAppointmentService
             UpdatedAt = this._dateTimeProvider.Now
         };
 
-        context.Appointments.Add(appointment);
-        await context.SaveChangesAsync();
+        await this._appointmentRepository.AddAsync(appointment);
 
         // 関連データを読み込んで返す
         return await this.GetAppointmentAsync(appointment.ApptId)
@@ -168,14 +135,12 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> UpdateAppointmentAsync(Guid apptId, UpdateAppointmentDto dto)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
         // 監査情報を設定
         var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
         var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        context.SetAuditInfo(userId, sessionId);
+        this._appointmentRepository.SetAuditInfo(userId, sessionId);
 
-        var appointment = await context.Appointments.FindAsync(apptId);
+        var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return null;
@@ -218,7 +183,7 @@ public class AppointmentService : IAppointmentService
 
         appointment.UpdatedAt = this._dateTimeProvider.Now;
 
-        await context.SaveChangesAsync();
+        await this._appointmentRepository.UpdateAsync(appointment);
 
         return await this.GetAppointmentAsync(apptId);
     }
@@ -226,44 +191,30 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<bool> DeleteAppointmentAsync(Guid apptId)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
         // 監査情報を設定
         var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
         var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        context.SetAuditInfo(userId, sessionId);
+        this._appointmentRepository.SetAuditInfo(userId, sessionId);
 
-        var appointment = await context.Appointments.FindAsync(apptId);
+        var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return false;
         }
 
-        appointment.IsDeleted = true;
-        appointment.UpdatedAt = this._dateTimeProvider.Now;
-
-        await context.SaveChangesAsync();
+        await this._appointmentRepository.DeleteAsync(apptId);
         return true;
     }
 
     /// <inheritdoc />
     public async Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate)
     {
-        using var context = this._contextFactory.CreateDbContext();
-
-        var holidays = await context.Holidays
-            .Where(h => !h.IsDeleted &&
-                        h.HolidayDate >= startDate &&
-                        h.HolidayDate <= endDate)
-            .OrderBy(h => h.HolidayDate)
-            .Select(h => new HolidayDto
-            {
-                Date = h.HolidayDate,
-                Name = h.HolidayName
-            })
-            .ToListAsync();
-
-        return holidays;
+        var holidays = await this._holidayRepository.GetByDateRangeAsync(startDate, endDate);
+        return holidays.Select(h => new HolidayDto
+        {
+            Date = h.HolidayDate,
+            Name = h.HolidayName
+        }).ToList();
     }
 
     private AppointmentDto MapToDto(Appointment appointment)
