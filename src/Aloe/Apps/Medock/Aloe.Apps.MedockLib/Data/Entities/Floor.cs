@@ -21,7 +21,7 @@ public class Floor : IAuditableEntity
 
     /// <summary>フロアコード</summary>
     [Column("floor_code")]
-    [MaxLength(100)]
+    [MaxLength(10)]
     public string FloorCode { get; set; } = String.Empty;
 
     /// <summary>フロア名</summary>
@@ -31,7 +31,7 @@ public class Floor : IAuditableEntity
 
     /// <summary>フロア説明</summary>
     [Column("floor_desc")]
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string FloorDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>

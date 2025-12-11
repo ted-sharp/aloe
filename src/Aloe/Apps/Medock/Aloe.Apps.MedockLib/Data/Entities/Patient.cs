@@ -39,32 +39,32 @@ public class Patient : IAuditableEntity
 
     /// <summary>患者名</summary>
     [Column("pt_name")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtName { get; set; } = String.Empty;
 
     /// <summary>患者名（互換）JIS縮むで第二水準までにしたもの</summary>
     [Column("pt_name_compat")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtNameCompat { get; set; } = String.Empty;
 
     /// <summary>患者名カタカナ</summary>
     [Column("pt_name_katakana")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtNameKatakana { get; set; } = String.Empty;
 
     /// <summary>患者名カタカナ（互換）トリガで更新、全角カナ、区切り文字統一、unaccent</summary>
     [Column("pt_name_katakana_compat")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtNameKatakanaCompat { get; set; } = String.Empty;
 
     /// <summary>旧姓名（名寄せなどで使用）</summary>
     [Column("pt_maiden_name")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtMaidenName { get; set; } = String.Empty;
 
     /// <summary>別名・芸名（印刷用）</summary>
     [Column("pt_alias_name")]
-    [MaxLength(200)]
+    [MaxLength(100)]
     public string PtAliasName { get; set; } = String.Empty;
 
     /// <summary>生年月日</summary>
@@ -77,7 +77,7 @@ public class Patient : IAuditableEntity
 
     /// <summary>メモ</summary>
     [Column("pt_memo")]
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string PtMemo { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>

@@ -16,6 +16,7 @@ public class Holiday : IAuditableEntity
 
     /// <summary>祝日名</summary>
     [Column("holiday_name")]
+    [MaxLength(100)]
     public string HolidayName { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>

@@ -22,7 +22,7 @@ public class Role : IAuditableEntity
 
     /// <summary>ロール説明</summary>
     [Column("role_desc")]
-    [MaxLength(500)]
+    [MaxLength(1000)]
     public string RoleDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>

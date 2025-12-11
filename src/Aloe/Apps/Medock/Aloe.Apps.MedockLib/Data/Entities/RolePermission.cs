@@ -12,7 +12,7 @@ public class RolePermission : IAuditableEntity
     /// <summary>ロールパーミッションコード (PK)</summary>
     [Key]
     [Column("role_permission_code")]
-    [MaxLength(31)]
+    [MaxLength(32)]
     public string RolePermissionCode { get; set; } = String.Empty;
 
     /// <summary>ロールコード (FK)</summary>
