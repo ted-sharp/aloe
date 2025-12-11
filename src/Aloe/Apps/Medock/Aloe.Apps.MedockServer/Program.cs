@@ -45,9 +45,9 @@ builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
-builder.Services.AddScoped<JwtTokenService>();
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<UserContextService>();
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 

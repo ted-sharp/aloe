@@ -10,7 +10,7 @@ public class AppointmentService : IAppointmentService
 {
     private readonly IAppointmentRepository _appointmentRepository;
     private readonly IHolidayRepository _holidayRepository;
-    private readonly UserContextService _userContextService;
+    private readonly IUserContextService _userContextService;
     private readonly IDateTimeProvider _dateTimeProvider;
 
     // AM/PM の時間境界
@@ -22,7 +22,7 @@ public class AppointmentService : IAppointmentService
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
         IHolidayRepository holidayRepository,
-        UserContextService userContextService,
+        IUserContextService userContextService,
         IDateTimeProvider dateTimeProvider)
     {
         this._appointmentRepository = appointmentRepository;

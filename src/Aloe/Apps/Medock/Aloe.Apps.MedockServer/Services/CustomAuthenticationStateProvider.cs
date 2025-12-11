@@ -14,12 +14,12 @@ namespace Aloe.Apps.MedockServer.Services;
 public class CustomAuthenticationStateProvider : RevalidatingServerAuthenticationStateProvider
 {
     private readonly ProtectedLocalStorage _localStorage;
-    private readonly JwtTokenService _jwtTokenService;
+    private readonly IJwtTokenService _jwtTokenService;
 
     public CustomAuthenticationStateProvider(
         ILoggerFactory loggerFactory,
         ProtectedLocalStorage localStorage,
-        JwtTokenService jwtTokenService)
+        IJwtTokenService jwtTokenService)
         : base(loggerFactory)
     {
         this._localStorage = localStorage;

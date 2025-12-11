@@ -23,7 +23,7 @@ namespace Aloe.Apps.MedockLib.Services;
 /// - is_system_admin: システム管理者フラグ（カスタムクレーム）
 /// - roles: ロール（カスタムクレーム）
 /// </remarks>
-public class JwtTokenService
+public class JwtTokenService : IJwtTokenService
 {
     private readonly JwtSettings _settings;
     private readonly SymmetricSecurityKey _signingKey;

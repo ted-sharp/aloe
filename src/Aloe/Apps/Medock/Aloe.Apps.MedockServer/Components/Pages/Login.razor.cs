@@ -11,13 +11,13 @@ public partial class Login : ComponentBase
     private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
-    private AuthService AuthService { get; set; } = default!;
+    private IAuthService AuthService { get; set; } = default!;
 
     [Inject]
     private ProtectedLocalStorage LocalStorage { get; set; } = default!;
 
     [Inject]
-    private UserContextService UserContextService { get; set; } = default!;
+    private IUserContextService UserContextService { get; set; } = default!;
 
     [Inject]
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;

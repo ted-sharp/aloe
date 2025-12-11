@@ -24,7 +24,7 @@ public partial class Calendar : ComponentBase
     private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
 
     [Inject]
-    private AuthService AuthService { get; set; } = default!;
+    private IAuthService AuthService { get; set; } = default!;
 
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;

@@ -9,28 +9,22 @@ namespace Aloe.Apps.MedockLib.Services;
 /// JWTトークンのクレームからユーザー情報を抽出し、
 /// コンポーネント間で共有可能な形式で保持します。
 /// </remarks>
-public class UserContextService
+public class UserContextService : IUserContextService
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
-    public UserContextService(AuthService authService)
+    public UserContextService(IAuthService authService)
     {
         this._authService = authService;
     }
 
-    /// <summary>
-    /// 現在のユーザー情報
-    /// </summary>
+    /// <inheritdoc />
     public UserContextInfo? CurrentUser { get; private set; }
 
-    /// <summary>
-    /// 現在のセッションID
-    /// </summary>
+    /// <inheritdoc />
     public Guid? CurrentSessionId { get; private set; }
 
-    /// <summary>
-    /// JWTクレームからユーザー情報を初期化します。
-    /// </summary>
+    /// <inheritdoc />
     public void InitializeFromClaims(ClaimsPrincipal principal)
     {
         if (principal.Identity?.IsAuthenticated != true)
@@ -66,17 +60,13 @@ public class UserContextService
         }
     }
 
-    /// <summary>
-    /// セッションIDを設定します（ログイン時に呼び出し）。
-    /// </summary>
+    /// <inheritdoc />
     public void SetSessionId(Guid sessionId)
     {
         this.CurrentSessionId = sessionId;
     }
 
-    /// <summary>
-    /// 切替可能な施設一覧を取得します（DBアクセス）。
-    /// </summary>
+    /// <inheritdoc />
     public async Task<List<FacilityInfo>> GetAccessibleFacilitiesAsync()
     {
         if (this.CurrentUser == null || this.CurrentUser.UserId == Guid.Empty)
@@ -87,9 +77,7 @@ public class UserContextService
         return await this._authService.GetAccessibleFacilitiesAsync(this.CurrentUser.UserId);
     }
 
-    /// <summary>
-    /// ユーザーが複数の施設にアクセス可能かどうかを取得します。
-    /// </summary>
+    /// <inheritdoc />
     public async Task<bool> HasMultipleFacilitiesAsync()
     {
         var facilities = await this.GetAccessibleFacilitiesAsync();

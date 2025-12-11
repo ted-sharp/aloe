@@ -8,18 +8,18 @@ namespace Aloe.Apps.MedockLib.Services;
 /// <summary>
 /// 認証サービス
 /// </summary>
-public class AuthService
+public class AuthService : IAuthService
 {
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly PasswordHasher _passwordHasher;
-    private readonly JwtTokenService _jwtTokenService;
+    private readonly IJwtTokenService _jwtTokenService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly JwtSettings _jwtSettings;
 
     public AuthService(
         IDbContextFactory<MedockDbContext> contextFactory,
         PasswordHasher passwordHasher,
-        JwtTokenService jwtTokenService,
+        IJwtTokenService jwtTokenService,
         IDateTimeProvider dateTimeProvider,
         IOptions<JwtSettings> jwtSettings)
     {

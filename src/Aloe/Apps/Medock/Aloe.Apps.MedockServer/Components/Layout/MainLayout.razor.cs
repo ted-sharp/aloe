@@ -11,7 +11,7 @@ public partial class MainLayout : LayoutComponentBase
     private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
-    private AuthService AuthService { get; set; } = default!;
+    private IAuthService AuthService { get; set; } = default!;
 
     [Inject]
     private ProtectedLocalStorage LocalStorage { get; set; } = default!;
@@ -20,7 +20,7 @@ public partial class MainLayout : LayoutComponentBase
     private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [Inject]
-    private UserContextService UserContextService { get; set; } = default!;
+    private IUserContextService UserContextService { get; set; } = default!;
 
     private UserContextInfo? userContext;
     private bool hasMultipleFacilities;
