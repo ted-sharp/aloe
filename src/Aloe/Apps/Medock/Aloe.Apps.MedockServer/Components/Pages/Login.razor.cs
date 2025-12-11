@@ -140,16 +140,17 @@ public partial class Login : ComponentBase
                 this.UserContextService.SetSessionId(loginResponse.SessionId);
 
                 // 遷移先を決定（複数施設なら施設選択へ）
+                // forceLoad: true でページをリロードし、新しいクッキーの認証情報を反映させる
                 var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(loginResponse.UserId);
                 if (facilities.Count > 1)
                 {
                     // 複数施設がある場合は施設選択画面へ
-                    this.NavigationManager.NavigateTo("/tenant-select");
+                    this.NavigationManager.NavigateTo("/tenant-select", forceLoad: true);
                 }
                 else
                 {
                     // 単一施設の場合は直接メイン画面へ
-                    this.NavigationManager.NavigateTo("/calendar");
+                    this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
                 }
             }
             else

@@ -73,14 +73,20 @@ try
     Console.WriteLine();
     Console.WriteLine("[INFO] Checking existing seed data...");
 
-    // テナント・ユーザー関連
+    // テナント・施設関連（ユーザーより先に作成する必要がある）
     var tenantId = await TenantSeeder.SeedAsync(context, dateTimeProvider);
-    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider);
-
-    // 施設・設備関連
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
     await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
     await EquipmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
+
+    // 施設が存在する状態で保存（FacilityUserの作成に必要）
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
+    // ユーザー関連（施設が存在する状態で実行）
+    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider);
     await EquipmentAppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
 
     // 予約スロット・統計関連
