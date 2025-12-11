@@ -24,12 +24,12 @@ internal static class OrganizationSeeder
                         FacilityId = facilityId.Value,
                         ParentOrgId = null,
                         OrgCode = "ORG001",
-                        OrgName = "総合診療部",
-                        OrgNameKatakana = "ソウゴウシンリョウブ",
-                        OrgNameKatakanaCompat = "ソウゴウシンリョウブ",
-                        OrgNameDisplay = "総合診療部",
-                        OrgNamePrint = "総合診療部",
-                        OrgMemo = "一般的な診療部門"
+                        OrgName = "株式会社アロエ商事",
+                        OrgNameKatakana = "カブシキガイシャアロエショウジ",
+                        OrgNameKatakanaCompat = "カブシキガイシャアロエショウジ",
+                        OrgNameDisplay = "株式会社アロエ商事",
+                        OrgNamePrint = "株式会社アロエ商事",
+                        OrgMemo = "健診契約企業"
                     },
                     new()
                     {
@@ -37,12 +37,12 @@ internal static class OrganizationSeeder
                         FacilityId = facilityId.Value,
                         ParentOrgId = null,
                         OrgCode = "ORG002",
-                        OrgName = "内科",
-                        OrgNameKatakana = "ナイカ",
-                        OrgNameKatakanaCompat = "ナイカ",
-                        OrgNameDisplay = "内科",
-                        OrgNamePrint = "内科",
-                        OrgMemo = "内科診療"
+                        OrgName = "アロエ工業株式会社",
+                        OrgNameKatakana = "アロエコウギョウカブシキガイシャ",
+                        OrgNameKatakanaCompat = "アロエコウギョウカブシキガイシャ",
+                        OrgNameDisplay = "アロエ工業株式会社",
+                        OrgNamePrint = "アロエ工業株式会社",
+                        OrgMemo = "健診契約企業"
                     },
                     new()
                     {
@@ -50,12 +50,12 @@ internal static class OrganizationSeeder
                         FacilityId = facilityId.Value,
                         ParentOrgId = null,
                         OrgCode = "ORG003",
-                        OrgName = "外科",
-                        OrgNameKatakana = "ゲカ",
-                        OrgNameKatakanaCompat = "ゲカ",
-                        OrgNameDisplay = "外科",
-                        OrgNamePrint = "外科",
-                        OrgMemo = "外科診療"
+                        OrgName = "アロエ建設株式会社",
+                        OrgNameKatakana = "アロエケンセツカブシキガイシャ",
+                        OrgNameKatakanaCompat = "アロエケンセツカブシキガイシャ",
+                        OrgNameDisplay = "アロエ建設株式会社",
+                        OrgNamePrint = "アロエ建設株式会社",
+                        OrgMemo = "健診契約企業"
                     },
                     new()
                     {
@@ -63,12 +63,38 @@ internal static class OrganizationSeeder
                         FacilityId = facilityId.Value,
                         ParentOrgId = null,
                         OrgCode = "ORG004",
-                        OrgName = "放射線科",
-                        OrgNameKatakana = "ホウシャセンカ",
-                        OrgNameKatakanaCompat = "ホウシャセンカ",
-                        OrgNameDisplay = "放射線科",
-                        OrgNamePrint = "放射線科",
-                        OrgMemo = "放射線診療"
+                        OrgName = "アロエサービス株式会社",
+                        OrgNameKatakana = "アロエサービスカブシキガイシャ",
+                        OrgNameKatakanaCompat = "アロエサービスカブシキガイシャ",
+                        OrgNameDisplay = "アロエサービス株式会社",
+                        OrgNamePrint = "アロエサービス株式会社",
+                        OrgMemo = "健診契約企業"
+                    },
+                    new()
+                    {
+                        OrgId = Guid.NewGuid(),
+                        FacilityId = facilityId.Value,
+                        ParentOrgId = null,
+                        OrgCode = "ORG005",
+                        OrgName = "株式会社アロエテクノ",
+                        OrgNameKatakana = "カブシキガイシャアロエテクノ",
+                        OrgNameKatakanaCompat = "カブシキガイシャアロエテクノ",
+                        OrgNameDisplay = "株式会社アロエテクノ",
+                        OrgNamePrint = "株式会社アロエテクノ",
+                        OrgMemo = "健診契約企業"
+                    },
+                    new()
+                    {
+                        OrgId = Guid.NewGuid(),
+                        FacilityId = facilityId.Value,
+                        ParentOrgId = null,
+                        OrgCode = "ORG006",
+                        OrgName = "アロエ物流株式会社",
+                        OrgNameKatakana = "アロエブツリュウカブシキガイシャ",
+                        OrgNameKatakanaCompat = "アロエブツリュウカブシキガイシャ",
+                        OrgNameDisplay = "アロエ物流株式会社",
+                        OrgNamePrint = "アロエ物流株式会社",
+                        OrgMemo = "健診契約企業"
                     }
                 };
 

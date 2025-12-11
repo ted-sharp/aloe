@@ -21,20 +21,38 @@ internal static class EquipmentSlotSeeder
 
                 foreach (var equipment in equipments)
                 {
-                    var slotsJson = System.Text.Json.JsonSerializer.Serialize(new
+                    string slotsJson;
+                    
+                    // 腹部エコーはAM/PMで大枠スロット
+                    if (equipment.EquipName.Contains("腹部エコー") || equipment.EquipDesc.Contains("腹部"))
                     {
-                        slots = new[]
+                        slotsJson = System.Text.Json.JsonSerializer.Serialize(new
                         {
-                            new { time = "08:00", max = 1, duration = 30 },
-                            new { time = "09:00", max = 2, duration = 30 },
-                            new { time = "10:00", max = 2, duration = 30 },
-                            new { time = "11:00", max = 2, duration = 30 },
-                            new { time = "13:00", max = 2, duration = 30 },
-                            new { time = "14:00", max = 2, duration = 30 },
-                            new { time = "15:00", max = 2, duration = 30 },
-                            new { time = "16:00", max = 1, duration = 30 },
-                        }
-                    });
+                            slots = new[]
+                            {
+                                new { time = "09:00", max = 5, duration = 180 }, // AM枠（9:00-12:00、3時間）
+                                new { time = "13:00", max = 5, duration = 240 }, // PM枠（13:00-17:00、4時間）
+                            }
+                        });
+                    }
+                    else
+                    {
+                        // その他の設備は通常のスロット
+                        slotsJson = System.Text.Json.JsonSerializer.Serialize(new
+                        {
+                            slots = new[]
+                            {
+                                new { time = "08:00", max = 1, duration = 30 },
+                                new { time = "09:00", max = 2, duration = 30 },
+                                new { time = "10:00", max = 2, duration = 30 },
+                                new { time = "11:00", max = 2, duration = 30 },
+                                new { time = "13:00", max = 2, duration = 30 },
+                                new { time = "14:00", max = 2, duration = 30 },
+                                new { time = "15:00", max = 2, duration = 30 },
+                                new { time = "16:00", max = 1, duration = 30 },
+                            }
+                        });
+                    }
 
                     equipmentSlots.Add(new EquipmentSlot
                     {

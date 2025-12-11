@@ -30,4 +30,10 @@ public interface IDateTimeProvider
     /// アプリ標準のタイムゾーン（JST）。
     /// </summary>
     TimeZoneInfo TimeZone { get; }
+
+    /// <summary>
+    /// アプリ標準ローカル日付（DateOnly型）。
+    /// EF Core + PostgreSQL の date 型マッピング用。
+    /// </summary>
+    DateOnly TodayDateOnly { get; }
 }
