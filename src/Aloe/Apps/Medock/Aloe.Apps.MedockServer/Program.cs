@@ -55,6 +55,7 @@ builder.Services.AddDbContext<MedockDbContext>((services, options) =>
 
 // Add Repositories
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
+builder.Services.AddScoped<IAppointmentStatsRepository, AppointmentStatsRepository>();
 builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 
 // Add Services
@@ -66,6 +67,7 @@ builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
+builder.Services.AddScoped<IAppointmentStatisticsService, AppointmentStatisticsService>();
 
 // Add Calendar Services
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();

@@ -47,20 +47,7 @@ public interface IAppointmentRepository
     /// </summary>
     Task DeleteAsync(Guid apptId);
 
-    /// <summary>
-    /// 指定日の予約件数を取得します。
-    /// </summary>
-    Task<int> GetCountByDateAsync(DateOnly date);
 
-    /// <summary>
-    /// 指定フロア・日付のステータス別予約件数を取得します。
-    /// </summary>
-    Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date);
-
-    /// <summary>
-    /// 日別統計用に予約の日付と開始時刻を取得します。
-    /// </summary>
-    Task<List<(DateOnly? ApptDate, DateTime? ApptStartAt)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate);
 
     /// <summary>
     /// 予約をIDで検索します（更新用）。

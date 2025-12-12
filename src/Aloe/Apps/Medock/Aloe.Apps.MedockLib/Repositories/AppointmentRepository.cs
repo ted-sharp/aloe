@@ -121,42 +121,7 @@ public class AppointmentRepository : IAppointmentRepository
         }
     }
 
-    /// <summary>
-    /// 指定日の予約件数を取得します。
-    /// </summary>
-    public async Task<int> GetCountByDateAsync(DateOnly date)
-    {
-        return await this._context.Appointments
-            .CountAsync(a => !a.IsDeleted && a.ApptDate == date);
-    }
 
-    /// <summary>
-    /// 指定フロア・日付のステータス別予約件数を取得します。
-    /// </summary>
-    public async Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date)
-    {
-        return await this._context.Appointments
-            .Where(a => !a.IsDeleted &&
-                        a.FloorId == floorId &&
-                        a.ApptDate == date)
-            .GroupBy(a => a.ApptStatusCode)
-            .Select(g => new { StatusCode = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.StatusCode, x => x.Count);
-    }
-
-    /// <inheritdoc />
-    public async Task<List<(DateOnly? ApptDate, DateTime? ApptStartAt)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate)
-    {
-        var results = await this._context.Appointments
-            .Where(a => !a.IsDeleted &&
-                        a.ApptDate.HasValue &&
-                        a.ApptDate >= startDate &&
-                        a.ApptDate <= endDate)
-            .Select(a => new { a.ApptDate, a.ApptStartAt })
-            .ToListAsync();
-
-        return results.Select(x => (x.ApptDate, x.ApptStartAt)).ToList();
-    }
 
     /// <inheritdoc />
     public async Task<Appointment?> FindByIdAsync(Guid apptId)

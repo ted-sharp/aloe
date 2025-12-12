@@ -5,13 +5,7 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public interface IAppointmentService
 {
-    /// <summary>
-    /// 指定期間の日別統計を取得します
-    /// </summary>
-    /// <param name="startDate">開始日</param>
-    /// <param name="endDate">終了日</param>
-    /// <returns>日付文字列をキーとした統計Dictionary</returns>
-    Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate);
+
 
     /// <summary>
     /// 指定期間の予約一覧を取得します
@@ -59,16 +53,7 @@ public interface IAppointmentService
     Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate);
 }
 
-/// <summary>
-/// 日別統計DTO
-/// </summary>
-public class DayStatsDto
-{
-    public int AmCount { get; set; }
-    public int PmCount { get; set; }
-    public int AmMax { get; set; } = 10;
-    public int PmMax { get; set; } = 10;
-}
+
 
 /// <summary>
 /// 予約DTO
