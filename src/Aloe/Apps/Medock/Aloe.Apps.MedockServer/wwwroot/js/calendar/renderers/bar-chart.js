@@ -300,6 +300,18 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     // 営業時間情報を取得（昼休み時間帯の縦ライン描画用、関数全体で使用）
     const businessHours = state.options?.businessHours;
+    
+    // 昼休み時間を解析（関数全体で使用するため、最初に初期化）
+    let lunchStartHour = null;
+    let lunchEndHour = null;
+    if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+        const parseTime = (timeStr) => {
+            const parts = timeStr.split(':');
+            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+        };
+        lunchStartHour = parseTime(businessHours.lunchStartTime);
+        lunchEndHour = parseTime(businessHours.lunchEndTime);
+    }
 
     // グレーアウト判定: confirmedDateRange がある場合は範囲外をグレーアウト
     let isDateGrayed = false;
@@ -423,18 +435,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const totalHours = endHour - startHour;
         const barAreaWidth = cellWidth - 4; // 左右余白2px
         
-        // 昼休み時間を解析
-        let lunchStartHour = null;
-        let lunchEndHour = null;
-        if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
-            const parseTime = (timeStr) => {
-                const parts = timeStr.split(':');
-                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-            };
-            lunchStartHour = parseTime(businessHours.lunchStartTime);
-            lunchEndHour = parseTime(businessHours.lunchEndTime);
-        }
-        
         // スロット数に応じて均等に分割して隙間なく配置
         const slotCount = slots.length;
         const gapWidth = slotCount > 1 ? 1 : 0; // スロット間の隙間（1px、スロットが1つの場合は隙間なし）
@@ -553,16 +553,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const barAreaWidth = Math.max(0, cellWidth - 4);
         const gapWidth = 1;
         const barWidth = Math.max(1, (barAreaWidth - gapWidth) / 2);
-
-        // 昼休み時間を解析（フォールバック用、既に取得済みの場合はスキップ）
-        if (lunchStartHour === null && lunchEndHour === null && businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
-            const parseTime = (timeStr) => {
-                const parts = timeStr.split(':');
-                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-            };
-            lunchStartHour = parseTime(businessHours.lunchStartTime);
-            lunchEndHour = parseTime(businessHours.lunchEndTime);
-        }
 
         // AM棒（空き率が0より大きい場合のみ描画）
         const amBarHeight = Math.max(0, barAreaHeight * amVacancyRatio);

@@ -1,4 +1,4 @@
-﻿using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockSeed.Seeders;
 using Microsoft.EntityFrameworkCore;
@@ -98,7 +98,20 @@ try
 
     // 団体・患者関連
     await OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+
+    // 団体を保存（患者データ作成前に必要）
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
     await PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+
+    // 団体・患者を保存（予約データ作成前に必要）
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
 
     // 予約データ関連
     await AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider);

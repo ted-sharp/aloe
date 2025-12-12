@@ -9,14 +9,30 @@ internal static class AppointmentStatsSeeder
 {
     public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
-        var existingStats = await context.AppointmentStats.AnyAsync();
-        if (!existingStats && floorId.HasValue)
+        if (!floorId.HasValue)
         {
-            Console.WriteLine("[INFO] Creating appointment stats seed data (1 year)...");
-            var random = new Random(42);
-            var startDate = new DateOnly(dateTimeProvider.Today.Year, 1, 1);
-            var endDate = new DateOnly(dateTimeProvider.Today.Year, 12, 31);
-            var statsList = new List<AppointmentStats>();
+            Console.WriteLine("[SKIP] FloorId is not set. Skipping appointment stats seed data.");
+            return;
+        }
+
+        var today = dateTimeProvider.TodayDateOnly;
+        var startDate = today.AddYears(-3);
+        var endDate = today.AddYears(1);
+
+        // 過去3年〜未来1年の範囲に既存データが存在するかチェック
+        var existingStatsInRange = await context.AppointmentStats
+            .Where(s => !s.IsDeleted && s.ApptDate >= startDate && s.ApptDate <= endDate)
+            .AnyAsync();
+
+        if (existingStatsInRange)
+        {
+            Console.WriteLine("[SKIP] AppointmentStats data already exists in the range (past 3 years to future 1 year).");
+            return;
+        }
+
+        Console.WriteLine("[INFO] Creating appointment stats seed data (past 3 years to future 1 year)...");
+        var random = new Random(42);
+        var statsList = new List<AppointmentStats>();
 
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
@@ -55,13 +71,8 @@ internal static class AppointmentStatsSeeder
                 });
             }
 
-            context.AppointmentStats.AddRange(statsList);
-            Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} days with slot data");
-        }
-        else if (existingStats)
-        {
-            Console.WriteLine("[SKIP] AppointmentStats already exist.");
-        }
+        context.AppointmentStats.AddRange(statsList);
+        Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} days with slot data");
     }
 }
 
