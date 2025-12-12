@@ -16,22 +16,13 @@ public partial class Calendar : ComponentBase
     private IAppointmentService AppointmentService { get; set; } = default!;
 
     [Inject]
-    private IEquipmentService EquipmentService { get; set; } = default!;
-
-    [Inject]
-    private AuthenticationStateProvider AuthStateProvider { get; set; } = default!;
-
-    [Inject]
-    private IAuthService AuthService { get; set; } = default!;
-
-    [Inject]
-    private IFacilityService FacilityService { get; set; } = default!;
-
-    [Inject]
-    private NavigationManager NavigationManager { get; set; } = default!;
-
-    [Inject]
     private CalendarFilterService FilterService { get; set; } = default!;
+
+    [Inject]
+    private CalendarUserService UserService { get; set; } = default!;
+
+    [Inject]
+    private CalendarDataService DataService { get; set; } = default!;
 
     // 状態管理
     private readonly CalendarState _state = new();
@@ -134,100 +125,21 @@ public partial class Calendar : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        await this.LoadUserInfoAsync();
-        await this.LoadBusinessHoursAsync();
+        await this.UserService.LoadUserInfoAsync(this._state);
+        await this.DataService.LoadBusinessHoursAsync(this._state);
         this.GenerateSampleData();
-        await this.GenerateFilterOptions();
-        await this.LoadHolidaysAsync();
-    }
-
-    private async Task LoadUserInfoAsync()
-    {
-        try
-        {
-            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (user.Identity?.IsAuthenticated == true)
-            {
-                this._state.UserDisplayName = user.FindFirst("user_display_name")?.Value
-                    ?? user.FindFirst("preferred_username")?.Value
-                    ?? user.Identity.Name
-                    ?? "";
-
-                this._state.UserEmail = user.FindFirst("email")?.Value ?? "";
-                this._state.TenantName = user.FindFirst("tenant_name")?.Value ?? "";
-                this._state.FacilityName = user.FindFirst("facility_name")?.Value ?? "";
-
-                var roles = user.FindAll("roles").Select(c => c.Value).ToList();
-                this._state.UserRole = roles.FirstOrDefault() ?? "";
-
-                if (Guid.TryParse(user.FindFirst("facility_id")?.Value, out var facilityId))
-                {
-                    this._state.CurrentFacilityId = facilityId;
-                }
-
-                if (!String.IsNullOrEmpty(this._state.UserDisplayName))
-                {
-                    this._state.UserInitial = this._state.UserDisplayName[..1].ToUpper();
-                }
-
-                if (Guid.TryParse(user.FindFirst("sub")?.Value, out var userId))
-                {
-                    this._state.AvailableFacilities = await this.AuthService.GetAccessibleFacilitiesAsync(userId);
-                    this._state.HasMultipleFacilities = this._state.AvailableFacilities.Count > 1;
-                }
-            }
-        }
-        catch
-        {
-            // ユーザー情報取得失敗時は初期値のまま
-        }
+        await this.DataService.GenerateFilterOptionsAsync(this._state);
+        await this.DataService.LoadHolidaysAsync(this._state);
     }
 
     private async Task HandleLogout()
     {
-        try
-        {
-            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
-            var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
-            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
-            {
-                await this.AuthService.LogoutAsync(sessionId);
-            }
-        }
-        catch
-        {
-            // ログアウトAPIの失敗は無視
-        }
-        finally
-        {
-            this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
-        }
+        await this.UserService.HandleLogoutAsync();
     }
 
     private async Task HandleFacilitySwitch(Guid facilityId)
     {
-        try
-        {
-            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
-            var userIdClaim = authState.User.FindFirst("sub")?.Value;
-
-            if (String.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
-            {
-                return;
-            }
-
-            var result = await this.AuthService.SwitchFacilityAsync(userId, facilityId);
-            if (result.IsSuccess)
-            {
-                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
-            }
-        }
-        catch
-        {
-            // 施設切替失敗時は何もしない
-        }
+        await this.UserService.HandleFacilitySwitchAsync(facilityId);
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -268,83 +180,6 @@ public partial class Calendar : ComponentBase
         this._state.SetViewFromString(view);
         this.Layout?.UpdateCurrentView(this.CurrentView.ToString().ToLower());
         this.RegisterLayoutActions();
-    }
-
-    private async Task GenerateFilterOptions()
-    {
-        try
-        {
-            var authState = await this.AuthStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (!user.Identity?.IsAuthenticated ?? false)
-            {
-                this._state.AvailableEquipments = [];
-                return;
-            }
-
-            var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
-            if (String.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
-            {
-                this._state.AvailableEquipments = [];
-                return;
-            }
-
-            var equipments = await this.EquipmentService.GetEquipmentsByTenantAsync(tenantId);
-            this._state.AvailableEquipments = equipments.Select(e => new SearchFilterPanel.FilterItem
-            {
-                Id = e.EquipId,
-                Name = e.EquipName
-            }).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"設備データ取得エラー: {ex.Message}");
-            this._state.AvailableEquipments = [];
-        }
-    }
-
-    private async Task LoadBusinessHoursAsync()
-    {
-        try
-        {
-            if (this._state.CurrentFacilityId.HasValue)
-            {
-                this._state.BusinessHours = await this.FacilityService.GetBusinessHoursAsync(
-                    this._state.CurrentFacilityId.Value,
-                    this._state.CurrentDate);
-
-                this._state.StartHour = this._state.BusinessHours.StartHour;
-                this._state.EndHour = this._state.BusinessHours.EndHour;
-            }
-            else
-            {
-                this._state.BusinessHours = new BusinessHoursDto();
-            }
-        }
-        catch (Exception)
-        {
-            this._state.BusinessHours = new BusinessHoursDto();
-        }
-    }
-
-    private async Task LoadHolidaysAsync()
-    {
-        try
-        {
-            var startDate = new DateOnly(this._state.CurrentDate.Year, 1, 1);
-            var endDate = new DateOnly(this._state.CurrentDate.Year, 12, 31);
-            var holidays = await this.AppointmentService.GetHolidaysAsync(startDate, endDate);
-
-            this._state.Holidays = holidays.ToDictionary(
-                h => h.Date.ToString("yyyy-MM-dd"),
-                h => h.Name
-            );
-        }
-        catch (Exception)
-        {
-            this._state.Holidays = [];
-        }
     }
 
     private void GenerateSampleData()

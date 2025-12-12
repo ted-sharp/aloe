@@ -1,11 +1,6 @@
 using Aloe.Apps.MedockLib.Services;
-using Aloe.Apps.MedockServer.Components.FAB;
-using Aloe.Apps.MedockServer.Components.Layout;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.JSInterop;
-using System.Linq;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -226,27 +221,18 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             }
         }
 
-        var data = this.BuildDataObject();
-        var businessHoursData = this.BusinessHours != null
-            ? new
-            {
-                startTime = this.BusinessHours.StartTime,
-                endTime = this.BusinessHours.EndTime,
-                lunchStartTime = this.BusinessHours.LunchStartTime,
-                lunchEndTime = this.BusinessHours.LunchEndTime
-            }
-            : null;
-
-        var options = new
-        {
-            weekDays = this.WeekDays,
-            showSlots = this.ShowSlots,
-            showSimpleView = this.ShowSimpleView,
-            showEquipmentGraph = this.ShowEquipmentGraph,
-            startHour = this.StartHour,
-            endHour = this.EndHour,
-            businessHours = businessHoursData
-        };
+        var data = CalendarCanvasInterop.BuildDataObject(
+            this.Appointments,
+            this.DayStats,
+            this.Holidays);
+        var options = CalendarCanvasInterop.BuildOptions(
+            this.WeekDays,
+            this.ShowSlots,
+            this.ShowSimpleView,
+            this.ShowEquipmentGraph,
+            this.StartHour,
+            this.EndHour,
+            this.BusinessHours);
 
         await this.JSRuntime.InvokeVoidAsync(
             "MedockCalendar.init",
@@ -266,7 +252,10 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         if (!this._isInitialized) return;
 
-        var data = this.BuildDataObject();
+        var data = CalendarCanvasInterop.BuildDataObject(
+            this.Appointments,
+            this.DayStats,
+            this.Holidays);
         await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
     }
 
@@ -277,26 +266,14 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
         // Update options if weekDays, showSlots, showSimpleView, or showEquipmentGraph changed
         if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView || this._lastShowEquipmentGraph != this.ShowEquipmentGraph)
         {
-            var businessHoursData = this.BusinessHours != null
-                ? new
-                {
-                    startTime = this.BusinessHours.StartTime,
-                    endTime = this.BusinessHours.EndTime,
-                    lunchStartTime = this.BusinessHours.LunchStartTime,
-                    lunchEndTime = this.BusinessHours.LunchEndTime
-                }
-                : null;
-
-            var options = new
-            {
-                weekDays = this.WeekDays,
-                showSlots = this.ShowSlots,
-                showSimpleView = this.ShowSimpleView,
-                showEquipmentGraph = this.ShowEquipmentGraph,
-                startHour = this.StartHour,
-                endHour = this.EndHour,
-                businessHours = businessHoursData
-            };
+            var options = CalendarCanvasInterop.BuildOptions(
+                this.WeekDays,
+                this.ShowSlots,
+                this.ShowSimpleView,
+                this.ShowEquipmentGraph,
+                this.StartHour,
+                this.EndHour,
+                this.BusinessHours);
             await this.JSRuntime.InvokeVoidAsync("MedockCalendar.setOptions", options);
         }
 
@@ -304,50 +281,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             "MedockCalendar.changeView",
             this.ViewType,
             this.CurrentDate.ToString("yyyy-MM-dd"));
-    }
-
-    private object BuildDataObject()
-    {
-        var appointments = this.Appointments?.Select(a => new
-        {
-            id = a.Id.ToString(),
-            date = a.Date.ToString("yyyy-MM-dd"),
-            startTime = a.StartTime?.ToString("HH:mm") ?? "09:00",
-            endTime = a.EndTime?.ToString("HH:mm") ?? "10:00",
-            patientName = a.PatientName,
-            orgName = a.OrganizationName,
-            status = a.Status
-        }).ToArray() ?? Array.Empty<object>();
-
-        var dayStats = this.DayStats != null
-            ? this.DayStats.ToDictionary(
-                kvp => kvp.Key,
-                kvp => (object)new
-                {
-                    am = kvp.Value.AmCount,
-                    pm = kvp.Value.PmCount,
-                    amMax = kvp.Value.AmMax,
-                    pmMax = kvp.Value.PmMax,
-                    slots = kvp.Value.Slots?.Select(s => new
-                    {
-                        time = s.Time,
-                        count = s.Count,
-                        max = s.Max,
-                        isGrayedOut = s.IsGrayedOut,
-                        filteredCount = s.FilteredCount
-                    }).ToArray(),
-                    isGrayedOut = kvp.Value.IsGrayedOut
-                })
-            : new Dictionary<string, object>();
-
-        var holidays = this.Holidays ?? new Dictionary<string, string>();
-
-        return new
-        {
-            appointments,
-            dayStats,
-            holidays
-        };
     }
 
     // ============================================================
