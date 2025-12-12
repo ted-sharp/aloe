@@ -10,8 +10,7 @@ internal static class EquipmentAppointmentSeeder
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var today = dateTimeProvider.TodayDateOnly;
-        var startDate = today.AddYears(-3);
-        var endDate = today.AddYears(1);
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
         // 過去3年〜未来1年の範囲に既存データが存在するかチェック
         var existingEquipmentAppointmentsInRange = await context.EquipmentAppointments
@@ -28,7 +27,7 @@ internal static class EquipmentAppointmentSeeder
         var equipments = await context.Equipments.Where(e => !e.IsDeleted).ToListAsync();
         var patients = await context.Patients.Where(p => !p.IsDeleted).ToListAsync();
         var orgs = await context.Organizations.Where(o => !o.IsDeleted).ToListAsync();
-        var holidays = await SeedBusinessCalendar.LoadHolidaySetAsync(context);
+        var holidays = await SeederHelper.LoadHolidaySetAsync(context);
 
         if (equipments.Any() && patients.Any() && orgs.Any())
         {

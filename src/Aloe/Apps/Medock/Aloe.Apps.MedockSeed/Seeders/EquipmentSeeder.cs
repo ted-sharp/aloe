@@ -27,12 +27,7 @@ internal static class EquipmentSeeder
             foreach (var equipment in equipments)
             {
                 equipment.IsDeleted = false;
-                equipment.CreatedAt = dateTimeProvider.Now;
-                equipment.UpdatedAt = dateTimeProvider.Now;
-                equipment.CreatedUserId = Guid.Empty;
-                equipment.CreatedSessionId = Guid.Empty;
-                equipment.UpdatedUserId = Guid.Empty;
-                equipment.UpdatedSessionId = Guid.Empty;
+                SeederHelper.InitializeAuditFields(equipment, dateTimeProvider);
             }
             context.Equipments.AddRange(equipments);
             Console.WriteLine($"  [+] Equipments: {equipments.Count} entries");

@@ -122,7 +122,7 @@
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public DateOnly? SelectedDate { get; set; }
-    [Parameter] public CalendarCanvas.CalendarDayStats? DayStats { get; set; }
+    [Parameter] public CalendarDayStats? DayStats { get; set; }
     [Parameter] public List<Guid> SelectedEquipmentIds { get; set; } = new();
     [Parameter] public List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     [Parameter] public EventCallback OnClose { get; set; }

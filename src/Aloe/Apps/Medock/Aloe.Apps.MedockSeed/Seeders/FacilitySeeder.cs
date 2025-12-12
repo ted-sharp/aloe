@@ -27,14 +27,9 @@ internal static class FacilitySeeder
                 FacilityNameDisplay = "アロエ健診センター",
                 IsActive = true,
                 ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today.AddYears(-1)),
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
+                IsDeleted = false
             };
+            SeederHelper.InitializeAuditFields(facility, dateTimeProvider);
             context.Facilities.Add(facility);
             Console.WriteLine($"  [+] Facility: {facility.FacilityName} (TenantId: {tenantId})");
 
@@ -47,14 +42,9 @@ internal static class FacilitySeeder
                 FloorName = "1階（健診フロア）",
                 FloorDesc = "一般健診・人間ドック",
                 FloorSeq = 1,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
+                IsDeleted = false
             };
+            SeederHelper.InitializeAuditFields(floor, dateTimeProvider);
             context.Floors.Add(floor);
             Console.WriteLine($"  [+] Floor: {floor.FloorName} (FacilityId: {facilityId})");
         }

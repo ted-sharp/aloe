@@ -16,8 +16,7 @@ internal static class AppointmentSeeder
         }
 
         var today = dateTimeProvider.TodayDateOnly;
-        var startDate = today.AddYears(-3);
-        var endDate = today.AddYears(1);
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
         // 過去3年〜未来1年の範囲に既存データが存在するかチェック
         var existingAppointmentsInRange = await context.Appointments
@@ -33,7 +32,7 @@ internal static class AppointmentSeeder
         Console.WriteLine("[INFO] Creating appointment seed data...");
         var patients = await context.Patients.Where(p => !p.IsDeleted).ToListAsync();
         var orgs = await context.Organizations.Where(o => !o.IsDeleted).ToListAsync();
-        var holidays = await SeedBusinessCalendar.LoadHolidaySetAsync(context);
+        var holidays = await SeederHelper.LoadHolidaySetAsync(context);
 
         if (patients.Any() && orgs.Any())
         {
@@ -46,15 +45,13 @@ internal static class AppointmentSeeder
                 const int maxLockerCapacityAM = 20; // 午前中の最大人数
                 const int maxLockerCapacityPM = 20; // 午後の最大人数
 
-                // 基本的な営業時間内のスロット（始業9:00、就業18:00、昼休み12:00-13:00を考慮）
-                var regularMorningSlots = new[] { "09:00", "09:15", "09:30", "09:45", "10:00", "10:15", "10:30", "10:45", "11:00", "11:15", "11:30", "11:45" }; // 始業～昼休み前（15分単位）
-                var regularAfternoonSlots = new[] { "13:00", "13:15", "13:30", "13:45", "14:00", "14:15", "14:30", "14:45", "15:00", "15:15", "15:30", "15:45", "16:00", "16:15", "16:30", "16:45", "17:00" }; // 昼休み後～就業前（15分単位）
-                var saturdayMorningSlots = new[] { "09:00", "09:30", "10:00", "10:30", "11:00", "11:30" }; // 土曜午前（30分単位）
-
-                // イレギュラーパターン
-                var earlyMorningSlots = new[] { "07:00", "07:30", "08:00", "08:30" }; // 早朝
-                var eveningSlots = new[] { "18:00", "18:30", "19:00", "19:30" }; // 夜間
-                var lunchSlots = new[] { "12:00", "12:15", "12:30", "12:45" }; // 昼休み中（イレギュラー）
+                // SeederHelper.TimeSlots から取得
+                var regularMorningSlots = SeederHelper.TimeSlots.MorningSlots;
+                var regularAfternoonSlots = SeederHelper.TimeSlots.AfternoonSlots;
+                var saturdayMorningSlots = SeederHelper.TimeSlots.SaturdayMorningSlots;
+                var earlyMorningSlots = SeederHelper.TimeSlots.EarlyMorningSlots;
+                var eveningSlots = SeederHelper.TimeSlots.EveningSlots;
+                var lunchSlots = SeederHelper.TimeSlots.LunchSlots;
 
                 // 日付パターンの判定
                 bool IsConferenceDay(DateOnly date) => date.Day % 15 == 0 || date.Day % 23 == 0; // 学会日（月に2-3回程度）

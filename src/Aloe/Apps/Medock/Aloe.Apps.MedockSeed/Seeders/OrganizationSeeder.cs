@@ -101,12 +101,7 @@ internal static class OrganizationSeeder
                 foreach (var org in organizations)
                 {
                     org.IsDeleted = false;
-                    org.CreatedAt = dateTimeProvider.Now;
-                    org.UpdatedAt = dateTimeProvider.Now;
-                    org.CreatedUserId = Guid.Empty;
-                    org.CreatedSessionId = Guid.Empty;
-                    org.UpdatedUserId = Guid.Empty;
-                    org.UpdatedSessionId = Guid.Empty;
+                    SeederHelper.InitializeAuditFields(org, dateTimeProvider);
                 }
 
                 context.Organizations.AddRange(organizations);

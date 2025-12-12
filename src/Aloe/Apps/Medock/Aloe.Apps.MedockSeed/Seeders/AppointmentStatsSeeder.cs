@@ -16,8 +16,7 @@ internal static class AppointmentStatsSeeder
         }
 
         var today = dateTimeProvider.TodayDateOnly;
-        var startDate = today.AddYears(-3);
-        var endDate = today.AddYears(1);
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
         // 過去3年〜未来1年の範囲に既存データが存在するかチェック
         var existingStatsInRange = await context.AppointmentStats
@@ -37,7 +36,7 @@ internal static class AppointmentStatsSeeder
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
                 var dayOfWeek = date.DayOfWeek;
-                var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
+                var isWeekend = SeederHelper.IsWeekend(date);
 
                 var slots = new List<object>();
                 var totalCount = 0;

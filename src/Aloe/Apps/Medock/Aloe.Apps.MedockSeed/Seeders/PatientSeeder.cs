@@ -481,12 +481,7 @@ internal static class PatientSeeder
                 foreach (var patient in patients)
                 {
                     patient.IsDeleted = false;
-                    patient.CreatedAt = dateTimeProvider.Now;
-                    patient.UpdatedAt = dateTimeProvider.Now;
-                    patient.CreatedUserId = Guid.Empty;
-                    patient.CreatedSessionId = Guid.Empty;
-                    patient.UpdatedUserId = Guid.Empty;
-                    patient.UpdatedSessionId = Guid.Empty;
+                    SeederHelper.InitializeAuditFields(patient, dateTimeProvider);
                 }
 
                 context.Patients.AddRange(patients);

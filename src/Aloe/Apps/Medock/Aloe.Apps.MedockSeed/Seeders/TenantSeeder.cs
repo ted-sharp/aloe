@@ -22,14 +22,9 @@ internal static class TenantSeeder
                 TenantName = "デモテナント",
                 IsActive = true,
                 ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today),
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
+                IsDeleted = false
             };
+            SeederHelper.InitializeAuditFields(tenant, dateTimeProvider);
             context.Tenants.Add(tenant);
             Console.WriteLine($"  [+] Tenant: {tenant.TenantName} ({tenant.TenantId})");
         }

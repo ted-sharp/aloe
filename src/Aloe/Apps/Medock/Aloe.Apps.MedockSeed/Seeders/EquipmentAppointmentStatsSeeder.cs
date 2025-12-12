@@ -10,8 +10,7 @@ internal static class EquipmentAppointmentStatsSeeder
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
         var today = dateTimeProvider.TodayDateOnly;
-        var startDate = today.AddYears(-3);
-        var endDate = today.AddYears(1);
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
         // 過去3年〜未来1年の範囲に既存データが存在するかチェック
         var existingEquipmentStatsInRange = await context.EquipmentAppointmentStats
@@ -36,7 +35,7 @@ internal static class EquipmentAppointmentStatsSeeder
             {
                 for (var date = startDate; date <= endDate; date = date.AddDays(1))
                 {
-                    if (date.DayOfWeek == DayOfWeek.Saturday || date.DayOfWeek == DayOfWeek.Sunday)
+                    if (SeederHelper.IsWeekend(date))
                         continue;
 
                     if (equipment == equipments.First())

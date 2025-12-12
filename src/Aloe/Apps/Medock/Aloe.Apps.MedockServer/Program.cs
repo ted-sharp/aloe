@@ -67,6 +67,9 @@ builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IEquipmentService, EquipmentService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
 
+// Add Calendar Services
+builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();
+
 // Add Authentication State Provider
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 builder.Services.AddScoped<ProtectedLocalStorage>();

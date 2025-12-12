@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services.Auth;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -34,7 +35,6 @@ public class AuthService : IAuthService
     {
         using var context = this._contextFactory.CreateDbContext();
 
-        // ユーザーを検索（テナント・施設情報も含む）
         var user = await context.Users
             .Include(u => u.FacilityUsers)
             .ThenInclude(fu => fu.FacilityUserRoles)
@@ -49,20 +49,16 @@ public class AuthService : IAuthService
             return AuthResult.Failed("Invalid credentials");
         }
 
-        // アカウントロック確認
         if (user.LockedUntilAt > this._dateTimeProvider.UtcNow)
         {
             return AuthResult.Failed("Account is locked");
         }
 
-        // パスワード検証
         if (!this._passwordHasher.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
         {
-            // 失敗回数を増加
             user.LoginFailureAttempts++;
             user.LoginFailureCount++;
 
-            // 一定回数失敗でロック
             if (user.LoginFailureAttempts >= 5)
             {
                 user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(15);
@@ -72,19 +68,16 @@ public class AuthService : IAuthService
             return AuthResult.Failed("Invalid credentials");
         }
 
-        // ログイン成功
         user.LoginFailureAttempts = 0;
         user.LoginSuccessCount++;
         user.LastLoginAt = this._dateTimeProvider.UtcNow;
 
-        // デフォルト施設を決定
         var defaultFacility = this.DetermineDefaultFacility(context, user);
 
-        // セッション作成
         var issuedAt = this._dateTimeProvider.UtcNow;
         var expireMinutes = this._cookieSettings.ExpireTimeSpanMinutes ?? 15;
         var expiresAt = issuedAt.AddMinutes(expireMinutes);
-        var refreshTokenExpiration = issuedAt.AddDays(7); // デフォルト7日間
+        var refreshTokenExpiration = issuedAt.AddDays(7);
 
         var session = new Session
         {
@@ -102,35 +95,7 @@ public class AuthService : IAuthService
 
         await context.SaveChangesAsync();
 
-        // 施設に関連するロールを取得
-        var roles = user.FacilityUsers
-            .Where(fu => !fu.IsDeleted && (defaultFacility == null || fu.FacilityId == defaultFacility.FacilityId))
-            .SelectMany(fu => fu.FacilityUserRoles)
-            .Where(fur => !fur.IsDeleted)
-            .Select(fur => fur.RoleCode)
-            .Distinct()
-            .ToArray();
-
-        // 施設管理者かチェック
-        var isFacilityAdmin = defaultFacility != null && user.FacilityUsers
-            .Any(fu => fu.FacilityId == defaultFacility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
-
-        return AuthResult.Success(
-            refreshTokenExpiration,
-            session.SessionId,
-            user.UserId,
-            user.UserCode,
-            user.Email,
-            user.UserDisplayName,
-            defaultFacility?.TenantId,
-            defaultFacility?.Tenant?.TenantName,
-            defaultFacility?.FacilityId,
-            defaultFacility != null
-                ? (!String.IsNullOrEmpty(defaultFacility.FacilityNameDisplay) ? defaultFacility.FacilityNameDisplay : defaultFacility.FacilityName)
-                : null,
-            user.IsSystemAdmin,
-            isFacilityAdmin,
-            roles);
+        return this.CreateSuccessResult(user, defaultFacility, refreshTokenExpiration, session.SessionId);
     }
 
     /// <summary>
@@ -141,13 +106,11 @@ public class AuthService : IAuthService
         using var context = this._contextFactory.CreateDbContext();
 
         var user = await this.GetUserWithRelationsAsync(context, userId);
-
         if (user == null)
         {
             return AuthResult.Failed("User not found");
         }
 
-        // 施設IDが指定されていれば使用、なければデフォルト
         Facility? facility = null;
         if (facilityId.HasValue)
         {
@@ -155,37 +118,9 @@ public class AuthService : IAuthService
         }
         facility ??= this.DetermineDefaultFacility(context, user);
 
-        // 施設に関連するロールを取得
-        var roles = user.FacilityUsers
-            .Where(fu => !fu.IsDeleted && (facility == null || fu.FacilityId == facility.FacilityId))
-            .SelectMany(fu => fu.FacilityUserRoles)
-            .Where(fur => !fur.IsDeleted)
-            .Select(fur => fur.RoleCode)
-            .Distinct()
-            .ToArray();
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7);
 
-        // 施設管理者かチェック
-        var isFacilityAdmin = facility != null && user.FacilityUsers
-            .Any(fu => fu.FacilityId == facility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
-
-        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7); // デフォルト7日間
-
-        return AuthResult.Success(
-            refreshTokenExpiration,
-            null,
-            user.UserId,
-            user.UserCode,
-            user.Email,
-            user.UserDisplayName,
-            facility?.TenantId,
-            facility?.Tenant?.TenantName,
-            facility?.FacilityId,
-            facility != null
-                ? (!String.IsNullOrEmpty(facility.FacilityNameDisplay) ? facility.FacilityNameDisplay : facility.FacilityName)
-                : null,
-            user.IsSystemAdmin,
-            isFacilityAdmin,
-            roles);
+        return this.CreateSuccessResult(user, facility, refreshTokenExpiration, null);
     }
 
     /// <summary>
@@ -201,42 +136,15 @@ public class AuthService : IAuthService
             return AuthResult.Failed("User not found");
         }
 
-        // 施設へのアクセス権限チェック
         var facility = await this.GetFacilityIfAccessibleAsync(context, user, facilityId);
         if (facility == null)
         {
             return AuthResult.Failed("Access denied to facility");
         }
 
-        // 施設に関連するロールを取得
-        var roles = user.FacilityUsers
-            .Where(fu => !fu.IsDeleted && fu.FacilityId == facility.FacilityId)
-            .SelectMany(fu => fu.FacilityUserRoles)
-            .Where(fur => !fur.IsDeleted)
-            .Select(fur => fur.RoleCode)
-            .Distinct()
-            .ToArray();
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7);
 
-        // 施設管理者かチェック
-        var isFacilityAdmin = user.FacilityUsers
-            .Any(fu => fu.FacilityId == facility.FacilityId && fu.IsFacilityAdmin && !fu.IsDeleted);
-
-        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7); // デフォルト7日間
-
-        return AuthResult.Success(
-            refreshTokenExpiration,
-            null,
-            user.UserId,
-            user.UserCode,
-            user.Email,
-            user.UserDisplayName,
-            facility.TenantId,
-            facility.Tenant?.TenantName,
-            facility.FacilityId,
-            !String.IsNullOrEmpty(facility.FacilityNameDisplay) ? facility.FacilityNameDisplay : facility.FacilityName,
-            user.IsSystemAdmin,
-            isFacilityAdmin,
-            roles);
+        return this.CreateSuccessResult(user, facility, refreshTokenExpiration, null);
     }
 
     /// <summary>
@@ -252,7 +160,6 @@ public class AuthService : IAuthService
             return [];
         }
 
-        // システム管理者: 全施設
         if (user.IsSystemAdmin)
         {
             var allFacilities = await context.Facilities
@@ -265,21 +172,18 @@ public class AuthService : IAuthService
             return allFacilities.Select(f => new FacilityInfo
             {
                 FacilityId = f.FacilityId,
-                FacilityName = !String.IsNullOrEmpty(f.FacilityNameDisplay) ? f.FacilityNameDisplay : f.FacilityName,
+                FacilityName = AuthorizationHelper.GetFacilityDisplayName(f),
                 TenantId = f.TenantId,
                 TenantName = f.Tenant.TenantName,
             }).OrderBy(f => f.TenantName).ThenBy(f => f.FacilityName).ToList();
         }
 
-        // 一般ユーザー: FacilityUser で明示的に割り当てられた施設のみ
         var facilities = user.FacilityUsers
             .Where(fu => !fu.IsDeleted && fu.Facility != null && fu.Facility.IsActive && !fu.Facility.IsDeleted)
             .Select(fu => new FacilityInfo
             {
                 FacilityId = fu.FacilityId,
-                FacilityName = !String.IsNullOrEmpty(fu.Facility.FacilityNameDisplay)
-                    ? fu.Facility.FacilityNameDisplay
-                    : fu.Facility.FacilityName,
+                FacilityName = AuthorizationHelper.GetFacilityDisplayName(fu.Facility),
                 TenantId = fu.Facility.TenantId,
                 TenantName = fu.Facility.Tenant?.TenantName ?? String.Empty,
             })
@@ -293,39 +197,32 @@ public class AuthService : IAuthService
     /// <summary>
     /// セッションを検証します。
     /// </summary>
-    /// <param name="sessionId">セッションID</param>
-    /// <returns>検証結果</returns>
     public async Task<SessionValidationResult> ValidateSessionAsync(Guid sessionId)
     {
         using var context = this._contextFactory.CreateDbContext();
 
-        // セッションの存在確認
         var session = await context.Sessions.FindAsync(sessionId);
         if (session == null)
         {
             return SessionValidationResult.Invalid("Session not found");
         }
 
-        // セッションが無効化済みかチェック
         if (session.RevokedAt.HasValue)
         {
             return SessionValidationResult.Invalid("Session has been revoked");
         }
 
-        // セッションの有効期限チェック
         if (session.ExpiresAt < this._dateTimeProvider.UtcNow)
         {
             return SessionValidationResult.Invalid("Session has expired");
         }
 
-        // ユーザーの存在確認
         var user = await context.Users.FindAsync(session.UserId);
         if (user == null || user.IsDeleted)
         {
             return SessionValidationResult.Invalid("User not found or deleted");
         }
 
-        // アカウントロック確認
         if (user.LockedUntilAt > this._dateTimeProvider.UtcNow)
         {
             return SessionValidationResult.Invalid("Account is locked");
@@ -359,6 +256,27 @@ public class AuthService : IAuthService
         return true;
     }
 
+    private AuthResult CreateSuccessResult(User user, Facility? facility, DateTime refreshTokenExpiration, Guid? sessionId)
+    {
+        var roles = AuthorizationHelper.GetUserRoles(user, facility?.FacilityId);
+        var isFacilityAdmin = facility != null && AuthorizationHelper.IsFacilityAdmin(user, facility.FacilityId);
+
+        return AuthResult.Success(
+            refreshTokenExpiration,
+            sessionId,
+            user.UserId,
+            user.UserCode,
+            user.Email,
+            user.UserDisplayName,
+            facility?.TenantId,
+            facility?.Tenant?.TenantName,
+            facility?.FacilityId,
+            AuthorizationHelper.GetFacilityDisplayName(facility),
+            user.IsSystemAdmin,
+            isFacilityAdmin,
+            roles);
+    }
+
     private async Task<User?> GetUserWithRelationsAsync(MedockDbContext context, Guid userId)
     {
         return await context.Users
@@ -373,7 +291,6 @@ public class AuthService : IAuthService
 
     private Facility? DetermineDefaultFacility(MedockDbContext context, User user)
     {
-        // 1. 施設ユーザーとして登録されている最初の施設（sequence順）
         var facilityUser = user.FacilityUsers
             .Where(fu => !fu.IsDeleted && fu.Facility != null && fu.Facility.IsActive && !fu.Facility.IsDeleted)
             .OrderBy(fu => fu.FacilityUserSeq)
@@ -384,7 +301,6 @@ public class AuthService : IAuthService
             return facilityUser.Facility;
         }
 
-        // 2. システム管理者の場合は最初の有効な施設
         if (user.IsSystemAdmin)
         {
             return context.Facilities
@@ -404,10 +320,8 @@ public class AuthService : IAuthService
 
         if (facility == null) return null;
 
-        // システム管理者は全施設アクセス可
         if (user.IsSystemAdmin) return facility;
 
-        // 施設ユーザーチェック
         var hasFacilityAccess = user.FacilityUsers
             .Any(fu => fu.FacilityId == facilityId && !fu.IsDeleted);
         if (hasFacilityAccess) return facility;

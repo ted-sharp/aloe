@@ -15,7 +15,7 @@ public partial class MonthView : ComponentBase
     /// 日別統計データ
     /// </summary>
     [Parameter]
-    public Dictionary<string, CalendarCanvas.CalendarDayStats>? DayStats { get; set; }
+    public Dictionary<string, CalendarDayStats>? DayStats { get; set; }
 
     /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）
