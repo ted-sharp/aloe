@@ -4,16 +4,16 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// 予約統計エンティティ
-/// 日別の予約状況（時間帯枠ごとの予約数/最大数）をJSONBで保持
+/// 予約スロット上書きエンティティ
+/// 特定日のスロット定義を上書きする
 /// </summary>
-[Table("appointment_stats")]
-public class AppointmentStats : IAuditableEntity
+[Table("appointment_slot_overrides")]
+public class AppointmentSlotOverride : IAuditableEntity
 {
-    /// <summary>予約統計ID (PK)</summary>
+    /// <summary>予約スロット上書きID (PK)</summary>
     [Key]
-    [Column("appt_stat_id")]
-    public Guid ApptStatId { get; set; }
+    [Column("appt_slot_override_id")]
+    public Guid ApptSlotOverrideId { get; set; }
 
     /// <summary>予約日</summary>
     [Column("appt_date")]
@@ -24,24 +24,12 @@ public class AppointmentStats : IAuditableEntity
     [ForeignKey("AppointmentResource")]
     public Guid ApptResId { get; set; }
 
-    /// <summary>予約容量（合計）</summary>
-    [Column("appt_cap")]
-    public int ApptCap { get; set; }
-
-    /// <summary>予約数（合計）</summary>
-    [Column("appt_count")]
-    public int ApptCount { get; set; }
-
-    /// <summary>利用可能数（GENERATEDカラム、読み取り専用）</summary>
-    [Column("appt_available")]
-    public int ApptAvailable { get; set; }
-
     /// <summary>
-    /// 時間帯枠ごとのグラフデータ（JSONB）
-    /// 例: { "slots": [{ "time": "08:00", "count": 3, "max": 5 }, ...] }
+    /// 予約スロット定義（JSONB）
+    /// 例: { "slots": [{ "time": "08:00", "max": 5, "duration": 60 }, ...] }
     /// </summary>
-    [Column("appt_graph")]
-    public string ApptGraph { get; set; } = "{}";
+    [Column("appt_slots")]
+    public string ApptSlots { get; set; } = "{}";
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]

@@ -18,5 +18,5 @@ public interface IAppointmentStatsRepository
     /// <summary>
     /// 日別統計用の予約データ（日付と開始時間のみ）を取得します。
     /// </summary>
-    Task<List<(DateOnly? ApptDate, DateTime? ApptStartAt)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate);
+    Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate);
 }

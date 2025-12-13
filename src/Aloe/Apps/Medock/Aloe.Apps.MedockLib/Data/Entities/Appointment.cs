@@ -11,8 +11,9 @@ public class Appointment : IAuditableEntity
     [Column("org_id")][ForeignKey("Organization")] public Guid OrgId { get; set; }
     [Column("pt_id")][ForeignKey("Patient")] public Guid PtId { get; set; }
     [Column("appt_date")] public DateOnly? ApptDate { get; set; }
-    [Column("appt_start_at")] public DateTime? ApptStartAt { get; set; }
-    [Column("appt_end_at")] public DateTime? ApptEndAt { get; set; }
+    [Column("appt_start_time")] public TimeOnly? ApptStartTime { get; set; }
+    [Column("appt_duration_min")] public int? ApptDurationMin { get; set; }
+    [Column("appt_end_time")] public TimeOnly? ApptEndTime { get; set; }
     [Column("appt_status_code")] public int ApptStatusCode { get; set; }
     [Column("appt_memo")][MaxLength(1000)] public string ApptMemo { get; set; } = String.Empty;
     [Column("is_deleted")] public bool IsDeleted { get; set; }
@@ -25,6 +26,7 @@ public class Appointment : IAuditableEntity
     public virtual Floor Floor { get; set; } = null!;
     public virtual Organization Organization { get; set; } = null!;
     public virtual Patient Patient { get; set; } = null!;
+    public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
 }
 
 

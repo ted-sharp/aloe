@@ -4,11 +4,8 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class SearchFilterPanel : ComponentBase
 {
-    /// <summary>
-    /// 利用可能な設備のリスト
-    /// </summary>
-    [Parameter]
-    public List<FilterItem> AvailableEquipments { get; set; } = new();
+    // EquipmentはAppointmentResourceに統合されました
+    // AvailableEquipmentsパラメータは削除されました
 
     /// <summary>
     /// フィルター変更時のコールバック
@@ -32,7 +29,6 @@ public partial class SearchFilterPanel : ComponentBase
     private HashSet<int> SelectedDays { get; set; } = new(); // デフォルト全オフ
     private HashSet<string> SelectedTimeSlots { get; set; } = new(); // 時間帯複数選択
     private int RequiredCapacity { get; set; } = 1;
-    private HashSet<Guid> SelectedEquipments { get; set; } = new();
 
     // 定数
     private readonly string[] DayNames = { "日", "月", "火", "水", "木", "金", "土" };
@@ -41,8 +37,7 @@ public partial class SearchFilterPanel : ComponentBase
     private int ActiveFilterCount =>
         (this.SelectedDays.Any() ? 1 : 0) +
         (this.SelectedTimeSlots.Any() ? 1 : 0) +
-        (this.RequiredCapacity > 1 ? 1 : 0) +
-        (this.SelectedEquipments.Any() ? 1 : 0);
+        (this.RequiredCapacity > 1 ? 1 : 0);
 
     private async Task HandleClose()
     {
@@ -62,18 +57,7 @@ public partial class SearchFilterPanel : ComponentBase
         this.OnFilterChanged();
     }
 
-    private void ToggleEquipment(Guid equipId)
-    {
-        if (this.SelectedEquipments.Contains(equipId))
-        {
-            this.SelectedEquipments.Remove(equipId);
-        }
-        else
-        {
-            this.SelectedEquipments.Add(equipId);
-        }
-        this.OnFilterChanged();
-    }
+    // ToggleEquipmentメソッドは削除されました（EquipmentはAppointmentResourceに統合）
 
     private void ToggleTimeSlot(string timeSlot)
     {
@@ -93,7 +77,6 @@ public partial class SearchFilterPanel : ComponentBase
         this.SelectedDays = new();
         this.SelectedTimeSlots.Clear();
         this.RequiredCapacity = 1;
-        this.SelectedEquipments.Clear();
         this.OnFilterChanged();
     }
 
@@ -110,8 +93,7 @@ public partial class SearchFilterPanel : ComponentBase
         {
             SelectedDays = this.SelectedDays.ToList(),
             TimeSlots = this.SelectedTimeSlots.ToList(),
-            RequiredCapacity = this.RequiredCapacity,
-            EquipIds = this.SelectedEquipments.ToList()
+            RequiredCapacity = this.RequiredCapacity
         };
     }
 
@@ -148,17 +130,7 @@ public partial class SearchFilterPanel : ComponentBase
         this.OnFilterChanged();
     }
 
-    private void SelectAllEquipments()
-    {
-        this.SelectedEquipments = this.AvailableEquipments.Select(e => e.Id).ToHashSet();
-        this.OnFilterChanged();
-    }
-
-    private void ClearAllEquipments()
-    {
-        this.SelectedEquipments.Clear();
-        this.OnFilterChanged();
-    }
+    // SelectAllEquipments/ClearAllEquipmentsメソッドは削除されました（EquipmentはAppointmentResourceに統合）
 
     /// <summary>
     /// 検索フィルターのデータ
@@ -168,7 +140,6 @@ public partial class SearchFilterPanel : ComponentBase
         public List<int> SelectedDays { get; set; } = new();
         public List<string> TimeSlots { get; set; } = new();
         public int RequiredCapacity { get; set; } = 1;
-        public List<Guid> EquipIds { get; set; } = new();
 
         /// <summary>
         /// フィルターが有効かどうか
@@ -176,8 +147,7 @@ public partial class SearchFilterPanel : ComponentBase
         public bool IsActive =>
             this.SelectedDays.Any() ||
             this.TimeSlots.Any() ||
-            this.RequiredCapacity > 1 ||
-            this.EquipIds.Any();
+            this.RequiredCapacity > 1;
     }
 }
 

@@ -29,7 +29,6 @@ public class Organization : IAuditableEntity
     public virtual Facility Facility { get; set; } = null!;
     public virtual Organization? ParentOrganization { get; set; }
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-    public virtual ICollection<EquipmentAppointment> EquipmentAppointments { get; set; } = new List<EquipmentAppointment>();
 }
 
 

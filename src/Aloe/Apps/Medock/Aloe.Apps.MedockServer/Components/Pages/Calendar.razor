@@ -114,7 +114,6 @@
     {
         <div class="absolute top-16 left-4 right-4 z-50">
             <SearchFilterPanel @ref="filterPanelRef"
-                AvailableEquipments="@AvailableEquipments"
                 OnFilterApplied="@HandleFilterApplied"
                 OnFilterChangedRealtime="@HandleFilterChangedRealtime"
                 OnClose="@CloseFilterPanel" />
@@ -130,7 +129,6 @@
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
                 ShowSimpleView="@ShowSimpleView"
-                ShowEquipmentGraph="@ShowEquipmentGraph"
                 BusinessHours="@BusinessHours"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
@@ -140,7 +138,6 @@
                 OnDateRangeSelect="@HandleDateRangeSelect"
                 OnYearSelected="@HandleYearSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged"
                 OnGoToToday="@HandleGoToToday" />
         }
         else if (CurrentView == CalendarViewType.Month)
@@ -150,14 +147,12 @@
                 DayStats="@SampleDayStats"
                 Holidays="@Holidays"
                 ShowSimpleView="@ShowSimpleView"
-                ShowEquipmentGraph="@ShowEquipmentGraph"
                 BusinessHours="@BusinessHours"
                 Height="100%"
                 OnDateClick="@HandleDateClick"
                 OnDateDoubleClick="@HandleDateDoubleClick"
                 OnMonthSelected="@HandleMonthSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnEquipmentGraphChanged="@HandleEquipmentGraphChanged"
                 OnGoToToday="@HandleGoToToday" />
         }
         else

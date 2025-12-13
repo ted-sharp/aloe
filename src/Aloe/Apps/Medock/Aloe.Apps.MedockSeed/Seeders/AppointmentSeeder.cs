@@ -2,281 +2,271 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentSeeder
 {
+    private static readonly Random _random = new Random();
+
     public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
         if (!floorId.HasValue)
         {
-            Console.WriteLine("[SKIP] FloorId is not set. Skipping appointment seed data.");
+            Console.WriteLine("[SKIP] Appointment: No floor ID provided.");
             return;
         }
 
-        var today = dateTimeProvider.TodayDateOnly;
-        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
-
-        // 過去3年〜未来1年の範囲に既存データが存在するかチェック
-        var existingAppointmentsInRange = await context.Appointments
-            .Where(a => !a.IsDeleted && a.ApptDate >= startDate && a.ApptDate <= endDate)
-            .AnyAsync();
-
-        if (existingAppointmentsInRange)
+        // テーブルが存在するか確認
+        try
         {
-            Console.WriteLine("[SKIP] Appointment data already exists in the range (past 3 years to future 1 year).");
+            var hasExistingData = await context.Appointments.AnyAsync();
+            if (hasExistingData)
+            {
+                Console.WriteLine("[SKIP] Appointments already exist.");
+                return;
+            }
+        }
+        catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01")
+        {
+            // テーブルが存在しない場合は続行（初回実行時）
+        }
+
+        var floor = await context.Floors.FirstOrDefaultAsync(f => f.FloorId == floorId.Value);
+        if (floor == null)
+        {
+            Console.WriteLine("[SKIP] Appointment: Floor not found.");
             return;
         }
 
-        Console.WriteLine("[INFO] Creating appointment seed data...");
-        var patients = await context.Patients.Where(p => !p.IsDeleted).ToListAsync();
-        var orgs = await context.Organizations.Where(o => !o.IsDeleted).ToListAsync();
+        var patients = await context.Patients
+            .Where(p => !p.IsDeleted && p.FacilityId == floor.FacilityId)
+            .ToListAsync();
+
+        if (!patients.Any())
+        {
+            Console.WriteLine("[SKIP] Appointment: No patients found.");
+            return;
+        }
+
+        var organizations = await context.Organizations
+            .Where(o => !o.IsDeleted && o.FacilityId == floor.FacilityId)
+            .ToListAsync();
+
+        if (!organizations.Any())
+        {
+            Console.WriteLine("[SKIP] Appointment: No organizations found.");
+            return;
+        }
+
         var holidays = await SeederHelper.LoadHolidaySetAsync(context);
 
-        if (patients.Any() && orgs.Any())
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
+
+        Console.WriteLine("[INFO] Creating appointment seed data...");
+
+        var appointments = new List<Appointment>();
+        var currentDate = startDate;
+
+        while (currentDate <= endDate)
         {
-            var appointments = new List<Appointment>();
-            var random = new Random(42);
+            var dayContext = GetDayContext(currentDate, holidays);
 
-                // ステータスコード: 0=仮押, 1=予約確定, 2=来院済み, 3=検査完了, 4=キャンセル, 5=無断キャンセル
+            // イレギュラーチェック（約1%の確率で例外）
+            var isIrregular = _random.Next(100) < 1;
+            if (isIrregular)
+            {
+                // イレギュラーデータを生成
+                dayContext = ApplyIrregularRule(dayContext, currentDate);
+            }
 
-                // ロッカー制約: AM/PMで一度に受け付ける最大人数（ロッカーの数）
-                const int maxLockerCapacityAM = 20; // 午前中の最大人数
-                const int maxLockerCapacityPM = 20; // 午後の最大人数
+            // 営業日の場合は予約を生成
+            if (dayContext.IsOpen)
+            {
+                var appointmentsForDay = GenerateAppointmentsForDay(
+                    currentDate,
+                    dayContext,
+                    floor,
+                    patients,
+                    organizations,
+                    dateTimeProvider);
 
-                // SeederHelper.TimeSlots から取得
-                var regularMorningSlots = SeederHelper.TimeSlots.MorningSlots;
-                var regularAfternoonSlots = SeederHelper.TimeSlots.AfternoonSlots;
-                var saturdayMorningSlots = SeederHelper.TimeSlots.SaturdayMorningSlots;
-                var earlyMorningSlots = SeederHelper.TimeSlots.EarlyMorningSlots;
-                var eveningSlots = SeederHelper.TimeSlots.EveningSlots;
-                var lunchSlots = SeederHelper.TimeSlots.LunchSlots;
+                appointments.AddRange(appointmentsForDay);
+            }
 
-                // 日付パターンの判定
-                bool IsConferenceDay(DateOnly date) => date.Day % 15 == 0 || date.Day % 23 == 0; // 学会日（月に2-3回程度）
-                bool IsLowStaffDay(DateOnly date) => date.Day % 7 == 0 || date.Day % 11 == 0; // スタッフ不足日（月に4-5回程度）
+            currentDate = currentDate.AddDays(1);
+        }
 
-                // 予約を作成するヘルパー関数
-                Appointment CreateAppointment(DateOnly apptDate, int hour, int minute, int durationMinutes, int statusCode, string? memo = null)
+        Console.WriteLine($"  [+] Appointments: {appointments.Count} entries (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
+
+        context.Appointments.AddRange(appointments);
+    }
+
+    /// <summary>
+    /// 日付の営業コンテキストを取得
+    /// </summary>
+    private static AppointmentDayContext GetDayContext(DateOnly date, HashSet<DateOnly> holidays)
+    {
+        var dayOfWeek = date.DayOfWeek;
+        var isHoliday = holidays.Contains(date);
+
+        // 日曜または祝日は休み
+        if (dayOfWeek == DayOfWeek.Sunday || isHoliday)
+        {
+            return new AppointmentDayContext
+            {
+                IsOpen = false,
+                IsMorningOnly = false,
+                IsIrregular = false
+            };
+        }
+
+        // 水曜・土曜は午前のみ
+        if (dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday)
+        {
+            return new AppointmentDayContext
+            {
+                IsOpen = true,
+                IsMorningOnly = true,
+                IsIrregular = false
+            };
+        }
+
+        // 平日（月・火・木・金）は全日営業
+        return new AppointmentDayContext
+        {
+            IsOpen = true,
+            IsMorningOnly = false,
+            IsIrregular = false
+        };
+    }
+
+    /// <summary>
+    /// イレギュラールールを適用（約1%の確率）
+    /// </summary>
+    private static AppointmentDayContext ApplyIrregularRule(AppointmentDayContext context, DateOnly date)
+    {
+        var irregularType = _random.Next(3);
+
+        return irregularType switch
+        {
+            0 => // 日曜や休みの日に臨時営業
+                new AppointmentDayContext
                 {
-                    var apptStart = new DateTime(apptDate.Year, apptDate.Month, apptDate.Day, hour, minute, 0, DateTimeKind.Utc);
-                    var apptEnd = apptStart.AddMinutes(durationMinutes);
-
-                    return new Appointment
-                    {
-                        ApptId = Guid.NewGuid(),
-                        FloorId = floorId.Value,
-                        OrgId = orgs[random.Next(orgs.Count)].OrgId,
-                        PtId = patients[random.Next(patients.Count)].PtId,
-                        ApptDate = apptDate,
-                        ApptStartAt = apptStart,
-                        ApptEndAt = apptEnd,
-                        ApptStatusCode = statusCode,
-                        ApptMemo = memo ?? "",
-                        IsDeleted = false,
-                        CreatedAt = dateTimeProvider.Now.AddDays((apptDate.DayNumber - today.DayNumber)),
-                        UpdatedAt = dateTimeProvider.Now.AddDays((apptDate.DayNumber - today.DayNumber)),
-                        CreatedUserId = Guid.Empty,
-                        CreatedSessionId = Guid.Empty,
-                        UpdatedUserId = Guid.Empty,
-                        UpdatedSessionId = Guid.Empty
-                    };
-                }
-
-                // 時間文字列を解析するヘルパー関数
-                (int hour, int minute) ParseTime(string timeStr)
+                    IsOpen = !context.IsOpen, // 休みの日を営業日に
+                    IsMorningOnly = context.IsOpen ? context.IsMorningOnly : false, // 休みだった場合は全日営業
+                    IsIrregular = true
+                },
+            1 => // 水曜・土曜の午後も営業
+                new AppointmentDayContext
                 {
-                    var parts = timeStr.Split(':');
-                    return (Int32.Parse(parts[0]), Int32.Parse(parts[1]));
-                }
-
-                // 過去3年〜未来1年の予約（営業カレンダー準拠、例外あり）
-                for (var date = startDate; date <= endDate; date = date.AddDays(1))
+                    IsOpen = context.IsOpen,
+                    IsMorningOnly = context.IsMorningOnly ? false : context.IsMorningOnly, // 午前のみ→全日に
+                    IsIrregular = true
+                },
+            _ => // 平日が臨時休診
+                new AppointmentDayContext
                 {
-                    var offsetDays = date.DayNumber - today.DayNumber;
-                    var dayCtx = SeedBusinessCalendar.GetDayContext(date, holidays, random);
-                    if (dayCtx.DayType == SeedDayType.Closed)
-                    {
-                        continue;
-                    }
-
-                    var isSaturday = dayCtx.DayType == SeedDayType.SaturdayMorning;
-                    var isIrregularOpen = dayCtx.DayType == SeedDayType.IrregularOpen;
-                    var isConference = IsConferenceDay(date);
-                    var isLowStaff = IsLowStaffDay(date);
-
-                    // 予約数の決定（ロッカー制約を考慮）
-                    int baseCount;
-                    if (isIrregularOpen)
-                    {
-                        baseCount = random.Next(1, 5); // 例外営業は1-4件
-                    }
-                    else if (isSaturday)
-                    {
-                        baseCount = random.Next(6, 18); // 土曜午前は6-17件
-                    }
-                    else if (isConference)
-                    {
-                        baseCount = random.Next(5, 12); // 学会日は通常の30-50%（5-11件）
-                    }
-                    else if (isLowStaff)
-                    {
-                        baseCount = random.Next(8, 18); // スタッフ不足日は通常の50-70%（8-17件）
-                    }
-                    else
-                    {
-                        baseCount = random.Next(15, 35); // 通常日は15-34件
-                    }
-
-                    // AM/PMでロッカー制約を考慮
-                    var amCount = 0;
-                    var pmCount = 0;
-                    if (isSaturday || isIrregularOpen)
-                    {
-                        amCount = Math.Min(baseCount, maxLockerCapacityAM);
-                        pmCount = 0;
-                    }
-                    else
-                    {
-                        amCount = Math.Min(baseCount / 2 + random.Next(-2, 3), maxLockerCapacityAM);
-                        pmCount = Math.Min(baseCount - amCount, maxLockerCapacityPM);
-                    }
-
-                    // 日付パターンのメモ
-                    string? dateMemo = null;
-                    if (isConference) dateMemo = "学会日（ドクター不在）";
-                    else if (isLowStaff) dateMemo = "スタッフ不足日";
-                    if (!String.IsNullOrWhiteSpace(dayCtx.DayMemo))
-                    {
-                        dateMemo = dateMemo != null ? $"{dateMemo} - {dayCtx.DayMemo}" : dayCtx.DayMemo;
-                    }
-
-                    // 午前中の予約を生成
-                    for (var j = 0; j < amCount; j++)
-                    {
-                        string slotTime;
-                        int duration;
-                        string? memo = dateMemo;
-
-                        // 85%は通常パターン、15%はイレギュラーパターン
-                        if (random.Next(100) < 85)
-                        {
-                            slotTime = isSaturday || isIrregularOpen
-                                ? saturdayMorningSlots[random.Next(saturdayMorningSlots.Length)]
-                                : regularMorningSlots[random.Next(regularMorningSlots.Length)];
-                            duration = random.Next(100) < 70 ? 60 : (random.Next(100) < 50 ? 90 : 120);
-                        }
-                        else
-                        {
-                            // イレギュラーパターン（早朝または昼休み）
-                            if (random.Next(100) < 70)
-                            {
-                                slotTime = earlyMorningSlots[random.Next(earlyMorningSlots.Length)];
-                                duration = 60;
-                                memo = memo != null ? $"{memo} - 早朝予約" : "早朝予約";
-                            }
-                            else
-                            {
-                                // 土曜/例外営業は昼休み予約を抑制
-                                if (isSaturday || isIrregularOpen)
-                                {
-                                    slotTime = saturdayMorningSlots[random.Next(saturdayMorningSlots.Length)];
-                                    duration = 60;
-                                }
-                                else
-                                {
-                                    slotTime = lunchSlots[random.Next(lunchSlots.Length)];
-                                    duration = 30;
-                                    memo = memo != null ? $"{memo} - 昼休み予約" : "昼休み予約";
-                                }
-                            }
-                        }
-
-                        var (hour, minute) = ParseTime(slotTime);
-                        var statusCode = GetStatusCode(date, today, random, ref memo);
-
-                        appointments.Add(CreateAppointment(date, hour, minute, duration, statusCode, memo));
-                    }
-
-                    // 午後の予約を生成
-                    for (var j = 0; j < pmCount; j++)
-                    {
-                        string slotTime;
-                        int duration;
-                        string? memo = dateMemo;
-
-                        // 85%は通常パターン、15%はイレギュラーパターン
-                        if (random.Next(100) < 85)
-                        {
-                            slotTime = regularAfternoonSlots[random.Next(regularAfternoonSlots.Length)];
-                            duration = random.Next(100) < 70 ? 60 : (random.Next(100) < 50 ? 90 : 120);
-                        }
-                        else
-                        {
-                            // イレギュラーパターン（夜間または長時間）
-                            if (random.Next(100) < 70)
-                            {
-                                slotTime = eveningSlots[random.Next(eveningSlots.Length)];
-                                duration = random.Next(100) < 70 ? 60 : 90;
-                                memo = memo != null ? $"{memo} - 夜間予約" : "夜間予約";
-                            }
-                            else
-                            {
-                                slotTime = regularAfternoonSlots[random.Next(regularAfternoonSlots.Length)];
-                                duration = random.Next(100) < 50 ? 180 : 120;
-                                memo = memo != null ? $"{memo} - 長時間予約" : "長時間予約";
-                            }
-                        }
-
-                        var (hour, minute) = ParseTime(slotTime);
-                        var statusCode = GetStatusCode(date, today, random, ref memo);
-
-                        appointments.Add(CreateAppointment(date, hour, minute, duration, statusCode, memo));
-                    }
+                    IsOpen = context.IsOpen ? false : context.IsOpen, // 営業日を休みに
+                    IsMorningOnly = false,
+                    IsIrregular = true
                 }
+        };
+    }
 
-                context.Appointments.AddRange(appointments);
-                Console.WriteLine($"  [+] Appointments: {appointments.Count} entries");
+    /// <summary>
+    /// 1日分の予約データを生成
+    /// </summary>
+    private static List<Appointment> GenerateAppointmentsForDay(
+        DateOnly date,
+        AppointmentDayContext dayContext,
+        Floor floor,
+        List<Patient> patients,
+        List<Organization> organizations,
+        IDateTimeProvider dateTimeProvider)
+    {
+        var appointments = new List<Appointment>();
+
+        // 1日あたり10～20件の予約を生成
+        var appointmentCount = _random.Next(10, 21);
+
+        for (int i = 0; i < appointmentCount; i++)
+        {
+            var patient = patients[_random.Next(patients.Count)];
+            var organization = organizations[_random.Next(organizations.Count)];
+
+            // 時間帯を決定
+            TimeOnly? startTime = null;
+            int? durationMin = null;
+            TimeOnly? endTime = null;
+
+            if (dayContext.IsMorningOnly)
+            {
+                // 午前のみ（09:00-12:00）
+                var morningTimes = SeederHelper.TimeSlots.MorningSlots;
+                var timeStr = morningTimes[_random.Next(morningTimes.Length)];
+                if (TimeOnly.TryParse(timeStr, out var parsedTime))
+                {
+                    startTime = parsedTime;
+                    durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                    endTime = startTime.Value.AddMinutes(durationMin.Value);
+                }
             }
             else
             {
-                Console.WriteLine("[SKIP] No patients or organizations found. Skipping appointment seed data.");
+                // 全日営業
+                var allTimes = new List<string>();
+                allTimes.AddRange(SeederHelper.TimeSlots.MorningSlots);
+                allTimes.AddRange(SeederHelper.TimeSlots.AfternoonSlots);
+
+                var timeStr = allTimes[_random.Next(allTimes.Count)];
+                if (TimeOnly.TryParse(timeStr, out var parsedTime))
+                {
+                    startTime = parsedTime;
+                    durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                    endTime = startTime.Value.AddMinutes(durationMin.Value);
+                }
             }
+
+            if (!startTime.HasValue)
+            {
+                continue;
+            }
+
+            // 予約ステータス（約95%が予約済み、5%がその他）
+            var statusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5);
+
+            var appointment = new Appointment
+            {
+                ApptId = Guid.NewGuid(),
+                FloorId = floor.FloorId,
+                OrgId = organization.OrgId,
+                PtId = patient.PtId,
+                ApptDate = date,
+                ApptStartTime = startTime,
+                ApptDurationMin = durationMin,
+                ApptEndTime = endTime,
+                ApptStatusCode = statusCode,
+                ApptMemo = dayContext.IsIrregular ? "イレギュラー営業" : String.Empty,
+                IsDeleted = false
+            };
+
+            SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
+            appointments.Add(appointment);
+        }
+
+        return appointments;
     }
 
-    private static int GetStatusCode(DateOnly date, DateOnly today, Random random, ref string? memo)
+    /// <summary>
+    /// 予約日の営業コンテキスト
+    /// </summary>
+    private class AppointmentDayContext
     {
-        // 過去：来院済み/検査完了中心、キャンセルも混ぜる
-        if (date < today)
-        {
-            var roll = random.Next(100);
-            if (roll < 55) return 2;
-            if (roll < 80) return 3;
-            if (roll < 92)
-            {
-                memo = memo != null ? $"{memo} - キャンセル" : "キャンセル";
-                return 4;
-            }
-
-            memo = memo != null ? $"{memo} - 無断キャンセル" : "無断キャンセル";
-            return 5;
-        }
-
-        // 当日：確定/来院済み
-        if (date == today)
-        {
-            return random.Next(100) < 70 ? 1 : 2;
-        }
-
-        // 未来：仮押/確定（稀にキャンセル）
-        var futureRoll = random.Next(100);
-        if (futureRoll < 20) return 0;
-        if (futureRoll < 95) return 1;
-        memo = memo != null ? $"{memo} - キャンセル" : "キャンセル";
-        return 4;
+        public bool IsOpen { get; set; }
+        public bool IsMorningOnly { get; set; }
+        public bool IsIrregular { get; set; }
     }
 }
-
-
 

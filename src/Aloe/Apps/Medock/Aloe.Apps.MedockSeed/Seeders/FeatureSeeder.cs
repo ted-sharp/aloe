@@ -5,36 +5,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
-internal static class ResourceSeeder
+internal static class FeatureSeeder
 {
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
-        var existingResources = await context.Resources.AnyAsync();
-        if (!existingResources)
+        var existingFeatures = await context.Features.AnyAsync();
+        if (!existingFeatures)
         {
-            Console.WriteLine("[INFO] Creating resource and operation master data...");
+            Console.WriteLine("[INFO] Creating feature and operation master data...");
 
-            var resources = new List<Resource>
+            var features = new List<Feature>
             {
-                new() { ResourceCode = "APPT" },
-                new() { ResourceCode = "PATIENT" },
-                new() { ResourceCode = "CALENDAR" },
-                new() { ResourceCode = "USER" },
+                new() { FeatureCode = "APPT" },
+                new() { FeatureCode = "PATIENT" },
+                new() { FeatureCode = "CALENDAR" },
+                new() { FeatureCode = "USER" },
             };
 
-            foreach (var resource in resources)
+            foreach (var feature in features)
             {
-                resource.IsDeleted = false;
-                resource.CreatedAt = dateTimeProvider.Now;
-                resource.UpdatedAt = dateTimeProvider.Now;
-                resource.CreatedUserId = Guid.Empty;
-                resource.CreatedSessionId = Guid.Empty;
-                resource.UpdatedUserId = Guid.Empty;
-                resource.UpdatedSessionId = Guid.Empty;
+                feature.IsDeleted = false;
+                feature.CreatedAt = dateTimeProvider.Now;
+                feature.UpdatedAt = dateTimeProvider.Now;
+                feature.CreatedUserId = Guid.Empty;
+                feature.CreatedSessionId = Guid.Empty;
+                feature.UpdatedUserId = Guid.Empty;
+                feature.UpdatedSessionId = Guid.Empty;
             }
 
-            context.Resources.AddRange(resources);
-            Console.WriteLine($"  [+] Resources: {resources.Count} entries");
+            context.Features.AddRange(features);
+            Console.WriteLine($"  [+] Features: {features.Count} entries");
 
             var operations = new List<Operation>
             {

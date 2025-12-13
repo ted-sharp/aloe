@@ -12,18 +12,15 @@ namespace Aloe.Apps.MedockServer.Components.Pages;
 public class CalendarDataService
 {
     private readonly IAppointmentService _appointmentService;
-    private readonly IEquipmentService _equipmentService;
     private readonly IFacilityService _facilityService;
     private readonly AuthenticationStateProvider _authStateProvider;
 
     public CalendarDataService(
         IAppointmentService appointmentService,
-        IEquipmentService equipmentService,
         IFacilityService facilityService,
         AuthenticationStateProvider authStateProvider)
     {
         this._appointmentService = appointmentService;
-        this._equipmentService = equipmentService;
         this._facilityService = facilityService;
         this._authStateProvider = authStateProvider;
     }
@@ -79,38 +76,12 @@ public class CalendarDataService
 
     /// <summary>
     /// フィルター用の設備オプションを生成して状態に反映します。
+    /// EquipmentはAppointmentResourceに統合されました。
     /// </summary>
     public async Task GenerateFilterOptionsAsync(CalendarState state)
     {
-        try
-        {
-            var authState = await this._authStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-
-            if (!user.Identity?.IsAuthenticated ?? false)
-            {
-                state.AvailableEquipments = [];
-                return;
-            }
-
-            var tenantIdClaim = user.FindFirst("tenant_id")?.Value;
-            if (String.IsNullOrEmpty(tenantIdClaim) || !Guid.TryParse(tenantIdClaim, out var tenantId))
-            {
-                state.AvailableEquipments = [];
-                return;
-            }
-
-            var equipments = await this._equipmentService.GetEquipmentsByTenantAsync(tenantId);
-            state.AvailableEquipments = equipments.Select(e => new SearchFilterPanel.FilterItem
-            {
-                Id = e.EquipId,
-                Name = e.EquipName
-            }).ToList();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"設備データ取得エラー: {ex.Message}");
-            state.AvailableEquipments = [];
-        }
+        // EquipmentはAppointmentResourceに統合されました
+        // このメソッドは将来AppointmentResource用に実装されます
+        await Task.CompletedTask;
     }
 }

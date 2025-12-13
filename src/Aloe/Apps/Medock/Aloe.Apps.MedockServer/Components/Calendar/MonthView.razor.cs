@@ -32,8 +32,9 @@ public partial class MonthView : ComponentBase
     /// <summary>
     /// 設備折れ線グラフを表示するかどうか
     /// </summary>
-    [Parameter]
-    public bool ShowEquipmentGraph { get; set; } = false;
+    //[Parameter]
+    // ShowEquipmentGraphプロパティは削除されました（EquipmentはAppointmentResourceに統合）
+    // public bool ShowEquipmentGraph { get; set; } = false;
 
     /// <summary>
     /// 営業時間情報（昼休み時間帯の縦ライン描画用）
@@ -74,8 +75,9 @@ public partial class MonthView : ComponentBase
     /// <summary>
     /// 設備表示スイッチ変更時のコールバック
     /// </summary>
-    [Parameter]
-    public EventCallback<bool> OnEquipmentGraphChanged { get; set; }
+    //[Parameter]
+    // OnEquipmentGraphChangedイベントは削除されました（EquipmentはAppointmentResourceに統合）
+    // public EventCallback<bool> OnEquipmentGraphChanged { get; set; }
 
     /// <summary>
     /// 今日ボタンクリック時のコールバック
@@ -104,10 +106,7 @@ public partial class MonthView : ComponentBase
         await this.OnSimpleViewChanged.InvokeAsync(this.ShowSimpleView);
     }
 
-    private async Task HandleEquipmentGraphChanged()
-    {
-        await this.OnEquipmentGraphChanged.InvokeAsync(this.ShowEquipmentGraph);
-    }
+    // HandleEquipmentGraphChangedメソッドは削除されました（EquipmentはAppointmentResourceに統合）
 
     private async Task HandleGoToToday()
     {

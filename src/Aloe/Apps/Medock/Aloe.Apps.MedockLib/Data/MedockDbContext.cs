@@ -25,7 +25,7 @@ public class MedockDbContext : DbContext
     public DbSet<Session> Sessions => this.Set<Session>();
     public DbSet<Role> Roles => this.Set<Role>();
     public DbSet<Permission> Permissions => this.Set<Permission>();
-    public DbSet<Resource> Resources => this.Set<Resource>();
+    public DbSet<Feature> Features => this.Set<Feature>();
     public DbSet<Operation> Operations => this.Set<Operation>();
     public DbSet<FacilityUserRole> UserRoles => this.Set<FacilityUserRole>();
     public DbSet<RolePermission> RolePermissions => this.Set<RolePermission>();
@@ -36,17 +36,16 @@ public class MedockDbContext : DbContext
     public DbSet<FacilityUser> FacilityUsers => this.Set<FacilityUser>();
     public DbSet<FacilityBusinessHours> FacilityBusinessHours => this.Set<FacilityBusinessHours>();
     public DbSet<Floor> Floors => this.Set<Floor>();
-    public DbSet<Equipment> Equipments => this.Set<Equipment>();
 
     // 業務系
     public DbSet<Patient> Patients => this.Set<Patient>();
     public DbSet<Organization> Organizations => this.Set<Organization>();
     public DbSet<Appointment> Appointments => this.Set<Appointment>();
-    public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
-    public DbSet<EquipmentAppointment> EquipmentAppointments => this.Set<EquipmentAppointment>();
-    public DbSet<EquipmentAppointmentStats> EquipmentAppointmentStats => this.Set<EquipmentAppointmentStats>();
+    public DbSet<AppointmentResource> AppointmentResources => this.Set<AppointmentResource>();
     public DbSet<AppointmentSlot> AppointmentSlots => this.Set<AppointmentSlot>();
-    public DbSet<EquipmentSlot> EquipmentSlots => this.Set<EquipmentSlot>();
+    public DbSet<AppointmentSlotOverride> AppointmentSlotOverrides => this.Set<AppointmentSlotOverride>();
+    public DbSet<AppointmentResourceAssignment> AppointmentResourceReservations => this.Set<AppointmentResourceAssignment>();
+    public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
 
     // マスタ系
     public DbSet<Holiday> Holidays => this.Set<Holiday>();

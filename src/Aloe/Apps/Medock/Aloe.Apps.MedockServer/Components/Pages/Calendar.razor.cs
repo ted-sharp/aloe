@@ -82,11 +82,7 @@ public partial class Calendar : ComponentBase
         set => this._state.ShowSimpleView = value;
     }
 
-    private bool ShowEquipmentGraph
-    {
-        get => this._state.ShowEquipmentGraph;
-        set => this._state.ShowEquipmentGraph = value;
-    }
+    // ShowEquipmentGraphプロパティは削除されました（EquipmentはAppointmentResourceに統合）
 
     private string UserInitial => this._state.UserInitial;
     private string UserDisplayName => this._state.UserDisplayName;
@@ -119,7 +115,7 @@ public partial class Calendar : ComponentBase
     private int StartHour => this._state.StartHour;
     private int EndHour => this._state.EndHour;
 
-    private List<SearchFilterPanel.FilterItem> AvailableEquipments => this._state.AvailableEquipments;
+    // AvailableEquipmentsプロパティは削除されました（EquipmentはAppointmentResourceに統合）
     private SearchFilterPanel.SearchFilter? CurrentFilter => this._state.CurrentFilter;
     private int ActiveFilterCount => this._state.ActiveFilterCount;
 
@@ -257,11 +253,7 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    private void HandleEquipmentGraphChanged(bool showEquipmentGraph)
-    {
-        this._state.ShowEquipmentGraph = showEquipmentGraph;
-        this.StateHasChanged();
-    }
+    // HandleEquipmentGraphChangedメソッドは削除されました（EquipmentはAppointmentResourceに統合）
 
     private void HandleDateSelect(DateOnly date)
     {
@@ -301,10 +293,7 @@ public partial class Calendar : ComponentBase
     {
         this._state.CurrentFilter = filter;
 
-        if (filter.EquipIds.Any() && !this._state.ShowEquipmentGraph)
-        {
-            this._state.ShowEquipmentGraph = true;
-        }
+        // Equipment関連の処理は削除されました（AppointmentResourceに統合）
 
         await this.FilterService.ApplyFilterAsync(
             filter,

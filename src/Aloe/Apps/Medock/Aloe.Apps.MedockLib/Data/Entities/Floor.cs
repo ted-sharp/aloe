@@ -59,9 +59,7 @@ public class Floor : IAuditableEntity
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-    public virtual ICollection<Equipment> Equipments { get; set; } = new List<Equipment>();
-    public virtual ICollection<AppointmentSlot> AppointmentSlots { get; set; } = new List<AppointmentSlot>();
-    public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
+    public virtual ICollection<AppointmentResource> AppointmentResources { get; set; } = new List<AppointmentResource>();
 }
 
 

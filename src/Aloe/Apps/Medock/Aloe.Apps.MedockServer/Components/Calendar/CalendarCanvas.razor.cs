@@ -57,11 +57,8 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     [Parameter]
     public bool ShowSimpleView { get; set; } = false;
 
-    /// <summary>
-    /// Show equipment line graph (for month/year view)
-    /// </summary>
-    [Parameter]
-    public bool ShowEquipmentGraph { get; set; } = false;
+    // ShowEquipmentGraphパラメータは削除されました（EquipmentはAppointmentResourceに統合）
+    // public bool ShowEquipmentGraph { get; set; } = false;
 
     /// <summary>
     /// Start hour for week/day view
@@ -149,7 +146,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     private int _lastWeekDays;
     private bool _lastShowSlots;
     private bool _lastShowSimpleView;
-    private bool _lastShowEquipmentGraph;
+    // _lastShowEquipmentGraphは削除されました（EquipmentはAppointmentResourceに統合）
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -163,12 +160,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             this._lastWeekDays = this.WeekDays;
             this._lastShowSlots = this.ShowSlots;
             this._lastShowSimpleView = this.ShowSimpleView;
-            this._lastShowEquipmentGraph = this.ShowEquipmentGraph;
+            // _lastShowEquipmentGraphの設定は削除されました
         }
         else if (this._isInitialized)
         {
             // Check if we need to update the view
-            if (this._lastViewType != this.ViewType || this._lastDate != this.CurrentDate || this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView || this._lastShowEquipmentGraph != this.ShowEquipmentGraph)
+            if (this._lastViewType != this.ViewType || this._lastDate != this.CurrentDate || this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView)
             {
                 await this.ChangeViewAsync();
                 this._lastViewType = this.ViewType;
@@ -176,7 +173,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
                 this._lastWeekDays = this.WeekDays;
                 this._lastShowSlots = this.ShowSlots;
                 this._lastShowSimpleView = this.ShowSimpleView;
-                this._lastShowEquipmentGraph = this.ShowEquipmentGraph;
             }
         }
     }
@@ -229,7 +225,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             this.WeekDays,
             this.ShowSlots,
             this.ShowSimpleView,
-            this.ShowEquipmentGraph,
             this.StartHour,
             this.EndHour,
             this.BusinessHours);
@@ -263,14 +258,13 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         if (!this._isInitialized) return;
 
-        // Update options if weekDays, showSlots, showSimpleView, or showEquipmentGraph changed
-        if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView || this._lastShowEquipmentGraph != this.ShowEquipmentGraph)
+        // Update options if weekDays, showSlots, or showSimpleView changed
+        if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView)
         {
             var options = CalendarCanvasInterop.BuildOptions(
                 this.WeekDays,
                 this.ShowSlots,
                 this.ShowSimpleView,
-                this.ShowEquipmentGraph,
                 this.StartHour,
                 this.EndHour,
                 this.BusinessHours);

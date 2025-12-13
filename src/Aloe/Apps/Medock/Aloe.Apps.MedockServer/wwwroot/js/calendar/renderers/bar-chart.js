@@ -383,11 +383,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         let overallVacancyRatio = 0;
         
         if (slots && slots.length > 0) {
-            // 設備フィルターが有効かどうかを判定
-            const showEquipmentGraph = state.options?.showEquipmentGraph ?? false;
-            const hasEquipmentFilter = showEquipmentGraph && slots.some(s => s.filteredCount > 0);
-            
-            // 全スロットの平均空き率を計算（フィルタ条件を考慮）
+            // 全スロットの平均空き率を計算
             let totalVacancy = 0;
             let slotCount = 0;
             
@@ -398,14 +394,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 }
                 
                 const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
-                
-                // 設備フィルターが有効な場合はfilteredCountを使用、そうでない場合はcountを使用
-                let count;
-                if (hasEquipmentFilter && slot.filteredCount !== undefined && slot.filteredCount !== null) {
-                    count = slot.filteredCount;
-                } else {
-                    count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-                }
+                const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
                 
                 const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / max)));
                 totalVacancy += vacancyRatio;
@@ -441,13 +430,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const totalGapWidth = gapWidth * (slotCount - 1); // 全隙間の合計
         const availableWidth = barAreaWidth - totalGapWidth; // 隙間を除いた利用可能な幅
         const barWidth = Math.max(1, Math.floor(availableWidth / slotCount)); // 各棒グラフの幅（均等分割）
-        
-        // 設備条件フィルター判定（showEquipmentGraphオプションも考慮）
-        const showEquipmentGraph = state.options?.showEquipmentGraph ?? false;
-        const hasEquipmentFilter = showEquipmentGraph && slots.some(s => s.filteredCount > 0);
-
-        // 折れ線グラフ用のポイント配列（設備条件フィルターが選択されている場合）
-        const linePoints = [];
 
         slots.forEach((slot, index) => {
             // データの値検証とデフォルト値設定（棒グラフ用）
@@ -477,41 +459,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 });
                 layers.content.add(bar);
             }
-
-            // 折れ線グラフ用のポイントを計算（設備条件フィルターが選択されている場合）
-            if (hasEquipmentFilter) {
-                // filteredCountの値検証とデフォルト値設定（maxは棒グラフで既に定義済み）
-                const filteredCount = (slot.filteredCount !== undefined && slot.filteredCount !== null) ? slot.filteredCount : 0;
-
-                // 空き率を計算（1 - 使用率）* 100 で0-100%の割合を計算（100%を超える場合は100%にクランプ）
-                const filteredVacancyRatio = Math.min(100, Math.max(0, (1 - filteredCount / max) * 100));
-
-                // デバッグログ（開発時のみ、本番では削除または条件付きで出力）
-                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-                    console.debug(`[折れ線グラフ] ${slot.time}: count=${count}, filteredCount=${filteredCount}, max=${max}, vacancyRatio=${(vacancyRatio * 100).toFixed(1)}%, filteredVacancyRatio=${filteredVacancyRatio.toFixed(1)}%`);
-                }
-
-                // Y座標: 0%が下、100%が上（barAreaTop + barAreaHeight - (空き率 / 100 * barAreaHeight)）
-                // セルの範囲内に収まるように、barAreaTopからbarAreaTop + barAreaHeightの範囲にクランプ
-                const lineY = Math.max(barAreaTop, Math.min(barAreaTop + barAreaHeight, barAreaTop + barAreaHeight - (filteredVacancyRatio / 100 * barAreaHeight)));
-                // X座標は均等分割に合わせて棒グラフの中央位置を使用
-                const lineX = barX + barWidth / 2;
-                linePoints.push(lineX, lineY);
-            }
         });
-
-        // 折れ線グラフを描画（設備条件フィルターが選択されている場合、かつポイントが2つ以上ある場合）
-        if (hasEquipmentFilter && linePoints.length >= 4) {
-            const lineGraph = new Konva.Line({
-                points: linePoints,
-                stroke: '#8b5cf6', // 紫系の色
-                strokeWidth: 2,
-                opacity: 0.8,
-                lineCap: 'round',
-                lineJoin: 'round'
-            });
-            layers.content.add(lineGraph);
-        }
 
         // 昼休み時間帯の縦ラインを描画（月間・年間ビューの場合）
         if (lunchStartHour !== null && lunchEndHour !== null && (state.currentView === 'month' || state.currentView === 'year')) {

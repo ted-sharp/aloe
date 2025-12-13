@@ -15,10 +15,10 @@ public class AppointmentSlot : IAuditableEntity
     [Column("appt_slot_id")]
     public Guid ApptSlotId { get; set; }
 
-    /// <summary>フロアID (FK)</summary>
-    [Column("floor_id")]
-    [ForeignKey("Floor")]
-    public Guid FloorId { get; set; }
+    /// <summary>予約リソースID (FK)</summary>
+    [Column("appt_res_id")]
+    [ForeignKey("AppointmentResource")]
+    public Guid ApptResId { get; set; }
 
     /// <summary>
     /// 予約スロット定義（JSONB）
@@ -58,6 +58,6 @@ public class AppointmentSlot : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual Floor Floor { get; set; } = null!;
+    public virtual AppointmentResource AppointmentResource { get; set; } = null!;
 }
 

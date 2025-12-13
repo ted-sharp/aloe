@@ -35,16 +35,16 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     }
 
     /// <inheritdoc />
-    public async Task<List<(DateOnly? ApptDate, DateTime? ApptStartAt)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate)
+    public async Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate)
     {
         var results = await this._context.Appointments
             .Where(a => !a.IsDeleted &&
                         a.ApptDate.HasValue &&
                         a.ApptDate >= startDate &&
                         a.ApptDate <= endDate)
-            .Select(a => new { a.ApptDate, a.ApptStartAt })
+            .Select(a => new { a.ApptDate, a.ApptStartTime })
             .ToListAsync();
 
-        return results.Select(x => (x.ApptDate, x.ApptStartAt)).ToList();
+        return results.Select(x => (x.ApptDate, x.ApptStartTime)).ToList();
     }
 }

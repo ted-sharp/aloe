@@ -39,16 +39,16 @@ internal static class RoleSeeder
 
             var permissions = new List<Permission>
             {
-                new() { PermissionCode = "APPT_CREATE", ResourceCode = "APPT", OperationCode = "CREATE" },
-                new() { PermissionCode = "APPT_READ", ResourceCode = "APPT", OperationCode = "READ" },
-                new() { PermissionCode = "APPT_UPDATE", ResourceCode = "APPT", OperationCode = "UPDATE" },
-                new() { PermissionCode = "APPT_DELETE", ResourceCode = "APPT", OperationCode = "DELETE" },
-                new() { PermissionCode = "PATIENT_CREATE", ResourceCode = "PATIENT", OperationCode = "CREATE" },
-                new() { PermissionCode = "PATIENT_READ", ResourceCode = "PATIENT", OperationCode = "READ" },
-                new() { PermissionCode = "PATIENT_UPDATE", ResourceCode = "PATIENT", OperationCode = "UPDATE" },
-                new() { PermissionCode = "PATIENT_DELETE", ResourceCode = "PATIENT", OperationCode = "DELETE" },
-                new() { PermissionCode = "CALENDAR_VIEW", ResourceCode = "CALENDAR", OperationCode = "READ" },
-                new() { PermissionCode = "USER_ADMIN", ResourceCode = "USER", OperationCode = "ADMIN" },
+                new() { PermissionCode = "APPT_CREATE", FeatureCode = "APPT", OperationCode = "CREATE" },
+                new() { PermissionCode = "APPT_READ", FeatureCode = "APPT", OperationCode = "READ" },
+                new() { PermissionCode = "APPT_UPDATE", FeatureCode = "APPT", OperationCode = "UPDATE" },
+                new() { PermissionCode = "APPT_DELETE", FeatureCode = "APPT", OperationCode = "DELETE" },
+                new() { PermissionCode = "PATIENT_CREATE", FeatureCode = "PATIENT", OperationCode = "CREATE" },
+                new() { PermissionCode = "PATIENT_READ", FeatureCode = "PATIENT", OperationCode = "READ" },
+                new() { PermissionCode = "PATIENT_UPDATE", FeatureCode = "PATIENT", OperationCode = "UPDATE" },
+                new() { PermissionCode = "PATIENT_DELETE", FeatureCode = "PATIENT", OperationCode = "DELETE" },
+                new() { PermissionCode = "CALENDAR_VIEW", FeatureCode = "CALENDAR", OperationCode = "READ" },
+                new() { PermissionCode = "USER_ADMIN", FeatureCode = "USER", OperationCode = "ADMIN" },
             };
 
             foreach (var permission in permissions)

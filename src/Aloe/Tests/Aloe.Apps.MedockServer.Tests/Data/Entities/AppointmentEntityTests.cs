@@ -49,19 +49,20 @@ public class AppointmentEntityTests
     public void Appointment_Should_Have_Time_Range()
     {
         // Arrange
-        var startAt = new DateTime(2025, 12, 15, 9, 0, 0);
-        var endAt = new DateTime(2025, 12, 15, 10, 0, 0);
+        var startTime = new TimeOnly(9, 0);
+        var durationMinutes = 60;
 
         // Act
         var appointment = new Appointment
         {
-            ApptStartAt = startAt,
-            ApptEndAt = endAt
+            ApptStartTime = startTime,
+            ApptDurationMin = durationMinutes
         };
 
         // Assert
-        appointment.ApptStartAt.Should().Be(startAt);
-        appointment.ApptEndAt.Should().Be(endAt);
+        appointment.ApptStartTime.Should().Be(startTime);
+        appointment.ApptDurationMin.Should().Be(durationMinutes);
+        // ApptEndTime is a GENERATED column, so it will be calculated by the database
     }
 }
 

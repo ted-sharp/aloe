@@ -16,7 +16,6 @@ public class CalendarState
     public bool ShowSlots { get; set; } = true;
     public bool ShowFilterPanel { get; set; }
     public bool ShowSimpleView { get; set; }
-    public bool ShowEquipmentGraph { get; set; }
 
     // ユーザー情報
     public string UserInitial { get; set; } = "U";
@@ -51,7 +50,6 @@ public class CalendarState
     public int EndHour { get; set; } = 18;
 
     // フィルター
-    public List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     public SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
 
     /// <summary>
@@ -60,8 +58,7 @@ public class CalendarState
     public int ActiveFilterCount =>
         (this.CurrentFilter?.SelectedDays.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.TimeSlots.Any() == true ? 1 : 0) +
-        (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
-        (this.CurrentFilter?.EquipIds.Any() == true ? 1 : 0);
+        (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0);
 
     /// <summary>
     /// 現在の期間のタイトルを取得

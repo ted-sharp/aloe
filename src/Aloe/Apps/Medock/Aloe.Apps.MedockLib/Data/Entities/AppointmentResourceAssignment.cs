@@ -4,28 +4,26 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// パーミッションエンティティ
+/// 予約リソース予約エンティティ
+/// 予約とリソースの多対多関係を表す
 /// </summary>
-[Table("permissions")]
-public class Permission : IAuditableEntity
+[Table("appointment_resource_assignments")]
+public class AppointmentResourceAssignment : IAuditableEntity
 {
-    /// <summary>パーミッションコード (PK)</summary>
+    /// <summary>予約リソース予約ID (PK)</summary>
     [Key]
-    [Column("permission_code")]
-    [MaxLength(21)]
-    public string PermissionCode { get; set; } = String.Empty;
+    [Column("appt_res_assign_id")]
+    public Guid ApptResAssignId { get; set; }
 
-    /// <summary>機能コード (FK)</summary>
-    [Column("feature_code")]
-    [MaxLength(10)]
-    [ForeignKey("Feature")]
-    public string FeatureCode { get; set; } = String.Empty;
+    /// <summary>予約ID (FK)</summary>
+    [Column("appt_id")]
+    [ForeignKey("Appointment")]
+    public Guid ApptId { get; set; }
 
-    /// <summary>操作コード (FK)</summary>
-    [Column("operation_code")]
-    [MaxLength(10)]
-    [ForeignKey("Operation")]
-    public string OperationCode { get; set; } = String.Empty;
+    /// <summary>予約リソースID (FK)</summary>
+    [Column("appt_res_id")]
+    [ForeignKey("AppointmentResource")]
+    public Guid ApptResId { get; set; }
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -46,7 +44,7 @@ public class Permission : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
+    public virtual Appointment Appointment { get; set; } = null!;
+    public virtual AppointmentResource AppointmentResource { get; set; } = null!;
 }
-
 

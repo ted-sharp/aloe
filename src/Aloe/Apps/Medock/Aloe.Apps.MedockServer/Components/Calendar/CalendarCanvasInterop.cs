@@ -65,7 +65,6 @@ public static class CalendarCanvasInterop
         int weekDays,
         bool showSlots,
         bool showSimpleView,
-        bool showEquipmentGraph,
         int startHour,
         int endHour,
         BusinessHoursDto? businessHours)
@@ -85,7 +84,6 @@ public static class CalendarCanvasInterop
             weekDays = weekDays,
             showSlots = showSlots,
             showSimpleView = showSimpleView,
-            showEquipmentGraph = showEquipmentGraph,
             startHour = startHour,
             endHour = endHour,
             businessHours = businessHoursData

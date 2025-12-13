@@ -4,29 +4,29 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// リソースエンティティ
+/// 機能エンティティ
 /// </summary>
-[Table("resources")]
-public class Resource : IAuditableEntity
+[Table("features")]
+public class Feature : IAuditableEntity
 {
-    /// <summary>リソースコード (PK)</summary>
+    /// <summary>機能コード (PK)</summary>
     [Key]
-    [Column("resource_code")]
+    [Column("feature_code")]
     [MaxLength(10)]
-    public string ResourceCode { get; set; } = String.Empty;
+    public string FeatureCode { get; set; } = String.Empty;
 
-    /// <summary>リソース名</summary>
-    [Column("resource_name")]
+    /// <summary>機能名</summary>
+    [Column("feature_name")]
     [MaxLength(100)]
     public string ResourceName { get; set; } = String.Empty;
 
-    /// <summary>リソース説明</summary>
-    [Column("resource_desc")]
+    /// <summary>機能説明</summary>
+    [Column("feature_desc")]
     [MaxLength(1000)]
     public string ResourceDesc { get; set; } = String.Empty;
 
     /// <summary>表示順</summary>
-    [Column("resource_seq")]
+    [Column("feature_seq")]
     public int ResourceSeq { get; set; }
 
     /// <summary>有効フラグ</summary>

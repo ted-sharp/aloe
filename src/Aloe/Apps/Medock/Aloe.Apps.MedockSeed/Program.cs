@@ -77,7 +77,6 @@ try
     var tenantId = await TenantSeeder.SeedAsync(context, dateTimeProvider);
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
     await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await EquipmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
 
     // 施設が存在する状態で保存（FacilityUserの作成に必要）
     if (context.ChangeTracker.HasChanges())
@@ -87,11 +86,6 @@ try
 
     // ユーザー関連（施設が存在する状態で実行）
     var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider);
-    await EquipmentAppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
-
-    // 予約スロット・統計関連
-    await AppointmentSlotSeeder.SeedAsync(context, floorId, dateTimeProvider);
-    await AppointmentStatsSeeder.SeedAsync(context, floorId, dateTimeProvider);
 
     // 祝日データ
     await HolidaySeeder.SeedAsync(context);
@@ -113,13 +107,36 @@ try
         await context.SaveChangesAsync();
     }
 
-    // 予約データ関連
+    // 予約リソース関連（施設・フロアの後）
+    var resourceIds = await AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider);
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
+    // 予約スロット（リソースの後）
+    await AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider);
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
+    // 予約データ（患者・団体の後）
     await AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
-    await EquipmentSlotSeeder.SeedAsync(context, dateTimeProvider);
-    await EquipmentAppointmentSeeder.SeedAsync(context, dateTimeProvider);
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
+    // 予約リソース関連付け（予約・リソースの後）
+    await AppointmentResourceReservationSeeder.SeedAsync(context, dateTimeProvider);
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
 
     // RBAC関連
-    await ResourceSeeder.SeedAsync(context, dateTimeProvider);
+    await FeatureSeeder.SeedAsync(context, dateTimeProvider);
     await RoleSeeder.SeedAsync(context, dateTimeProvider);
 
     // 保存（ユーザーまたは祝日のいずれかが追加された場合）

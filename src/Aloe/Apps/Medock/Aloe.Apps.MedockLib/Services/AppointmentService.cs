@@ -59,11 +59,9 @@ public class AppointmentService : IAppointmentService
         {
             ApptId = Guid.NewGuid(),
             ApptDate = dto.Date,
-            ApptStartAt = dto.StartTime.HasValue
-                ? dto.Date.ToDateTime(dto.StartTime.Value)
-                : null,
-            ApptEndAt = dto.EndTime.HasValue
-                ? dto.Date.ToDateTime(dto.EndTime.Value)
+            ApptStartTime = dto.StartTime,
+            ApptDurationMin = dto.StartTime.HasValue && dto.EndTime.HasValue
+                ? (int?)(dto.EndTime.Value - dto.StartTime.Value).TotalMinutes
                 : null,
             PtId = dto.PatientId,
             OrgId = dto.OrganizationId,
@@ -100,14 +98,14 @@ public class AppointmentService : IAppointmentService
             appointment.ApptDate = dto.Date.Value;
         }
 
-        if (dto.StartTime.HasValue && appointment.ApptDate.HasValue)
+        if (dto.StartTime.HasValue)
         {
-            appointment.ApptStartAt = appointment.ApptDate.Value.ToDateTime(dto.StartTime.Value);
+            appointment.ApptStartTime = dto.StartTime.Value;
         }
 
-        if (dto.EndTime.HasValue && appointment.ApptDate.HasValue)
+        if (dto.StartTime.HasValue && dto.EndTime.HasValue)
         {
-            appointment.ApptEndAt = appointment.ApptDate.Value.ToDateTime(dto.EndTime.Value);
+            appointment.ApptDurationMin = (int)(dto.EndTime.Value - dto.StartTime.Value).TotalMinutes;
         }
 
         if (dto.PatientId.HasValue)
@@ -172,12 +170,8 @@ public class AppointmentService : IAppointmentService
         {
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
-            StartTime = appointment.ApptStartAt.HasValue
-                ? TimeOnly.FromDateTime(appointment.ApptStartAt.Value)
-                : null,
-            EndTime = appointment.ApptEndAt.HasValue
-                ? TimeOnly.FromDateTime(appointment.ApptEndAt.Value)
-                : null,
+            StartTime = appointment.ApptStartTime,
+            EndTime = appointment.ApptEndTime,
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,
             OrganizationId = appointment.OrgId,

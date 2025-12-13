@@ -93,30 +93,7 @@
                 </div>
             </div>
 
-            <!-- 設備 -->
-            <div class="form-control">
-                <label class="label">
-                    <span class="label-text font-semibold">設備</span>
-                    <div class="flex gap-1">
-                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllEquipments">全選択</button>
-                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllEquipments">全解除</button>
-                    </div>
-                </label>
-                <div class="flex flex-wrap gap-1 max-h-40 overflow-y-auto border border-base-300 rounded-lg p-2">
-                    @foreach (var equipment in AvailableEquipments)
-                    {
-                        <label class="cursor-pointer">
-                            <input type="checkbox"
-                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                   checked="@SelectedEquipments.Contains(equipment.Id)"
-                                   @onchange="() => ToggleEquipment(equipment.Id)" />
-                            <span class="badge @(SelectedEquipments.Contains(equipment.Id) ? "badge-primary" : "badge-outline")">
-                                @equipment.Name
-                            </span>
-                        </label>
-                    }
-                </div>
-            </div>
+            @* 設備フィルターは削除されました（AppointmentResourceに統合） *@
         </div>
 
         <!-- クリアボタン -->

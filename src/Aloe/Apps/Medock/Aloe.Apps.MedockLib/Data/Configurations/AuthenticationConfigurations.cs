@@ -61,13 +61,13 @@ public class RoleConfiguration : IEntityTypeConfiguration<Role>
 /// <summary>
 /// Resource エンティティ設定
 /// </summary>
-public class ResourceConfiguration : IEntityTypeConfiguration<Resource>
+public class ResourceConfiguration : IEntityTypeConfiguration<Feature>
 {
-    public void Configure(EntityTypeBuilder<Resource> entity)
+    public void Configure(EntityTypeBuilder<Feature> entity)
     {
-        entity.ToTable("resources");
-        entity.HasKey(e => e.ResourceCode);
-        entity.Property(e => e.ResourceCode).HasColumnName("resource_code").HasMaxLength(10);
+        entity.ToTable("features");
+        entity.HasKey(e => e.FeatureCode);
+        entity.Property(e => e.FeatureCode).HasColumnName("feature_code").HasMaxLength(10);
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
         ConfigurationHelper.ConfigureAuditableEntity(entity);
     }
@@ -98,14 +98,14 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
         entity.ToTable("permissions");
         entity.HasKey(e => e.PermissionCode);
         entity.Property(e => e.PermissionCode).HasColumnName("permission_code").HasMaxLength(21);
-        entity.Property(e => e.ResourceCode).HasColumnName("resource_code").HasMaxLength(10);
+        entity.Property(e => e.FeatureCode).HasColumnName("feature_code").HasMaxLength(10);
         entity.Property(e => e.OperationCode).HasColumnName("operation_code").HasMaxLength(10);
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
-        entity.HasOne<Resource>()
+        entity.HasOne<Feature>()
             .WithMany(r => r.Permissions)
-            .HasForeignKey(e => e.ResourceCode);
+            .HasForeignKey(e => e.FeatureCode);
         entity.HasOne<Operation>()
             .WithMany(o => o.Permissions)
             .HasForeignKey(e => e.OperationCode);

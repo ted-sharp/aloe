@@ -1,6 +1,5 @@
-@* 日付詳細ポップアップ - 通常予約と設備別予約を2列表示 *@
-@using Aloe.Apps.MedockLib.Services
-@inject IEquipmentService EquipmentService
+@* 日付詳細ポップアップ - 通常予約を表示 *@
+@* EquipmentはAppointmentResourceに統合されました *@
 
 @if (IsOpen)
 {
@@ -20,8 +19,8 @@
                 <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleClose">✕</button>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-hidden">
-                <!-- 左側: 通常予約の横棒グラフ -->
+            <div class="flex-1 overflow-hidden">
+                <!-- 通常予約の横棒グラフ -->
                 <div class="flex flex-col overflow-hidden">
                     <h4 class="font-semibold mb-2">通常予約</h4>
                     <div class="overflow-y-auto space-y-3">
@@ -57,58 +56,6 @@
                         }
                     </div>
                 </div>
-
-                <!-- 右側: 選択された設備の横棒グラフ -->
-                <div class="flex flex-col overflow-hidden">
-                    <h4 class="font-semibold mb-2">設備別予約</h4>
-                    @if (IsLoadingEquipmentStats)
-                    {
-                        <div class="flex justify-center items-center h-32">
-                            <span class="loading loading-spinner loading-lg"></span>
-                        </div>
-                    }
-                    else if (EquipmentStats.Any())
-                    {
-                        <div class="overflow-y-auto space-y-4">
-                            @foreach (var equipmentStat in EquipmentStats)
-                            {
-                                <div class="border-l-4 border-primary pl-3">
-                                    <h5 class="font-medium mb-2">@GetEquipmentName(equipmentStat.EquipId)</h5>
-                                    <div class="space-y-2">
-                                        @foreach (var slot in equipmentStat.ApptGraph.Slots)
-                                        {
-                                            // 空き率を計算（1 - 使用率）
-                                            var vacancyRatio = slot.Max > 0 ? (1 - slot.Count / (double)slot.Max) * 100 : 0;
-                                            // 空き率が0%より大きい場合のみ表示
-                                            if (vacancyRatio > 0)
-                                            {
-                                                var color = GetBarColor(vacancyRatio);
-                                                var timeLabel = slot.IsCoarseSlot ? GetCoarseSlotLabel(slot.Time) : slot.Time;
-
-                                                <div>
-                                                    <div class="flex justify-between text-xs mb-1">
-                                                        <span class="@(slot.IsCoarseSlot ? "font-bold" : "")">@timeLabel</span>
-                                                        <span>@slot.Count/@slot.Max (空き:@Math.Round(vacancyRatio)%)</span>
-                                                    </div>
-                                                    <div class="bg-base-200 h-4 rounded overflow-hidden">
-                                                        <div class="h-full transition-all"
-                                                             style="width: @(vacancyRatio)%; background-color: @color;"></div>
-                                                    </div>
-                                                </div>
-                                            }
-                                        }
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-center text-base-content/60 py-8">
-                            設備が選択されていません
-                        </div>
-                    }
-                </div>
             </div>
 
             <!-- フッター -->
@@ -123,49 +70,9 @@
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public DateOnly? SelectedDate { get; set; }
     [Parameter] public CalendarDayStats? DayStats { get; set; }
-    [Parameter] public List<Guid> SelectedEquipmentIds { get; set; } = new();
-    [Parameter] public List<SearchFilterPanel.FilterItem> AvailableEquipments { get; set; } = new();
     [Parameter] public EventCallback OnClose { get; set; }
 
-    private List<EquipmentAppointmentStatsDto> EquipmentStats { get; set; } = new();
-    private bool IsLoadingEquipmentStats { get; set; }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        if (IsOpen && SelectedDate.HasValue && SelectedEquipmentIds.Any())
-        {
-            await LoadEquipmentStatsAsync();
-        }
-        else if (!SelectedEquipmentIds.Any())
-        {
-            EquipmentStats = new();
-        }
-    }
-
-    private async Task LoadEquipmentStatsAsync()
-    {
-        IsLoadingEquipmentStats = true;
-        StateHasChanged();
-
-        try
-        {
-            EquipmentStats = await EquipmentService.GetEquipmentStatsAsync(SelectedEquipmentIds, SelectedDate!.Value);
-        }
-        catch
-        {
-            EquipmentStats = new();
-        }
-        finally
-        {
-            IsLoadingEquipmentStats = false;
-            StateHasChanged();
-        }
-    }
-
-    private string GetEquipmentName(Guid equipId)
-    {
-        return AvailableEquipments.FirstOrDefault(e => e.Id == equipId)?.Name ?? "不明";
-    }
+    // Equipment関連のパラメータとメソッドは削除されました（AppointmentResourceに統合）
 
     private string GetBarColor(double vacancyRatio)
     {
@@ -179,15 +86,7 @@
         };
     }
 
-    private string GetCoarseSlotLabel(string time)
-    {
-        return time switch
-        {
-            "AM" => "午前",
-            "PM" => "午後",
-            _ => time
-        };
-    }
+    // GetCoarseSlotLabelメソッドは削除されました（Equipment関連）
 
     private async Task HandleClose()
     {
