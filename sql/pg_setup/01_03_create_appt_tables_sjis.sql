@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/13 17:48:57
+-- Date/Time    : 2025/12/13 18:30:15
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -102,7 +102,7 @@ CREATE TABLE "appointment_stats" (
   , "appt_res_id" UUID NOT NULL
   , "appt_cap" integer DEFAULT 0 NOT NULL
   , "appt_count" integer DEFAULT 0 NOT NULL
-  , "appt_available" integer DEFAULT 0 NOT NULL GENERATED ALWAYS AS (appt_max - appt_count) STORED
+  , "appt_available" integer NOT NULL GENERATED ALWAYS AS (appt_cap - appt_count) STORED
   , "appt_graph" JSONB DEFAULT '{}' NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL

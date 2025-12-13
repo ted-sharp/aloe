@@ -135,6 +135,13 @@ try
         await context.SaveChangesAsync();
     }
 
+    // 予約統計（予約・リソース関連付けの後）
+    await AppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
+    if (context.ChangeTracker.HasChanges())
+    {
+        await context.SaveChangesAsync();
+    }
+
     // RBAC関連
     await FeatureSeeder.SeedAsync(context, dateTimeProvider);
     await RoleSeeder.SeedAsync(context, dateTimeProvider);

@@ -1019,14 +1019,14 @@ Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000000FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="appt_cap","appt_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="appt_count","appt_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="appt_available","appt_available","@INT","NOT NULL",,"0","",$FFFFFFFF,"GENERATED ALWAYS AS (appt_max - appt_count) STORED"
+Field="appt_available","appt_available","@INT","NOT NULL",,"","",$FFFFFFFF,"GENERATED ALWAYS AS (appt_cap - appt_count) STORED"
 Field="appt_graph","appt_graph","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
 Index==1,appt_date,appt_res_id
 IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251213151500
+ModifiedDateTime=20251213182004
 Position="APPT",3000,1000
 ZOrder=311
 
@@ -1623,7 +1623,7 @@ LName=appointment_slot_overrides
 Comment=
 TableInnerOption=
 TableOption=
-Page=appt
+Page=APPT
 Left=3000
 Top=600
 Field="appt_slot_override_id","appt_slot_override_id","UUID","NOT NULL",0,"","",$000028FF,""
@@ -1636,7 +1636,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251213151311
-Position="appt",3000,600
+Position="APPT",3000,600
 ZOrder=358
 
 [Relation]
@@ -1701,3 +1701,37 @@ Bar3=331
 TermPos1=R
 TermPos2=R
 ZOrder=361
+
+[Comment]
+Comment=```jsonb\n{\n  "appt_slots": [\n    {\n      "label": "8階,平日",\n      "dow": [1, 2, 3, 4, 5], // 0:日, 1:月, ... 6:土\n      "slots": [\n        {\n          "start": "09:00",\n          "end": "12:00",\n          "interval_min": 15,\n          "cap": 1,\n        },\n        {\n          "start": "13:00",\n          "end": "16:00",\n          "interval_min": 15,\n          "cap": 1,\n        }\n      ]\n  ]\n}\n```
+FontName=Tahoma
+FontBold=0
+FontItalic=0
+FontUnderline=0
+FontSize=9
+FontColor=$000000
+LineColor=$000000
+BkColor=$FFFFFF
+Page=appt
+Left=2490
+Top=1781
+ZOrder=363
+Width=828
+Height=1008
+
+[Comment]
+Comment=```jsonb\n{\n  "appt_graph": [\n    {\n      "start": "09:00",\n      "end": "09:30",\n      "cap": 10,\n      "count": 6,\n      "available": 4,\n    },\n    {\n      "start": "09:30",\n      "end": "10:00",\n      "cap": 10,\n      "count": 7,\n      "available": 3,\n    },\n  ]\n}\n```
+FontName=Tahoma
+FontBold=0
+FontItalic=0
+FontUnderline=0
+FontSize=9
+FontColor=$000000
+LineColor=$000000
+BkColor=$FFFFFF
+Page=appt
+Left=3426
+Top=1778
+ZOrder=364
+Width=407
+Height=1008
