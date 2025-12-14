@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Http;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
-public partial class TenantSelect : ComponentBase
+public partial class FacilitySelect : ComponentBase
 {
     [Inject]
     private NavigationManager NavigationManager { get; set; } = default!;
@@ -102,5 +102,3 @@ public partial class TenantSelect : ComponentBase
         }
     }
 }
-
-

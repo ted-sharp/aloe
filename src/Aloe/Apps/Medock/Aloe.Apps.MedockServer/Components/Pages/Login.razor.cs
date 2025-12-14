@@ -33,21 +33,7 @@ public partial class Login : ComponentBase
     {
         this.loginModel ??= new LoginModel();
 
-        // 認証状態を確認して自動ログイン（最優先で実行）
-        try
-        {
-            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
-            if (authState.User.Identity?.IsAuthenticated == true)
-            {
-                // 既に認証済みの場合は自動遷移
-                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
-                return;
-            }
-        }
-        catch
-        {
-            // 認証状態チェック失敗は無視（ログイン画面を表示）
-        }
+
     }
 
     private bool IsLoading { get; set; } = false;
@@ -145,7 +131,7 @@ public partial class Login : ComponentBase
                 if (facilities.Count > 1)
                 {
                     // 複数施設がある場合は施設選択画面へ
-                    this.NavigationManager.NavigateTo("/tenant-select", forceLoad: true);
+                    this.NavigationManager.NavigateTo("/facility-select", forceLoad: true);
                 }
                 else
                 {
