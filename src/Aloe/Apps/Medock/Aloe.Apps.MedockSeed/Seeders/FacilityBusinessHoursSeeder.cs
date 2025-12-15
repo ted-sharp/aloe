@@ -58,6 +58,11 @@ internal static class FacilityBusinessHoursSeeder
 
         context.FacilityBusinessHours.Add(facilityBusinessHours);
         Console.WriteLine($"  [+] FacilityBusinessHours: Start 09:00, End 18:00, Lunch 12:00-13:00");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
 

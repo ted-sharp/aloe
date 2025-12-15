@@ -51,6 +51,11 @@ internal static class FacilitySeeder
         context.Floors.Add(floor);
         Console.WriteLine($"  [+] Floor: {floor.FloorName} (FacilityId: {facilityId})");
 
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+
         return (facilityId, floorId);
     }
 }

@@ -30,6 +30,11 @@ internal static class TenantSeeder
         context.Tenants.Add(tenant);
         Console.WriteLine($"  [+] Tenant: {tenant.TenantName} ({tenant.TenantId})");
 
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+
         return tenantId;
     }
 }

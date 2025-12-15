@@ -296,6 +296,11 @@ internal static class UserSeeder
             Console.WriteLine($"  [+] FacilityUsers: {facilityUsers.Count} entries");
         }
 
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
+
         return needsUserSeed;
     }
 }

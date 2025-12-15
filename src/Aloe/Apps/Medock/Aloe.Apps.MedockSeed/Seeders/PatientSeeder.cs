@@ -498,6 +498,11 @@ internal static class PatientSeeder
             context.Patients.AddRange(patients);
             Console.WriteLine($"  [+] Patients: {patients.Count} entries");
         }
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
 

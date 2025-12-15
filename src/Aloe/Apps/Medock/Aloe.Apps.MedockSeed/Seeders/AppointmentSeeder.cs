@@ -101,6 +101,11 @@ internal static class AppointmentSeeder
         Console.WriteLine($"  [+] Appointments: {appointments.Count} entries (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
 
         context.Appointments.AddRange(appointments);
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 
     /// <summary>

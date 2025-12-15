@@ -160,6 +160,11 @@ internal static class HolidaySeeder
 
         context.Holidays.AddRange(holidays);
         Console.WriteLine($"  [+] Holidays: {holidays.Length} entries (2020-2026)");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
 

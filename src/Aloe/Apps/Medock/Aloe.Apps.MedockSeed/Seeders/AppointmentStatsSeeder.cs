@@ -274,6 +274,11 @@ internal static class AppointmentStatsSeeder
 
         context.AppointmentStats.AddRange(statsList);
         Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} entries");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 
     /// <summary>

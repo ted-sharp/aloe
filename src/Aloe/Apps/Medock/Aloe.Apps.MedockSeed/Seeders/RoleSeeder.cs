@@ -110,5 +110,10 @@ internal static class RoleSeeder
 
         context.RolePermissions.AddRange(rolePermissions);
         Console.WriteLine($"  [+] RolePermissions: {rolePermissions.Count} entries ({roles.Count} roles × permissions)");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }

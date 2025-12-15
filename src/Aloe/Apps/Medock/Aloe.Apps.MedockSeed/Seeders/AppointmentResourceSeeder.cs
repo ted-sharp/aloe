@@ -10,7 +10,7 @@ internal static class AppointmentResourceSeeder
     public static async Task<Dictionary<string, Guid>> SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
     {
         var resourceIds = new Dictionary<string, Guid>();
-        
+
         if (!floorId.HasValue)
         {
             Console.WriteLine("[SKIP] AppointmentResource: No floor ID provided.");
@@ -103,6 +103,11 @@ internal static class AppointmentResourceSeeder
         foreach (var resource in resources)
         {
             Console.WriteLine($"    - {resource.ApptResName} (Type: {resource.ApptResTypeCode})");
+        }
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
         }
 
         return resourceIds;

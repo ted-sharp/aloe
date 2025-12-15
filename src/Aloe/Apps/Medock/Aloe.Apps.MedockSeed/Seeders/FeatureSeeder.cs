@@ -60,5 +60,10 @@ internal static class FeatureSeeder
 
         context.Operations.AddRange(operations);
         Console.WriteLine($"  [+] Operations: {operations.Count} entries");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }

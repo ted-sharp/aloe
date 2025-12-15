@@ -82,6 +82,11 @@ internal static class AppointmentResourceAssignmentSeeder
 
         context.AppointmentResourceAssignments.AddRange(assignments);
         Console.WriteLine($"  [+] AppointmentResourceAssignments: {assignments.Count} entries");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
 

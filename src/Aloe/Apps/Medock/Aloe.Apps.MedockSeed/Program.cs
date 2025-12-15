@@ -78,13 +78,6 @@ try
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
     await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
-    // TODO: それぞれのSeedAsyncの最後に必要に応じてやるのがいいのでは？
-    // 施設が存在する状態で保存（FacilityUserの作成に必要）
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
-
     // ユーザー関連（施設が存在する状態で実行）
     var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId);
 
@@ -93,72 +86,26 @@ try
 
     // 団体・患者関連
     await OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-
-    // 団体を保存（患者データ作成前に必要）
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
-
     await PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-
-    // 団体・患者を保存（予約データ作成前に必要）
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // 予約リソース関連（施設・フロアの後）
     var resourceIds = await AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider);
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // 予約スロット（リソースの後）
     await AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider);
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // 予約データ（患者・団体の後）
     await AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // 予約リソース関連付け（予約・リソースの後）
     await AppointmentResourceAssignmentSeeder.SeedAsync(context, dateTimeProvider);
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // 予約統計（予約・リソース関連付けの後）
     await AppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-    }
 
     // RBAC関連
     await FeatureSeeder.SeedAsync(context, dateTimeProvider);
     await RoleSeeder.SeedAsync(context, dateTimeProvider);
-
-    // 保存（ユーザーまたは祝日のいずれかが追加された場合）
-    if (context.ChangeTracker.HasChanges())
-    {
-        await context.SaveChangesAsync();
-        Console.WriteLine();
-        Console.WriteLine("[OK] Seed data saved successfully.");
-    }
-    else
-    {
-        Console.WriteLine();
-        Console.WriteLine("[INFO] No changes to save.");
-    }
 
     Console.WriteLine();
     Console.WriteLine("=== Seed completed ===");

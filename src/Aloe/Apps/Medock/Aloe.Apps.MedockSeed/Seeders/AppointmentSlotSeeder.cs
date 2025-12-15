@@ -38,7 +38,7 @@ internal static class AppointmentSlotSeeder
         foreach (var resource in resources)
         {
             AppointmentSlot slot;
-            
+
             // リソースタイプに応じてスロット定義を作成
             switch (resource.ApptResTypeCode)
             {
@@ -70,6 +70,11 @@ internal static class AppointmentSlotSeeder
 
         context.AppointmentSlots.AddRange(slots);
         Console.WriteLine($"  [+] AppointmentSlots: {slots.Count} entries");
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 
     /// <summary>
@@ -79,7 +84,7 @@ internal static class AppointmentSlotSeeder
     {
         // 15分単位のスロット（09:00-18:00の範囲、1スロット30分）
         var timeSlots = new List<object>();
-        
+
         // 午前のスロット（09:00-11:45）
         foreach (var time in SeederHelper.TimeSlots.MorningSlots)
         {

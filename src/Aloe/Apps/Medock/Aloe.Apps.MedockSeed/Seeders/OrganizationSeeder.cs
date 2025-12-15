@@ -117,6 +117,11 @@ internal static class OrganizationSeeder
             context.Organizations.AddRange(organizations);
             Console.WriteLine($"  [+] Organizations: {organizations.Count} entries");
         }
+
+        if (context.ChangeTracker.HasChanges())
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
 
