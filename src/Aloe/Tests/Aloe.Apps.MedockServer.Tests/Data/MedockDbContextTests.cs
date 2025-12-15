@@ -13,7 +13,7 @@ public class MedockDbContextTests
     private static DbContextOptions<MedockDbContext> CreateInMemoryOptions()
     {
         return new DbContextOptionsBuilder<MedockDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName: Guid.CreateVersion7().ToString())
             .Options;
     }
 
@@ -22,7 +22,7 @@ public class MedockDbContextTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var userId = Guid.NewGuid();
+        var userId = Guid.CreateVersion7();
 
         // Act
         await using (var context = new MedockDbContext(options))
@@ -53,7 +53,7 @@ public class MedockDbContextTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var tenantId = Guid.NewGuid();
+        var tenantId = Guid.CreateVersion7();
 
         // Act
         await using (var context = new MedockDbContext(options))
@@ -83,12 +83,12 @@ public class MedockDbContextTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var tenantId = Guid.NewGuid();
-        var facilityId = Guid.NewGuid();
-        var floorId = Guid.NewGuid();
-        var orgId = Guid.NewGuid();
-        var ptId = Guid.NewGuid();
-        var apptId = Guid.NewGuid();
+        var tenantId = Guid.CreateVersion7();
+        var facilityId = Guid.CreateVersion7();
+        var floorId = Guid.CreateVersion7();
+        var orgId = Guid.CreateVersion7();
+        var ptId = Guid.CreateVersion7();
+        var apptId = Guid.CreateVersion7();
 
         // Act
         await using (var context = new MedockDbContext(options))
@@ -173,9 +173,9 @@ public class MedockDbContextTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var userId = Guid.NewGuid();
-        var sessionId = Guid.NewGuid();
-        var actingUserId = Guid.NewGuid();
+        var userId = Guid.CreateVersion7();
+        var sessionId = Guid.CreateVersion7();
+        var actingUserId = Guid.CreateVersion7();
 
         // Act
         await using (var context = new MedockDbContext(options))

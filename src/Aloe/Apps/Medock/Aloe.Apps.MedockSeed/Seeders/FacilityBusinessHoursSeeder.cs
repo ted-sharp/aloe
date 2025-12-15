@@ -26,6 +26,7 @@ internal static class FacilityBusinessHoursSeeder
 
         Console.WriteLine("[INFO] Creating facility business hours seed data...");
 
+        // TODO: 型を決める
         // JSONB構造: 始業・就業・昼休憩時間
         var businessHoursJson = System.Text.Json.JsonSerializer.Serialize(new
         {
@@ -40,7 +41,7 @@ internal static class FacilityBusinessHoursSeeder
 
         var facilityBusinessHours = new FacilityBusinessHours
         {
-            FacilityBusinessHoursId = Guid.NewGuid(),
+            FacilityBusinessHoursId = Guid.CreateVersion7(),
             FacilityId = facilityId.Value,
             BusinessHours = businessHoursJson,
             IsActive = true,

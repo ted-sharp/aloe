@@ -78,6 +78,7 @@ try
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
     await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
+    // TODO: それぞれのSeedAsyncの最後に必要に応じてやるのがいいのでは？
     // 施設が存在する状態で保存（FacilityUserの作成に必要）
     if (context.ChangeTracker.HasChanges())
     {
@@ -85,7 +86,7 @@ try
     }
 
     // ユーザー関連（施設が存在する状態で実行）
-    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider);
+    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId);
 
     // 祝日データ
     await HolidaySeeder.SeedAsync(context);
@@ -129,7 +130,7 @@ try
     }
 
     // 予約リソース関連付け（予約・リソースの後）
-    await AppointmentResourceReservationSeeder.SeedAsync(context, dateTimeProvider);
+    await AppointmentResourceAssignmentSeeder.SeedAsync(context, dateTimeProvider);
     if (context.ChangeTracker.HasChanges())
     {
         await context.SaveChangesAsync();

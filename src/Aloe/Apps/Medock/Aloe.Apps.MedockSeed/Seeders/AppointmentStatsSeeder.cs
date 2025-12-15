@@ -86,7 +86,7 @@ internal static class AppointmentStatsSeeder
             return;
         }
 
-        var resourceAssignments = await context.AppointmentResourceReservations
+        var resourceAssignments = await context.AppointmentResourceAssignments
             .Where(ara => !ara.IsDeleted)
             .ToListAsync();
 
@@ -259,7 +259,7 @@ internal static class AppointmentStatsSeeder
 
             var stat = new AppointmentStats
             {
-                ApptStatId = Guid.NewGuid(),
+                ApptStatId = Guid.CreateVersion7(),
                 ApptDate = statsData.Date,
                 ApptResId = statsData.ResourceId,
                 ApptCap = statsData.Capacity,

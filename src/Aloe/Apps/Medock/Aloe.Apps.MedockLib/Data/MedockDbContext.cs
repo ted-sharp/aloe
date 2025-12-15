@@ -44,7 +44,7 @@ public class MedockDbContext : DbContext
     public DbSet<AppointmentResource> AppointmentResources => this.Set<AppointmentResource>();
     public DbSet<AppointmentSlot> AppointmentSlots => this.Set<AppointmentSlot>();
     public DbSet<AppointmentSlotOverride> AppointmentSlotOverrides => this.Set<AppointmentSlotOverride>();
-    public DbSet<AppointmentResourceAssignment> AppointmentResourceReservations => this.Set<AppointmentResourceAssignment>();
+    public DbSet<AppointmentResourceAssignment> AppointmentResourceAssignments => this.Set<AppointmentResourceAssignment>();
     public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
 
     // マスタ系

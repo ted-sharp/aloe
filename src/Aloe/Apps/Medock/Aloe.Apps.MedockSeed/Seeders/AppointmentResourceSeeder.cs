@@ -42,7 +42,7 @@ internal static class AppointmentResourceSeeder
         {
             new()
             {
-                ApptResId = Guid.NewGuid(),
+                ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId.Value,
                 ApptResTypeCode = 1, // 内視鏡
                 ApptResName = "内視鏡",
@@ -52,7 +52,7 @@ internal static class AppointmentResourceSeeder
             },
             new()
             {
-                ApptResId = Guid.NewGuid(),
+                ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId.Value,
                 ApptResTypeCode = 2, // エコー
                 ApptResName = "エコー",
@@ -62,7 +62,7 @@ internal static class AppointmentResourceSeeder
             },
             new()
             {
-                ApptResId = Guid.NewGuid(),
+                ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId.Value,
                 ApptResTypeCode = 3, // CT
                 ApptResName = "CT",
@@ -72,7 +72,7 @@ internal static class AppointmentResourceSeeder
             },
             new()
             {
-                ApptResId = Guid.NewGuid(),
+                ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId.Value,
                 ApptResTypeCode = 4, // MR
                 ApptResName = "MR",
@@ -82,7 +82,7 @@ internal static class AppointmentResourceSeeder
             },
             new()
             {
-                ApptResId = Guid.NewGuid(),
+                ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId.Value,
                 ApptResTypeCode = 5, // ロッカー
                 ApptResName = "ロッカー",

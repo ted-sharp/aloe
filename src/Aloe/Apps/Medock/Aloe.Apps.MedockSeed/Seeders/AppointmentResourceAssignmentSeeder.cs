@@ -6,7 +6,7 @@ using Npgsql;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
-internal static class AppointmentResourceReservationSeeder
+internal static class AppointmentResourceAssignmentSeeder
 {
     private static readonly Random _random = new Random();
 
@@ -15,10 +15,10 @@ internal static class AppointmentResourceReservationSeeder
         // テーブルが存在するか確認
         try
         {
-            var existingReservations = await context.AppointmentResourceReservations.AnyAsync();
-            if (existingReservations)
+            var existingAssignments = await context.AppointmentResourceAssignments.AnyAsync();
+            if (existingAssignments)
             {
-                Console.WriteLine("[SKIP] AppointmentResourceReservations already exist.");
+                Console.WriteLine("[SKIP] AppointmentResourceAssignments already exist.");
                 return;
             }
         }
@@ -33,7 +33,7 @@ internal static class AppointmentResourceReservationSeeder
 
         if (!appointments.Any())
         {
-            Console.WriteLine("[SKIP] AppointmentResourceReservation: No appointments found.");
+            Console.WriteLine("[SKIP] AppointmentResourceAssignment: No appointments found.");
             return;
         }
 
@@ -43,13 +43,13 @@ internal static class AppointmentResourceReservationSeeder
 
         if (!resources.Any())
         {
-            Console.WriteLine("[SKIP] AppointmentResourceReservation: No appointment resources found.");
+            Console.WriteLine("[SKIP] AppointmentResourceAssignment: No appointment resources found.");
             return;
         }
 
-        Console.WriteLine("[INFO] Creating appointment resource reservation seed data...");
+        Console.WriteLine("[INFO] Creating appointment resource assignment seed data...");
 
-        var reservations = new List<AppointmentResourceAssignment>();
+        var assignments = new List<AppointmentResourceAssignment>();
 
         foreach (var appointment in appointments)
         {
@@ -67,21 +67,21 @@ internal static class AppointmentResourceReservationSeeder
 
             foreach (var resource in selectedResources)
             {
-                var reservation = new AppointmentResourceAssignment
+                var assignment = new AppointmentResourceAssignment
                 {
-                    ApptResAssignId = Guid.NewGuid(),
+                    ApptResAssignId = Guid.CreateVersion7(),
                     ApptId = appointment.ApptId,
                     ApptResId = resource.ApptResId,
                     IsDeleted = false
                 };
 
-                SeederHelper.InitializeAuditFields(reservation, dateTimeProvider);
-                reservations.Add(reservation);
+                SeederHelper.InitializeAuditFields(assignment, dateTimeProvider);
+                assignments.Add(assignment);
             }
         }
 
-        context.AppointmentResourceReservations.AddRange(reservations);
-        Console.WriteLine($"  [+] AppointmentResourceReservations: {reservations.Count} entries");
+        context.AppointmentResourceAssignments.AddRange(assignments);
+        Console.WriteLine($"  [+] AppointmentResourceAssignments: {assignments.Count} entries");
     }
 }
 

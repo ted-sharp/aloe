@@ -57,7 +57,7 @@ public class AppointmentService : IAppointmentService
 
         var appointment = new Appointment
         {
-            ApptId = Guid.NewGuid(),
+            ApptId = Guid.CreateVersion7(),
             ApptDate = dto.Date,
             ApptStartTime = dto.StartTime,
             ApptDurationMin = dto.StartTime.HasValue && dto.EndTime.HasValue

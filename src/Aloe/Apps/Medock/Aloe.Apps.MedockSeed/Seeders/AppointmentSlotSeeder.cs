@@ -106,7 +106,7 @@ internal static class AppointmentSlotSeeder
 
         return new AppointmentSlot
         {
-            ApptSlotId = Guid.NewGuid(),
+            ApptSlotId = Guid.CreateVersion7(),
             ApptResId = resourceId,
             ApptSlots = slotsJson,
             IsActive = true,
@@ -131,7 +131,7 @@ internal static class AppointmentSlotSeeder
 
         return new AppointmentSlot
         {
-            ApptSlotId = Guid.NewGuid(),
+            ApptSlotId = Guid.CreateVersion7(),
             ApptResId = resourceId,
             ApptSlots = slotsJson,
             IsActive = true,

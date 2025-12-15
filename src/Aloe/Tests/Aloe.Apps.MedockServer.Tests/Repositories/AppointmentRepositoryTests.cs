@@ -14,17 +14,17 @@ public class AppointmentRepositoryTests
     private static DbContextOptions<MedockDbContext> CreateInMemoryOptions()
     {
         return new DbContextOptionsBuilder<MedockDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName: Guid.CreateVersion7().ToString())
             .Options;
     }
 
     private static async Task<(Guid TenantId, Guid FacilityId, Guid FloorId, Guid OrgId, Guid PtId)> SeedTestDataAsync(MedockDbContext context)
     {
-        var tenantId = Guid.NewGuid();
-        var facilityId = Guid.NewGuid();
-        var floorId = Guid.NewGuid();
-        var orgId = Guid.NewGuid();
-        var ptId = Guid.NewGuid();
+        var tenantId = Guid.CreateVersion7();
+        var facilityId = Guid.CreateVersion7();
+        var floorId = Guid.CreateVersion7();
+        var orgId = Guid.CreateVersion7();
+        var ptId = Guid.CreateVersion7();
 
         context.Tenants.Add(new Tenant
         {
@@ -76,7 +76,7 @@ public class AppointmentRepositoryTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var apptId = Guid.NewGuid();
+        var apptId = Guid.CreateVersion7();
 
         await using (var context = new MedockDbContext(options))
         {
@@ -111,7 +111,7 @@ public class AppointmentRepositoryTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var nonExistentId = Guid.NewGuid();
+        var nonExistentId = Guid.CreateVersion7();
 
         // Act
         await using var context = new MedockDbContext(options);
@@ -135,7 +135,7 @@ public class AppointmentRepositoryTests
             // 範囲内の予約
             context.Appointments.Add(new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = floorId,
                 OrgId = orgId,
                 PtId = ptId,
@@ -143,7 +143,7 @@ public class AppointmentRepositoryTests
             });
             context.Appointments.Add(new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = floorId,
                 OrgId = orgId,
                 PtId = ptId,
@@ -153,7 +153,7 @@ public class AppointmentRepositoryTests
             // 範囲外の予約
             context.Appointments.Add(new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = floorId,
                 OrgId = orgId,
                 PtId = ptId,
@@ -190,7 +190,7 @@ public class AppointmentRepositoryTests
             targetFloorId = floorId;
 
             // 別のフロアを作成
-            var otherFloorId = Guid.NewGuid();
+            var otherFloorId = Guid.CreateVersion7();
             context.Floors.Add(new Floor
             {
                 FloorId = otherFloorId,
@@ -202,7 +202,7 @@ public class AppointmentRepositoryTests
             // ターゲットフロアの予約
             context.Appointments.Add(new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = floorId,
                 OrgId = orgId,
                 PtId = ptId,
@@ -212,7 +212,7 @@ public class AppointmentRepositoryTests
             // 別のフロアの予約（同日）
             context.Appointments.Add(new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = otherFloorId,
                 OrgId = orgId,
                 PtId = ptId,
@@ -239,7 +239,7 @@ public class AppointmentRepositoryTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var apptId = Guid.NewGuid();
+        var apptId = Guid.CreateVersion7();
         Guid floorId, orgId, ptId;
 
         await using (var context = new MedockDbContext(options))
@@ -276,7 +276,7 @@ public class AppointmentRepositoryTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var apptId = Guid.NewGuid();
+        var apptId = Guid.CreateVersion7();
 
         await using (var context = new MedockDbContext(options))
         {
@@ -316,7 +316,7 @@ public class AppointmentRepositoryTests
     {
         // Arrange
         var options = CreateInMemoryOptions();
-        var apptId = Guid.NewGuid();
+        var apptId = Guid.CreateVersion7();
 
         await using (var context = new MedockDbContext(options))
         {

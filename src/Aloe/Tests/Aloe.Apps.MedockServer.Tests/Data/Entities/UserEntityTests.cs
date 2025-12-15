@@ -14,7 +14,7 @@ public class UserEntityTests
         // Arrange & Act
         var user = new User
         {
-            UserId = Guid.NewGuid(),
+            UserId = Guid.CreateVersion7(),
             UserCode = "testuser",
             Email = "test@example.com",
             PasswordHash = "hash",

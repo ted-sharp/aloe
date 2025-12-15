@@ -239,7 +239,7 @@ internal static class AppointmentSeeder
 
             var appointment = new Appointment
             {
-                ApptId = Guid.NewGuid(),
+                ApptId = Guid.CreateVersion7(),
                 FloorId = floor.FloorId,
                 OrgId = organization.OrgId,
                 PtId = patient.PtId,

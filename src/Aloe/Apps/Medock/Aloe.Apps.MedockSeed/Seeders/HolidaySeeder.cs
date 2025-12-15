@@ -12,59 +12,154 @@ internal static class HolidaySeeder
         if (existingHolidays)
         {
             Console.WriteLine("[SKIP] Holidays already exist. Skipping holiday seed.");
+            return;
         }
-        else
-        {
-            Console.WriteLine("[INFO] Creating holiday seed data...");
-            var holidays = new List<Holiday>
-            {
-                // 2025年
-                new() { HolidayDate = new DateOnly(2025, 1, 1), HolidayName = "元日" },
-                new() { HolidayDate = new DateOnly(2025, 1, 13), HolidayName = "成人の日" },
-                new() { HolidayDate = new DateOnly(2025, 2, 11), HolidayName = "建国記念の日" },
-                new() { HolidayDate = new DateOnly(2025, 2, 23), HolidayName = "天皇誕生日" },
-                new() { HolidayDate = new DateOnly(2025, 2, 24), HolidayName = "振替休日" },
-                new() { HolidayDate = new DateOnly(2025, 3, 20), HolidayName = "春分の日" },
-                new() { HolidayDate = new DateOnly(2025, 4, 29), HolidayName = "昭和の日" },
-                new() { HolidayDate = new DateOnly(2025, 5, 3), HolidayName = "憲法記念日" },
-                new() { HolidayDate = new DateOnly(2025, 5, 4), HolidayName = "みどりの日" },
-                new() { HolidayDate = new DateOnly(2025, 5, 5), HolidayName = "こどもの日" },
-                new() { HolidayDate = new DateOnly(2025, 5, 6), HolidayName = "振替休日" },
-                new() { HolidayDate = new DateOnly(2025, 7, 21), HolidayName = "海の日" },
-                new() { HolidayDate = new DateOnly(2025, 8, 11), HolidayName = "山の日" },
-                new() { HolidayDate = new DateOnly(2025, 9, 15), HolidayName = "敬老の日" },
-                new() { HolidayDate = new DateOnly(2025, 9, 23), HolidayName = "秋分の日" },
-                new() { HolidayDate = new DateOnly(2025, 10, 13), HolidayName = "スポーツの日" },
-                new() { HolidayDate = new DateOnly(2025, 11, 3), HolidayName = "文化の日" },
-                new() { HolidayDate = new DateOnly(2025, 11, 23), HolidayName = "勤労感謝の日" },
-                new() { HolidayDate = new DateOnly(2025, 11, 24), HolidayName = "振替休日" },
-                // 2026年
-                new() { HolidayDate = new DateOnly(2026, 1, 1), HolidayName = "元日" },
-                new() { HolidayDate = new DateOnly(2026, 1, 12), HolidayName = "成人の日" },
-                new() { HolidayDate = new DateOnly(2026, 2, 11), HolidayName = "建国記念の日" },
-                new() { HolidayDate = new DateOnly(2026, 2, 23), HolidayName = "天皇誕生日" },
-                new() { HolidayDate = new DateOnly(2026, 3, 20), HolidayName = "春分の日" },
-                new() { HolidayDate = new DateOnly(2026, 4, 29), HolidayName = "昭和の日" },
-                new() { HolidayDate = new DateOnly(2026, 5, 3), HolidayName = "憲法記念日" },
-                new() { HolidayDate = new DateOnly(2026, 5, 4), HolidayName = "みどりの日" },
-                new() { HolidayDate = new DateOnly(2026, 5, 5), HolidayName = "こどもの日" },
-                new() { HolidayDate = new DateOnly(2026, 5, 6), HolidayName = "振替休日" },
-                new() { HolidayDate = new DateOnly(2026, 7, 20), HolidayName = "海の日" },
-                new() { HolidayDate = new DateOnly(2026, 8, 11), HolidayName = "山の日" },
-                new() { HolidayDate = new DateOnly(2026, 9, 21), HolidayName = "敬老の日" },
-                new() { HolidayDate = new DateOnly(2026, 9, 22), HolidayName = "国民の休日" },
-                new() { HolidayDate = new DateOnly(2026, 9, 23), HolidayName = "秋分の日" },
-                new() { HolidayDate = new DateOnly(2026, 10, 12), HolidayName = "スポーツの日" },
-                new() { HolidayDate = new DateOnly(2026, 11, 3), HolidayName = "文化の日" },
-                new() { HolidayDate = new DateOnly(2026, 11, 23), HolidayName = "勤労感謝の日" },
-            };
-            foreach (var holiday in holidays)
-            {
-                holiday.IsDeleted = false;
-            }
-            context.Holidays.AddRange(holidays);
-            Console.WriteLine($"  [+] Holidays: {holidays.Count} entries (2025-2026)");
-        }
+
+        Console.WriteLine("[INFO] Creating holiday seed data...");
+
+        // ローカルファンクション: 祝日オブジェクト生成を簡潔化
+        Holiday H(int year, int month, int day, string name) =>
+            new() { HolidayDate = new DateOnly(year, month, day), HolidayName = name, IsDeleted = false };
+
+        // Collection expressionsとローカルファンクションを使用
+        Holiday[] holidays = [
+            // 2020年
+            H(2020, 1, 1, "元日"),
+            H(2020, 1, 13, "成人の日"),
+            H(2020, 2, 11, "建国記念の日"),
+            H(2020, 2, 23, "天皇誕生日"),
+            H(2020, 2, 24, "振替休日"),
+            H(2020, 3, 20, "春分の日"),
+            H(2020, 4, 29, "昭和の日"),
+            H(2020, 5, 3, "憲法記念日"),
+            H(2020, 5, 4, "みどりの日"),
+            H(2020, 5, 5, "こどもの日"),
+            H(2020, 5, 6, "振替休日"),
+            H(2020, 7, 23, "海の日"),
+            H(2020, 7, 24, "スポーツの日"),
+            H(2020, 8, 10, "山の日"),
+            H(2020, 9, 21, "敬老の日"),
+            H(2020, 9, 22, "秋分の日"),
+            H(2020, 11, 3, "文化の日"),
+            H(2020, 11, 23, "勤労感謝の日"),
+            // 2021年
+            H(2021, 1, 1, "元日"),
+            H(2021, 1, 11, "成人の日"),
+            H(2021, 2, 11, "建国記念の日"),
+            H(2021, 2, 23, "天皇誕生日"),
+            H(2021, 3, 20, "春分の日"),
+            H(2021, 4, 29, "昭和の日"),
+            H(2021, 5, 3, "憲法記念日"),
+            H(2021, 5, 4, "みどりの日"),
+            H(2021, 5, 5, "こどもの日"),
+            H(2021, 7, 22, "海の日"),
+            H(2021, 7, 23, "スポーツの日"),
+            H(2021, 8, 8, "山の日"),
+            H(2021, 8, 9, "振替休日"),
+            H(2021, 9, 20, "敬老の日"),
+            H(2021, 9, 23, "秋分の日"),
+            H(2021, 11, 3, "文化の日"),
+            H(2021, 11, 23, "勤労感謝の日"),
+            // 2022年
+            H(2022, 1, 1, "元日"),
+            H(2022, 1, 10, "成人の日"),
+            H(2022, 2, 11, "建国記念の日"),
+            H(2022, 2, 23, "天皇誕生日"),
+            H(2022, 3, 21, "春分の日"),
+            H(2022, 4, 29, "昭和の日"),
+            H(2022, 5, 3, "憲法記念日"),
+            H(2022, 5, 4, "みどりの日"),
+            H(2022, 5, 5, "こどもの日"),
+            H(2022, 7, 18, "海の日"),
+            H(2022, 8, 11, "山の日"),
+            H(2022, 9, 19, "敬老の日"),
+            H(2022, 9, 23, "秋分の日"),
+            H(2022, 10, 10, "スポーツの日"),
+            H(2022, 11, 3, "文化の日"),
+            H(2022, 11, 23, "勤労感謝の日"),
+            // 2023年
+            H(2023, 1, 1, "元日"),
+            H(2023, 1, 2, "振替休日"),
+            H(2023, 1, 9, "成人の日"),
+            H(2023, 2, 11, "建国記念の日"),
+            H(2023, 2, 23, "天皇誕生日"),
+            H(2023, 3, 21, "春分の日"),
+            H(2023, 4, 29, "昭和の日"),
+            H(2023, 5, 3, "憲法記念日"),
+            H(2023, 5, 4, "みどりの日"),
+            H(2023, 5, 5, "こどもの日"),
+            H(2023, 7, 17, "海の日"),
+            H(2023, 8, 11, "山の日"),
+            H(2023, 9, 18, "敬老の日"),
+            H(2023, 9, 23, "秋分の日"),
+            H(2023, 10, 9, "スポーツの日"),
+            H(2023, 11, 3, "文化の日"),
+            H(2023, 11, 23, "勤労感謝の日"),
+            // 2024年
+            H(2024, 1, 1, "元日"),
+            H(2024, 1, 8, "成人の日"),
+            H(2024, 2, 11, "建国記念の日"),
+            H(2024, 2, 12, "振替休日"),
+            H(2024, 2, 23, "天皇誕生日"),
+            H(2024, 3, 20, "春分の日"),
+            H(2024, 4, 29, "昭和の日"),
+            H(2024, 5, 3, "憲法記念日"),
+            H(2024, 5, 4, "みどりの日"),
+            H(2024, 5, 5, "こどもの日"),
+            H(2024, 5, 6, "振替休日"),
+            H(2024, 7, 15, "海の日"),
+            H(2024, 8, 11, "山の日"),
+            H(2024, 8, 12, "振替休日"),
+            H(2024, 9, 16, "敬老の日"),
+            H(2024, 9, 22, "秋分の日"),
+            H(2024, 9, 23, "振替休日"),
+            H(2024, 10, 14, "スポーツの日"),
+            H(2024, 11, 3, "文化の日"),
+            H(2024, 11, 4, "振替休日"),
+            H(2024, 11, 23, "勤労感謝の日"),
+            // 2025年
+            H(2025, 1, 1, "元日"),
+            H(2025, 1, 13, "成人の日"),
+            H(2025, 2, 11, "建国記念の日"),
+            H(2025, 2, 23, "天皇誕生日"),
+            H(2025, 2, 24, "振替休日"),
+            H(2025, 3, 20, "春分の日"),
+            H(2025, 4, 29, "昭和の日"),
+            H(2025, 5, 3, "憲法記念日"),
+            H(2025, 5, 4, "みどりの日"),
+            H(2025, 5, 5, "こどもの日"),
+            H(2025, 5, 6, "振替休日"),
+            H(2025, 7, 21, "海の日"),
+            H(2025, 8, 11, "山の日"),
+            H(2025, 9, 15, "敬老の日"),
+            H(2025, 9, 23, "秋分の日"),
+            H(2025, 10, 13, "スポーツの日"),
+            H(2025, 11, 3, "文化の日"),
+            H(2025, 11, 23, "勤労感謝の日"),
+            H(2025, 11, 24, "振替休日"),
+            // 2026年
+            H(2026, 1, 1, "元日"),
+            H(2026, 1, 12, "成人の日"),
+            H(2026, 2, 11, "建国記念の日"),
+            H(2026, 2, 23, "天皇誕生日"),
+            H(2026, 3, 20, "春分の日"),
+            H(2026, 4, 29, "昭和の日"),
+            H(2026, 5, 3, "憲法記念日"),
+            H(2026, 5, 4, "みどりの日"),
+            H(2026, 5, 5, "こどもの日"),
+            H(2026, 5, 6, "振替休日"),
+            H(2026, 7, 20, "海の日"),
+            H(2026, 8, 11, "山の日"),
+            H(2026, 9, 21, "敬老の日"),
+            H(2026, 9, 22, "国民の休日"),
+            H(2026, 9, 23, "秋分の日"),
+            H(2026, 10, 12, "スポーツの日"),
+            H(2026, 11, 3, "文化の日"),
+            H(2026, 11, 23, "勤労感謝の日"),
+        ];
+
+        context.Holidays.AddRange(holidays);
+        Console.WriteLine($"  [+] Holidays: {holidays.Length} entries (2020-2026)");
     }
 }
 

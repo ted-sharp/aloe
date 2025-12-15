@@ -81,7 +81,7 @@ public class AuthService : IAuthService
 
         var session = new Session
         {
-            SessionId = Guid.NewGuid(),
+            SessionId = Guid.CreateVersion7(),
             UserId = user.UserId,
             UserDisplayName = user.UserDisplayName,
             IssuedAt = issuedAt,

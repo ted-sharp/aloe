@@ -12,14 +12,14 @@ public class AppointmentEntityTests
     public void Appointment_Should_Have_Required_Properties()
     {
         // Arrange
-        var floorId = Guid.NewGuid();
-        var orgId = Guid.NewGuid();
-        var ptId = Guid.NewGuid();
+        var floorId = Guid.CreateVersion7();
+        var orgId = Guid.CreateVersion7();
+        var ptId = Guid.CreateVersion7();
 
         // Act
         var appointment = new Appointment
         {
-            ApptId = Guid.NewGuid(),
+            ApptId = Guid.CreateVersion7(),
             FloorId = floorId,
             OrgId = orgId,
             PtId = ptId,

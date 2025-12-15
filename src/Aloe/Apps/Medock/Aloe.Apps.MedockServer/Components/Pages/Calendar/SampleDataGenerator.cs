@@ -83,7 +83,7 @@ public static class SampleDataGenerator
 
                 appointments.Add(new CalendarAppointment
                 {
-                    Id = Guid.NewGuid(),
+                    Id = Guid.CreateVersion7(),
                     Date = DateOnly.FromDateTime(date),
                     StartTime = new TimeOnly(startHour, 0),
                     EndTime = new TimeOnly(endHour, 0),

@@ -14,7 +14,7 @@ public class TenantEntityTests
         // Arrange & Act
         var tenant = new Tenant
         {
-            TenantId = Guid.NewGuid(),
+            TenantId = Guid.CreateVersion7(),
             TenantName = "Test Tenant"
         };
 

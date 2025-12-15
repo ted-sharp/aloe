@@ -19,7 +19,7 @@ public class AuthServiceTests : IDisposable
     {
         // InMemory Database
         var options = new DbContextOptionsBuilder<MedockDbContext>()
-            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .UseInMemoryDatabase(databaseName: Guid.CreateVersion7().ToString())
             .Options;
         this._context = new MedockDbContext(options);
 
@@ -54,7 +54,7 @@ public class AuthServiceTests : IDisposable
 
         var tenant = new Tenant
         {
-            TenantId = Guid.NewGuid(),
+            TenantId = Guid.CreateVersion7(),
             TenantName = "テストテナント",
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(DateTime.Today),
@@ -65,7 +65,7 @@ public class AuthServiceTests : IDisposable
 
         var facility = new Facility
         {
-            FacilityId = Guid.NewGuid(),
+            FacilityId = Guid.CreateVersion7(),
             TenantId = tenant.TenantId,
             MedicalInstitutionCode = "1234567890",
             FacilityName = "テスト施設",
@@ -79,7 +79,7 @@ public class AuthServiceTests : IDisposable
 
         var user = new User
         {
-            UserId = Guid.NewGuid(),
+            UserId = Guid.CreateVersion7(),
             UserCode = userCode,
             Email = $"{userCode}@example.com",
             PasswordHash = hash,
@@ -93,7 +93,7 @@ public class AuthServiceTests : IDisposable
 
         var facilityUser = new FacilityUser
         {
-            FacilityUserId = Guid.NewGuid(),
+            FacilityUserId = Guid.CreateVersion7(),
             FacilityId = facility.FacilityId,
             UserId = user.UserId,
             FacilityUserSeq = 1,
@@ -287,7 +287,7 @@ public class AuthServiceTests : IDisposable
     public async Task LogoutAsync_WithInvalidSession_ShouldReturnFalse()
     {
         // Act
-        var result = await this._authService.LogoutAsync(Guid.NewGuid());
+        var result = await this._authService.LogoutAsync(Guid.CreateVersion7());
 
         // Assert
         result.Should().BeFalse();

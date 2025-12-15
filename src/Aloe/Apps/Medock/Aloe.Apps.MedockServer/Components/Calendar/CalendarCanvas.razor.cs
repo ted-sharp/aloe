@@ -138,7 +138,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     [Parameter]
     public EventCallback<(DateOnly Start, DateOnly End)> OnDateRangeSelected { get; set; }
 
-    private string ContainerId { get; } = $"calendar-canvas-{Guid.NewGuid():N}";
+    private string ContainerId { get; } = $"calendar-canvas-{Guid.CreateVersion7():N}";
     private DotNetObjectReference<CalendarCanvas>? _dotNetRef;
     private bool _isInitialized = false;
     private string? _lastViewType;
