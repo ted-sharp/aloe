@@ -9,12 +9,12 @@ internal static class FeatureSeeder
 {
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
-        var existingFeatures = await context.Features.AnyAsync();
-        if (existingFeatures)
-        {
-            Console.WriteLine("[SKIP] Resources and Operations already exist.");
-        }
         Console.WriteLine("[INFO] Creating feature and operation master data...");
+
+        // 既存のFeatureコードを取得
+        var existingFeatureCodes = await context.Features
+            .Select(f => f.FeatureCode)
+            .ToListAsync();
 
         var features = new List<Feature>
         {
@@ -24,7 +24,12 @@ internal static class FeatureSeeder
             new() { FeatureCode = "USER" },
         };
 
-        foreach (var feature in features)
+        // 既に存在しないFeatureだけを追加
+        var newFeatures = features
+            .Where(f => !existingFeatureCodes.Contains(f.FeatureCode))
+            .ToList();
+
+        foreach (var feature in newFeatures)
         {
             feature.IsDeleted = false;
             feature.CreatedAt = dateTimeProvider.Now;
@@ -35,8 +40,20 @@ internal static class FeatureSeeder
             feature.UpdatedSessionId = Guid.Empty;
         }
 
-        context.Features.AddRange(features);
-        Console.WriteLine($"  [+] Features: {features.Count} entries");
+        if (newFeatures.Any())
+        {
+            context.Features.AddRange(newFeatures);
+            Console.WriteLine($"  [+] Features: {newFeatures.Count} entries");
+        }
+        else
+        {
+            Console.WriteLine($"  [SKIP] Features: All features already exist.");
+        }
+
+        // 既存のOperationコードを取得
+        var existingOperationCodes = await context.Operations
+            .Select(o => o.OperationCode)
+            .ToListAsync();
 
         var operations = new List<Operation>
         {
@@ -47,7 +64,12 @@ internal static class FeatureSeeder
             new() { OperationCode = "ADMIN" },
         };
 
-        foreach (var operation in operations)
+        // 既に存在しないOperationだけを追加
+        var newOperations = operations
+            .Where(o => !existingOperationCodes.Contains(o.OperationCode))
+            .ToList();
+
+        foreach (var operation in newOperations)
         {
             operation.IsDeleted = false;
             operation.CreatedAt = dateTimeProvider.Now;
@@ -58,8 +80,15 @@ internal static class FeatureSeeder
             operation.UpdatedSessionId = Guid.Empty;
         }
 
-        context.Operations.AddRange(operations);
-        Console.WriteLine($"  [+] Operations: {operations.Count} entries");
+        if (newOperations.Any())
+        {
+            context.Operations.AddRange(newOperations);
+            Console.WriteLine($"  [+] Operations: {newOperations.Count} entries");
+        }
+        else
+        {
+            Console.WriteLine($"  [SKIP] Operations: All operations already exist.");
+        }
 
         if (context.ChangeTracker.HasChanges())
         {

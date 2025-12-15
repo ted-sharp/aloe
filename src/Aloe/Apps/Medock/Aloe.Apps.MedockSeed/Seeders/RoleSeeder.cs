@@ -9,13 +9,12 @@ internal static class RoleSeeder
 {
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
-        var existingRoles = await context.Roles.AnyAsync();
-        if (existingRoles)
-        {
-            Console.WriteLine("[SKIP] Roles already exist.");
-        }
-
         Console.WriteLine("[INFO] Creating role, permission, and RBAC seed data...");
+
+        // 既存のRoleコードを取得
+        var existingRoleCodes = await context.Roles
+            .Select(r => r.RoleCode)
+            .ToListAsync();
 
         var roles = new List<Role>
         {
@@ -26,7 +25,12 @@ internal static class RoleSeeder
             new() { RoleCode = "VIEWER", RoleName = "閲覧", RoleDesc = "データ閲覧ユーザー", RoleSeq = 5 },
         };
 
-        foreach (var role in roles)
+        // 既に存在しないRoleだけを追加
+        var newRoles = roles
+            .Where(r => !existingRoleCodes.Contains(r.RoleCode))
+            .ToList();
+
+        foreach (var role in newRoles)
         {
             role.IsDeleted = false;
             role.CreatedAt = dateTimeProvider.Now;
@@ -37,8 +41,21 @@ internal static class RoleSeeder
             role.UpdatedSessionId = Guid.Empty;
         }
 
-        context.Roles.AddRange(roles);
-        Console.WriteLine($"  [+] Roles: {roles.Count} entries");
+        if (newRoles.Any())
+        {
+            context.Roles.AddRange(newRoles);
+            Console.WriteLine($"  [+] Roles: {newRoles.Count} entries");
+        }
+        else
+        {
+            Console.WriteLine($"  [SKIP] Roles: All roles already exist.");
+        }
+
+        // 既存のPermissionを (feature_code, operation_code) の組み合わせで取得
+        var existingPermissions = await context.Permissions
+            .Where(p => !p.IsDeleted)
+            .Select(p => new { p.FeatureCode, p.OperationCode })
+            .ToListAsync();
 
         var permissions = new List<Permission>
         {
@@ -54,7 +71,12 @@ internal static class RoleSeeder
             new() { PermissionCode = "USER_ADMIN", FeatureCode = "USER", OperationCode = "ADMIN" },
         };
 
-        foreach (var permission in permissions)
+        // 既に存在しないPermissionだけを追加（(feature_code, operation_code) の組み合わせでチェック）
+        var newPermissions = permissions
+            .Where(p => !existingPermissions.Any(ep => ep.FeatureCode == p.FeatureCode && ep.OperationCode == p.OperationCode))
+            .ToList();
+
+        foreach (var permission in newPermissions)
         {
             permission.IsDeleted = false;
             permission.CreatedAt = dateTimeProvider.Now;
@@ -65,8 +87,20 @@ internal static class RoleSeeder
             permission.UpdatedSessionId = Guid.Empty;
         }
 
-        context.Permissions.AddRange(permissions);
-        Console.WriteLine($"  [+] Permissions: {permissions.Count} entries");
+        if (newPermissions.Any())
+        {
+            context.Permissions.AddRange(newPermissions);
+            Console.WriteLine($"  [+] Permissions: {newPermissions.Count} entries");
+        }
+        else
+        {
+            Console.WriteLine($"  [SKIP] Permissions: All permissions already exist.");
+        }
+
+        // 既存のRolePermissionコードを取得
+        var existingRolePermissionCodes = await context.RolePermissions
+            .Select(rp => rp.RolePermissionCode)
+            .ToListAsync();
 
         var rolePermissions = new List<RolePermission>
         {
@@ -97,7 +131,12 @@ internal static class RoleSeeder
             new() { RolePermissionCode = "VIEWER_CALENDAR_VIEW", RoleCode = "VIEWER", PermissionCode = "CALENDAR_VIEW" },
         };
 
-        foreach (var rolePermission in rolePermissions)
+        // 既に存在しないRolePermissionだけを追加
+        var newRolePermissions = rolePermissions
+            .Where(rp => !existingRolePermissionCodes.Contains(rp.RolePermissionCode))
+            .ToList();
+
+        foreach (var rolePermission in newRolePermissions)
         {
             rolePermission.IsDeleted = false;
             rolePermission.CreatedAt = dateTimeProvider.Now;
@@ -108,8 +147,15 @@ internal static class RoleSeeder
             rolePermission.UpdatedSessionId = Guid.Empty;
         }
 
-        context.RolePermissions.AddRange(rolePermissions);
-        Console.WriteLine($"  [+] RolePermissions: {rolePermissions.Count} entries ({roles.Count} roles × permissions)");
+        if (newRolePermissions.Any())
+        {
+            context.RolePermissions.AddRange(newRolePermissions);
+            Console.WriteLine($"  [+] RolePermissions: {newRolePermissions.Count} entries");
+        }
+        else
+        {
+            Console.WriteLine($"  [SKIP] RolePermissions: All role permissions already exist.");
+        }
 
         if (context.ChangeTracker.HasChanges())
         {
