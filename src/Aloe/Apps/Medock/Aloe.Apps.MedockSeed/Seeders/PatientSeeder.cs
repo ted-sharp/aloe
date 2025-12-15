@@ -22,466 +22,61 @@ internal static class PatientSeeder
 
         if (tenant != null && org != null)
         {
-            // TODO: ランダムで作成するジェネレーターがほしい
-            var patients = new List<Patient>
+            var random = new Random();
+            var patients = new List<Patient>(1000);
+
+            // 現在の日付を基準に年齢層を定義（2025年基準）
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var ageRanges = new[]
             {
-                // 20代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0001",
-                    KarteCode = "K001",
-                    PtName = "佐藤 健太",
-                    PtNameCompat = "佐藤健太",
-                    PtNameKatakana = "サトウ ケンタ",
-                    PtNameKatakanaCompat = "サトウケンタ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1998, 4, 12),
-                    SexCode = 1,
-                    PtMemo = "一般健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0002",
-                    KarteCode = "K002",
-                    PtName = "鈴木 美咲",
-                    PtNameCompat = "鈴木美咲",
-                    PtNameKatakana = "スズキ ミサキ",
-                    PtNameKatakanaCompat = "スズキミサキ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1996, 8, 25),
-                    SexCode = 2,
-                    PtMemo = "一般健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0003",
-                    KarteCode = "K003",
-                    PtName = "高橋 翔太",
-                    PtNameCompat = "高橋翔太",
-                    PtNameKatakana = "タカハシ ショウタ",
-                    PtNameKatakanaCompat = "タカハシショウタ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1999, 11, 3),
-                    SexCode = 1,
-                    PtMemo = "一般健診"
-                },
-                // 30代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0004",
-                    KarteCode = "K004",
-                    PtName = "田中 太郎",
-                    PtNameCompat = "田中太郎",
-                    PtNameKatakana = "タナカ タロウ",
-                    PtNameKatakanaCompat = "タナカタロウ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1988, 5, 15),
-                    SexCode = 1,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0005",
-                    KarteCode = "K005",
-                    PtName = "山田 花子",
-                    PtNameCompat = "山田花子",
-                    PtNameKatakana = "ヤマダ ハナコ",
-                    PtNameKatakanaCompat = "ヤマダハナコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1987, 3, 22),
-                    SexCode = 2,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0006",
-                    KarteCode = "K006",
-                    PtName = "伊藤 直樹",
-                    PtNameCompat = "伊藤直樹",
-                    PtNameKatakana = "イトウ ナオキ",
-                    PtNameKatakanaCompat = "イトウナオキ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1990, 7, 8),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0007",
-                    KarteCode = "K007",
-                    PtName = "中村 由美",
-                    PtNameCompat = "中村由美",
-                    PtNameKatakana = "ナカムラ ユミ",
-                    PtNameKatakanaCompat = "ナカムラユミ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1991, 12, 18),
-                    SexCode = 2,
-                    PtMemo = "人間ドック"
-                },
-                // 40代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0008",
-                    KarteCode = "K008",
-                    PtName = "小林 誠",
-                    PtNameCompat = "小林誠",
-                    PtNameKatakana = "コバヤシ マコト",
-                    PtNameKatakanaCompat = "コバヤシマコト",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1978, 2, 14),
-                    SexCode = 1,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0009",
-                    KarteCode = "K009",
-                    PtName = "加藤 麻衣",
-                    PtNameCompat = "加藤麻衣",
-                    PtNameKatakana = "カトウ マイ",
-                    PtNameKatakanaCompat = "カトウマイ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1979, 6, 30),
-                    SexCode = 2,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0010",
-                    KarteCode = "K010",
-                    PtName = "吉田 雄一",
-                    PtNameCompat = "吉田雄一",
-                    PtNameKatakana = "ヨシダ ユウイチ",
-                    PtNameKatakanaCompat = "ヨシダユウイチ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1980, 9, 5),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0011",
-                    KarteCode = "K011",
-                    PtName = "松本 恵子",
-                    PtNameCompat = "松本恵子",
-                    PtNameKatakana = "マツモト ケイコ",
-                    PtNameKatakanaCompat = "マツモトケイコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1982, 1, 20),
-                    SexCode = 2,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0012",
-                    KarteCode = "K012",
-                    PtName = "井上 健一",
-                    PtNameCompat = "井上健一",
-                    PtNameKatakana = "イノウエ ケンイチ",
-                    PtNameKatakanaCompat = "イノウエケンイチ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1983, 4, 7),
-                    SexCode = 1,
-                    PtMemo = "定期健診"
-                },
-                // 50代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0013",
-                    KarteCode = "K013",
-                    PtName = "木村 正雄",
-                    PtNameCompat = "木村正雄",
-                    PtNameKatakana = "キムラ マサオ",
-                    PtNameKatakanaCompat = "キムラマサオ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1968, 10, 12),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0014",
-                    KarteCode = "K014",
-                    PtName = "林 久美子",
-                    PtNameCompat = "林久美子",
-                    PtNameKatakana = "ハヤシ クミコ",
-                    PtNameKatakanaCompat = "ハヤシクミコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1970, 7, 28),
-                    SexCode = 2,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0015",
-                    KarteCode = "K015",
-                    PtName = "斎藤 和彦",
-                    PtNameCompat = "斎藤和彦",
-                    PtNameKatakana = "サイトウ カズヒコ",
-                    PtNameKatakanaCompat = "サイトウカズヒコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1971, 3, 15),
-                    SexCode = 1,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0016",
-                    KarteCode = "K016",
-                    PtName = "清水 真理",
-                    PtNameCompat = "清水真理",
-                    PtNameKatakana = "シミズ マリ",
-                    PtNameKatakanaCompat = "シミズマリ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1973, 11, 9),
-                    SexCode = 2,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0017",
-                    KarteCode = "K017",
-                    PtName = "山口 敏夫",
-                    PtNameCompat = "山口敏夫",
-                    PtNameKatakana = "ヤマグチ トシオ",
-                    PtNameKatakanaCompat = "ヤマグチトシオ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1974, 5, 22),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                // 60代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0018",
-                    KarteCode = "K018",
-                    PtName = "森 一郎",
-                    PtNameCompat = "森一郎",
-                    PtNameKatakana = "モリ イチロウ",
-                    PtNameKatakanaCompat = "モリイチロウ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1960, 8, 3),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0019",
-                    KarteCode = "K019",
-                    PtName = "池田 静香",
-                    PtNameCompat = "池田静香",
-                    PtNameKatakana = "イケダ シズカ",
-                    PtNameKatakanaCompat = "イケダシズカ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1962, 12, 17),
-                    SexCode = 2,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0020",
-                    KarteCode = "K020",
-                    PtName = "橋本 清",
-                    PtNameCompat = "橋本清",
-                    PtNameKatakana = "ハシモト キヨシ",
-                    PtNameKatakanaCompat = "ハシモトキヨシ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1963, 6, 25),
-                    SexCode = 1,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0021",
-                    KarteCode = "K021",
-                    PtName = "前田 幸子",
-                    PtNameCompat = "前田幸子",
-                    PtNameKatakana = "マエダ サチコ",
-                    PtNameKatakanaCompat = "マエダサチコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1964, 2, 11),
-                    SexCode = 2,
-                    PtMemo = "特定健診"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0022",
-                    KarteCode = "K022",
-                    PtName = "藤原 博",
-                    PtNameCompat = "藤原博",
-                    PtNameKatakana = "フジワラ ヒロシ",
-                    PtNameKatakanaCompat = "フジワラヒロシ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1965, 9, 30),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                // 70代
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0023",
-                    KarteCode = "K023",
-                    PtName = "岡田 三郎",
-                    PtNameCompat = "岡田三郎",
-                    PtNameKatakana = "オカダ サブロウ",
-                    PtNameKatakanaCompat = "オカダサブロウ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1952, 4, 18),
-                    SexCode = 1,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0024",
-                    KarteCode = "K024",
-                    PtName = "長谷川 節子",
-                    PtNameCompat = "長谷川節子",
-                    PtNameKatakana = "ハセガワ セツコ",
-                    PtNameKatakanaCompat = "ハセガワセツコ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1954, 7, 6),
-                    SexCode = 2,
-                    PtMemo = "人間ドック"
-                },
-                new()
-                {
-                    PtId = Guid.CreateVersion7(),
-                    CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    PrimaryOrgId = org.OrgId,
-                    PtCode = "PT0025",
-                    KarteCode = "K025",
-                    PtName = "村上 義明",
-                    PtNameCompat = "村上義明",
-                    PtNameKatakana = "ムラカミ ヨシアキ",
-                    PtNameKatakanaCompat = "ムラカミヨシアキ",
-                    PtMaidenName = "",
-                    PtAliasName = "",
-                    BirthDate = new DateOnly(1955, 10, 14),
-                    SexCode = 1,
-                    PtMemo = "定期健診"
-                }
+                (Start: today.AddYears(-29), End: today.AddYears(-20)), // 20代
+                (Start: today.AddYears(-39), End: today.AddYears(-30)), // 30代
+                (Start: today.AddYears(-49), End: today.AddYears(-40)), // 40代
+                (Start: today.AddYears(-59), End: today.AddYears(-50)), // 50代
+                (Start: today.AddYears(-69), End: today.AddYears(-60)), // 60代
+                (Start: today.AddYears(-79), End: today.AddYears(-70)), // 70代
             };
+
+            for (int i = 1; i <= 1000; i++)
+            {
+                // 年齢層をランダムに選択
+                var ageRange = ageRanges[random.Next(ageRanges.Length)];
+                var daysDiff = (ageRange.End.ToDateTime(TimeOnly.MinValue) - ageRange.Start.ToDateTime(TimeOnly.MinValue)).Days;
+                var randomDays = random.Next(daysDiff);
+                var birthDate = ageRange.Start.AddDays(randomDays);
+
+                // 性別をランダムに割り当て（1: 男性、2: 女性）
+                var sexCode = random.Next(2) == 0 ? 1 : 2;
+
+                // 患者名を生成
+                var (name, nameCompat, katakana, katakanaCompat) = NameGenerator.GeneratePatientName(random);
+
+                // コードを生成
+                var ptCode = $"PT{i:D4}";
+                var karteCode = $"K{i:D3}";
+
+                // メモをランダムに選択
+                var memo = NameGenerator.GetRandomPatientMemo(random);
+
+                patients.Add(new Patient
+                {
+                    PtId = Guid.CreateVersion7(),
+                    CanonicalPtId = Guid.CreateVersion7(),
+                    FacilityId = facilityId,
+                    PrimaryOrgId = org.OrgId,
+                    PtCode = ptCode,
+                    KarteCode = karteCode,
+                    PtName = name,
+                    PtNameCompat = nameCompat,
+                    PtNameKatakana = katakana,
+                    PtNameKatakanaCompat = katakanaCompat,
+                    PtMaidenName = "",
+                    PtAliasName = "",
+                    BirthDate = birthDate,
+                    SexCode = sexCode,
+                    PtMemo = memo
+                });
+            }
 
             foreach (var patient in patients)
             {

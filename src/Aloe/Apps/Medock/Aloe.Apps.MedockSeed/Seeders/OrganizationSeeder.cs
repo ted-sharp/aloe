@@ -20,87 +20,34 @@ internal static class OrganizationSeeder
         var tenant = await context.Tenants.FirstOrDefaultAsync();
         if (tenant != null)
         {
-            var organizations = new List<Organization>
+            var random = new Random();
+            var organizations = new List<Organization>(50);
+
+            for (int i = 1; i <= 50; i++)
             {
-                new()
+                // 団体名を生成
+                var (name, nameKatakana, nameKatakanaCompat, nameDisplay, namePrint) = NameGenerator.GenerateOrganizationName(random);
+
+                // 団体コードを生成
+                var orgCode = $"ORG{i:D3}";
+
+                // メモをランダムに選択
+                var memo = NameGenerator.GetRandomOrganizationMemo(random);
+
+                organizations.Add(new Organization
                 {
                     OrgId = Guid.CreateVersion7(),
                     FacilityId = facilityId,
                     ParentOrgId = null,
-                    OrgCode = "ORG001",
-                    OrgName = "株式会社アロエ商事",
-                    OrgNameKatakana = "カブシキガイシャアロエショウジ",
-                    OrgNameKatakanaCompat = "カブシキガイシャアロエショウジ",
-                    OrgNameDisplay = "株式会社アロエ商事",
-                    OrgNamePrint = "株式会社アロエ商事",
-                    OrgMemo = "健診契約企業"
-                },
-                new()
-                {
-                    OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    ParentOrgId = null,
-                    OrgCode = "ORG002",
-                    OrgName = "アロエ工業株式会社",
-                    OrgNameKatakana = "アロエコウギョウカブシキガイシャ",
-                    OrgNameKatakanaCompat = "アロエコウギョウカブシキガイシャ",
-                    OrgNameDisplay = "アロエ工業株式会社",
-                    OrgNamePrint = "アロエ工業株式会社",
-                    OrgMemo = "健診契約企業"
-                },
-                new()
-                {
-                    OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    ParentOrgId = null,
-                    OrgCode = "ORG003",
-                    OrgName = "アロエ建設株式会社",
-                    OrgNameKatakana = "アロエケンセツカブシキガイシャ",
-                    OrgNameKatakanaCompat = "アロエケンセツカブシキガイシャ",
-                    OrgNameDisplay = "アロエ建設株式会社",
-                    OrgNamePrint = "アロエ建設株式会社",
-                    OrgMemo = "健診契約企業"
-                },
-                new()
-                {
-                    OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    ParentOrgId = null,
-                    OrgCode = "ORG004",
-                    OrgName = "アロエサービス株式会社",
-                    OrgNameKatakana = "アロエサービスカブシキガイシャ",
-                    OrgNameKatakanaCompat = "アロエサービスカブシキガイシャ",
-                    OrgNameDisplay = "アロエサービス株式会社",
-                    OrgNamePrint = "アロエサービス株式会社",
-                    OrgMemo = "健診契約企業"
-                },
-                new()
-                {
-                    OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    ParentOrgId = null,
-                    OrgCode = "ORG005",
-                    OrgName = "株式会社アロエテクノ",
-                    OrgNameKatakana = "カブシキガイシャアロエテクノ",
-                    OrgNameKatakanaCompat = "カブシキガイシャアロエテクノ",
-                    OrgNameDisplay = "株式会社アロエテクノ",
-                    OrgNamePrint = "株式会社アロエテクノ",
-                    OrgMemo = "健診契約企業"
-                },
-                new()
-                {
-                    OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId,
-                    ParentOrgId = null,
-                    OrgCode = "ORG006",
-                    OrgName = "アロエ物流株式会社",
-                    OrgNameKatakana = "アロエブツリュウカブシキガイシャ",
-                    OrgNameKatakanaCompat = "アロエブツリュウカブシキガイシャ",
-                    OrgNameDisplay = "アロエ物流株式会社",
-                    OrgNamePrint = "アロエ物流株式会社",
-                    OrgMemo = "健診契約企業"
-                }
-            };
+                    OrgCode = orgCode,
+                    OrgName = name,
+                    OrgNameKatakana = nameKatakana,
+                    OrgNameKatakanaCompat = nameKatakanaCompat,
+                    OrgNameDisplay = nameDisplay,
+                    OrgNamePrint = namePrint,
+                    OrgMemo = memo
+                });
+            }
 
             foreach (var org in organizations)
             {
