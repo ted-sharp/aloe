@@ -38,13 +38,7 @@ public class FacilityService : IFacilityService
         if (businessHours == null || String.IsNullOrWhiteSpace(businessHours.BusinessHours))
         {
             // デフォルト値を返す
-            return new BusinessHoursDto
-            {
-                StartTime = "09:00",
-                EndTime = "18:00",
-                LunchStartTime = "12:00",
-                LunchEndTime = "13:00"
-            };
+            return GetDefaultBusinessHoursDto();
         }
 
         // JSONBをパース
@@ -55,49 +49,42 @@ public class FacilityService : IFacilityService
                 PropertyNameCaseInsensitive = true
             };
 
-            var jsonDoc = JsonDocument.Parse(businessHours.BusinessHours);
-            var root = jsonDoc.RootElement;
+            var businessHoursJson = JsonSerializer.Deserialize<BusinessHoursJson>(
+                businessHours.BusinessHours,
+                options);
 
-            var dto = new BusinessHoursDto();
-
-            // start, end を取得
-            if (root.TryGetProperty("start", out var startElement))
+            if (businessHoursJson == null)
             {
-                dto.StartTime = startElement.GetString() ?? "09:00";
+                return GetDefaultBusinessHoursDto();
             }
 
-            if (root.TryGetProperty("end", out var endElement))
+            return new BusinessHoursDto
             {
-                dto.EndTime = endElement.GetString() ?? "18:00";
-            }
-
-            // lunch オブジェクトを取得
-            if (root.TryGetProperty("lunch", out var lunchElement) && lunchElement.ValueKind == JsonValueKind.Object)
-            {
-                if (lunchElement.TryGetProperty("start", out var lunchStartElement))
-                {
-                    dto.LunchStartTime = lunchStartElement.GetString() ?? "12:00";
-                }
-
-                if (lunchElement.TryGetProperty("end", out var lunchEndElement))
-                {
-                    dto.LunchEndTime = lunchEndElement.GetString() ?? "13:00";
-                }
-            }
-
-            return dto;
+                StartTime = businessHoursJson.Start ?? "09:00",
+                EndTime = businessHoursJson.End ?? "18:00",
+                LunchStartTime = businessHoursJson.Lunch?.Start ?? "12:00",
+                LunchEndTime = businessHoursJson.Lunch?.End ?? "13:00"
+            };
         }
         catch (JsonException)
         {
             // JSONパースエラーの場合はデフォルト値を返す
-            return new BusinessHoursDto
-            {
-                StartTime = "09:00",
-                EndTime = "18:00",
-                LunchStartTime = "12:00",
-                LunchEndTime = "13:00"
-            };
+            return GetDefaultBusinessHoursDto();
         }
+    }
+
+    /// <summary>
+    /// デフォルトの営業時間DTOを取得
+    /// </summary>
+    private static BusinessHoursDto GetDefaultBusinessHoursDto()
+    {
+        return new BusinessHoursDto
+        {
+            StartTime = "09:00",
+            EndTime = "18:00",
+            LunchStartTime = "12:00",
+            LunchEndTime = "13:00"
+        };
     }
 }
 
