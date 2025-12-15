@@ -10,14 +10,8 @@ internal static class AppointmentSeeder
 {
     private static readonly Random _random = new Random();
 
-    public static async Task SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(MedockDbContext context, Guid floorId, IDateTimeProvider dateTimeProvider)
     {
-        if (!floorId.HasValue)
-        {
-            Console.WriteLine("[SKIP] Appointment: No floor ID provided.");
-            return;
-        }
-
         // テーブルが存在するか確認
         try
         {
@@ -33,7 +27,7 @@ internal static class AppointmentSeeder
             // テーブルが存在しない場合は続行（初回実行時）
         }
 
-        var floor = await context.Floors.FirstOrDefaultAsync(f => f.FloorId == floorId.Value);
+        var floor = await context.Floors.FirstOrDefaultAsync(f => f.FloorId == floorId);
         if (floor == null)
         {
             Console.WriteLine("[SKIP] Appointment: Floor not found.");

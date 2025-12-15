@@ -7,7 +7,7 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class UserSeeder
 {
-    public static async Task<bool> SeedAsync(MedockDbContext context, PasswordHasher passwordHasher, IDateTimeProvider dateTimeProvider, Guid? facilityId, Guid? floorId)
+    public static async Task<bool> SeedAsync(MedockDbContext context, PasswordHasher passwordHasher, IDateTimeProvider dateTimeProvider, Guid facilityId, Guid floorId)
     {
         var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
         var needsUserSeed = existingAdmin == null;
@@ -50,24 +50,21 @@ internal static class UserSeeder
         Console.WriteLine($"      Password: admin (hashed)");
         Console.WriteLine($"      IsSystemAdmin: {newAdminUser.IsSystemAdmin}");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = adminUserId,
-                FacilityUserSeq = 1,
-                IsFacilityAdmin = true,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = adminUserId,
+            FacilityUserSeq = 1,
+            IsFacilityAdmin = true,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         // 看護師ユーザー1
         var nurse1Id = Guid.CreateVersion7();
@@ -94,24 +91,21 @@ internal static class UserSeeder
         Console.WriteLine($"      Email: {nurse1.Email}");
         Console.WriteLine($"      Password: nurse1 (hashed)");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = nurse1Id,
-                FacilityUserSeq = 2,
-                IsFacilityAdmin = false,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = nurse1Id,
+            FacilityUserSeq = 2,
+            IsFacilityAdmin = false,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         // 看護師ユーザー2
         var nurse2Id = Guid.CreateVersion7();
@@ -138,24 +132,21 @@ internal static class UserSeeder
         Console.WriteLine($"      Email: {nurse2.Email}");
         Console.WriteLine($"      Password: nurse2 (hashed)");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = nurse2Id,
-                FacilityUserSeq = 3,
-                IsFacilityAdmin = false,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = nurse2Id,
+            FacilityUserSeq = 3,
+            IsFacilityAdmin = false,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         // 受付ユーザー1
         var reception1Id = Guid.CreateVersion7();
@@ -182,24 +173,21 @@ internal static class UserSeeder
         Console.WriteLine($"      Email: {reception1.Email}");
         Console.WriteLine($"      Password: reception1 (hashed)");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = reception1Id,
-                FacilityUserSeq = 4,
-                IsFacilityAdmin = false,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = reception1Id,
+            FacilityUserSeq = 4,
+            IsFacilityAdmin = false,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         // 受付ユーザー2
         var reception2Id = Guid.CreateVersion7();
@@ -226,24 +214,21 @@ internal static class UserSeeder
         Console.WriteLine($"      Email: {reception2.Email}");
         Console.WriteLine($"      Password: reception2 (hashed)");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = reception2Id,
-                FacilityUserSeq = 5,
-                IsFacilityAdmin = false,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = reception2Id,
+            FacilityUserSeq = 5,
+            IsFacilityAdmin = false,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         // 医師ユーザー
         var doctor1Id = Guid.CreateVersion7();
@@ -270,31 +255,25 @@ internal static class UserSeeder
         Console.WriteLine($"      Email: {doctor1.Email}");
         Console.WriteLine($"      Password: doctor1 (hashed)");
 
-        if (facilityId.HasValue)
+        facilityUsers.Add(new FacilityUser
         {
-            facilityUsers.Add(new FacilityUser
-            {
-                FacilityUserId = Guid.CreateVersion7(),
-                FacilityId = facilityId.Value,
-                UserId = doctor1Id,
-                FacilityUserSeq = 6,
-                IsFacilityAdmin = false,
-                IsDeleted = false,
-                CreatedAt = dateTimeProvider.Now,
-                UpdatedAt = dateTimeProvider.Now,
-                CreatedUserId = Guid.Empty,
-                CreatedSessionId = Guid.Empty,
-                UpdatedUserId = Guid.Empty,
-                UpdatedSessionId = Guid.Empty
-            });
-        }
+            FacilityUserId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            UserId = doctor1Id,
+            FacilityUserSeq = 6,
+            IsFacilityAdmin = false,
+            IsDeleted = false,
+            CreatedAt = dateTimeProvider.Now,
+            UpdatedAt = dateTimeProvider.Now,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
+        });
 
         context.Users.AddRange(users);
-        if (facilityUsers.Any())
-        {
-            context.FacilityUsers.AddRange(facilityUsers);
-            Console.WriteLine($"  [+] FacilityUsers: {facilityUsers.Count} entries");
-        }
+        context.FacilityUsers.AddRange(facilityUsers);
+        Console.WriteLine($"  [+] FacilityUsers: {facilityUsers.Count} entries");
 
         if (context.ChangeTracker.HasChanges())
         {

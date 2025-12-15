@@ -7,16 +7,10 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class FacilityBusinessHoursSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(MedockDbContext context, Guid facilityId, IDateTimeProvider dateTimeProvider)
     {
-        if (!facilityId.HasValue)
-        {
-            Console.WriteLine("[SKIP] FacilityBusinessHours: No facility ID provided.");
-            return;
-        }
-
         var existingBusinessHours = await context.FacilityBusinessHours
-            .AnyAsync(fbh => fbh.FacilityId == facilityId.Value && !fbh.IsDeleted);
+            .AnyAsync(fbh => fbh.FacilityId == facilityId && !fbh.IsDeleted);
 
         if (existingBusinessHours)
         {
@@ -42,7 +36,7 @@ internal static class FacilityBusinessHoursSeeder
         var facilityBusinessHours = new FacilityBusinessHours
         {
             FacilityBusinessHoursId = Guid.CreateVersion7(),
-            FacilityId = facilityId.Value,
+            FacilityId = facilityId,
             BusinessHours = businessHoursJson,
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today),

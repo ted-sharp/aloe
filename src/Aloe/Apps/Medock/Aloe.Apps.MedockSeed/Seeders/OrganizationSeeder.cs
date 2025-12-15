@@ -7,18 +7,12 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class OrganizationSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(MedockDbContext context, Guid facilityId, IDateTimeProvider dateTimeProvider)
     {
         var existingOrganizations = await context.Organizations.AnyAsync();
         if (existingOrganizations)
         {
             Console.WriteLine("[SKIP] Organizations already exist.");
-            return;
-        }
-        if (!facilityId.HasValue)
-        {
-            // TODO: 例外でよいかも
-            Console.WriteLine("[SKIP] facilityId is null.");
             return;
         }
 
@@ -31,7 +25,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG001",
                     OrgName = "株式会社アロエ商事",
@@ -44,7 +38,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG002",
                     OrgName = "アロエ工業株式会社",
@@ -57,7 +51,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG003",
                     OrgName = "アロエ建設株式会社",
@@ -70,7 +64,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG004",
                     OrgName = "アロエサービス株式会社",
@@ -83,7 +77,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG005",
                     OrgName = "株式会社アロエテクノ",
@@ -96,7 +90,7 @@ internal static class OrganizationSeeder
                 new()
                 {
                     OrgId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     ParentOrgId = null,
                     OrgCode = "ORG006",
                     OrgName = "アロエ物流株式会社",

@@ -7,15 +7,9 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentResourceSeeder
 {
-    public static async Task<Dictionary<string, Guid>> SeedAsync(MedockDbContext context, Guid? floorId, IDateTimeProvider dateTimeProvider)
+    public static async Task<Dictionary<string, Guid>> SeedAsync(MedockDbContext context, Guid floorId, IDateTimeProvider dateTimeProvider)
     {
         var resourceIds = new Dictionary<string, Guid>();
-
-        if (!floorId.HasValue)
-        {
-            Console.WriteLine("[SKIP] AppointmentResource: No floor ID provided.");
-            return resourceIds;
-        }
 
         var existingResources = await context.AppointmentResources.AnyAsync();
         if (existingResources)
@@ -43,7 +37,7 @@ internal static class AppointmentResourceSeeder
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId.Value,
+                FloorId = floorId,
                 ApptResTypeCode = 1, // 内視鏡
                 ApptResName = "内視鏡",
                 ApptResDesc = "内視鏡検査用リソース",
@@ -53,7 +47,7 @@ internal static class AppointmentResourceSeeder
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId.Value,
+                FloorId = floorId,
                 ApptResTypeCode = 2, // エコー
                 ApptResName = "エコー",
                 ApptResDesc = "エコー検査用リソース（AM/PM制限）",
@@ -63,7 +57,7 @@ internal static class AppointmentResourceSeeder
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId.Value,
+                FloorId = floorId,
                 ApptResTypeCode = 3, // CT
                 ApptResName = "CT",
                 ApptResDesc = "CT検査用リソース",
@@ -73,7 +67,7 @@ internal static class AppointmentResourceSeeder
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId.Value,
+                FloorId = floorId,
                 ApptResTypeCode = 4, // MR
                 ApptResName = "MR",
                 ApptResDesc = "MR検査用リソース",
@@ -83,7 +77,7 @@ internal static class AppointmentResourceSeeder
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId.Value,
+                FloorId = floorId,
                 ApptResTypeCode = 5, // ロッカー
                 ApptResName = "ロッカー",
                 ApptResDesc = "ロッカー（AM/PM各80個制限）",

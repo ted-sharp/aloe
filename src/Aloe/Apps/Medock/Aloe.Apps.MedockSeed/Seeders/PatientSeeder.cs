@@ -7,19 +7,13 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class PatientSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, Guid? facilityId, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(MedockDbContext context, Guid facilityId, IDateTimeProvider dateTimeProvider)
     {
         var existingPatients = await context.Patients.AnyAsync();
         if (existingPatients)
         {
             Console.WriteLine("[SKIP] Patients already exist.");
             return;
-        }
-        if (!facilityId.HasValue)
-        {
-            Console.WriteLine("[SKIP] facilityId is null.");
-            return;
-
         }
 
         Console.WriteLine("[INFO] Creating patient seed data...");
@@ -36,7 +30,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0001",
                     KarteCode = "K001",
@@ -54,7 +48,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0002",
                     KarteCode = "K002",
@@ -72,7 +66,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0003",
                     KarteCode = "K003",
@@ -91,7 +85,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0004",
                     KarteCode = "K004",
@@ -109,7 +103,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0005",
                     KarteCode = "K005",
@@ -127,7 +121,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0006",
                     KarteCode = "K006",
@@ -145,7 +139,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0007",
                     KarteCode = "K007",
@@ -164,7 +158,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0008",
                     KarteCode = "K008",
@@ -182,7 +176,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0009",
                     KarteCode = "K009",
@@ -200,7 +194,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0010",
                     KarteCode = "K010",
@@ -218,7 +212,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0011",
                     KarteCode = "K011",
@@ -236,7 +230,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0012",
                     KarteCode = "K012",
@@ -255,7 +249,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0013",
                     KarteCode = "K013",
@@ -273,7 +267,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0014",
                     KarteCode = "K014",
@@ -291,7 +285,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0015",
                     KarteCode = "K015",
@@ -309,7 +303,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0016",
                     KarteCode = "K016",
@@ -327,7 +321,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0017",
                     KarteCode = "K017",
@@ -346,7 +340,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0018",
                     KarteCode = "K018",
@@ -364,7 +358,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0019",
                     KarteCode = "K019",
@@ -382,7 +376,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0020",
                     KarteCode = "K020",
@@ -400,7 +394,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0021",
                     KarteCode = "K021",
@@ -418,7 +412,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0022",
                     KarteCode = "K022",
@@ -437,7 +431,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0023",
                     KarteCode = "K023",
@@ -455,7 +449,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0024",
                     KarteCode = "K024",
@@ -473,7 +467,7 @@ internal static class PatientSeeder
                 {
                     PtId = Guid.CreateVersion7(),
                     CanonicalPtId = Guid.CreateVersion7(),
-                    FacilityId = facilityId.Value,
+                    FacilityId = facilityId,
                     PrimaryOrgId = org.OrgId,
                     PtCode = "PT0025",
                     KarteCode = "K025",

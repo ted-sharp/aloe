@@ -7,15 +7,19 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class FacilitySeeder
 {
-    public static async Task<(Guid? facilityId, Guid? floorId)> SeedAsync(MedockDbContext context, Guid tenantId, IDateTimeProvider dateTimeProvider)
+    public static async Task<(Guid facilityId, Guid floorId)> SeedAsync(MedockDbContext context, Guid tenantId, IDateTimeProvider dateTimeProvider)
     {
         var existingFacility = await context.Facilities.FirstOrDefaultAsync();
         if (existingFacility != null)
         {
             Console.WriteLine("[SKIP] Facility already exists.");
             var firstFacilityId = existingFacility.FacilityId;
-            var firstFloorId = (await context.Floors.FirstOrDefaultAsync())?.FloorId;
-            return (firstFacilityId, firstFloorId);
+            var firstFloor = await context.Floors.FirstOrDefaultAsync();
+            if (firstFloor == null)
+            {
+                throw new InvalidOperationException("Facility exists but no Floor found. This is an invalid state.");
+            }
+            return (firstFacilityId, firstFloor.FloorId);
         }
 
         Console.WriteLine("[INFO] Creating facility and floor seed data...");
