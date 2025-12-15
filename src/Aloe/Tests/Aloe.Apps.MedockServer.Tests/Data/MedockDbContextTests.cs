@@ -1,7 +1,10 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services;
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
 
 namespace Aloe.Apps.MedockServer.Tests.Data;
 
@@ -177,11 +180,22 @@ public class MedockDbContextTests
         var sessionId = Guid.CreateVersion7();
         var actingUserId = Guid.CreateVersion7();
 
-        // Act
-        await using (var context = new MedockDbContext(options))
+        // IUserContextServiceをモック
+        var mockUserContextService = new Mock<IUserContextService>();
+        mockUserContextService.Setup(x => x.CurrentUser).Returns(new UserContextInfo
         {
-            context.SetAuditInfo(actingUserId, sessionId);
+            UserId = actingUserId
+        });
+        mockUserContextService.Setup(x => x.CurrentSessionId).Returns(sessionId);
 
+        // サービスプロバイダーを作成
+        var serviceProvider = new ServiceCollection()
+            .AddSingleton(mockUserContextService.Object)
+            .BuildServiceProvider();
+
+        // Act
+        await using (var context = new MedockDbContext(options, serviceProvider: serviceProvider))
+        {
             var user = new User
             {
                 UserId = userId,

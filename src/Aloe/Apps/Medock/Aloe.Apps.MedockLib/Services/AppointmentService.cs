@@ -50,11 +50,6 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto> CreateAppointmentAsync(CreateAppointmentDto dto)
     {
-        // 監査情報を設定
-        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
-        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        this._appointmentRepository.SetAuditInfo(userId, sessionId);
-
         var appointment = new Appointment
         {
             ApptId = Guid.CreateVersion7(),
@@ -82,11 +77,6 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> UpdateAppointmentAsync(Guid apptId, UpdateAppointmentDto dto)
     {
-        // 監査情報を設定
-        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
-        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        this._appointmentRepository.SetAuditInfo(userId, sessionId);
-
         var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
@@ -138,11 +128,6 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<bool> DeleteAppointmentAsync(Guid apptId)
     {
-        // 監査情報を設定
-        var userId = this._userContextService.CurrentUser?.UserId ?? Guid.Empty;
-        var sessionId = this._userContextService.CurrentSessionId ?? Guid.Empty;
-        this._appointmentRepository.SetAuditInfo(userId, sessionId);
-
         var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {

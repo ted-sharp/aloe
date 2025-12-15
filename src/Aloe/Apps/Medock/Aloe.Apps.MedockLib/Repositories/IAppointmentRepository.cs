@@ -53,10 +53,5 @@ public interface IAppointmentRepository
     /// 予約をIDで検索します（更新用）。
     /// </summary>
     Task<Appointment?> FindByIdAsync(Guid apptId);
-
-    /// <summary>
-    /// 監査情報を設定します。
-    /// </summary>
-    void SetAuditInfo(Guid userId, Guid sessionId);
 }
 

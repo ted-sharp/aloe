@@ -128,12 +128,6 @@ public class AppointmentRepository : IAppointmentRepository
     {
         return await this._context.Appointments.FindAsync(apptId);
     }
-
-    /// <inheritdoc />
-    public void SetAuditInfo(Guid userId, Guid sessionId)
-    {
-        this._context.SetAuditInfo(userId, sessionId);
-    }
 }
 
 

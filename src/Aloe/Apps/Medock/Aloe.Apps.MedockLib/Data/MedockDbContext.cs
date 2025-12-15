@@ -10,14 +10,17 @@ namespace Aloe.Apps.MedockLib.Data;
 /// </summary>
 public class MedockDbContext : DbContext
 {
-    private Guid _currentUserId;
-    private Guid _currentSessionId;
     private readonly IDateTimeProvider? _dateTimeProvider;
+    private readonly IServiceProvider? _serviceProvider;
 
-    public MedockDbContext(DbContextOptions<MedockDbContext> options, IServiceProvider? serviceProvider = null)
+    public MedockDbContext(
+        DbContextOptions<MedockDbContext> options,
+        IDateTimeProvider? dateTimeProvider = null,
+        IServiceProvider? serviceProvider = null)
         : base(options)
     {
-        this._dateTimeProvider = serviceProvider?.GetService<IDateTimeProvider>();
+        this._dateTimeProvider = dateTimeProvider;
+        this._serviceProvider = serviceProvider;
     }
 
     // 認証系
@@ -50,15 +53,6 @@ public class MedockDbContext : DbContext
     // マスタ系
     public DbSet<Holiday> Holidays => this.Set<Holiday>();
 
-    /// <summary>
-    /// 監査情報を設定します。SaveChanges時に自動でCreated/Updatedフィールドに反映されます。
-    /// </summary>
-    public void SetAuditInfo(Guid userId, Guid sessionId)
-    {
-        this._currentUserId = userId;
-        this._currentSessionId = sessionId;
-    }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -83,22 +77,30 @@ public class MedockDbContext : DbContext
     {
         var now = this._dateTimeProvider?.Now ?? DateTime.Now;
 
+        // SaveChanges時にIUserContextServiceを取得（遅延評価）
+        // Blazor Serverでは、ScopedサービスのライフタイムがSignalR接続に一致するため、
+        // コンストラクタ時点では初期化されていない可能性がある
+        // IServiceProviderを使用して、現在のスコープからIUserContextServiceを取得
+        var userContextService = this._serviceProvider?.GetService<IUserContextService>();
+        var userId = userContextService?.CurrentUser?.UserId ?? Guid.Empty;
+        var sessionId = userContextService?.CurrentSessionId ?? Guid.Empty;
+
         foreach (var entry in this.ChangeTracker.Entries<IAuditableEntity>())
         {
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreatedAt = now;
-                entry.Entity.CreatedUserId = this._currentUserId;
-                entry.Entity.CreatedSessionId = this._currentSessionId;
+                entry.Entity.CreatedUserId = userId;
+                entry.Entity.CreatedSessionId = sessionId;
                 entry.Entity.UpdatedAt = now;
-                entry.Entity.UpdatedUserId = this._currentUserId;
-                entry.Entity.UpdatedSessionId = this._currentSessionId;
+                entry.Entity.UpdatedUserId = userId;
+                entry.Entity.UpdatedSessionId = sessionId;
             }
             else if (entry.State == EntityState.Modified)
             {
                 entry.Entity.UpdatedAt = now;
-                entry.Entity.UpdatedUserId = this._currentUserId;
-                entry.Entity.UpdatedSessionId = this._currentSessionId;
+                entry.Entity.UpdatedUserId = userId;
+                entry.Entity.UpdatedSessionId = sessionId;
             }
         }
     }
