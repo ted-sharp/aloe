@@ -1,0 +1,24 @@
+/* ========================================
+   カレンダーコンポーネント用スタイル
+   ======================================== */
+
+/* CalendarCanvas - カレンダーキャンバスコンテナ */
+.calendar-canvas-container {
+    width: 100%;
+    height: var(--calendar-height, 600px);
+    position: relative;
+}
+
+/* Calendar - カレンダーページ全体 */
+.calendar-full-height {
+    height: 100dvh;
+}
+
+/* DayDetailPopup - 日付詳細ポップアップのバー */
+.vacancy-bar {
+    width: var(--bar-width, 0%);
+    background-color: var(--bar-color, #9ca3af);
+    height: 100%;
+    transition: all 0.3s ease;
+}
+

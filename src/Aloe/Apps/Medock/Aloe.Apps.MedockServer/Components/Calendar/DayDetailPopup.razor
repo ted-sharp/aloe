@@ -41,8 +41,8 @@
                                             <span>@slot.Count/@slot.Max (空き:@Math.Round(vacancyRatio)%)</span>
                                         </div>
                                         <div class="bg-base-200 h-6 rounded overflow-hidden">
-                                            <div class="h-full transition-all"
-                                                 style="width: @(vacancyRatio)%; background-color: @color;"></div>
+                                            <div class="h-full transition-all vacancy-bar"
+                                                 style="--bar-width: @(vacancyRatio)%; --bar-color: @color;"></div>
                                         </div>
                                     </div>
                                 }

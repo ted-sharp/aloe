@@ -1,0 +1,244 @@
+/* ========================================
+   レイアウト・共通コンポーネント用スタイル
+   ======================================== */
+
+/* ルート要素の高さ制約 */
+html, body {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+/* コンテナクエリ対応 */
+.responsive-container {
+    container-type: inline-size;
+}
+
+/* サイドバー切り替え用コンテナクエリ */
+@container (min-width: 768px) {
+    .sidebar-visible {
+        display: flex !important;
+    }
+    .drawer-toggle-btn {
+        display: none !important;
+    }
+}
+
+@container (max-width: 767px) {
+    .sidebar-visible {
+        display: none !important;
+    }
+    .drawer-toggle-btn {
+        display: flex !important;
+    }
+}
+
+/* ========================================
+   カレンダーフルスクリーンレイアウト
+   ======================================== */
+
+/* dvhでフルビューポート */
+.calendar-fullscreen {
+    height: 100dvh;
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+}
+
+/* スマホ縦の場合は縦スクロール許可 */
+@container calendar (max-width: 767px) {
+    .calendar-fullscreen {
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+}
+
+/* カレンダーコンテナ（コンテナクエリ対応） */
+.calendar-container {
+    container-type: inline-size;
+    container-name: calendar;
+    height: 100%;
+    width: 100%;
+}
+
+/* 年間カレンダーのグリッドレイアウト */
+.year-grid-container {
+    --year-cols: 4;
+    --year-rows: 3;
+}
+
+@container calendar (max-width: 767px) {
+    .year-grid-container {
+        --year-cols: 2;
+        --year-rows: 6;
+    }
+}
+
+@container calendar (min-width: 768px) and (max-width: 1199px) {
+    .year-grid-container {
+        --year-cols: 3;
+        --year-rows: 4;
+    }
+}
+
+@container calendar (min-width: 1200px) {
+    .year-grid-container {
+        --year-cols: 4;
+        --year-rows: 3;
+    }
+}
+
+/* ========================================
+   FAB（Floating Action Button）
+   ======================================== */
+
+/* daisyUI v5のfabコンポーネント用配置 */
+.fab-bottom-right {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    z-index: 1000;
+}
+
+/* ========================================
+   Bottom Sheet（モバイルナビゲーション）
+   ======================================== */
+
+.bottom-sheet-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    z-index: 1001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease-out;
+}
+
+.bottom-sheet-backdrop.open {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.bottom-sheet {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-out;
+    z-index: 1002;
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
+    border-radius: 1.5rem 1.5rem 0 0;
+}
+
+/* スマホでは上部の閉じるスペースを小さく */
+@media (max-width: 639px) {
+    .bottom-sheet {
+        max-height: calc(100dvh - 2rem);
+    }
+}
+
+.bottom-sheet.open {
+    transform: translateY(0);
+}
+
+.bottom-sheet-handle {
+    width: 3rem;
+    height: 0.375rem;
+    background: var(--fallback-bc,oklch(var(--bc)/0.3));
+    border-radius: 9999px;
+    margin: 0 auto 1rem;
+}
+
+/* ========================================
+   カレンダーヘッダー
+   ======================================== */
+
+.calendar-header {
+    flex-shrink: 0;
+    background: var(--fallback-b2,oklch(var(--b2)));
+}
+
+/* ========================================
+   ボトムシートグリッドメニュー
+   ======================================== */
+
+.menu-grid {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1rem;
+}
+
+/* デフォルト: 3列 */
+.menu-grid {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+/* タブレット: 4列以上 */
+@media (min-width: 640px) {
+    .menu-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+    }
+}
+
+/* デスクトップ: 横一列 */
+@media (min-width: 1024px) {
+    .menu-grid {
+        grid-template-columns: repeat(9, 1fr);
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+}
+
+.menu-grid-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem 0.5rem;
+    border-radius: 1rem;
+    background: var(--fallback-b2,oklch(var(--b2)));
+    transition: all 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    min-height: 5rem;
+}
+
+.menu-grid-item:hover {
+    background: var(--fallback-b3,oklch(var(--b3)));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.menu-grid-item svg {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.menu-grid-item span {
+    font-size: 0.75rem;
+    text-align: center;
+    line-height: 1.2;
+}
+
+/* レスポンシブなアイコンサイズ */
+@media (min-width: 640px) {
+    .menu-grid-item {
+        padding: 1.25rem 0.75rem;
+        min-height: 6rem;
+    }
+    .menu-grid-item svg {
+        width: 1.75rem;
+        height: 1.75rem;
+    }
+    .menu-grid-item span {
+        font-size: 0.875rem;
+    }
+}
+
