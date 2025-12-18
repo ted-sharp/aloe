@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/13 18:30:15
+-- Date/Time    : 2025/12/18 21:12:07
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -18,9 +18,10 @@ DROP TABLE if exists "appointment_resource_assignments" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_resource_assignments" (
-  "appt_res_assign_id" UUID NOT NULL
+  "appt_res_assign_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_id" UUID NOT NULL
   , "appt_res_id" UUID NOT NULL
+  , "appt_start_time" time
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -30,11 +31,77 @@ CREATE TABLE "appointment_resource_assignments" (
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
 
+CREATE INDEX "appointment_resource_assignments_IX1"
+  ON "appointment_resource_assignments"("appt_id");
+
+CREATE INDEX "appointment_resource_assignments_IX2"
+  ON "appointment_resource_assignments"("appt_res_id");
+
 CREATE UNIQUE INDEX "appointment_resource_assignments_PKI"
   ON "appointment_resource_assignments"("appt_res_assign_id");
 
 ALTER TABLE "appointment_resource_assignments"
   ADD CONSTRAINT "appointment_resource_assignments_PKC" PRIMARY KEY ("appt_res_assign_id");
+
+-- appointment_resource_group_members
+-- * BackupToTempTable
+DROP TABLE if exists "appointment_resource_group_members" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "appointment_resource_group_members" (
+  "appt_res_group_member_id" UUID DEFAULT uuidv7() NOT NULL
+  , "appt_res_id" UUID NOT NULL
+  , "appt_res_group_id" UUID NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "appointment_resource_group_members_IX1"
+  ON "appointment_resource_group_members"("appt_res_id");
+
+CREATE INDEX "appointment_resource_group_members_IX2"
+  ON "appointment_resource_group_members"("appt_res_group_id");
+
+CREATE UNIQUE INDEX "appointment_resource_group_members_PKI"
+  ON "appointment_resource_group_members"("appt_res_group_member_id");
+
+ALTER TABLE "appointment_resource_group_members"
+  ADD CONSTRAINT "appointment_resource_group_members_PKC" PRIMARY KEY ("appt_res_group_member_id");
+
+-- appointment_resource_groups
+-- * BackupToTempTable
+DROP TABLE if exists "appointment_resource_groups" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "appointment_resource_groups" (
+  "appt_res_group_id" UUID DEFAULT uuidv7() NOT NULL
+  , "facility_id" UUID NOT NULL
+  , "res_group_code" character varying(20) DEFAULT '' NOT NULL
+  , "res_group_name" character varying(100) DEFAULT '' NOT NULL
+  , "res_group_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "res_group_seq" integer DEFAULT 0 NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "appointment_resource_groups_IX1"
+  ON "appointment_resource_groups"("facility_id");
+
+CREATE UNIQUE INDEX "appointment_resource_groups_PKI"
+  ON "appointment_resource_groups"("appt_res_group_id");
+
+ALTER TABLE "appointment_resource_groups"
+  ADD CONSTRAINT "appointment_resource_groups_PKC" PRIMARY KEY ("appt_res_group_id");
 
 -- appointment_slot_overrides
 -- * BackupToTempTable
@@ -42,7 +109,7 @@ DROP TABLE if exists "appointment_slot_overrides" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_slot_overrides" (
-  "appt_slot_override_id" UUID NOT NULL
+  "appt_slot_override_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_date" date DEFAULT CURRENT_DATE NOT NULL
   , "appt_res_id" UUID NOT NULL
   , "appt_slots" JSONB DEFAULT '{}' NOT NULL
@@ -70,7 +137,7 @@ DROP TABLE if exists "appointment_slots" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_slots" (
-  "appt_slot_id" UUID NOT NULL
+  "appt_slot_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_res_id" UUID NOT NULL
   , "appt_slots" JSONB DEFAULT '{}' NOT NULL
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
@@ -85,6 +152,9 @@ CREATE TABLE "appointment_slots" (
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
 
+CREATE INDEX "appointment_slots_IX1"
+  ON "appointment_slots"("appt_res_id");
+
 CREATE UNIQUE INDEX "appointment_slots_PKI"
   ON "appointment_slots"("appt_slot_id");
 
@@ -97,7 +167,7 @@ DROP TABLE if exists "appointment_stats" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_stats" (
-  "appt_stat_id" UUID NOT NULL
+  "appt_stat_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_date" date NOT NULL
   , "appt_res_id" UUID NOT NULL
   , "appt_cap" integer DEFAULT 0 NOT NULL
@@ -128,14 +198,13 @@ DROP TABLE if exists "appointments" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointments" (
-  "appt_id" UUID NOT NULL
+  "appt_id" UUID DEFAULT uuidv7() NOT NULL
   , "floor_id" UUID NOT NULL
   , "org_id" UUID NOT NULL
   , "pt_id" UUID NOT NULL
   , "appt_date" date
   , "appt_start_time" time
   , "appt_duration_min" integer
-  , "appt_end_time" time GENERATED ALWAYS AS (appt_start_time + (COALESCE(appt_duration_min, 0) * INTERVAL '1 minute')) STORED
   , "appt_status_code" integer DEFAULT 0 NOT NULL
   , "appt_memo" character varying(1000) DEFAULT '' NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
@@ -229,6 +298,9 @@ CREATE TABLE "facility_business_hours" (
   , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
+
+CREATE INDEX "facility_business_hours_IX1"
+  ON "facility_business_hours"("facility_id");
 
 CREATE UNIQUE INDEX "facility_business_hours_PKI"
   ON "facility_business_hours"("facility_business_hours_id");
@@ -487,11 +559,11 @@ CREATE TABLE "organization_members" (
   "org_member_id" UUID NOT NULL
   , "org_id" UUID NOT NULL
   , "pt_id" UUID NOT NULL
-  , "personal_code" TEXT DEFAULT '' NOT NULL
-  , "department" TEXT DEFAULT '' NOT NULL
+  , "personal_code" character varying(100) DEFAULT '' NOT NULL
+  , "department" character varying(100) DEFAULT '' NOT NULL
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
   , "deactivated_on" date
-  , "org_member_memo" TEXT DEFAULT '' NOT NULL
+  , "org_member_memo" character varying(1000) DEFAULT '' NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -691,6 +763,148 @@ CREATE UNIQUE INDEX "patients_PKI"
 ALTER TABLE "patients"
   ADD CONSTRAINT "patients_PKC" PRIMARY KEY ("pt_id");
 
+-- plan_condition_members
+-- * BackupToTempTable
+DROP TABLE if exists "plan_condition_members" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "plan_condition_members" (
+  "plan_cond_member_id" UUID DEFAULT uuidv7() NOT NULL
+  , "plan_id" UUID NOT NULL
+  , "plan_cond_id" UUID NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "plan_condition_members_IX1"
+  ON "plan_condition_members"("plan_id");
+
+CREATE INDEX "plan_condition_members_IX2"
+  ON "plan_condition_members"("plan_cond_id");
+
+CREATE UNIQUE INDEX "plan_condition_members_PKI"
+  ON "plan_condition_members"("plan_cond_member_id");
+
+ALTER TABLE "plan_condition_members"
+  ADD CONSTRAINT "plan_condition_members_PKC" PRIMARY KEY ("plan_cond_member_id");
+
+-- plan_conditions
+-- * BackupToTempTable
+DROP TABLE if exists "plan_conditions" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "plan_conditions" (
+  "plan_cond_id" UUID DEFAULT uuidv7() NOT NULL
+  , "condition_name" character varying(100) DEFAULT '' NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "plan_conditions_PKI"
+  ON "plan_conditions"("plan_cond_id");
+
+ALTER TABLE "plan_conditions"
+  ADD CONSTRAINT "plan_conditions_PKC" PRIMARY KEY ("plan_cond_id");
+
+-- plan_options
+-- * BackupToTempTable
+DROP TABLE if exists "plan_options" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "plan_options" (
+  "plan_option_id" UUID DEFAULT uuidv7() NOT NULL
+  , "plan_id" UUID NOT NULL
+  , "option_plan_id" UUID NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "plan_options_IX1"
+  ON "plan_options"("plan_id");
+
+CREATE UNIQUE INDEX "plan_options_PKI"
+  ON "plan_options"("plan_option_id");
+
+ALTER TABLE "plan_options"
+  ADD CONSTRAINT "plan_options_PKC" PRIMARY KEY ("plan_option_id");
+
+-- plan_resource_requirements
+-- * BackupToTempTable
+DROP TABLE if exists "plan_resource_requirements" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "plan_resource_requirements" (
+  "plan_res_req_id" UUID DEFAULT uuidv7() NOT NULL
+  , "plan_id" UUID NOT NULL
+  , "appt_res_id" UUID NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "plan_resource_requirements_IX1"
+  ON "plan_resource_requirements"("plan_id");
+
+CREATE INDEX "plan_resource_requirements_IX2"
+  ON "plan_resource_requirements"("appt_res_id");
+
+CREATE UNIQUE INDEX "plan_resource_requirements_PKI"
+  ON "plan_resource_requirements"("plan_res_req_id");
+
+ALTER TABLE "plan_resource_requirements"
+  ADD CONSTRAINT "plan_resource_requirements_PKC" PRIMARY KEY ("plan_res_req_id");
+
+-- plans
+-- * BackupToTempTable
+DROP TABLE if exists "plans" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "plans" (
+  "plan_id" UUID DEFAULT uuidv7() NOT NULL
+  , "facility_id" UUID NOT NULL
+  , "plan_code" character varying(20) DEFAULT '' NOT NULL
+  , "plan_name" character varying(100) DEFAULT '' NOT NULL
+  , "plan_short_name" character varying(100) DEFAULT '' NOT NULL
+  , "plan_abbr_name" character varying(100) DEFAULT '' NOT NULL
+  , "plan_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "plan_kind_code" integer DEFAULT 0 NOT NULL
+  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
+  , "active_from" date DEFAULT CURRENT_DATE NOT NULL
+  , "active_to" date DEFAULT '9999-12-31' NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "plans_PKI"
+  ON "plans"("plan_id");
+
+ALTER TABLE "plans"
+  ADD CONSTRAINT "plans_PKC" PRIMARY KEY ("plan_id");
+
 -- policies
 -- * BackupToTempTable
 DROP TABLE if exists "policies" CASCADE;
@@ -771,32 +985,6 @@ CREATE UNIQUE INDEX "roles_PKI"
 ALTER TABLE "roles"
   ADD CONSTRAINT "roles_PKC" PRIMARY KEY ("role_code");
 
--- sessions
--- * BackupToTempTable
-DROP TABLE if exists "sessions" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "sessions" (
-  "session_id" UUID DEFAULT uuidv7() NOT NULL
-  , "user_id" UUID NOT NULL
-  , "user_display_name" TEXT DEFAULT '' NOT NULL
-  , "issued_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "expires_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "revoked_at" timestamp
-  , "ip_address" character varying(256) DEFAULT '' NOT NULL
-  , "user_agent" character varying(512) DEFAULT '' NOT NULL
-  , "app_name" character varying(100) DEFAULT '' NOT NULL
-) ;
-
-CREATE INDEX "sessions_IX1"
-  ON "sessions"("user_id");
-
-CREATE UNIQUE INDEX "sessions_PKI"
-  ON "sessions"("session_id");
-
-ALTER TABLE "sessions"
-  ADD CONSTRAINT "sessions_PKC" PRIMARY KEY ("session_id");
-
 -- user_preferences
 -- * BackupToTempTable
 DROP TABLE if exists "user_preferences" CASCADE;
@@ -825,6 +1013,58 @@ CREATE UNIQUE INDEX "user_preferences_PKI"
 ALTER TABLE "user_preferences"
   ADD CONSTRAINT "user_preferences_PKC" PRIMARY KEY ("user_preference_id");
 
+-- user_sessions
+-- * BackupToTempTable
+DROP TABLE if exists "user_sessions" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "user_sessions" (
+  "session_id" UUID DEFAULT uuidv7() NOT NULL
+  , "user_id" UUID NOT NULL
+  , "user_display_name" character varying(100) DEFAULT '' NOT NULL
+  , "security_stamp" UUID NOT NULL
+  , "issued_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "expires_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "revoked_at" timestamp
+  , "ip_address" character varying(256) DEFAULT '' NOT NULL
+  , "user_agent" character varying(512) DEFAULT '' NOT NULL
+  , "app_name" character varying(100) DEFAULT '' NOT NULL
+) ;
+
+CREATE INDEX "user_sessions_IX1"
+  ON "user_sessions"("user_id");
+
+CREATE INDEX "user_sessions_IX2"
+  ON "user_sessions"("security_stamp");
+
+CREATE UNIQUE INDEX "user_sessions_PKI"
+  ON "user_sessions"("session_id");
+
+ALTER TABLE "user_sessions"
+  ADD CONSTRAINT "user_sessions_PKC" PRIMARY KEY ("session_id");
+
+-- user_tokens
+-- * BackupToTempTable
+DROP TABLE if exists "user_tokens" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "user_tokens" (
+  "token_id" UUID DEFAULT uuidv7() NOT NULL
+  , "user_id" UUID NOT NULL
+  , "token_provider" integer DEFAULT 0 NOT NULL
+  , "token_name" character varying(64) DEFAULT '' NOT NULL
+  , "token_value" TEXT DEFAULT '' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "user_tokens_IX1"
+  ON "user_tokens"("user_id","token_provider","token_name");
+
+CREATE UNIQUE INDEX "user_tokens_PKI"
+  ON "user_tokens"("token_id");
+
+ALTER TABLE "user_tokens"
+  ADD CONSTRAINT "user_tokens_PKC" PRIMARY KEY ("token_id");
+
 -- users
 -- * BackupToTempTable
 DROP TABLE if exists "users" CASCADE;
@@ -833,17 +1073,23 @@ DROP TABLE if exists "users" CASCADE;
 CREATE TABLE "users" (
   "user_id" UUID DEFAULT uuidv7() NOT NULL
   , "user_code" character varying(100) NOT NULL
-  , "email" character varying(254) NOT NULL
   , "user_display_name" character varying(100) DEFAULT '' NOT NULL
   , "password_hash" character varying(255) NOT NULL
   , "password_salt" character varying(64) NOT NULL
   , "expires_on" date DEFAULT '9999-12-31' NOT NULL
-  , "login_success_count" integer DEFAULT 0 NOT NULL
-  , "login_failure_count" integer DEFAULT 0 NOT NULL
-  , "login_failure_attempts" integer DEFAULT 0 NOT NULL
-  , "locked_until_at" timestamp DEFAULT '1970-01-01' NOT NULL
+  , "access_success_total_count" integer DEFAULT 0 NOT NULL
+  , "access_failed_total_count" integer DEFAULT 0 NOT NULL
+  , "access_failed_count" integer DEFAULT 0 NOT NULL
+  , "locked_end_at" timestamp DEFAULT '1970-01-01' NOT NULL
   , "last_login_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "last_logout_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "security_stamp" UUID DEFAULT uuidv7() NOT NULL
+  , "two_factor_enabled" BOOLEAN DEFAULT FALSE NOT NULL
+  , "mfa_method" integer DEFAULT 0 NOT NULL
+  , "email" character varying(254) DEFAULT '' NOT NULL
+  , "email_confirmed" BOOLEAN DEFAULT FALSE NOT NULL
+  , "sms" character varying(20) DEFAULT '' NOT NULL
+  , "sms_confirmed" BOOLEAN DEFAULT FALSE NOT NULL
   , "is_system_admin" BOOLEAN DEFAULT FALSE NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -857,9 +1103,6 @@ CREATE TABLE "users" (
 CREATE UNIQUE INDEX "users_IX1"
   ON "users"("user_code") WHERE is_deleted = FALSE;
 
-CREATE UNIQUE INDEX "users_IX2"
-  ON "users"("email") WHERE is_deleted = FALSE;
-
 CREATE UNIQUE INDEX "users_PKI"
   ON "users"("user_id");
 
@@ -872,7 +1115,7 @@ DROP TABLE if exists "appointment_resources" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_resources" (
-  "appt_res_id" UUID NOT NULL
+  "appt_res_id" UUID DEFAULT uuidv7() NOT NULL
   , "floor_id" UUID NOT NULL
   , "appt_res_type_code" integer DEFAULT 0 NOT NULL
   , "appt_res_name" character varying(100) DEFAULT '' NOT NULL
@@ -902,7 +1145,7 @@ DROP TABLE if exists "floors" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "floors" (
-  "floor_id" UUID NOT NULL
+  "floor_id" UUID DEFAULT uuidv7() NOT NULL
   , "facility_id" UUID NOT NULL
   , "floor_code" character varying(10) DEFAULT '' NOT NULL
   , "floor_name" character varying(100) DEFAULT '' NOT NULL
@@ -1102,6 +1345,16 @@ ALTER TABLE "appointment_resource_assignments"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "appointment_resource_group_members"
+  ADD CONSTRAINT "appointment_resource_group_members_FK1" FOREIGN KEY ("appt_res_group_id") REFERENCES "appointment_resource_groups"("appt_res_group_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "appointment_resource_group_members"
+  ADD CONSTRAINT "appointment_resource_group_members_FK2" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "appointment_resources"
   ADD CONSTRAINT "appointment_resources_FK1" FOREIGN KEY ("floor_id") REFERENCES "floors"("floor_id")
   ON DELETE CASCADE
@@ -1237,6 +1490,36 @@ ALTER TABLE "permissions"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "plan_condition_members"
+  ADD CONSTRAINT "plan_condition_members_FK1" FOREIGN KEY ("plan_id") REFERENCES "plans"("plan_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "plan_condition_members"
+  ADD CONSTRAINT "plan_condition_members_FK2" FOREIGN KEY ("plan_cond_id") REFERENCES "plan_conditions"("plan_cond_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "plan_options"
+  ADD CONSTRAINT "plan_options_FK1" FOREIGN KEY ("plan_id") REFERENCES "plans"("plan_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "plan_options"
+  ADD CONSTRAINT "plan_options_FK2" FOREIGN KEY ("option_plan_id") REFERENCES "plans"("plan_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "plan_resource_requirements"
+  ADD CONSTRAINT "plan_resource_requirements_FK1" FOREIGN KEY ("plan_id") REFERENCES "plans"("plan_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "plan_resource_requirements"
+  ADD CONSTRAINT "plan_resource_requirements_FK2" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "role_permissions"
   ADD CONSTRAINT "role_permissions_FK1" FOREIGN KEY ("role_code") REFERENCES "roles"("role_code")
   ON DELETE CASCADE
@@ -1247,18 +1530,23 @@ ALTER TABLE "role_permissions"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "sessions"
-  ADD CONSTRAINT "sessions_FK1" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
+ALTER TABLE "user_preferences"
+  ADD CONSTRAINT "user_preferences_FK1" FOREIGN KEY ("preference_code") REFERENCES "preferences"("preference_code")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
 ALTER TABLE "user_preferences"
-  ADD CONSTRAINT "user_preferences_FK1" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
+  ADD CONSTRAINT "user_preferences_FK2" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "user_preferences"
-  ADD CONSTRAINT "user_preferences_FK2" FOREIGN KEY ("preference_code") REFERENCES "preferences"("preference_code")
+ALTER TABLE "user_sessions"
+  ADD CONSTRAINT "user_sessions_FK1" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "user_tokens"
+  ADD CONSTRAINT "user_tokens_FK1" FOREIGN KEY ("user_id") REFERENCES "users"("user_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1266,6 +1554,7 @@ COMMENT ON TABLE "appointment_resource_assignments" IS 'appointment_resource_ass
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_res_assign_id" IS 'appt_res_assign_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_id" IS 'appt_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_res_id" IS 'appt_res_id';
+COMMENT ON COLUMN "appointment_resource_assignments"."appt_start_time" IS 'appt_start_time';
 COMMENT ON COLUMN "appointment_resource_assignments"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointment_resource_assignments"."created_at" IS 'created_at';
 COMMENT ON COLUMN "appointment_resource_assignments"."created_user_id" IS 'created_user_id';
@@ -1273,6 +1562,33 @@ COMMENT ON COLUMN "appointment_resource_assignments"."created_session_id" IS 'cr
 COMMENT ON COLUMN "appointment_resource_assignments"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointment_resource_assignments"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "appointment_resource_group_members" IS 'appointment_resource_group_members';
+COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_group_member_id" IS 'appt_res_group_member_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_id" IS 'appt_res_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_group_id" IS 'appt_res_group_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "appointment_resource_group_members"."created_at" IS 'created_at';
+COMMENT ON COLUMN "appointment_resource_group_members"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "appointment_resource_group_members"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "appointment_resource_group_members"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "appointment_resource_groups" IS 'appointment_resource_groups';
+COMMENT ON COLUMN "appointment_resource_groups"."appt_res_group_id" IS 'appt_res_group_id';
+COMMENT ON COLUMN "appointment_resource_groups"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "appointment_resource_groups"."res_group_code" IS 'res_group_code';
+COMMENT ON COLUMN "appointment_resource_groups"."res_group_name" IS 'res_group_name';
+COMMENT ON COLUMN "appointment_resource_groups"."res_group_desc" IS 'res_group_desc';
+COMMENT ON COLUMN "appointment_resource_groups"."res_group_seq" IS 'res_group_seq';
+COMMENT ON COLUMN "appointment_resource_groups"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "appointment_resource_groups"."created_at" IS 'created_at';
+COMMENT ON COLUMN "appointment_resource_groups"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "appointment_resource_groups"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "appointment_resource_groups"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "appointment_resource_groups"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "appointment_resource_groups"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "appointment_slot_overrides" IS 'appointment_slot_overrides';
 COMMENT ON COLUMN "appointment_slot_overrides"."appt_slot_override_id" IS 'appt_slot_override_id';
@@ -1326,7 +1642,6 @@ COMMENT ON COLUMN "appointments"."pt_id" IS 'pt_id';
 COMMENT ON COLUMN "appointments"."appt_date" IS 'appt_date:未定がある';
 COMMENT ON COLUMN "appointments"."appt_start_time" IS 'appt_start_time';
 COMMENT ON COLUMN "appointments"."appt_duration_min" IS 'appt_duration_min';
-COMMENT ON COLUMN "appointments"."appt_end_time" IS 'appt_end_time:自動計算';
 COMMENT ON COLUMN "appointments"."appt_status_code" IS 'appt_status_code:仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル';
 COMMENT ON COLUMN "appointments"."appt_memo" IS 'appt_memo';
 COMMENT ON COLUMN "appointments"."is_deleted" IS 'is_deleted';
@@ -1388,7 +1703,7 @@ COMMENT ON COLUMN "facility_policies"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "facility_policies"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "facility_policies"."updated_session_id" IS 'updated_session_id';
 
-COMMENT ON TABLE "facility_user_permissions_cache" IS 'facility_user_permissions_cache';
+COMMENT ON TABLE "facility_user_permissions_cache" IS 'facility_user_permissions_cache:いつ消失してもよい、なければ作成';
 COMMENT ON COLUMN "facility_user_permissions_cache"."facility_user_id" IS 'facility_user_id';
 COMMENT ON COLUMN "facility_user_permissions_cache"."permission_codes" IS 'permission_codes';
 COMMENT ON COLUMN "facility_user_permissions_cache"."expires_at" IS 'expires_at';
@@ -1599,6 +1914,73 @@ COMMENT ON COLUMN "patients"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "patients"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "patients"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "plan_condition_members" IS 'plan_condition_members';
+COMMENT ON COLUMN "plan_condition_members"."plan_cond_member_id" IS 'plan_cond_member_id';
+COMMENT ON COLUMN "plan_condition_members"."plan_id" IS 'plan_id';
+COMMENT ON COLUMN "plan_condition_members"."plan_cond_id" IS 'plan_cond_id';
+COMMENT ON COLUMN "plan_condition_members"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "plan_condition_members"."created_at" IS 'created_at';
+COMMENT ON COLUMN "plan_condition_members"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "plan_condition_members"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "plan_condition_members"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "plan_condition_members"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "plan_condition_members"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "plan_conditions" IS 'plan_conditions';
+COMMENT ON COLUMN "plan_conditions"."plan_cond_id" IS 'plan_cond_id';
+COMMENT ON COLUMN "plan_conditions"."condition_name" IS 'condition_name';
+COMMENT ON COLUMN "plan_conditions"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "plan_conditions"."created_at" IS 'created_at';
+COMMENT ON COLUMN "plan_conditions"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "plan_conditions"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "plan_conditions"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "plan_conditions"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "plan_conditions"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "plan_options" IS 'plan_options';
+COMMENT ON COLUMN "plan_options"."plan_option_id" IS 'plan_option_id:論理削除の履歴を保持するために必要';
+COMMENT ON COLUMN "plan_options"."plan_id" IS 'plan_id';
+COMMENT ON COLUMN "plan_options"."option_plan_id" IS 'option_plan_id';
+COMMENT ON COLUMN "plan_options"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "plan_options"."created_at" IS 'created_at';
+COMMENT ON COLUMN "plan_options"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "plan_options"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "plan_options"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "plan_options"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "plan_options"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "plan_resource_requirements" IS 'plan_resource_requirements';
+COMMENT ON COLUMN "plan_resource_requirements"."plan_res_req_id" IS 'plan_res_req_id';
+COMMENT ON COLUMN "plan_resource_requirements"."plan_id" IS 'plan_id';
+COMMENT ON COLUMN "plan_resource_requirements"."appt_res_id" IS 'appt_res_id';
+COMMENT ON COLUMN "plan_resource_requirements"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "plan_resource_requirements"."created_at" IS 'created_at';
+COMMENT ON COLUMN "plan_resource_requirements"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "plan_resource_requirements"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "plan_resource_requirements"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "plan_resource_requirements"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "plan_resource_requirements"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "plans" IS 'plans';
+COMMENT ON COLUMN "plans"."plan_id" IS 'plan_id';
+COMMENT ON COLUMN "plans"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "plans"."plan_code" IS 'plan_code';
+COMMENT ON COLUMN "plans"."plan_name" IS 'plan_name';
+COMMENT ON COLUMN "plans"."plan_short_name" IS 'plan_short_name';
+COMMENT ON COLUMN "plans"."plan_abbr_name" IS 'plan_abbr_name';
+COMMENT ON COLUMN "plans"."plan_desc" IS 'plan_desc';
+COMMENT ON COLUMN "plans"."plan_kind_code" IS 'plan_kind_code';
+COMMENT ON COLUMN "plans"."is_active" IS 'is_active';
+COMMENT ON COLUMN "plans"."active_from" IS 'active_from';
+COMMENT ON COLUMN "plans"."active_to" IS 'active_to';
+COMMENT ON COLUMN "plans"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "plans"."created_at" IS 'created_at';
+COMMENT ON COLUMN "plans"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "plans"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "plans"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "plans"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "plans"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "policies" IS 'policies';
 COMMENT ON COLUMN "policies"."policy_code" IS 'policy_code';
 COMMENT ON COLUMN "policies"."policy_name" IS 'policy_name';
@@ -1640,19 +2022,8 @@ COMMENT ON COLUMN "roles"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "roles"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "roles"."updated_session_id" IS 'updated_session_id';
 
-COMMENT ON TABLE "sessions" IS 'sessions';
-COMMENT ON COLUMN "sessions"."session_id" IS 'session_id';
-COMMENT ON COLUMN "sessions"."user_id" IS 'user_id';
-COMMENT ON COLUMN "sessions"."user_display_name" IS 'user_display_name';
-COMMENT ON COLUMN "sessions"."issued_at" IS 'issued_at';
-COMMENT ON COLUMN "sessions"."expires_at" IS 'expires_at';
-COMMENT ON COLUMN "sessions"."revoked_at" IS 'revoked_at';
-COMMENT ON COLUMN "sessions"."ip_address" IS 'ip_address';
-COMMENT ON COLUMN "sessions"."user_agent" IS 'user_agent';
-COMMENT ON COLUMN "sessions"."app_name" IS 'app_name:バージョン含む';
-
 COMMENT ON TABLE "user_preferences" IS 'user_preferences';
-COMMENT ON COLUMN "user_preferences"."user_preference_id" IS 'user_preference_id';
+COMMENT ON COLUMN "user_preferences"."user_preference_id" IS 'user_preference_id:論理削除の履歴を保持するために必要';
 COMMENT ON COLUMN "user_preferences"."user_id" IS 'user_id';
 COMMENT ON COLUMN "user_preferences"."preference_code" IS 'preference_code';
 COMMENT ON COLUMN "user_preferences"."preference_value" IS 'preference_value';
@@ -1664,20 +2035,45 @@ COMMENT ON COLUMN "user_preferences"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "user_preferences"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "user_preferences"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "user_sessions" IS 'user_sessions';
+COMMENT ON COLUMN "user_sessions"."session_id" IS 'session_id';
+COMMENT ON COLUMN "user_sessions"."user_id" IS 'user_id';
+COMMENT ON COLUMN "user_sessions"."user_display_name" IS 'user_display_name';
+COMMENT ON COLUMN "user_sessions"."security_stamp" IS 'security_stamp';
+COMMENT ON COLUMN "user_sessions"."issued_at" IS 'issued_at';
+COMMENT ON COLUMN "user_sessions"."expires_at" IS 'expires_at';
+COMMENT ON COLUMN "user_sessions"."revoked_at" IS 'revoked_at';
+COMMENT ON COLUMN "user_sessions"."ip_address" IS 'ip_address';
+COMMENT ON COLUMN "user_sessions"."user_agent" IS 'user_agent';
+COMMENT ON COLUMN "user_sessions"."app_name" IS 'app_name:バージョン含む';
+
+COMMENT ON TABLE "user_tokens" IS 'user_tokens';
+COMMENT ON COLUMN "user_tokens"."token_id" IS 'token_id';
+COMMENT ON COLUMN "user_tokens"."user_id" IS 'user_id';
+COMMENT ON COLUMN "user_tokens"."token_provider" IS 'token_provider:0: None, 1: App, 2: Totp, 3: WebAuthn, 4: Email, 5: Sms, 99: Others';
+COMMENT ON COLUMN "user_tokens"."token_name" IS 'token_name';
+COMMENT ON COLUMN "user_tokens"."token_value" IS 'token_value';
+
 COMMENT ON TABLE "users" IS 'users';
 COMMENT ON COLUMN "users"."user_id" IS 'user_id';
 COMMENT ON COLUMN "users"."user_code" IS 'user_code:ログイン用ID';
-COMMENT ON COLUMN "users"."email" IS 'email:メールアドレスも併用';
 COMMENT ON COLUMN "users"."user_display_name" IS 'user_display_name';
 COMMENT ON COLUMN "users"."password_hash" IS 'password_hash';
 COMMENT ON COLUMN "users"."password_salt" IS 'password_salt';
 COMMENT ON COLUMN "users"."expires_on" IS 'expires_on';
-COMMENT ON COLUMN "users"."login_success_count" IS 'login_success_count';
-COMMENT ON COLUMN "users"."login_failure_count" IS 'login_failure_count';
-COMMENT ON COLUMN "users"."login_failure_attempts" IS 'login_failure_attempts:ログイン成功でリセットします';
-COMMENT ON COLUMN "users"."locked_until_at" IS 'locked_until_at:ロックされたら更新します、ロックの前回値としてずっと保持します';
+COMMENT ON COLUMN "users"."access_success_total_count" IS 'access_success_total_count';
+COMMENT ON COLUMN "users"."access_failed_total_count" IS 'access_failed_total_count';
+COMMENT ON COLUMN "users"."access_failed_count" IS 'access_failed_count:ログイン成功でリセットします';
+COMMENT ON COLUMN "users"."locked_end_at" IS 'locked_end_at:ロックされたら更新します、ロックの前回値としてずっと保持します';
 COMMENT ON COLUMN "users"."last_login_at" IS 'last_login_at';
 COMMENT ON COLUMN "users"."last_logout_at" IS 'last_logout_at:last_login_atより前を探すため初期値は同じとします。';
+COMMENT ON COLUMN "users"."security_stamp" IS 'security_stamp';
+COMMENT ON COLUMN "users"."two_factor_enabled" IS 'two_factor_enabled';
+COMMENT ON COLUMN "users"."mfa_method" IS 'mfa_method:0: None, 1: App, 2: Totp, 3: WebAuthn, 4: Email, 5: Sms, 99: Others';
+COMMENT ON COLUMN "users"."email" IS 'email:メールアドレスも併用';
+COMMENT ON COLUMN "users"."email_confirmed" IS 'email_confirmed';
+COMMENT ON COLUMN "users"."sms" IS 'sms';
+COMMENT ON COLUMN "users"."sms_confirmed" IS 'sms_confirmed';
 COMMENT ON COLUMN "users"."is_system_admin" IS 'is_system_admin';
 COMMENT ON COLUMN "users"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "users"."created_at" IS 'created_at';
