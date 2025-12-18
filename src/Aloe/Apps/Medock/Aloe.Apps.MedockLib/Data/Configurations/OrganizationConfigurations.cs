@@ -72,6 +72,10 @@ public class FacilityUserConfiguration : IEntityTypeConfiguration<FacilityUser>
         entity.HasOne(e => e.User)
             .WithMany(u => u.FacilityUsers)
             .HasForeignKey(e => e.UserId);
+
+        entity.HasIndex(e => new { e.FacilityId, e.UserId })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }
 
@@ -120,5 +124,9 @@ public class FloorConfiguration : IEntityTypeConfiguration<Floor>
         entity.HasOne(e => e.Facility)
             .WithMany(f => f.Floors)
             .HasForeignKey(e => e.FacilityId);
+
+        entity.HasIndex(e => new { e.FacilityId, e.FloorCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }

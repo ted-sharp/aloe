@@ -26,11 +26,11 @@ public class AppointmentStats : IAuditableEntity
 
     /// <summary>予約容量（合計）</summary>
     [Column("appt_cap")]
-    public int ApptCap { get; set; }
+    public int ApptCap { get; set; } = 0;
 
     /// <summary>予約数（合計）</summary>
     [Column("appt_count")]
-    public int ApptCount { get; set; }
+    public int ApptCount { get; set; } = 0;
 
     /// <summary>利用可能数（GENERATEDカラム、読み取り専用）</summary>
     [Column("appt_available")]

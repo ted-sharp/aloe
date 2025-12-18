@@ -156,7 +156,9 @@ public class AppointmentService : IAppointmentService
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
             StartTime = appointment.ApptStartTime,
-            EndTime = appointment.ApptEndTime,
+            EndTime = appointment.ApptStartTime.HasValue && appointment.ApptDurationMin.HasValue
+                ? appointment.ApptStartTime.Value.AddMinutes(appointment.ApptDurationMin.Value)
+                : null,
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,
             OrganizationId = appointment.OrgId,

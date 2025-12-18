@@ -22,7 +22,7 @@ public class AppointmentResource : IAuditableEntity
 
     /// <summary>予約リソースタイプコード</summary>
     [Column("appt_res_type_code")]
-    public int ApptResTypeCode { get; set; }
+    public int ApptResTypeCode { get; set; } = 0;
 
     /// <summary>予約リソース名</summary>
     [Column("appt_res_name")]
@@ -36,7 +36,7 @@ public class AppointmentResource : IAuditableEntity
 
     /// <summary>表示順</summary>
     [Column("appt_res_seq")]
-    public int ApptResSeq { get; set; }
+    public int ApptResSeq { get; set; } = 0;
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -62,5 +62,6 @@ public class AppointmentResource : IAuditableEntity
     public virtual ICollection<AppointmentSlotOverride> AppointmentSlotOverrides { get; set; } = new List<AppointmentSlotOverride>();
     public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
     public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
+    public virtual ICollection<AppointmentResourceGroupMember> AppointmentResourceGroupMembers { get; set; } = new List<AppointmentResourceGroupMember>();
 }
 

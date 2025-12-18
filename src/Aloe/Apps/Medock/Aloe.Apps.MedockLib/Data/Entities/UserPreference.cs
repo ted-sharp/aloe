@@ -4,33 +4,31 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// 施設ユーザー（施設とユーザーの関連）エンティティ
+/// ユーザー設定エンティティ
 /// </summary>
-[Table("facility_users")]
-public class FacilityUser : IAuditableEntity
+[Table("user_preferences")]
+public class UserPreference : IAuditableEntity
 {
-    /// <summary>施設ユーザーID (PK)</summary>
+    /// <summary>ユーザー設定ID (PK)</summary>
     [Key]
-    [Column("facility_user_id")]
-    public Guid FacilityUserId { get; set; }
-
-    /// <summary>施設ID (FK)</summary>
-    [Column("facility_id")]
-    [ForeignKey("Facility")]
-    public Guid FacilityId { get; set; }
+    [Column("user_preference_id")]
+    public Guid UserPreferenceId { get; set; }
 
     /// <summary>ユーザーID (FK)</summary>
     [Column("user_id")]
     [ForeignKey("User")]
     public Guid UserId { get; set; }
 
-    /// <summary>表示順</summary>
-    [Column("facility_user_seq")]
-    public int FacilityUserSeq { get; set; }
+    /// <summary>設定コード (FK)</summary>
+    [Column("preference_code")]
+    [ForeignKey("Preference")]
+    [MaxLength(100)]
+    public string PreferenceCode { get; set; } = String.Empty;
 
-    /// <summary>施設管理者フラグ</summary>
-    [Column("is_facility_admin")]
-    public bool IsFacilityAdmin { get; set; }
+    /// <summary>設定値</summary>
+    [Column("preference_value")]
+    [MaxLength(10)]
+    public string PreferenceValue { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -51,8 +49,7 @@ public class FacilityUser : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual Facility Facility { get; set; } = null!;
     public virtual User User { get; set; } = null!;
-    public virtual ICollection<FacilityUserRole> FacilityUserRoles { get; set; } = new List<FacilityUserRole>();
-    public virtual FacilityUserPermissionsCache? FacilityUserPermissionsCache { get; set; }
+    public virtual Preference Preference { get; set; } = null!;
 }
+

@@ -4,40 +4,25 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// 予約スロット定義エンティティ
-/// フロアごとの予約可能時間帯をJSONBで保持
+/// プランリソース要件エンティティ
 /// </summary>
-[Table("appointment_slots")]
-public class AppointmentSlot : IAuditableEntity
+[Table("plan_resource_requirements")]
+public class PlanResourceRequirement : IAuditableEntity
 {
-    /// <summary>予約スロットID (PK)</summary>
+    /// <summary>プランリソース要件ID (PK)</summary>
     [Key]
-    [Column("appt_slot_id")]
-    public Guid ApptSlotId { get; set; }
+    [Column("plan_res_req_id")]
+    public Guid PlanResReqId { get; set; }
+
+    /// <summary>プランID (FK)</summary>
+    [Column("plan_id")]
+    [ForeignKey("Plan")]
+    public Guid PlanId { get; set; }
 
     /// <summary>予約リソースID (FK)</summary>
     [Column("appt_res_id")]
     [ForeignKey("AppointmentResource")]
     public Guid ApptResId { get; set; }
-
-    /// <summary>
-    /// 予約スロット定義（JSONB）
-    /// 例: { "slots": [{ "time": "08:00", "max": 5, "duration": 60 }, ...] }
-    /// </summary>
-    [Column("appt_slots")]
-    public string ApptSlots { get; set; } = "{}";
-
-    /// <summary>有効フラグ</summary>
-    [Column("is_active")]
-    public bool IsActive { get; set; } = false;
-
-    /// <summary>有効開始日</summary>
-    [Column("active_from")]
-    public DateOnly ActiveFrom { get; set; } = DateOnly.FromDateTime(DateTime.Today);
-
-    /// <summary>有効終了日</summary>
-    [Column("active_to")]
-    public DateOnly ActiveTo { get; set; } = new DateOnly(9999, 12, 31);
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -58,6 +43,7 @@ public class AppointmentSlot : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
+    public virtual Plan Plan { get; set; } = null!;
     public virtual AppointmentResource AppointmentResource { get; set; } = null!;
 }
 

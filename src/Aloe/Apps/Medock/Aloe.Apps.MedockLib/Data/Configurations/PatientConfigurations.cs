@@ -34,6 +34,13 @@ public class PatientConfiguration : IEntityTypeConfiguration<Patient>
         entity.HasOne(e => e.Facility)
             .WithMany(f => f.Patients)
             .HasForeignKey(e => e.FacilityId);
+
+        entity.HasIndex(e => new { e.FacilityId, e.PtCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
+        entity.HasIndex(e => new { e.FacilityId, e.KarteCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }
 
@@ -65,5 +72,9 @@ public class OrganizationConfiguration : IEntityTypeConfiguration<Organization>
         entity.HasOne(e => e.ParentOrganization)
             .WithMany()
             .HasForeignKey(e => e.ParentOrgId);
+
+        entity.HasIndex(e => new { e.FacilityId, e.OrgCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }

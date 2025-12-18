@@ -6,7 +6,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// セッションエンティティ
 /// </summary>
-[Table("sessions")]
+[Table("user_sessions")]
 public class Session
 {
     /// <summary>セッションID (PK)</summary>
@@ -22,6 +22,10 @@ public class Session
     /// <summary>ユーザー表示名</summary>
     [Column("user_display_name")]
     public string UserDisplayName { get; set; } = String.Empty;
+
+    /// <summary>セキュリティスタンプ</summary>
+    [Column("security_stamp")]
+    public Guid SecurityStamp { get; set; }
 
     /// <summary>発行日時</summary>
     [Column("issued_at")]

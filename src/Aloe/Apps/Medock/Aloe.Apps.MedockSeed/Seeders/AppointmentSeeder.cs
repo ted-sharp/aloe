@@ -245,7 +245,6 @@ internal static class AppointmentSeeder
                 ApptDate = date,
                 ApptStartTime = startTime,
                 ApptDurationMin = durationMin,
-                ApptEndTime = endTime,
                 ApptStatusCode = statusCode,
                 ApptMemo = dayContext.IsIrregular ? "イレギュラー営業" : String.Empty,
                 IsDeleted = false

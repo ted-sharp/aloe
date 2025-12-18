@@ -13,8 +13,7 @@ public class Appointment : IAuditableEntity
     [Column("appt_date")] public DateOnly? ApptDate { get; set; }
     [Column("appt_start_time")] public TimeOnly? ApptStartTime { get; set; }
     [Column("appt_duration_min")] public int? ApptDurationMin { get; set; }
-    [Column("appt_end_time")] public TimeOnly? ApptEndTime { get; set; }
-    [Column("appt_status_code")] public int ApptStatusCode { get; set; }
+    [Column("appt_status_code")] public int ApptStatusCode { get; set; } = 0;
     [Column("appt_memo")][MaxLength(1000)] public string ApptMemo { get; set; } = String.Empty;
     [Column("is_deleted")] public bool IsDeleted { get; set; }
     [Column("created_at")] public DateTime CreatedAt { get; set; }

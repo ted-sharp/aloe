@@ -38,20 +38,40 @@ public class MedockDbContext : DbContext
     public DbSet<Facility> Facilities => this.Set<Facility>();
     public DbSet<FacilityUser> FacilityUsers => this.Set<FacilityUser>();
     public DbSet<FacilityBusinessHours> FacilityBusinessHours => this.Set<FacilityBusinessHours>();
+    public DbSet<FacilityAddress> FacilityAddresses => this.Set<FacilityAddress>();
+    public DbSet<FacilityPolicy> FacilityPolicies => this.Set<FacilityPolicy>();
+    public DbSet<FacilityUserPermissionsCache> FacilityUserPermissionsCaches => this.Set<FacilityUserPermissionsCache>();
     public DbSet<Floor> Floors => this.Set<Floor>();
 
     // 業務系
     public DbSet<Patient> Patients => this.Set<Patient>();
+    public DbSet<PatientAddress> PatientAddresses => this.Set<PatientAddress>();
+    public DbSet<PatientInsuranceCard> PatientInsuranceCards => this.Set<PatientInsuranceCard>();
     public DbSet<Organization> Organizations => this.Set<Organization>();
+    public DbSet<OrganizationAddress> OrganizationAddresses => this.Set<OrganizationAddress>();
+    public DbSet<OrganizationInsurance> OrganizationInsurances => this.Set<OrganizationInsurance>();
+    public DbSet<OrganizationMember> OrganizationMembers => this.Set<OrganizationMember>();
     public DbSet<Appointment> Appointments => this.Set<Appointment>();
     public DbSet<AppointmentResource> AppointmentResources => this.Set<AppointmentResource>();
+    public DbSet<AppointmentResourceGroup> AppointmentResourceGroups => this.Set<AppointmentResourceGroup>();
+    public DbSet<AppointmentResourceGroupMember> AppointmentResourceGroupMembers => this.Set<AppointmentResourceGroupMember>();
     public DbSet<AppointmentSlot> AppointmentSlots => this.Set<AppointmentSlot>();
     public DbSet<AppointmentSlotOverride> AppointmentSlotOverrides => this.Set<AppointmentSlotOverride>();
     public DbSet<AppointmentResourceAssignment> AppointmentResourceAssignments => this.Set<AppointmentResourceAssignment>();
     public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
+    public DbSet<Plan> Plans => this.Set<Plan>();
+    public DbSet<PlanCondition> PlanConditions => this.Set<PlanCondition>();
+    public DbSet<PlanConditionMember> PlanConditionMembers => this.Set<PlanConditionMember>();
+    public DbSet<PlanOption> PlanOptions => this.Set<PlanOption>();
+    public DbSet<PlanResourceRequirement> PlanResourceRequirements => this.Set<PlanResourceRequirement>();
 
     // マスタ系
     public DbSet<Holiday> Holidays => this.Set<Holiday>();
+    public DbSet<InsuranceProvider> InsuranceProviders => this.Set<InsuranceProvider>();
+    public DbSet<Policy> Policies => this.Set<Policy>();
+    public DbSet<Preference> Preferences => this.Set<Preference>();
+    public DbSet<UserPreference> UserPreferences => this.Set<UserPreference>();
+    public DbSet<UserToken> UserTokens => this.Set<UserToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

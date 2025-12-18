@@ -11,7 +11,32 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> entity)
     {
+        entity.ToTable("users");
+        entity.HasKey(e => e.UserId);
+        entity.Property(e => e.UserCode).HasColumnName("user_code").HasMaxLength(100);
+        entity.Property(e => e.UserDisplayName).HasColumnName("user_display_name").HasMaxLength(100);
+        entity.Property(e => e.PasswordHash).HasColumnName("password_hash").HasMaxLength(255);
+        entity.Property(e => e.PasswordSalt).HasColumnName("password_salt").HasMaxLength(64);
+        entity.Property(e => e.ExpiresOn).HasColumnName("expires_on");
+        entity.Property(e => e.LoginSuccessCount).HasColumnName("access_success_total_count");
+        entity.Property(e => e.LoginFailureCount).HasColumnName("access_failed_total_count");
+        entity.Property(e => e.LoginFailureAttempts).HasColumnName("access_failed_count");
+        entity.Property(e => e.LockedUntilAt).HasColumnName("locked_end_at");
+        entity.Property(e => e.LastLoginAt).HasColumnName("last_login_at");
+        entity.Property(e => e.LastLogoutAt).HasColumnName("last_logout_at");
+        entity.Property(e => e.SecurityStamp).HasColumnName("security_stamp");
+        entity.Property(e => e.TwoFactorEnabled).HasColumnName("two_factor_enabled");
+        entity.Property(e => e.MfaMethod).HasColumnName("mfa_method");
+        entity.Property(e => e.Email).HasColumnName("email").HasMaxLength(254);
+        entity.Property(e => e.EmailConfirmed).HasColumnName("email_confirmed");
+        entity.Property(e => e.Sms).HasColumnName("sms").HasMaxLength(20);
+        entity.Property(e => e.SmsConfirmed).HasColumnName("sms_confirmed");
+        entity.Property(e => e.IsSystemAdmin).HasColumnName("is_system_admin");
         ConfigurationHelper.ConfigureAuditableEntity(entity);
+
+        entity.HasIndex(e => e.UserCode)
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }
 
@@ -22,11 +47,12 @@ public class SessionConfiguration : IEntityTypeConfiguration<Session>
 {
     public void Configure(EntityTypeBuilder<Session> entity)
     {
-        entity.ToTable("sessions");
+        entity.ToTable("user_sessions");
         entity.HasKey(e => e.SessionId);
         entity.Property(e => e.SessionId).HasColumnName("session_id");
         entity.Property(e => e.UserId).HasColumnName("user_id");
         entity.Property(e => e.UserDisplayName).HasColumnName("user_display_name");
+        entity.Property(e => e.SecurityStamp).HasColumnName("security_stamp");
         entity.Property(e => e.IssuedAt).HasColumnName("issued_at");
         entity.Property(e => e.ExpiresAt).HasColumnName("expires_at");
         entity.Property(e => e.RevokedAt).HasColumnName("revoked_at");
@@ -109,6 +135,10 @@ public class PermissionConfiguration : IEntityTypeConfiguration<Permission>
         entity.HasOne<Operation>()
             .WithMany(o => o.Permissions)
             .HasForeignKey(e => e.OperationCode);
+
+        entity.HasIndex(e => new { e.FeatureCode, e.OperationCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }
 
@@ -133,6 +163,10 @@ public class FacilityUserRoleConfiguration : IEntityTypeConfiguration<FacilityUs
         entity.HasOne(e => e.Role)
             .WithMany(r => r.UserRoles)
             .HasForeignKey(e => e.RoleCode);
+
+        entity.HasIndex(e => new { e.FacilityUserId, e.RoleCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }
 
@@ -157,5 +191,9 @@ public class RolePermissionConfiguration : IEntityTypeConfiguration<RolePermissi
         entity.HasOne(e => e.Permission)
             .WithMany(p => p.RolePermissions)
             .HasForeignKey(e => e.PermissionCode);
+
+        entity.HasIndex(e => new { e.RoleCode, e.PermissionCode })
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0");
     }
 }

@@ -84,6 +84,7 @@ public class AuthService : IAuthService
             SessionId = Guid.CreateVersion7(),
             UserId = user.UserId,
             UserDisplayName = user.UserDisplayName,
+            SecurityStamp = Guid.CreateVersion7(),
             IssuedAt = issuedAt,
             ExpiresAt = expiresAt,
             RevokedAt = null,

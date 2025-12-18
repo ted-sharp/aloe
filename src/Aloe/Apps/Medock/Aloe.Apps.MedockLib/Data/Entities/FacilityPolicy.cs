@@ -4,33 +4,31 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 /// <summary>
-/// 施設ユーザー（施設とユーザーの関連）エンティティ
+/// 施設ポリシーエンティティ
 /// </summary>
-[Table("facility_users")]
-public class FacilityUser : IAuditableEntity
+[Table("facility_policies")]
+public class FacilityPolicy : IAuditableEntity
 {
-    /// <summary>施設ユーザーID (PK)</summary>
+    /// <summary>施設ポリシーID (PK)</summary>
     [Key]
-    [Column("facility_user_id")]
-    public Guid FacilityUserId { get; set; }
+    [Column("facility_policy_id")]
+    public Guid FacilityPolicyId { get; set; }
 
     /// <summary>施設ID (FK)</summary>
     [Column("facility_id")]
     [ForeignKey("Facility")]
     public Guid FacilityId { get; set; }
 
-    /// <summary>ユーザーID (FK)</summary>
-    [Column("user_id")]
-    [ForeignKey("User")]
-    public Guid UserId { get; set; }
+    /// <summary>ポリシーコード (FK)</summary>
+    [Column("policy_code")]
+    [ForeignKey("Policy")]
+    [MaxLength(100)]
+    public string PolicyCode { get; set; } = String.Empty;
 
-    /// <summary>表示順</summary>
-    [Column("facility_user_seq")]
-    public int FacilityUserSeq { get; set; }
-
-    /// <summary>施設管理者フラグ</summary>
-    [Column("is_facility_admin")]
-    public bool IsFacilityAdmin { get; set; }
+    /// <summary>ポリシー値</summary>
+    [Column("policy_value")]
+    [MaxLength(10)]
+    public string PolicyValue { get; set; } = String.Empty;
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
@@ -52,7 +50,6 @@ public class FacilityUser : IAuditableEntity
 
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
-    public virtual User User { get; set; } = null!;
-    public virtual ICollection<FacilityUserRole> FacilityUserRoles { get; set; } = new List<FacilityUserRole>();
-    public virtual FacilityUserPermissionsCache? FacilityUserPermissionsCache { get; set; }
+    public virtual Policy Policy { get; set; } = null!;
 }
+

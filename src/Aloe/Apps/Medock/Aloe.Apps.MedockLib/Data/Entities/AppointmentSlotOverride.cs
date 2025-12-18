@@ -17,7 +17,7 @@ public class AppointmentSlotOverride : IAuditableEntity
 
     /// <summary>予約日</summary>
     [Column("appt_date")]
-    public DateOnly ApptDate { get; set; }
+    public DateOnly ApptDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     /// <summary>予約リソースID (FK)</summary>
     [Column("appt_res_id")]

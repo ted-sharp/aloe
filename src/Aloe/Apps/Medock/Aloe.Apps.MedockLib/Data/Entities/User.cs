@@ -44,19 +44,19 @@ public class User : IAuditableEntity
     public DateTime ExpiresOn { get; set; } = new DateTime(9999, 12, 31);
 
     /// <summary>ログイン成功回数</summary>
-    [Column("login_success_count")]
+    [Column("access_success_total_count")]
     public int LoginSuccessCount { get; set; }
 
     /// <summary>ログイン失敗回数</summary>
-    [Column("login_failure_count")]
+    [Column("access_failed_total_count")]
     public int LoginFailureCount { get; set; }
 
     /// <summary>ログイン失敗試行回数（ログイン成功でリセット）</summary>
-    [Column("login_failure_attempts")]
+    [Column("access_failed_count")]
     public int LoginFailureAttempts { get; set; }
 
     /// <summary>ロック解除日時</summary>
-    [Column("locked_until_at")]
+    [Column("locked_end_at")]
     public DateTime LockedUntilAt { get; set; } = new DateTime(1970, 1, 1, 0, 0, 0);
 
     /// <summary>最終ログイン日時</summary>
@@ -66,6 +66,31 @@ public class User : IAuditableEntity
     /// <summary>最終ログアウト日時</summary>
     [Column("last_logout_at")]
     public DateTime LastLogoutAt { get; set; }
+
+    /// <summary>セキュリティスタンプ</summary>
+    [Column("security_stamp")]
+    public Guid SecurityStamp { get; set; }
+
+    /// <summary>二要素認証有効フラグ</summary>
+    [Column("two_factor_enabled")]
+    public bool TwoFactorEnabled { get; set; }
+
+    /// <summary>MFA方式</summary>
+    [Column("mfa_method")]
+    public int MfaMethod { get; set; }
+
+    /// <summary>メール確認済みフラグ</summary>
+    [Column("email_confirmed")]
+    public bool EmailConfirmed { get; set; }
+
+    /// <summary>SMS番号</summary>
+    [Column("sms")]
+    [MaxLength(20)]
+    public string Sms { get; set; } = String.Empty;
+
+    /// <summary>SMS確認済みフラグ</summary>
+    [Column("sms_confirmed")]
+    public bool SmsConfirmed { get; set; }
 
     /// <summary>システム管理者フラグ</summary>
     [Column("is_system_admin")]
@@ -92,6 +117,8 @@ public class User : IAuditableEntity
     // Navigation Properties
     public virtual ICollection<FacilityUser> FacilityUsers { get; set; } = new List<FacilityUser>();
     public virtual ICollection<Session> Sessions { get; set; } = new List<Session>();
+    public virtual ICollection<UserPreference> UserPreferences { get; set; } = new List<UserPreference>();
+    public virtual ICollection<UserToken> UserTokens { get; set; } = new List<UserToken>();
 }
 
 
