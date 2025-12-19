@@ -15,3 +15,5 @@ public class CookieSettings
     public bool? SlidingExpiration { get; set; }
 }
 
+
+

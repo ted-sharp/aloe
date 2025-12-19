@@ -7,6 +7,10 @@ using System.Text.Json;
 /// <summary>
 /// 予約統計エンティティ
 /// 日別の予約状況（時間帯枠ごとの予約数/最大数）をJSONBで保持
+/// 
+/// 注意: 年間カレンダー表示などのパフォーマンス向上のため、このエンティティは
+/// AppointmentResourceやAppointmentSlotを直接使用せず、事前に集計された統計データを保持します。
+/// これにより、毎回の集計処理のコストを削減し、表示速度を向上させています。
 /// </summary>
 [Table("appointment_stats")]
 public class AppointmentStats : IAuditableEntity

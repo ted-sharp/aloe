@@ -67,6 +67,7 @@ builder.Services.AddScoped<IUserContextService, UserContextService>();
 builder.Services.AddScoped<IAppointmentService, AppointmentService>();
 builder.Services.AddScoped<IFacilityService, FacilityService>();
 builder.Services.AddScoped<IAppointmentStatisticsService, AppointmentStatisticsService>();
+builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
 
 // Add Calendar Services
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();

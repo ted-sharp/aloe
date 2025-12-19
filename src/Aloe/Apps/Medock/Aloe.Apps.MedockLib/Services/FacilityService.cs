@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockLib.Services;

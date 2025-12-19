@@ -1,3 +1,5 @@
+using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.AspNetCore.Components;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
@@ -10,20 +12,33 @@ public partial class DayView : ComponentBase
     [Parameter]
     public EventCallback<DateTime> OnTimeSlotClick { get; set; }
 
-    // サンプルデータ
-    private IEnumerable<(string Name, string Org, int Status)> GetSampleHourAppointments(int hour)
+    [Parameter]
+    public IEnumerable<AppointmentDto>? Appointments { get; set; }
+
+    /// <summary>
+    /// 指定された時間の予約を取得します
+    /// </summary>
+    private IEnumerable<(string Name, string Org, int Status)> GetHourAppointments(int hour)
     {
-        var hash = (this.CurrentDate.GetHashCode() + hour) % 10;
-        if (hash < 4) yield break;
+        if (this.Appointments == null) yield break;
 
-        var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲" };
-        var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF" };
+        var hourStart = new TimeOnly(hour, 0);
+        var hourEnd = new TimeOnly(hour + 1, 0);
 
-        yield return (names[hash % 4], orgs[hash % 4], hash % 4);
-
-        if (hash > 7)
+        foreach (var appt in this.Appointments)
         {
-            yield return (names[(hash + 1) % 4], orgs[(hash + 1) % 4], (hash + 1) % 4);
+            if (appt.Date != this.CurrentDate) continue;
+            if (appt.StartTime == null) continue;
+
+            // 予約の開始時間がこの時間帯に含まれるか、または予約がこの時間帯と重なる場合
+            if (appt.StartTime.Value >= hourStart && appt.StartTime.Value < hourEnd)
+            {
+                yield return (
+                    appt.PatientName ?? "未設定",
+                    appt.OrganizationName ?? "",
+                    appt.Status
+                );
+            }
         }
     }
 

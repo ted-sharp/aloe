@@ -27,7 +27,7 @@
         @for (int hour = 8; hour <= 18; hour++)
         {
             var dateTime = CurrentDate.ToDateTime(new TimeOnly(hour, 0));
-            var appointments = GetSampleHourAppointments(hour).ToList();
+            var appointments = GetHourAppointments(hour).ToList();
 
             <div class="flex border-b border-base-300 hover:bg-base-200/50 transition-colors">
                 <!-- 時間ラベル -->

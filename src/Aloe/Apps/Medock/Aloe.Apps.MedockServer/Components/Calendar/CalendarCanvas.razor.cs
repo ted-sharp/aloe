@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -9,6 +10,9 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 {
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Inject]
+    private ICalendarDataService CalendarDataService { get; set; } = default!;
 
     /// <summary>
     /// Current view type: "year", "month", "week"
@@ -224,11 +228,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
             }
         }
 
-        var data = CalendarCanvasInterop.BuildDataObject(
-            this.Appointments,
-            this.MainStats,
-            this.MainStatsGrayedOut,
-            this.Holidays);
+        var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+            this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+            this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+            this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+            this.Holidays ?? new Dictionary<string, string>());
+        var data = CalendarCanvasInterop.BuildDataObject(calendarData);
         var options = CalendarCanvasInterop.BuildOptions(
             this.WeekDays,
             this.ShowSlots,
@@ -255,11 +260,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         if (!this._isInitialized) return;
 
-        var data = CalendarCanvasInterop.BuildDataObject(
-            this.Appointments,
-            this.MainStats,
-            this.MainStatsGrayedOut,
-            this.Holidays);
+        var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+            this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+            this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+            this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+            this.Holidays ?? new Dictionary<string, string>());
+        var data = CalendarCanvasInterop.BuildDataObject(calendarData);
         await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
     }
 
@@ -389,3 +395,5 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
         this._dotNetRef?.Dispose();
     }
 }
+
+

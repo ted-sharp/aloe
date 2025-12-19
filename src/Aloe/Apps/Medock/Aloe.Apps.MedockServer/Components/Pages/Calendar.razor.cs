@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Layout;
 using Aloe.Apps.MedockServer.Components.FAB;
@@ -107,10 +108,10 @@ public partial class Calendar : ComponentBase
     private DateOnly? SelectedDate => this._state.SelectedDate;
     private (DateOnly Start, DateOnly End)? SelectedDateRange => this._state.SelectedDateRange;
 
-    private Dictionary<string, List<AppointmentStats>> SampleMainStats => this._state.MainStats;
+    private Dictionary<string, List<AppointmentStats>> MainStats => this._state.MainStats;
     private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this._state.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this._state.MainStatsGrayedOut;
-    private List<AppointmentDto> SampleAppointments => this._state.Appointments;
+    private List<AppointmentDto> Appointments => this._state.Appointments;
     private Dictionary<string, string> Holidays => this._state.Holidays;
 
     private BusinessHoursDto? BusinessHours => this._state.BusinessHours;
@@ -313,15 +314,35 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    private void HandleMonthSelected((int Year, int Month) yearMonth)
+    private async Task HandleMonthSelected((int Year, int Month) yearMonth)
     {
         this._state.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
+        await this.DataService.LoadAppointmentsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         this.StateHasChanged();
     }
 
-    private void HandleYearSelected(int year)
+    private async Task HandleYearSelected(int year)
     {
         this._state.CurrentDate = new DateOnly(year, this._state.CurrentDate.Month, this._state.CurrentDate.Day);
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
+        await this.DataService.LoadAppointmentsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         this.StateHasChanged();
     }
 

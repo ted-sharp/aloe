@@ -66,7 +66,7 @@ internal static class AppointmentSlotSeeder
                 // 午前: 8:00-12:00（4時間）= 8スロット、午後: 13:00-17:00（4時間）= 8スロット
                 slot = CreateMainSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxPerSlot: 10);
             }
-            else if (resource.ApptResTypeCode == 6) // 胃Ba（旧コード、Equipmentに移行予定。enum に該当値がないため int 比較のまま）
+            else if (resource.ApptResName == "胃Ba")
             {
                 // 胃Ba：時間スロット形式（デフォルト20分間隔）
                 slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20);

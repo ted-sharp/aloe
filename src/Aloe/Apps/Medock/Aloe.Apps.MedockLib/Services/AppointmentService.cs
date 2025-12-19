@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Repositories;
+using Aloe.Apps.MedockLib.Services.Dtos;
 
 namespace Aloe.Apps.MedockLib.Services;
 

@@ -1,3 +1,5 @@
+using Aloe.Apps.MedockLib.Services.Dtos;
+
 namespace Aloe.Apps.MedockLib.Services;
 
 /// <summary>
@@ -5,8 +7,6 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public interface IAppointmentService
 {
-
-
     /// <summary>
     /// 指定期間の予約一覧を取得します
     /// </summary>
@@ -51,64 +51,5 @@ public interface IAppointmentService
     /// <param name="endDate">終了日</param>
     /// <returns>祝日DTOのリスト</returns>
     Task<List<HolidayDto>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate);
-}
-
-
-
-/// <summary>
-/// 予約DTO
-/// </summary>
-public class AppointmentDto
-{
-    public Guid Id { get; set; }
-    public DateOnly Date { get; set; }
-    public TimeOnly? StartTime { get; set; }
-    public TimeOnly? EndTime { get; set; }
-    public string? PatientName { get; set; }
-    public Guid? PatientId { get; set; }
-    public string? OrganizationName { get; set; }
-    public Guid? OrganizationId { get; set; }
-    public string? FloorName { get; set; }
-    public Guid? FloorId { get; set; }
-    public int Status { get; set; }
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
-
-/// <summary>
-/// 予約作成DTO
-/// </summary>
-public class CreateAppointmentDto
-{
-    public DateOnly Date { get; set; }
-    public TimeOnly? StartTime { get; set; }
-    public TimeOnly? EndTime { get; set; }
-    public Guid PatientId { get; set; }
-    public Guid OrganizationId { get; set; }
-    public Guid FloorId { get; set; }
-    public int Status { get; set; } = 0;
-}
-
-/// <summary>
-/// 予約更新DTO
-/// </summary>
-public class UpdateAppointmentDto
-{
-    public DateOnly? Date { get; set; }
-    public TimeOnly? StartTime { get; set; }
-    public TimeOnly? EndTime { get; set; }
-    public Guid? PatientId { get; set; }
-    public Guid? OrganizationId { get; set; }
-    public Guid? FloorId { get; set; }
-    public int? Status { get; set; }
-}
-
-/// <summary>
-/// 祝日DTO
-/// </summary>
-public class HolidayDto
-{
-    public DateOnly Date { get; set; }
-    public string Name { get; set; } = String.Empty;
 }
 

@@ -489,42 +489,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         }
     }
 
-        // 昼休み時間帯の縦ラインを描画（月間・年間ビューの場合、スロットがない場合でも表示）
-        if (lunchStartHour !== null && lunchEndHour !== null && (state.currentView === 'month' || state.currentView === 'year')) {
-            // 業務時間設定を取得
-            const startHour = state.options.startHour || 8;
-            const endHour = state.options.endHour || 18;
-
-            // 昼休み開始時刻と終了時刻をX座標に変換
-            const timeToX = (timeInHours) => {
-                const totalHours = endHour - startHour;
-                const relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
-                return cellLeft + 2 + relativePosition * barAreaWidth;
-            };
-
-            const lunchStartX = timeToX(lunchStartHour);
-            const lunchEndX = timeToX(lunchEndHour);
-
-            // 昼休み開始時刻の縦ライン
-            const lunchStartLine = new Konva.Line({
-                points: [lunchStartX, barAreaTop, lunchStartX, barAreaTop + barAreaHeight],
-                stroke: '#d1d5db', // グレー
-                strokeWidth: 1,
-                opacity: 0.8
-            });
-            layers.content.add(lunchStartLine);
-
-            // 昼休み終了時刻の縦ライン
-            const lunchEndLine = new Konva.Line({
-                points: [lunchEndX, barAreaTop, lunchEndX, barAreaTop + barAreaHeight],
-                stroke: '#d1d5db', // グレー
-                strokeWidth: 1,
-                opacity: 0.8
-            });
-            layers.content.add(lunchEndLine);
-        }
-    }
-
     // インタラクションエリア
     const hitArea = new Konva.Rect({
         x: cellLeft,

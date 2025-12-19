@@ -1,4 +1,4 @@
-namespace Aloe.Apps.MedockLib.Services;
+namespace Aloe.Apps.MedockLib.Services.Dtos;
 
 /// <summary>
 /// 施設営業時間DTO

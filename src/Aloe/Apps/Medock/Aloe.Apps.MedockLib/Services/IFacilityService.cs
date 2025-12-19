@@ -1,3 +1,5 @@
+using Aloe.Apps.MedockLib.Services.Dtos;
+
 namespace Aloe.Apps.MedockLib.Services;
 
 /// <summary>

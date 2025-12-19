@@ -37,11 +37,12 @@
                 {
                     var date = startOfWeek.AddDays(day);
                     var dateTime = date.ToDateTime(new TimeOnly(hour, 0));
-                    var hasAppointment = GetSampleHourAppointments(date, hour).Any();
+                    var hourAppointments = GetHourAppointments(date, hour).ToList();
+                    var hasAppointment = hourAppointments.Any();
 
                     <div class="p-1 min-h-[60px] border-r border-base-300 hover:bg-base-200 cursor-pointer transition-colors"
                          @onclick="() => OnTimeSlotClick.InvokeAsync(dateTime)">
-                        @foreach (var appt in GetSampleHourAppointments(date, hour))
+                        @foreach (var appt in hourAppointments)
                         {
                             <div class="text-xs p-1 mb-1 rounded @GetStatusClass(appt.Status)">
                                 <div class="font-semibold">@appt.Name</div>

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Components;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Services.Dtos;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
