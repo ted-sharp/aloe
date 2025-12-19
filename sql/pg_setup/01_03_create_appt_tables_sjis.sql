@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/18 21:12:07
+-- Date/Time    : 2025/12/19 10:09:57
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -446,10 +446,10 @@ DROP TABLE if exists "insurance_providers" CASCADE;
 CREATE TABLE "insurance_providers" (
   "insurer_id" UUID NOT NULL
   , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" TEXT DEFAULT '' NOT NULL
-  , "insurer_name" TEXT DEFAULT '' NOT NULL
-  , "insurer_short_name" TEXT DEFAULT '' NOT NULL
-  , "insurer_desc" TEXT DEFAULT '' NOT NULL
+  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
+  , "insurer_name" character varying(100) DEFAULT '' NOT NULL
+  , "insurer_short_name" character varying(100) DEFAULT '' NOT NULL
+  , "insurer_desc" character varying(1000) DEFAULT '' NOT NULL
   , "insurer_seq" integer DEFAULT 0 NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -524,10 +524,10 @@ CREATE TABLE "organization_insurances" (
   , "is_primary" BOOLEAN DEFAULT FALSE NOT NULL
   , "insurer_id" UUID
   , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" TEXT DEFAULT '' NOT NULL
+  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
   , "deactivated_on" date
-  , "org_insurance_memo" TEXT DEFAULT '' NOT NULL
+  , "org_insurance_memo" character varying(1000) DEFAULT '' NOT NULL
   , "org_insurance_seq" integer DEFAULT 0 NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -677,19 +677,19 @@ CREATE TABLE "patient_insurance_cards" (
   , "is_primary" BOOLEAN DEFAULT FALSE NOT NULL
   , "insurer_id" UUID
   , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" TEXT DEFAULT '' NOT NULL
-  , "insurer_name" TEXT DEFAULT '' NOT NULL
-  , "insured_code" TEXT DEFAULT '' NOT NULL
-  , "insured_code_symbol" TEXT DEFAULT '' NOT NULL
-  , "insured_code_number" TEXT DEFAULT '' NOT NULL
-  , "insured_code_branch_number" TEXT DEFAULT '' NOT NULL
-  , "insured_person_name" TEXT DEFAULT '' NOT NULL
-  , "self_family_relationship_code" TEXT DEFAULT '' NOT NULL
-  , "assistance_code" TEXT DEFAULT '' NOT NULL
-  , "continuation_code" TEXT DEFAULT '' NOT NULL
+  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
+  , "insurer_name" character varying(100) DEFAULT '' NOT NULL
+  , "insured_code" character varying(20) DEFAULT '' NOT NULL
+  , "insured_code_symbol" character varying(100) DEFAULT '' NOT NULL
+  , "insured_code_number" character varying(20) DEFAULT '' NOT NULL
+  , "insured_code_branch_number" character varying(20) DEFAULT '' NOT NULL
+  , "insured_person_name" character varying(100) DEFAULT '' NOT NULL
+  , "self_family_relationship_code" integer DEFAULT 0 NOT NULL
+  , "assistance_code" integer DEFAULT 0 NOT NULL
+  , "continuation_code" integer DEFAULT 0 NOT NULL
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
   , "deactivated_on" date
-  , "pt_insure_card_memo" TEXT DEFAULT '' NOT NULL
+  , "pt_insure_card_memo" character varying(1000) DEFAULT '' NOT NULL
   , "pt_insure_card_seq" integer DEFAULT 0 NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -1352,6 +1352,11 @@ ALTER TABLE "appointment_resource_group_members"
 
 ALTER TABLE "appointment_resource_group_members"
   ADD CONSTRAINT "appointment_resource_group_members_FK2" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "appointment_resource_groups"
+  ADD CONSTRAINT "appointment_resource_groups_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 

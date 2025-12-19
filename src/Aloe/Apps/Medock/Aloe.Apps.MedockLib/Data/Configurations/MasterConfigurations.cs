@@ -13,9 +13,9 @@ public class HolidayConfiguration : IEntityTypeConfiguration<Holiday>
     {
         entity.ToTable("holidays");
         entity.HasKey(e => e.HolidayDate);
-        entity.Property(e => e.HolidayDate).HasColumnName("holiday_date");
-        entity.Property(e => e.HolidayName).HasColumnName("holiday_name");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.HolidayDate).HasColumnName("holiday_date").ValueGeneratedNever();
+        entity.Property(e => e.HolidayName).HasColumnName("holiday_name").HasMaxLength(100).HasDefaultValue("");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
     }
 }

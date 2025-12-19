@@ -41,44 +41,77 @@ internal static class AppointmentResourceGroupMemberSeeder
         var members = new List<AppointmentResourceGroupMember>();
 
         // グループコードでグループを取得
-        var examRoomGroup = groups.FirstOrDefault(g => g.ResGroupCode == "EXAM_ROOM");
         var echoRoomGroup = groups.FirstOrDefault(g => g.ResGroupCode == "ECHO_ROOM");
-        var lockerClusterGroup = groups.FirstOrDefault(g => g.ResGroupCode == "LOCKER_CLUSTER");
+        var stomachExamBothGroup = groups.FirstOrDefault(g => g.ResGroupCode == "STOMACH_EXAM_BOTH");
+        var stomachExamBothExtGroup = groups.FirstOrDefault(g => g.ResGroupCode == "STOMACH_EXAM_BOTH_EXT");
+        var endoscopeOnlyGroup = groups.FirstOrDefault(g => g.ResGroupCode == "ENDOSCOPE_ONLY");
+        var endoscopeOnlyExtGroup = groups.FirstOrDefault(g => g.ResGroupCode == "ENDOSCOPE_ONLY_EXT");
 
         // リソース名でリソースを取得
         var endoscope = resources.FirstOrDefault(r => r.ApptResName == "内視鏡");
-        var ct = resources.FirstOrDefault(r => r.ApptResName == "CT");
-        var mr = resources.FirstOrDefault(r => r.ApptResName == "MR");
-        var echo = resources.FirstOrDefault(r => r.ApptResName == "エコー");
-        var locker = resources.FirstOrDefault(r => r.ApptResName == "ロッカー");
+        var endoscopeExt = resources.FirstOrDefault(r => r.ApptResName == "内視鏡(外部)");
+        var abdomenEcho = resources.FirstOrDefault(r => r.ApptResName == "腹部エコー");
+        var breastEcho = resources.FirstOrDefault(r => r.ApptResName == "乳腺エコー");
+        var carotidEcho = resources.FirstOrDefault(r => r.ApptResName == "頸動脈エコー");
+        var stomachBa = resources.FirstOrDefault(r => r.ApptResName == "胃Ba");
 
-        // 検査室グループに内視鏡、CT、MRを追加
-        if (examRoomGroup != null)
+        // エコーグループにすべてのエコーリソースを追加
+        if (echoRoomGroup != null)
+        {
+            if (abdomenEcho != null)
+            {
+                members.Add(CreateMember(echoRoomGroup.ApptResGroupId, abdomenEcho.ApptResId, dateTimeProvider));
+            }
+            if (breastEcho != null)
+            {
+                members.Add(CreateMember(echoRoomGroup.ApptResGroupId, breastEcho.ApptResId, dateTimeProvider));
+            }
+            if (carotidEcho != null)
+            {
+                members.Add(CreateMember(echoRoomGroup.ApptResGroupId, carotidEcho.ApptResId, dateTimeProvider));
+            }
+        }
+
+        // 胃部検査(内視鏡または胃Ba)グループに内視鏡と胃Baを追加
+        if (stomachExamBothGroup != null)
         {
             if (endoscope != null)
             {
-                members.Add(CreateMember(examRoomGroup.ApptResGroupId, endoscope.ApptResId, dateTimeProvider));
+                members.Add(CreateMember(stomachExamBothGroup.ApptResGroupId, endoscope.ApptResId, dateTimeProvider));
             }
-            if (ct != null)
+            if (stomachBa != null)
             {
-                members.Add(CreateMember(examRoomGroup.ApptResGroupId, ct.ApptResId, dateTimeProvider));
-            }
-            if (mr != null)
-            {
-                members.Add(CreateMember(examRoomGroup.ApptResGroupId, mr.ApptResId, dateTimeProvider));
+                members.Add(CreateMember(stomachExamBothGroup.ApptResGroupId, stomachBa.ApptResId, dateTimeProvider));
             }
         }
 
-        // エコー室グループにエコーを追加
-        if (echoRoomGroup != null && echo != null)
+        // 胃部検査(内視鏡または胃Ba)-外部委託含むグループに内視鏡、内視鏡(外部)、胃Baを追加
+        if (stomachExamBothExtGroup != null)
         {
-            members.Add(CreateMember(echoRoomGroup.ApptResGroupId, echo.ApptResId, dateTimeProvider));
+            if (endoscope != null)
+            {
+                members.Add(CreateMember(stomachExamBothExtGroup.ApptResGroupId, endoscope.ApptResId, dateTimeProvider));
+            }
+            if (endoscopeExt != null)
+            {
+                members.Add(CreateMember(stomachExamBothExtGroup.ApptResGroupId, endoscopeExt.ApptResId, dateTimeProvider));
+            }
+            if (stomachBa != null)
+            {
+                members.Add(CreateMember(stomachExamBothExtGroup.ApptResGroupId, stomachBa.ApptResId, dateTimeProvider));
+            }
         }
 
-        // ロッカークラスターにロッカーを追加
-        if (lockerClusterGroup != null && locker != null)
+        // 内視鏡グループに内視鏡を追加
+        if (endoscopeOnlyGroup != null && endoscope != null)
         {
-            members.Add(CreateMember(lockerClusterGroup.ApptResGroupId, locker.ApptResId, dateTimeProvider));
+            members.Add(CreateMember(endoscopeOnlyGroup.ApptResGroupId, endoscope.ApptResId, dateTimeProvider));
+        }
+
+        // 内視鏡-外部委託含むグループに内視鏡(外部)を追加
+        if (endoscopeOnlyExtGroup != null && endoscopeExt != null)
+        {
+            members.Add(CreateMember(endoscopeOnlyExtGroup.ApptResGroupId, endoscopeExt.ApptResId, dateTimeProvider));
         }
 
         context.AppointmentResourceGroupMembers.AddRange(members);

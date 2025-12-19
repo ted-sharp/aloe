@@ -24,9 +24,9 @@ internal static class AppointmentResourceGroupSeeder
             {
                 ApptResGroupId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
-                ResGroupCode = "EXAM_ROOM",
-                ResGroupName = "検査室グループ",
-                ResGroupDesc = "内視鏡、CT、MRなどの検査室をグループ化",
+                ResGroupCode = "ECHO_ROOM",
+                ResGroupName = "エコー",
+                ResGroupDesc = "エコー検査室をグループ化",
                 ResGroupSeq = 1,
                 IsDeleted = false
             },
@@ -34,9 +34,9 @@ internal static class AppointmentResourceGroupSeeder
             {
                 ApptResGroupId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
-                ResGroupCode = "ECHO_ROOM",
-                ResGroupName = "エコー室グループ",
-                ResGroupDesc = "エコー検査室をグループ化",
+                ResGroupCode = "STOMACH_EXAM_BOTH",
+                ResGroupName = "胃部検査(内視鏡または胃Ba)",
+                ResGroupDesc = "胃部検査（内視鏡または胃Ba）用リソースグループ",
                 ResGroupSeq = 2,
                 IsDeleted = false
             },
@@ -44,10 +44,30 @@ internal static class AppointmentResourceGroupSeeder
             {
                 ApptResGroupId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
-                ResGroupCode = "LOCKER_CLUSTER",
-                ResGroupName = "ロッカークラスター",
-                ResGroupDesc = "ロッカーをクラスター化",
+                ResGroupCode = "STOMACH_EXAM_BOTH_X",
+                ResGroupName = "胃部検査(内視鏡または胃Ba)-外部委託含む",
+                ResGroupDesc = "胃部検査（内視鏡または胃Ba）-外部委託含む用リソースグループ",
                 ResGroupSeq = 3,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResGroupId = Guid.CreateVersion7(),
+                FacilityId = facilityId,
+                ResGroupCode = "ENDOSCOPE_ONLY",
+                ResGroupName = "内視鏡",
+                ResGroupDesc = "内視鏡検査用リソースグループ",
+                ResGroupSeq = 4,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResGroupId = Guid.CreateVersion7(),
+                FacilityId = facilityId,
+                ResGroupCode = "ENDOSCOPE_ONLY_EXT",
+                ResGroupName = "内視鏡-外部委託含む",
+                ResGroupDesc = "内視鏡検査-外部委託含む用リソースグループ",
+                ResGroupSeq = 5,
                 IsDeleted = false
             }
         };

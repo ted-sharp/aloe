@@ -39,29 +39,41 @@ internal static class AppointmentSlotSeeder
         {
             AppointmentSlot slot;
 
-            // リソースタイプに応じてスロット定義を作成
-            switch (resource.ApptResTypeCode)
+            // リソース名とタイプに応じてスロット定義を作成
+            if (resource.ApptResName == "内視鏡" || resource.ApptResName == "内視鏡(外部)")
             {
-                case 1: // 内視鏡
-                case 3: // CT
-                case 4: // MR
-                    // 時間がかかる検査：15分単位の時間スロット
-                    slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate);
-                    break;
-
-                case 2: // エコー
-                    // AM/PMで大枠制限
-                    slot = CreateAmPmSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxAm: 10, maxPm: 10);
-                    break;
-
-                case 5: // ロッカー
-                    // AM/PMで各80個制限
-                    slot = CreateAmPmSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxAm: 80, maxPm: 80);
-                    break;
-
-                default:
-                    Console.WriteLine($"    [!] Unknown resource type: {resource.ApptResTypeCode} for {resource.ApptResName}");
-                    continue;
+                // 胃部内視鏡：20分に1スロット（1時間に3スロット）
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20);
+            }
+            else if (resource.ApptResName == "CT")
+            {
+                // CT：10分に1スロット（1時間に6スロット）
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 10);
+            }
+            else if (resource.ApptResName == "MR")
+            {
+                // MR：30分に1スロット（1時間に2スロット）
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 30);
+            }
+            else if (resource.ApptResName == "腹部エコー" || resource.ApptResName == "乳腺エコー" || resource.ApptResName == "頸動脈エコー")
+            {
+                // エコー：15分に1スロット（1時間に4スロット）
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 15);
+            }
+            else if (resource.ApptResTypeCode == 5) // ロッカー
+            {
+                // AM/PMで各80個制限
+                slot = CreateAmPmSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxAm: 80, maxPm: 80);
+            }
+            else if (resource.ApptResTypeCode == 6) // 胃Ba
+            {
+                // 胃Ba：時間スロット形式（デフォルト20分間隔）
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20);
+            }
+            else
+            {
+                Console.WriteLine($"    [!] Unknown resource: {resource.ApptResName} (Type: {resource.ApptResTypeCode})");
+                continue;
             }
 
             SeederHelper.InitializeAuditFields(slot, dateTimeProvider);
@@ -78,33 +90,43 @@ internal static class AppointmentSlotSeeder
     }
 
     /// <summary>
-    /// 時間スロット形式のリソース（内視鏡、CT、MR）を作成
+    /// 時間スロット形式のリソース（内視鏡、CT、MR、エコー）を作成
     /// </summary>
-    private static AppointmentSlot CreateTimeSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate)
+    private static AppointmentSlot CreateTimeSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int intervalMinutes)
     {
-        // 15分単位のスロット（09:00-18:00の範囲、1スロット30分）
+        // 指定された間隔でスロットを生成（09:00-12:00、13:00-17:00の範囲、1時間の枠で作成）
         var timeSlots = new List<object>();
 
-        // 午前のスロット（09:00-11:45）
-        foreach (var time in SeederHelper.TimeSlots.MorningSlots)
+        // 午前のスロット（09:00-12:00）
+        for (int hour = 9; hour < 12; hour++)
         {
-            timeSlots.Add(new
+            // 1時間の枠内で、指定された間隔でスロットを作成
+            for (int minute = 0; minute < 60; minute += intervalMinutes)
             {
-                time = time,
-                max = 1,
-                duration = 30
-            });
+                var timeString = $"{hour:D2}:{minute:D2}";
+                timeSlots.Add(new
+                {
+                    time = timeString,
+                    max = 1,
+                    duration = intervalMinutes
+                });
+            }
         }
 
         // 午後のスロット（13:00-17:00）
-        foreach (var time in SeederHelper.TimeSlots.AfternoonSlots)
+        for (int hour = 13; hour <= 17; hour++)
         {
-            timeSlots.Add(new
+            // 1時間の枠内で、指定された間隔でスロットを作成
+            for (int minute = 0; minute < 60; minute += intervalMinutes)
             {
-                time = time,
-                max = 1,
-                duration = 30
-            });
+                var timeString = $"{hour:D2}:{minute:D2}";
+                timeSlots.Add(new
+                {
+                    time = timeString,
+                    max = 1,
+                    duration = intervalMinutes
+                });
+            }
         }
 
         var slotsJson = JsonSerializer.Serialize(new { slots = timeSlots });

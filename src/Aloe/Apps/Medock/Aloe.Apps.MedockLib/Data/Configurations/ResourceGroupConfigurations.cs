@@ -15,17 +15,17 @@ public class AppointmentResourceGroupConfiguration : IEntityTypeConfiguration<Ap
         entity.HasKey(e => e.ApptResGroupId);
         entity.Property(e => e.ApptResGroupId).HasColumnName("appt_res_group_id");
         entity.Property(e => e.FacilityId).HasColumnName("facility_id");
-        entity.Property(e => e.ResGroupCode).HasColumnName("res_group_code").HasMaxLength(20);
-        entity.Property(e => e.ResGroupName).HasColumnName("res_group_name").HasMaxLength(100);
-        entity.Property(e => e.ResGroupDesc).HasColumnName("res_group_desc").HasMaxLength(1000);
+        entity.Property(e => e.ResGroupCode).HasColumnName("res_group_code").HasMaxLength(20).HasDefaultValue("");
+        entity.Property(e => e.ResGroupName).HasColumnName("res_group_name").HasMaxLength(100).HasDefaultValue("");
+        entity.Property(e => e.ResGroupDesc).HasColumnName("res_group_desc").HasMaxLength(1000).HasDefaultValue("");
         entity.Property(e => e.ResGroupSeq).HasColumnName("res_group_seq").HasDefaultValue(0);
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.Facility)
             .WithMany(f => f.AppointmentResourceGroups)
             .HasForeignKey(e => e.FacilityId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Cascade);
 
         entity.HasIndex(e => e.FacilityId);
     }
@@ -43,7 +43,7 @@ public class AppointmentResourceGroupMemberConfiguration : IEntityTypeConfigurat
         entity.Property(e => e.ApptResGroupMemberId).HasColumnName("appt_res_group_member_id");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.ApptResGroupId).HasColumnName("appt_res_group_id");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.AppointmentResource)

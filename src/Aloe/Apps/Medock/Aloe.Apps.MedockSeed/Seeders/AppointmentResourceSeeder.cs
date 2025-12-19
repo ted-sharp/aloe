@@ -49,9 +49,29 @@ internal static class AppointmentResourceSeeder
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
                 ApptResTypeCode = 2, // エコー
-                ApptResName = "エコー",
-                ApptResDesc = "エコー検査用リソース（AM/PM制限）",
+                ApptResName = "腹部エコー",
+                ApptResDesc = "腹部エコー検査用リソース",
                 ApptResSeq = 2,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResId = Guid.CreateVersion7(),
+                FloorId = floorId,
+                ApptResTypeCode = 2, // エコー
+                ApptResName = "乳腺エコー",
+                ApptResDesc = "乳腺エコー検査用リソース",
+                ApptResSeq = 3,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResId = Guid.CreateVersion7(),
+                FloorId = floorId,
+                ApptResTypeCode = 2, // エコー
+                ApptResName = "頸動脈エコー",
+                ApptResDesc = "頸動脈エコー検査用リソース",
+                ApptResSeq = 4,
                 IsDeleted = false
             },
             new()
@@ -61,7 +81,7 @@ internal static class AppointmentResourceSeeder
                 ApptResTypeCode = 3, // CT
                 ApptResName = "CT",
                 ApptResDesc = "CT検査用リソース",
-                ApptResSeq = 3,
+                ApptResSeq = 5,
                 IsDeleted = false
             },
             new()
@@ -71,7 +91,7 @@ internal static class AppointmentResourceSeeder
                 ApptResTypeCode = 4, // MR
                 ApptResName = "MR",
                 ApptResDesc = "MR検査用リソース",
-                ApptResSeq = 4,
+                ApptResSeq = 6,
                 IsDeleted = false
             },
             new()
@@ -81,7 +101,27 @@ internal static class AppointmentResourceSeeder
                 ApptResTypeCode = 5, // ロッカー
                 ApptResName = "ロッカー",
                 ApptResDesc = "ロッカー（AM/PM各80個制限）",
-                ApptResSeq = 5,
+                ApptResSeq = 7,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResId = Guid.CreateVersion7(),
+                FloorId = floorId,
+                ApptResTypeCode = 6, // 胃Ba
+                ApptResName = "胃Ba",
+                ApptResDesc = "胃部X線検査用リソース",
+                ApptResSeq = 8,
+                IsDeleted = false
+            },
+            new()
+            {
+                ApptResId = Guid.CreateVersion7(),
+                FloorId = floorId,
+                ApptResTypeCode = 1, // 内視鏡
+                ApptResName = "内視鏡(外部)",
+                ApptResDesc = "内視鏡検査用リソース（外部委託）",
+                ApptResSeq = 9,
                 IsDeleted = false
             }
         };

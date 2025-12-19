@@ -21,8 +21,8 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
         entity.Property(e => e.ApptStartTime).HasColumnName("appt_start_time").HasColumnType("time");
         entity.Property(e => e.ApptDurationMin).HasColumnName("appt_duration_min");
         entity.Property(e => e.ApptStatusCode).HasColumnName("appt_status_code").HasDefaultValue(0);
-        entity.Property(e => e.ApptMemo).HasColumnName("appt_memo").HasMaxLength(1000);
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.ApptMemo).HasColumnName("appt_memo").HasMaxLength(1000).HasDefaultValue("");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.Floor)
@@ -55,9 +55,11 @@ public class AppointmentStatsConfiguration : IEntityTypeConfiguration<Appointmen
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.ApptCap).HasColumnName("appt_cap").HasDefaultValue(0);
         entity.Property(e => e.ApptCount).HasColumnName("appt_count").HasDefaultValue(0);
-        entity.Property(e => e.ApptAvailable).HasColumnName("appt_available").ValueGeneratedOnAddOrUpdate();
-        entity.Property(e => e.ApptGraph).HasColumnName("appt_graph").HasColumnType("jsonb");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.ApptAvailable)
+            .HasColumnName("appt_available")
+            .HasComputedColumnSql("appt_cap - appt_count", stored: true);
+        entity.Property(e => e.ApptGraph).HasColumnName("appt_graph").HasColumnType("jsonb").HasDefaultValue("{}");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.AppointmentResource)
@@ -81,11 +83,11 @@ public class AppointmentSlotConfiguration : IEntityTypeConfiguration<Appointment
         entity.HasKey(e => e.ApptSlotId);
         entity.Property(e => e.ApptSlotId).HasColumnName("appt_slot_id");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb");
+        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb").HasDefaultValue("{}");
         entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(false);
         entity.Property(e => e.ActiveFrom).HasColumnName("active_from").HasDefaultValueSql("CURRENT_DATE");
         entity.Property(e => e.ActiveTo).HasColumnName("active_to").HasDefaultValueSql("'9999-12-31'::date");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.AppointmentResource)
@@ -108,10 +110,10 @@ public class AppointmentResourceConfiguration : IEntityTypeConfiguration<Appoint
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.FloorId).HasColumnName("floor_id");
         entity.Property(e => e.ApptResTypeCode).HasColumnName("appt_res_type_code").HasDefaultValue(0);
-        entity.Property(e => e.ApptResName).HasColumnName("appt_res_name").HasMaxLength(100);
-        entity.Property(e => e.ApptResDesc).HasColumnName("appt_res_desc").HasMaxLength(1000);
+        entity.Property(e => e.ApptResName).HasColumnName("appt_res_name").HasMaxLength(100).HasDefaultValue("");
+        entity.Property(e => e.ApptResDesc).HasColumnName("appt_res_desc").HasMaxLength(1000).HasDefaultValue("");
         entity.Property(e => e.ApptResSeq).HasColumnName("appt_res_seq").HasDefaultValue(0);
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.Floor)
@@ -134,8 +136,8 @@ public class AppointmentSlotOverrideConfiguration : IEntityTypeConfiguration<App
         entity.Property(e => e.ApptSlotOverrideId).HasColumnName("appt_slot_override_id");
         entity.Property(e => e.ApptDate).HasColumnName("appt_date").HasDefaultValueSql("CURRENT_DATE");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb").HasDefaultValue("{}");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.AppointmentResource)
@@ -161,7 +163,7 @@ public class AppointmentResourceReservationConfiguration : IEntityTypeConfigurat
         entity.Property(e => e.ApptId).HasColumnName("appt_id");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.ApptStartTime).HasColumnName("appt_start_time").HasColumnType("time");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted");
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.Appointment)

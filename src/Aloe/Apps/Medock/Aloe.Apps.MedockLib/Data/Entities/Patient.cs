@@ -34,7 +34,7 @@ public class Patient : IAuditableEntity
 
     /// <summary>カルテコード</summary>
     [Column("karte_code")]
-    [MaxLength(50)]
+    [MaxLength(100)]
     public string? KarteCode { get; set; }
 
     /// <summary>患者名</summary>
