@@ -2,6 +2,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Aloe.Apps.MedockLib.Constants;
 
 /// <summary>
 /// 予約リソースエンティティ
@@ -20,9 +21,26 @@ public class AppointmentResource : IAuditableEntity
     [ForeignKey("Floor")]
     public Guid FloorId { get; set; }
 
-    /// <summary>予約リソースタイプコード</summary>
+    /// <summary>
+    /// 予約リソースタイプコード
+    /// 1: Main - メインスロット（30分区切り、棒グラフ表示予定）
+    /// 2: Equipment - 設備（折れ線グラフ表示予定）
+    /// 3: Environment - 環境（背景積み立てグラフ表示予定）
+    /// 99: Others - その他（カレンダー非表示）
+    /// </summary>
     [Column("appt_res_type_code")]
     public int ApptResTypeCode { get; set; } = 0;
+
+    /// <summary>
+    /// 予約リソースタイプ（enum型、型安全なアクセサー）
+    /// ApptResTypeCode の enum ラッパー
+    /// </summary>
+    [NotMapped]
+    public AppointmentResourceType AppointmentResourceType
+    {
+        get => (AppointmentResourceType)this.ApptResTypeCode;
+        set => this.ApptResTypeCode = (int)value;
+    }
 
     /// <summary>予約リソース名</summary>
     [Column("appt_res_name")]

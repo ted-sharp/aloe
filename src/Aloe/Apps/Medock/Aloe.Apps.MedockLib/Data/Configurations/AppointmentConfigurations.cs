@@ -109,6 +109,7 @@ public class AppointmentResourceConfiguration : IEntityTypeConfiguration<Appoint
         entity.HasKey(e => e.ApptResId);
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.FloorId).HasColumnName("floor_id");
+        // appt_res_type_code: 1=Main(棒グラフ), 2=Equipment(折れ線グラフ), 3=Environment(背景積み立て), 99=Others(非表示)
         entity.Property(e => e.ApptResTypeCode).HasColumnName("appt_res_type_code").HasDefaultValue(0);
         entity.Property(e => e.ApptResName).HasColumnName("appt_res_name").HasMaxLength(100).HasDefaultValue("");
         entity.Property(e => e.ApptResDesc).HasColumnName("appt_res_desc").HasMaxLength(1000).HasDefaultValue("");

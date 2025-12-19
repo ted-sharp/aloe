@@ -323,12 +323,12 @@ function renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, sta
         layers.content.add(nameText);
 
         // Organization name
-        if (appt.orgName && h > 35) {
+        if (appt.organizationName && h > 35) {
             const orgText = new Konva.Text({
                 x: x + 4,
                 y: y + 20,
                 width: w - 8,
-                text: appt.orgName,
+                text: appt.organizationName,
                 fontSize: CONFIG.font.sizeSmall,
                 fontFamily: CONFIG.font.family,
                 fill: '#4b5563',
@@ -351,7 +351,7 @@ function renderSlotMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, sta
             layers.content.batchDraw();
             showTooltip(e.evt.clientX, e.evt.clientY,
                 `<strong>${appt.patientName || '未設定'}</strong><br>` +
-                `${appt.orgName || ''}<br>` +
+                `${appt.organizationName || ''}<br>` +
                 `${appt.startTime} - ${appt.endTime}<br>` +
                 `ステータス: ${getStatusText(appt.status)}`);
         });
@@ -470,7 +470,7 @@ function renderDetailMode(timeColumnWidth, headerHeight, dayWidth, hourHeight, s
                 document.body.style.cursor = 'pointer';
                 showTooltip(e.evt.clientX, e.evt.clientY,
                     `<strong>${appt.patientName || '未設定'}</strong><br>` +
-                    `${appt.orgName || ''}<br>` +
+                    `${appt.organizationName || ''}<br>` +
                     `${appt.startTime} - ${appt.endTime}<br>` +
                     `ステータス: ${getStatusText(appt.status)}`);
             });

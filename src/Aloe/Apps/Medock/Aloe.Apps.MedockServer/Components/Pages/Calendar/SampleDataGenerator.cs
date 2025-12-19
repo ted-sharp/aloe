@@ -55,9 +55,9 @@ public static class SampleDataGenerator
     }
 
     /// <summary>
-    /// 予約サンプルデータを生成
+    /// 予約サンプルデータを生成（開発・テスト用）
     /// </summary>
-    public static List<CalendarAppointment> GenerateAppointments(BusinessHoursDto? businessHours)
+    public static List<AppointmentDto> GenerateAppointments(BusinessHoursDto? businessHours)
     {
         var random = new Random(42);
         var today = DateTime.Today;
@@ -67,7 +67,7 @@ public static class SampleDataGenerator
         var names = new[] { "山田 太郎", "佐藤 花子", "鈴木 一郎", "田中 美咲", "高橋 健二" };
         var orgs = new[] { "株式会社ABC", "XYZ商事", "個人", "医療法人DEF", "○○健保組合" };
 
-        var appointments = new List<CalendarAppointment>();
+        var appointments = new List<AppointmentDto>();
 
         for (var day = 0; day < 7; day++)
         {
@@ -81,7 +81,7 @@ public static class SampleDataGenerator
                 var duration = random.Next(1, 3);
                 var endHour = Math.Min(startHour + duration, hours.EndHour);
 
-                appointments.Add(new CalendarAppointment
+                appointments.Add(new AppointmentDto
                 {
                     Id = Guid.CreateVersion7(),
                     Date = DateOnly.FromDateTime(date),
@@ -89,7 +89,9 @@ public static class SampleDataGenerator
                     EndTime = new TimeOnly(endHour, 0),
                     PatientName = names[random.Next(names.Length)],
                     OrganizationName = orgs[random.Next(orgs.Length)],
-                    Status = random.Next(0, 4)
+                    Status = random.Next(0, 4),
+                    CreatedAt = DateTime.Now,
+                    UpdatedAt = DateTime.Now
                 });
             }
         }

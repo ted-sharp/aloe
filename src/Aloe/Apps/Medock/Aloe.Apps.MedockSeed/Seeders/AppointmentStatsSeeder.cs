@@ -10,29 +10,6 @@ namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentStatsSeeder
 {
-    /// <summary>
-    /// スロット定義のJSONB構造
-    /// </summary>
-    private class SlotDefinition
-    {
-        [JsonPropertyName("slots")]
-        public List<SlotItem> Slots { get; set; } = new();
-    }
-
-    /// <summary>
-    /// スロットアイテム
-    /// </summary>
-    private class SlotItem
-    {
-        [JsonPropertyName("time")]
-        public string Time { get; set; } = string.Empty;
-
-        [JsonPropertyName("max")]
-        public int Max { get; set; }
-
-        [JsonPropertyName("duration")]
-        public int Duration { get; set; }
-    }
 
     /// <summary>
     /// グラフデータのJSONB構造
@@ -196,17 +173,17 @@ internal static class AppointmentStatsSeeder
                 var key = (currentDate, resource.ApptResId);
 
                 // スロット定義を取得（overrideがあれば優先）
-                SlotDefinition? slotDef = null;
+                AppointmentSlotRoot? slotDef = null;
                 if (overrideDict.TryGetValue((currentDate, resource.ApptResId), out var slotOverride))
                 {
-                    slotDef = ParseSlotDefinition(slotOverride.ApptSlots);
+                    slotDef = slotOverride.ApptSlotsData;
                 }
                 else if (slotDict.TryGetValue(resource.ApptResId, out var slot))
                 {
                     // 有効期間内かチェック
                     if (slot.ActiveFrom <= currentDate && currentDate <= slot.ActiveTo)
                     {
-                        slotDef = ParseSlotDefinition(slot.ApptSlots);
+                        slotDef = slot.ApptSlotsData;
                     }
                 }
 
@@ -281,25 +258,6 @@ internal static class AppointmentStatsSeeder
         }
     }
 
-    /// <summary>
-    /// スロット定義のJSONBを解析
-    /// </summary>
-    private static SlotDefinition? ParseSlotDefinition(string json)
-    {
-        if (string.IsNullOrWhiteSpace(json) || json == "{}")
-        {
-            return null;
-        }
-
-        try
-        {
-            return JsonSerializer.Deserialize<SlotDefinition>(json);
-        }
-        catch (JsonException)
-        {
-            return null;
-        }
-    }
 
     /// <summary>
     /// 統計データの一時保持用クラス

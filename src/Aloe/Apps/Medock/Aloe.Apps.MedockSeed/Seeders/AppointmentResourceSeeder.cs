@@ -38,7 +38,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 1, // 内視鏡
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // 内視鏡 → Equipment
                 ApptResName = "内視鏡",
                 ApptResDesc = "内視鏡検査用リソース",
                 ApptResSeq = 1,
@@ -48,7 +48,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 2, // エコー
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "腹部エコー",
                 ApptResDesc = "腹部エコー検査用リソース",
                 ApptResSeq = 2,
@@ -58,7 +58,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 2, // エコー
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "乳腺エコー",
                 ApptResDesc = "乳腺エコー検査用リソース",
                 ApptResSeq = 3,
@@ -68,7 +68,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 2, // エコー
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "頸動脈エコー",
                 ApptResDesc = "頸動脈エコー検査用リソース",
                 ApptResSeq = 4,
@@ -78,7 +78,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 3, // CT
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // CT → Equipment
                 ApptResName = "CT",
                 ApptResDesc = "CT検査用リソース",
                 ApptResSeq = 5,
@@ -88,7 +88,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 4, // MR
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // MR → Equipment
                 ApptResName = "MR",
                 ApptResDesc = "MR検査用リソース",
                 ApptResSeq = 6,
@@ -98,9 +98,9 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 5, // ロッカー
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main, // ロッカー → Main
                 ApptResName = "ロッカー",
-                ApptResDesc = "ロッカー（AM/PM各80個制限）",
+                ApptResDesc = "ロッカー（AM/PM各80個制限、30分区切りで業務時間を分割）",
                 ApptResSeq = 7,
                 IsDeleted = false
             },
@@ -108,7 +108,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 6, // 胃Ba
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // 胃Ba → Equipment
                 ApptResName = "胃Ba",
                 ApptResDesc = "胃部X線検査用リソース",
                 ApptResSeq = 8,
@@ -118,7 +118,7 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                ApptResTypeCode = 1, // 内視鏡
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // 内視鏡(外部) → Equipment
                 ApptResName = "内視鏡(外部)",
                 ApptResDesc = "内視鏡検査用リソース（外部委託）",
                 ApptResSeq = 9,

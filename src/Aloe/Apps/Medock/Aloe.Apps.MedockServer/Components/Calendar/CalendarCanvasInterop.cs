@@ -12,7 +12,7 @@ public static class CalendarCanvasInterop
     /// カレンダーデータをJavaScript用のオブジェクトに変換します。
     /// </summary>
     public static object BuildDataObject(
-        IEnumerable<CalendarAppointment>? appointments,
+        IEnumerable<AppointmentDto>? appointments,
         Dictionary<string, CalendarDayStats>? dayStats,
         Dictionary<string, string>? holidays)
     {
@@ -23,8 +23,13 @@ public static class CalendarCanvasInterop
             startTime = a.StartTime?.ToString("HH:mm") ?? "09:00",
             endTime = a.EndTime?.ToString("HH:mm") ?? "10:00",
             patientName = a.PatientName,
-            orgName = a.OrganizationName,
-            status = a.Status
+            organizationName = a.OrganizationName,
+            status = a.Status,
+            // 将来的に使用可能な追加プロパティ
+            patientId = a.PatientId,
+            organizationId = a.OrganizationId,
+            floorName = a.FloorName,
+            floorId = a.FloorId
         }).ToArray() ?? Array.Empty<object>();
 
         var dayStatsDict = dayStats != null

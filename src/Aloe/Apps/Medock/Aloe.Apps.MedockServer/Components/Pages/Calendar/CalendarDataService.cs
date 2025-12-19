@@ -84,4 +84,51 @@ public class CalendarDataService
         // このメソッドは将来AppointmentResource用に実装されます
         await Task.CompletedTask;
     }
+
+    /// <summary>
+    /// 期間に応じた予約データを取得して状態に反映します。
+    /// </summary>
+    public async Task LoadAppointmentsAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
+    {
+        try
+        {
+            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var appointments = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+            state.Appointments = appointments;
+        }
+        catch (Exception)
+        {
+            state.Appointments = [];
+        }
+    }
+
+    /// <summary>
+    /// ビューと日付に基づいて取得期間を計算します。
+    /// </summary>
+    private static (DateOnly StartDate, DateOnly EndDate) GetDateRange(
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays)
+    {
+        return viewType switch
+        {
+            CalendarViewType.Year => (
+                new DateOnly(currentDate.Year, 1, 1),
+                new DateOnly(currentDate.Year, 12, 31)
+            ),
+            CalendarViewType.Month => (
+                new DateOnly(currentDate.Year, currentDate.Month, 1),
+                new DateOnly(currentDate.Year, currentDate.Month, DateTime.DaysInMonth(currentDate.Year, currentDate.Month))
+            ),
+            CalendarViewType.Week => (
+                currentDate.AddDays(-((int)currentDate.DayOfWeek)),
+                currentDate.AddDays(-((int)currentDate.DayOfWeek) + weekDays - 1)
+            ),
+            _ => (currentDate, currentDate)
+        };
+    }
 }

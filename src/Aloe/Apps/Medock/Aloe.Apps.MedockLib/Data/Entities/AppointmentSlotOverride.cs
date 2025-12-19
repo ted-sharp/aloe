@@ -2,6 +2,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 /// <summary>
 /// 予約スロット上書きエンティティ
@@ -30,6 +31,34 @@ public class AppointmentSlotOverride : IAuditableEntity
     /// </summary>
     [Column("appt_slots")]
     public string ApptSlots { get; set; } = "{}";
+
+    /// <summary>
+    /// 予約スロット定義（型安全なアクセサー）
+    /// ApptSlots の JSONB データを型安全にアクセスするためのプロパティ
+    /// </summary>
+    [NotMapped]
+    public AppointmentSlotRoot? ApptSlotsData
+    {
+        get
+        {
+            if (string.IsNullOrWhiteSpace(ApptSlots) || ApptSlots == "{}")
+                return null;
+            try
+            {
+                return JsonSerializer.Deserialize<AppointmentSlotRoot>(ApptSlots);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+        set
+        {
+            ApptSlots = value != null
+                ? JsonSerializer.Serialize(value)
+                : "{}";
+        }
+    }
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]

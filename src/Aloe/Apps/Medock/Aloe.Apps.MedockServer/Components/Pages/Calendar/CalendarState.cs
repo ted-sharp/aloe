@@ -41,7 +41,7 @@ public class CalendarState
     // カレンダーデータ
     public Dictionary<string, CalendarDayStats> DayStats { get; set; } = new();
     public Dictionary<string, CalendarDayStats> OriginalDayStats { get; set; } = new();
-    public List<CalendarAppointment> Appointments { get; set; } = new();
+    public List<AppointmentDto> Appointments { get; set; } = new();
     public Dictionary<string, string> Holidays { get; set; } = new();
 
     // 営業時間

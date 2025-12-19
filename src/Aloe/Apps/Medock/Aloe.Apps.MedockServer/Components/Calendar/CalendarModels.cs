@@ -1,20 +1,6 @@
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 /// <summary>
-/// カレンダー表示用の予約データ
-/// </summary>
-public class CalendarAppointment
-{
-    public Guid Id { get; set; }
-    public DateOnly Date { get; set; }
-    public TimeOnly? StartTime { get; set; }
-    public TimeOnly? EndTime { get; set; }
-    public string? PatientName { get; set; }
-    public string? OrganizationName { get; set; }
-    public int Status { get; set; }
-}
-
-/// <summary>
 /// 日別統計データ（パイチャート用）
 /// </summary>
 public class CalendarDayStats

@@ -25,7 +25,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     /// Appointment data for the calendar
     /// </summary>
     [Parameter]
-    public IEnumerable<CalendarAppointment>? Appointments { get; set; }
+    public IEnumerable<AppointmentDto>? Appointments { get; set; }
 
     /// <summary>
     /// Day statistics (AM/PM counts per day)
