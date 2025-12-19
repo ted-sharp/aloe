@@ -1,39 +1,15 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Services;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentStatsSeeder
 {
-
-    /// <summary>
-    /// グラフデータのJSONB構造
-    /// </summary>
-    private class GraphDefinition
-    {
-        [JsonPropertyName("slots")]
-        public List<GraphSlotItem> Slots { get; set; } = new();
-    }
-
-    /// <summary>
-    /// グラフスロットアイテム
-    /// </summary>
-    private class GraphSlotItem
-    {
-        [JsonPropertyName("time")]
-        public string Time { get; set; } = string.Empty;
-
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [JsonPropertyName("max")]
-        public int Max { get; set; }
-    }
+    private static readonly Random _random = new Random();
 
     public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
     {
@@ -52,20 +28,118 @@ internal static class AppointmentStatsSeeder
             // テーブルが存在しない場合は続行（初回実行時）
         }
 
+        // 日付範囲を取得（後続の処理で使用）
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
+
         // 必要なデータを取得
         var appointments = await context.Appointments
             .Where(a => !a.IsDeleted && a.ApptDate.HasValue)
             .ToListAsync();
+
+        var resourceAssignments = await context.AppointmentResourceAssignments
+            .Where(ara => !ara.IsDeleted)
+            .ToListAsync();
+
+        // mainリソースの場合、既存の予約データがない場合に予約データを生成
+        // AppointmentResourceTypeは[NotMapped]のため、ApptResTypeCodeを使用
+        var mainResources = await context.AppointmentResources
+            .Where(r => !r.IsDeleted && r.ApptResTypeCode == (int)AppointmentResourceType.Main)
+            .ToListAsync();
+
+        if (mainResources.Any() && (!appointments.Any() || !resourceAssignments.Any()))
+        {
+            Console.WriteLine("[INFO] Generating appointment data for main resources...");
+            var holidays = await SeederHelper.LoadHolidaySetAsync(context);
+
+            // Floor、Organization、Patientを取得
+            var floors = await context.Floors
+                .Where(f => !f.IsDeleted)
+                .ToListAsync();
+
+            if (!floors.Any())
+            {
+                Console.WriteLine("[SKIP] AppointmentStats: No floors found for generating appointments.");
+            }
+            else
+            {
+                foreach (var mainResource in mainResources)
+                {
+                    var floor = floors.FirstOrDefault(f => f.FloorId == mainResource.FloorId);
+                    if (floor == null)
+                    {
+                        Console.WriteLine($"  [!] Floor not found for resource: {mainResource.ApptResName}");
+                        continue;
+                    }
+
+                    var patients = await context.Patients
+                        .Where(p => !p.IsDeleted && p.FacilityId == floor.FacilityId)
+                        .ToListAsync();
+
+                    var organizations = await context.Organizations
+                        .Where(o => !o.IsDeleted && o.FacilityId == floor.FacilityId)
+                        .ToListAsync();
+
+                    if (!patients.Any() || !organizations.Any())
+                    {
+                        Console.WriteLine($"  [!] Patients or Organizations not found for resource: {mainResource.ApptResName}");
+                        continue;
+                    }
+
+                    // スロット定義を取得
+                    var slot = await context.AppointmentSlots
+                        .Where(s => !s.IsDeleted && s.IsActive && s.ApptResId == mainResource.ApptResId)
+                        .FirstOrDefaultAsync();
+
+                    if (slot?.ApptSlotsData == null || !slot.ApptSlotsData.Slots.Any())
+                    {
+                        Console.WriteLine($"  [!] Slot definition not found for resource: {mainResource.ApptResName}");
+                        continue;
+                    }
+
+                    // 予約データを生成
+                    var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
+                        mainResource,
+                        startDate,
+                        endDate,
+                        slot.ApptSlotsData,
+                        slot.ActiveFrom,
+                        slot.ActiveTo,
+                        holidays,
+                        floor,
+                        patients,
+                        organizations,
+                        dateTimeProvider);
+
+                    if (generatedAppointments.Any())
+                    {
+                        context.Appointments.AddRange(generatedAppointments);
+                        context.AppointmentResourceAssignments.AddRange(generatedAssignments);
+                        Console.WriteLine($"  [+] Generated {generatedAppointments.Count} appointments for {mainResource.ApptResName}");
+                    }
+                }
+
+                // 生成した予約データを保存
+                if (context.ChangeTracker.HasChanges())
+                {
+                    await context.SaveChangesAsync();
+                }
+
+                // 予約データを再取得
+                appointments = await context.Appointments
+                    .Where(a => !a.IsDeleted && a.ApptDate.HasValue)
+                    .ToListAsync();
+
+                resourceAssignments = await context.AppointmentResourceAssignments
+                    .Where(ara => !ara.IsDeleted)
+                    .ToListAsync();
+            }
+        }
 
         if (!appointments.Any())
         {
             Console.WriteLine("[SKIP] AppointmentStats: No appointments found.");
             return;
         }
-
-        var resourceAssignments = await context.AppointmentResourceAssignments
-            .Where(ara => !ara.IsDeleted)
-            .ToListAsync();
 
         if (!resourceAssignments.Any())
         {
@@ -130,25 +204,16 @@ internal static class AppointmentStatsSeeder
             statsMap[key].AppointmentCount = appointmentsInGroup.Count;
 
             // 時間帯ごとの予約数を集計
-            // リソースのタイプを取得して、AM/PM形式か時間スロット形式かを判定
-            var resource = resources.FirstOrDefault(r => r.ApptResId == group.Key.ResourceId);
+            // 予約の開始時刻をTimeOnlyとして、スロットの時間範囲とマッチング
             foreach (var appointment in appointmentsInGroup)
             {
                 if (appointment.ApptStartTime.HasValue)
                 {
-                    string timeKey;
-                    // AM/PM形式のリソース（エコー、ロッカー）の場合
-                    if (resource != null && (resource.ApptResTypeCode == 2 || resource.ApptResTypeCode == 5))
-                    {
-                        var hour = appointment.ApptStartTime.Value.Hour;
-                        timeKey = (hour >= 8 && hour < 13) ? "AM" : "PM";
-                    }
-                    else
-                    {
-                        // 時間スロット形式（内視鏡、CT、MR）の場合
-                        timeKey = appointment.ApptStartTime.Value.ToString("HH:mm");
-                    }
-
+                    var appointmentTime = appointment.ApptStartTime.Value;
+                    // 時間範囲のキーを作成（"HH:mm"形式）
+                    var timeKey = appointmentTime.ToString("HH:mm");
+                    // 後でスロット定義とマッチングするため、開始時刻のみをキーとして使用
+                    // 実際のマッチングはスロット定義のStart/End範囲で行う
                     if (!statsMap[key].TimeSlotCounts.ContainsKey(timeKey))
                     {
                         statsMap[key].TimeSlotCounts[timeKey] = 0;
@@ -159,7 +224,6 @@ internal static class AppointmentStatsSeeder
         }
 
         // 2. キャパシティとグラフデータを計算（appointment_slotsから）
-        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
         var slotDict = slots.ToDictionary(s => s.ApptResId);
         var overrideDict = slotOverrides
             .GroupBy(so => (so.ApptDate, so.ApptResId))
@@ -202,19 +266,33 @@ internal static class AppointmentStatsSeeder
 
                     var statsData = statsMap[key];
 
-                    // キャパシティを計算（各スロットのmax値を合計）
-                    statsData.Capacity = slotDef.Slots.Sum(s => s.Max);
+                    // キャパシティを計算（各スロットのCap値を合計）
+                    statsData.Capacity = slotDef.Slots.Sum(s => s.Cap);
 
                     // グラフデータを生成
-                    var graphSlots = new List<GraphSlotItem>();
+                    var graphSlots = new List<AppointmentGraphItem>();
                     foreach (var slotItem in slotDef.Slots)
                     {
-                        var count = statsData.TimeSlotCounts.TryGetValue(slotItem.Time, out var c) ? c : 0;
-                        graphSlots.Add(new GraphSlotItem
+                        // スロットの時間範囲内にある予約数をカウント
+                        int count = 0;
+                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
                         {
-                            Time = slotItem.Time,
+                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                            {
+                                // 予約の開始時刻がスロットの時間範囲内にあるかチェック
+                                if (appointmentTime >= slotItem.Start && appointmentTime < slotItem.End)
+                                {
+                                    count += cnt;
+                                }
+                            }
+                        }
+
+                        graphSlots.Add(new AppointmentGraphItem
+                        {
+                            Start = slotItem.Start,
+                            End = slotItem.End,
                             Count = count,
-                            Max = slotItem.Max
+                            Cap = slotItem.Cap
                         });
                     }
 
@@ -229,11 +307,6 @@ internal static class AppointmentStatsSeeder
         var statsList = new List<AppointmentStats>();
         foreach (var (key, statsData) in statsMap)
         {
-            var graphJson = JsonSerializer.Serialize(new GraphDefinition
-            {
-                Slots = statsData.GraphData
-            });
-
             var stat = new AppointmentStats
             {
                 ApptStatId = Guid.CreateVersion7(),
@@ -241,7 +314,10 @@ internal static class AppointmentStatsSeeder
                 ApptResId = statsData.ResourceId,
                 ApptCap = statsData.Capacity,
                 ApptCount = statsData.AppointmentCount,
-                ApptGraph = graphJson,
+                ApptGraphData = new AppointmentGraphRoot
+                {
+                    Slots = statsData.GraphData
+                },
                 IsDeleted = false
             };
 
@@ -260,6 +336,102 @@ internal static class AppointmentStatsSeeder
 
 
     /// <summary>
+    /// Mainリソース用の予約データを生成
+    /// </summary>
+    private static (List<Appointment> Appointments, List<AppointmentResourceAssignment> Assignments) GenerateAppointmentsForMainResource(
+        AppointmentResource resource,
+        DateOnly startDate,
+        DateOnly endDate,
+        AppointmentSlotRoot slotDef,
+        DateOnly slotActiveFrom,
+        DateOnly slotActiveTo,
+        HashSet<DateOnly> holidays,
+        Floor floor,
+        List<Patient> patients,
+        List<Organization> organizations,
+        IDateTimeProvider dateTimeProvider)
+    {
+        var appointments = new List<Appointment>();
+        var assignments = new List<AppointmentResourceAssignment>();
+
+        var currentDate = startDate;
+        while (currentDate <= endDate)
+        {
+            // スロット定義が有効な日付範囲内かチェック
+            if (currentDate < slotActiveFrom || currentDate > slotActiveTo)
+            {
+                currentDate = currentDate.AddDays(1);
+                continue;
+            }
+
+            // 営業日判定
+            var isBusinessDay = SeederHelper.IsBusinessDay(currentDate, holidays);
+            
+            // 忙しい時期（営業日）か閑散期（週末・祝日）かを判定
+            var isBusyPeriod = isBusinessDay;
+            
+            foreach (var slotItem in slotDef.Slots)
+            {
+                // 埋まり具合を決定
+                int appointmentCount;
+                if (isBusyPeriod)
+                {
+                    // 忙しい時期: Cap値の100%（10割埋まる）
+                    appointmentCount = slotItem.Cap;
+                }
+                else
+                {
+                    // 閑散期: Cap値の50%（半分埋まる、切り上げ）
+                    appointmentCount = (int)Math.Ceiling(slotItem.Cap * 0.5);
+                }
+
+                // 予約を生成
+                for (int i = 0; i < appointmentCount; i++)
+                {
+                    // ランダムにPatientとOrganizationを選択
+                    var patient = patients[_random.Next(patients.Count)];
+                    var organization = organizations[_random.Next(organizations.Count)];
+
+                    // Appointmentを作成
+                    var appointment = new Appointment
+                    {
+                        ApptId = Guid.CreateVersion7(),
+                        FloorId = floor.FloorId,
+                        OrgId = organization.OrgId,
+                        PtId = patient.PtId,
+                        ApptDate = currentDate,
+                        ApptStartTime = slotItem.Start,
+                        ApptDurationMin = (int)slotItem.Duration.TotalMinutes,
+                        ApptStatusCode = 0,
+                        ApptMemo = $"Generated for main resource: {resource.ApptResName}",
+                        IsDeleted = false
+                    };
+
+                    SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
+                    appointments.Add(appointment);
+
+                    // AppointmentResourceAssignmentを作成
+                    var assignment = new AppointmentResourceAssignment
+                    {
+                        ApptResAssignId = Guid.CreateVersion7(),
+                        ApptId = appointment.ApptId,
+                        ApptResId = resource.ApptResId,
+                        ApptStartTime = slotItem.Start,
+                        IsDeleted = false
+                    };
+
+                    SeederHelper.InitializeAuditFields(assignment, dateTimeProvider);
+                    assignments.Add(assignment);
+                }
+            }
+
+            currentDate = currentDate.AddDays(1);
+        }
+
+        return (appointments, assignments);
+    }
+
+    /// <summary>
     /// 統計データの一時保持用クラス
     /// </summary>
     private class AppointmentStatsData
@@ -269,7 +441,7 @@ internal static class AppointmentStatsSeeder
         public int AppointmentCount { get; set; }
         public int Capacity { get; set; }
         public Dictionary<string, int> TimeSlotCounts { get; set; } = new();
-        public List<GraphSlotItem> GraphData { get; set; } = new();
+        public List<AppointmentGraphItem> GraphData { get; set; } = new();
     }
 }
 

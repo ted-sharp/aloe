@@ -34,6 +34,18 @@ internal static class AppointmentResourceSeeder
 
         var resources = new List<AppointmentResource>
         {
+            // メインリソースを最初に追加
+            new()
+            {
+                ApptResId = Guid.CreateVersion7(),
+                FloorId = floorId,
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main, // ロッカー → Main
+                ApptResName = "ロッカー",
+                ApptResDesc = "ロッカー（AM/PM各80個制限、30分区切りで業務時間を分割）",
+                ApptResSeq = 1,
+                IsDeleted = false
+            },
+            // その他のリソース
             new()
             {
                 ApptResId = Guid.CreateVersion7(),
@@ -41,7 +53,7 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // 内視鏡 → Equipment
                 ApptResName = "内視鏡",
                 ApptResDesc = "内視鏡検査用リソース",
-                ApptResSeq = 1,
+                ApptResSeq = 2,
                 IsDeleted = false
             },
             new()
@@ -51,7 +63,7 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "腹部エコー",
                 ApptResDesc = "腹部エコー検査用リソース",
-                ApptResSeq = 2,
+                ApptResSeq = 3,
                 IsDeleted = false
             },
             new()
@@ -61,7 +73,7 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "乳腺エコー",
                 ApptResDesc = "乳腺エコー検査用リソース",
-                ApptResSeq = 3,
+                ApptResSeq = 4,
                 IsDeleted = false
             },
             new()
@@ -71,7 +83,7 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // エコー → Equipment
                 ApptResName = "頸動脈エコー",
                 ApptResDesc = "頸動脈エコー検査用リソース",
-                ApptResSeq = 4,
+                ApptResSeq = 5,
                 IsDeleted = false
             },
             new()
@@ -81,7 +93,7 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // CT → Equipment
                 ApptResName = "CT",
                 ApptResDesc = "CT検査用リソース",
-                ApptResSeq = 5,
+                ApptResSeq = 6,
                 IsDeleted = false
             },
             new()
@@ -91,16 +103,6 @@ internal static class AppointmentResourceSeeder
                 AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment, // MR → Equipment
                 ApptResName = "MR",
                 ApptResDesc = "MR検査用リソース",
-                ApptResSeq = 6,
-                IsDeleted = false
-            },
-            new()
-            {
-                ApptResId = Guid.CreateVersion7(),
-                FloorId = floorId,
-                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main, // ロッカー → Main
-                ApptResName = "ロッカー",
-                ApptResDesc = "ロッカー（AM/PM各80個制限、30分区切りで業務時間を分割）",
                 ApptResSeq = 7,
                 IsDeleted = false
             },

@@ -24,12 +24,12 @@
                 <div class="flex flex-col overflow-hidden">
                     <h4 class="font-semibold mb-2">通常予約</h4>
                     <div class="overflow-y-auto space-y-3">
-                        @if (DayStats?.Slots != null)
+                        @if (MainStats != null && MainStats.Any())
                         {
-                            @foreach (var slot in DayStats.Slots)
+                            @foreach (var slot in GetSlotsFromStats())
                             {
                                 // 空き率を計算（1 - 使用率）
-                                var vacancyRatio = slot.Max > 0 ? (1 - slot.Count / (double)slot.Max) * 100 : 0;
+                                var vacancyRatio = slot.Cap > 0 ? (1 - slot.Count / (double)slot.Cap) * 100 : 0;
                                 // 空き率が0%より大きい場合のみ表示
                                 if (vacancyRatio > 0)
                                 {
@@ -38,7 +38,7 @@
                                     <div>
                                         <div class="flex justify-between text-sm mb-1">
                                             <span class="font-medium">@slot.Time</span>
-                                            <span>@slot.Count/@slot.Max (空き:@Math.Round(vacancyRatio)%)</span>
+                                            <span>@slot.Count/@slot.Cap (空き:@Math.Round(vacancyRatio)%)</span>
                                         </div>
                                         <div class="bg-base-200 h-6 rounded overflow-hidden">
                                             <div class="h-full transition-all vacancy-bar"
@@ -69,10 +69,80 @@
 @code {
     [Parameter] public bool IsOpen { get; set; }
     [Parameter] public DateOnly? SelectedDate { get; set; }
-    [Parameter] public CalendarDayStats? DayStats { get; set; }
+    [Parameter] public List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStats>? MainStats { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
 
     // Equipment関連のパラメータとメソッドは削除されました（AppointmentResourceに統合）
+
+    private List<TimeSlotStats> GetSlotsFromStats()
+    {
+        if (MainStats == null || !MainStats.Any())
+            return new List<TimeSlotStats>();
+
+        // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）
+        var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
+
+        foreach (var stat in MainStats)
+        {
+            try
+            {
+                var graphData = System.Text.Json.JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+                if (graphData?.Slots != null)
+                {
+                    foreach (var slot in graphData.Slots)
+                    {
+                        var timeRangeKey = $"{slot.Start:HH:mm}-{slot.End:HH:mm}";
+                        if (slotMap.ContainsKey(timeRangeKey))
+                        {
+                            var existing = slotMap[timeRangeKey];
+                            slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + slot.Count, existing.Cap + slot.Cap);
+                        }
+                        else
+                        {
+                            slotMap[timeRangeKey] = (slot.Start, slot.End, slot.Count, slot.Cap);
+                        }
+                    }
+                }
+            }
+            catch (System.Text.Json.JsonException)
+            {
+                // JSONパースエラーは無視して続行
+            }
+        }
+
+        return slotMap.Select(kvp => new TimeSlotStats
+        {
+            Time = kvp.Key,
+            Count = kvp.Value.Count,
+            Cap = kvp.Value.Cap,
+            IsGrayedOut = false,
+            FilteredCount = 0
+        }).OrderBy(s => s.Time).ToList();
+    }
+
+    private class GraphDefinition
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("slots")]
+        public List<GraphSlotItem> Slots { get; set; } = new();
+    }
+
+    private class GraphSlotItem
+    {
+        [System.Text.Json.Serialization.JsonPropertyName("start")]
+        public TimeOnly Start { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("end")]
+        public TimeOnly End { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("cap")]
+        public int Cap { get; set; }
+
+        [System.Text.Json.Serialization.JsonPropertyName("available")]
+        public int Available { get; set; }
+    }
 
     private string GetBarColor(double vacancyRatio)
     {

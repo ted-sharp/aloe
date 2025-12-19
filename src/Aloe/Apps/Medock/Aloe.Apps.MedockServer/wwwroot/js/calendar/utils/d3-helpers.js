@@ -24,6 +24,7 @@ export function createArcPath(startAngle, endAngle, innerRadius, outerRadius) {
 
 /**
  * AM/PM の使用率から円グラフ用の角度データを計算
+ * @deprecated AM/PM形式は廃止されました。時間範囲ベースのデータ構造に移行してください。
  * @param {number} amRatio - AM の使用率（0.0 ～ 1.0）
  * @param {number} pmRatio - PM の使用率（0.0 ～ 1.0）
  * @returns {Object} AM/PM の filled/empty 領域の角度データ

@@ -62,10 +62,10 @@ builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSingleton(PasswordHasher.Default);
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
-    builder.Services.AddScoped<IAuthService, AuthService>();
-    builder.Services.AddScoped<IUserContextService, UserContextService>();
-    builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-    builder.Services.AddScoped<IFacilityService, FacilityService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IUserContextService, UserContextService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IFacilityService, FacilityService>();
 builder.Services.AddScoped<IAppointmentStatisticsService, AppointmentStatisticsService>();
 
 // Add Calendar Services

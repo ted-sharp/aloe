@@ -313,7 +313,7 @@ Left=1500
 Top=500
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="appt_res_type_code","appt_res_type_code","@INT","NOT NULL",,"0","0: None, 1: ",$FFFFFFFF,""
+Field="appt_res_type_code","appt_res_type_code","@INT","NOT NULL",,"0","0: None, 1: Main, 2: Equipment, 3: Environment, 99: Others",$FFFFFFFF,""
 Field="appt_res_name","appt_res_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="appt_res_desc","appt_res_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="appt_res_seq","appt_res_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
@@ -321,7 +321,7 @@ Index==0,floor_id
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251217201553
+ModifiedDateTime=20251219143455
 Position="APPT",1500,500
 ZOrder=217
 

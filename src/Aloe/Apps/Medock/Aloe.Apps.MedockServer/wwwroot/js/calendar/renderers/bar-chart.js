@@ -21,9 +21,9 @@ function buildModalContent(dateStr, slots, state) {
     let content = '';
 
     if (slots && slots.length > 0) {
-        const totalCount = slots.reduce((sum, s) => sum + s.count, 0);
-        const totalMax = slots.reduce((sum, s) => sum + s.max, 0);
-        content += `<p class="text-base mb-2">予約: ${totalCount}/${totalMax}件</p>`;
+        const totalCount = slots.reduce((sum, s) => sum + (s.count || 0), 0);
+        const totalCap = slots.reduce((sum, s) => sum + (s.cap || 0), 0);
+        content += `<p class="text-base mb-2">予約: ${totalCount}/${totalCap}件</p>`;
 
         // Show room filter summary
         const hasRoomFilter = slots.some(s => s.filteredCount > 0);
@@ -36,7 +36,8 @@ function buildModalContent(dateStr, slots, state) {
         content += '<div class="space-y-3 mt-4">';
         slots.forEach(s => {
             // 空き率を計算（1 - 使用率）
-            const vacancyRatio = s.max > 0 ? (1 - s.count / s.max) * 100 : 0;
+            const cap = (s.cap !== undefined && s.cap !== null && s.cap > 0) ? s.cap : 1;
+            const vacancyRatio = cap > 0 ? (1 - s.count / cap) * 100 : 0;
             // 空き率に基づいて色クラスを決定（空きが多い→緑、空きが少ない→グレー）
             const colorClass = vacancyRatio >= 70 ? 'bg-success' : vacancyRatio >= 30 ? 'bg-info' : vacancyRatio > 0 ? 'bg-base-300' : '';
 
@@ -46,13 +47,16 @@ function buildModalContent(dateStr, slots, state) {
                 roomInfo = ` <span class="text-warning">[部屋:${s.filteredCount}]</span>`;
             }
 
+            // 時間範囲の表示（start-end形式）
+            const timeRange = s.start && s.end ? `${s.start}-${s.end}` : (s.time || '');
+
             // 空き率が0%の場合は表示しない
             if (vacancyRatio > 0) {
                 content += `
                     <div>
                         <div class="flex justify-between text-sm mb-1">
-                            <span>${s.time}</span>
-                            <span>${s.count}/${s.max} (空き:${Math.round(vacancyRatio)}%)${roomInfo}</span>
+                            <span>${timeRange}</span>
+                            <span>${s.count}/${cap} (空き:${Math.round(vacancyRatio)}%)${roomInfo}</span>
                         </div>
                         <progress class="progress ${colorClass} w-full" value="${vacancyRatio}" max="100"></progress>
                     </div>
@@ -60,10 +64,6 @@ function buildModalContent(dateStr, slots, state) {
             }
         });
         content += '</div>';
-    } else {
-        const st = state.dayStats.get(dateStr) || { am: 0, pm: 0 };
-        content += `<p class="text-base">午前: ${st.am}件</p>`;
-        content += `<p class="text-base">午後: ${st.pm}件</p>`;
     }
 
     return content;
@@ -108,13 +108,23 @@ function timeToX(timeInHours, startHour, endHour, cellLeft, barAreaWidth) {
 
 /**
  * スロットの時刻文字列を時刻（時間単位）に変換
- * @param {string} timeStr - 時刻文字列（"08:00"、"08:00-09:00"、"AM"、"PM"など）
- * @param {number} startHour - 業務開始時刻（AM/PMなどの緩いスロット用）
- * @param {number} endHour - 業務終了時刻（AM/PMなどの緩いスロット用）
+ * @param {string|object} timeData - 時刻データ（"HH:mm-HH:mm"形式の文字列、または{start, end}オブジェクト）
+ * @param {number} startHour - 業務開始時刻（フォールバック用）
+ * @param {number} endHour - 業務終了時刻（フォールバック用）
  * @returns {number} 時刻（時間単位）
  */
-function parseTimeSlot(timeStr, startHour, endHour) {
-    // "08:00-09:00"形式の場合は開始時刻を取得
+function parseTimeSlot(timeData, startHour, endHour) {
+    // オブジェクト形式の場合（{start: "HH:mm", end: "HH:mm"}）
+    if (typeof timeData === 'object' && timeData.start) {
+        const startParts = timeData.start.split(':');
+        const hour = parseInt(startParts[0], 10);
+        const minute = startParts[1] ? parseInt(startParts[1], 10) : 0;
+        return hour + minute / 60;
+    }
+
+    // 文字列形式の場合
+    const timeStr = typeof timeData === 'string' ? timeData : '';
+    // "HH:mm-HH:mm"形式の場合は開始時刻を取得
     const timePart = timeStr.split('-')[0].trim();
 
     // "HH:MM"形式の時刻を解析
@@ -123,14 +133,6 @@ function parseTimeSlot(timeStr, startHour, endHour) {
         const hour = parseInt(parts[0], 10);
         const minute = parts[1] ? parseInt(parts[1], 10) : 0;
         return hour + minute / 60;
-    }
-
-    // "AM"、"PM"などの緩いスロット
-    const upper = timePart.toUpperCase();
-    if (upper === 'AM') {
-        return startHour + (12 - startHour) / 2; // 午前の中央時刻
-    } else if (upper === 'PM') {
-        return 12 + (endHour - 12) / 2; // 午後の中央時刻
     }
 
     // その他の場合は開始時刻を返す
@@ -295,7 +297,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     const isTooSmall = cellWidth < 10 || cellHeight < 10;
 
     // 時間帯枠データを取得
-    const stats = state.dayStats.get(dateStr);
+    const stats = state.mainStats.get(dateStr);
     const slots = stats?.slots || null;
 
     // 営業時間情報を取得（昼休み時間帯の縦ライン描画用、関数全体で使用）
@@ -393,10 +395,10 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                     return;
                 }
                 
-                const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
+                const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 1;
                 const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
                 
-                const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / max)));
+                const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / cap)));
                 totalVacancy += vacancyRatio;
                 slotCount++;
             });
@@ -404,12 +406,6 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             if (slotCount > 0) {
                 overallVacancyRatio = totalVacancy / slotCount;
             }
-        } else {
-            // フォールバック: AM/PM データから空き率を計算
-            const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
-            const amVacancyRatio = stats.amMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.am / stats.amMax))) : 0;
-            const pmVacancyRatio = stats.pmMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.pm / stats.pmMax))) : 0;
-            overallVacancyRatio = (amVacancyRatio + pmVacancyRatio) / 2;
         }
         
         // 記号を決定して描画
@@ -434,9 +430,9 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         slots.forEach((slot, index) => {
             // データの値検証とデフォルト値設定（棒グラフ用）
             const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-            const max = (slot.max !== undefined && slot.max !== null && slot.max > 0) ? slot.max : 1;
+            const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 1;
             // 空き率を計算（1 - 使用率）
-            const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / max)));
+            const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / cap)));
             const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
             const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColor(vacancyRatio);
             // 空き率に基づいて棒の高さを計算
@@ -491,44 +487,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             });
             layers.content.add(lunchEndLine);
         }
-    } else if (!isTooSmall) {
-        // フォールバック: AM/PM 2本の棒
-        const stats = state.dayStats.get(dateStr) || { am: 0, pm: 0, amMax: 10, pmMax: 10 };
-        // 空き率を計算（1 - 使用率）
-        const amVacancyRatio = stats.amMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.am / stats.amMax))) : 0;
-        const pmVacancyRatio = stats.pmMax > 0 ? Math.max(0, Math.min(1, 1 - (stats.pm / stats.pmMax))) : 0;
-
-        const barAreaWidth = Math.max(0, cellWidth - 4);
-        const gapWidth = 1;
-        const barWidth = Math.max(1, (barAreaWidth - gapWidth) / 2);
-
-        // AM棒（空き率が0より大きい場合のみ描画）
-        const amBarHeight = Math.max(0, barAreaHeight * amVacancyRatio);
-        if (amBarHeight > 0 && barWidth > 0) {
-            const amBar = new Konva.Rect({
-                x: cellLeft + 2,
-                y: barAreaTop + barAreaHeight - amBarHeight,
-                width: barWidth,
-                height: amBarHeight,
-                fill: getSlotColor(amVacancyRatio),
-                cornerRadius: Math.min(1, amBarHeight / 2, barWidth / 2)
-            });
-            layers.content.add(amBar);
-        }
-
-        // PM棒（空き率が0より大きい場合のみ描画）
-        const pmBarHeight = Math.max(0, barAreaHeight * pmVacancyRatio);
-        if (pmBarHeight > 0 && barWidth > 0) {
-            const pmBar = new Konva.Rect({
-                x: cellLeft + 2 + barWidth + gapWidth,
-                y: barAreaTop + barAreaHeight - pmBarHeight,
-                width: barWidth,
-                height: pmBarHeight,
-                fill: getSlotColor(pmVacancyRatio),
-                cornerRadius: Math.min(1, pmBarHeight / 2, barWidth / 2)
-            });
-            layers.content.add(pmBar);
-        }
+    }
 
         // 昼休み時間帯の縦ラインを描画（月間・年間ビューの場合、スロットがない場合でも表示）
         if (lunchStartHour !== null && lunchEndHour !== null && (state.currentView === 'month' || state.currentView === 'year')) {

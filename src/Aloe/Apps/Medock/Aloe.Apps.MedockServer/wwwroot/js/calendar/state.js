@@ -18,7 +18,7 @@ let state = {
     currentView: 'month',             // 現在のビュー: 'year', 'month', 'week'
     currentDate: new Date(),          // 現在表示中の日付
     appointments: [],                 // 予約データの配列
-    dayStats: new Map(),              // 日付文字列 -> { am, pm, amMax, pmMax, slots[], isGrayedOut }
+    mainStats: new Map(),              // 日付文字列 -> Mainリソース統計 { am, pm, amMax, pmMax, slots[], isGrayedOut }
     holidays: new Map(),              // 日付文字列 -> 祝日名
     options: {
         weekDays: 7,                  // 週表示で表示する日数: 1, 3, 7, 14, 31
@@ -76,7 +76,7 @@ export function resetState() {
         stage: null,
         layers: {},
         appointments: [],
-        dayStats: new Map(),
+        mainStats: new Map(),
         holidays: new Map(),
         resizeObserver: null,
         selectedDate: null,

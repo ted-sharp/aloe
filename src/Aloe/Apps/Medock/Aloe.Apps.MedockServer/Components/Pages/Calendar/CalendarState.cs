@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
 
@@ -39,8 +40,9 @@ public class CalendarState
     public (DateOnly Start, DateOnly End)? SelectedDateRange { get; set; }
 
     // カレンダーデータ
-    public Dictionary<string, CalendarDayStats> DayStats { get; set; } = new();
-    public Dictionary<string, CalendarDayStats> OriginalDayStats { get; set; } = new();
+    public Dictionary<string, List<AppointmentStats>> MainStats { get; set; } = new();
+    public Dictionary<string, List<AppointmentStats>> OriginalMainStats { get; set; } = new();
+    public Dictionary<string, bool> MainStatsGrayedOut { get; set; } = new(); // フィルター用のグレーアウト状態
     public List<AppointmentDto> Appointments { get; set; } = new();
     public Dictionary<string, string> Holidays { get; set; } = new();
 

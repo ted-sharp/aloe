@@ -33,7 +33,7 @@ function getGridLayout(width) {
  */
 export function renderYearView() {
     const state = getState();
-    const { stage, layers, currentDate, dayStats } = state;
+    const { stage, layers, currentDate, mainStats } = state;
     const width = stage.width();
     const height = stage.height();
 

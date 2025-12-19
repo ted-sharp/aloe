@@ -1,5 +1,8 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -9,11 +12,28 @@ namespace Aloe.Apps.MedockServer.Components.Pages;
 public static class SampleDataGenerator
 {
     /// <summary>
-    /// 日別統計サンプルデータを生成
+    /// グラフスロットアイテム（JSON生成用）
     /// </summary>
-    public static void GenerateDayStats(
-        Dictionary<string, CalendarDayStats> dayStats,
-        Dictionary<string, CalendarDayStats> originalDayStats,
+    private class GraphSlotItem
+    {
+        [JsonPropertyName("time")]
+        public string Time { get; set; } = String.Empty;
+
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [JsonPropertyName("max")]
+        public int Max { get; set; }
+    }
+
+    /// <summary>
+    /// Mainリソース統計サンプルデータを生成
+    /// 注意: このメソッドは開発用です。実際のエンティティ作成にはリソースIDなどが必要です。
+    /// </summary>
+    public static void GenerateMainStats(
+        Dictionary<string, List<AppointmentStats>> mainStats,
+        Dictionary<string, List<AppointmentStats>> originalMainStats,
+        Dictionary<string, bool> mainStatsGrayedOut,
         BusinessHoursDto? businessHours)
     {
         var random = new Random(42);
@@ -46,11 +66,28 @@ public static class SampleDataGenerator
             var dayOfWeek = date.DayOfWeek;
             var isWeekend = dayOfWeek == DayOfWeek.Saturday || dayOfWeek == DayOfWeek.Sunday;
 
-            var (stats, originalStats) = GenerateDayStatsPair(
-                random, slotTimes, slotMaxes, isWeekend, hours);
+            var statsList = GenerateAppointmentStatsList(
+                random, slotTimes, slotMaxes, isWeekend, DateOnly.FromDateTime(date));
 
-            dayStats[dateStr] = stats;
-            originalDayStats[dateStr] = originalStats;
+            mainStats[dateStr] = statsList;
+            originalMainStats[dateStr] = statsList.Select(s => new AppointmentStats
+            {
+                ApptStatId = s.ApptStatId,
+                ApptDate = s.ApptDate,
+                ApptResId = s.ApptResId,
+                ApptCap = s.ApptCap,
+                ApptCount = s.ApptCount,
+                ApptAvailable = s.ApptAvailable,
+                ApptGraph = s.ApptGraph,
+                IsDeleted = s.IsDeleted,
+                CreatedAt = s.CreatedAt,
+                CreatedUserId = s.CreatedUserId,
+                CreatedSessionId = s.CreatedSessionId,
+                UpdatedAt = s.UpdatedAt,
+                UpdatedUserId = s.UpdatedUserId,
+                UpdatedSessionId = s.UpdatedSessionId
+            }).ToList();
+            mainStatsGrayedOut[dateStr] = false;
         }
     }
 
@@ -124,82 +161,59 @@ public static class SampleDataGenerator
         return slotTimes;
     }
 
-    private static (CalendarDayStats stats, CalendarDayStats originalStats) GenerateDayStatsPair(
+    private static List<AppointmentStats> GenerateAppointmentStatsList(
         Random random,
         List<string> slotTimes,
         int[] slotMaxes,
         bool isWeekend,
-        BusinessHoursDto businessHours)
+        DateOnly date)
     {
-        var slots = new List<TimeSlotStats>();
-        var amCount = 0;
-        var pmCount = 0;
-        var amMax = 0;
-        var pmMax = 0;
-
-        var lunchStart = businessHours.GetLunchStartTimeOnly();
-        var lunchEnd = businessHours.GetLunchEndTimeOnly();
+        var slots = new List<GraphSlotItem>();
+        var totalCount = 0;
+        var totalMax = 0;
 
         for (var i = 0; i < slotTimes.Count; i++)
         {
             var max = isWeekend ? Math.Max(1, slotMaxes[i] / 2) : slotMaxes[i];
             var count = random.Next(0, max + 1);
 
-            slots.Add(new TimeSlotStats
+            slots.Add(new GraphSlotItem
             {
                 Time = slotTimes[i],
                 Count = count,
-                Max = max,
-                IsGrayedOut = false
+                Max = max
             });
 
-            // 営業時間に基づいてAM/PMを判定
-            var slotTime = TimeOnly.Parse(slotTimes[i]);
-
-            if (slotTime < lunchStart)
-            {
-                amCount += count;
-                amMax += max;
-            }
-            else if (slotTime >= lunchEnd)
-            {
-                pmCount += count;
-                pmMax += max;
-            }
-            else
-            {
-                // 昼休み時間内はAMにカウント
-                amCount += count;
-                amMax += max;
-            }
+            totalCount += count;
+            totalMax += max;
         }
 
-        var dayStats = new CalendarDayStats
+        // JSON形式のグラフデータを生成
+        var graphData = new
         {
-            AmCount = amCount,
-            PmCount = pmCount,
-            AmMax = amMax,
-            PmMax = pmMax,
-            Slots = slots,
-            IsGrayedOut = false
+            slots = slots
+        };
+        var apptGraph = JsonSerializer.Serialize(graphData);
+
+        // サンプル用のAppointmentStatsを作成（リソースIDはダミー）
+        var stats = new AppointmentStats
+        {
+            ApptStatId = Guid.CreateVersion7(),
+            ApptDate = date,
+            ApptResId = Guid.Empty, // ダミーID
+            ApptCap = totalMax,
+            ApptCount = totalCount,
+            ApptAvailable = totalMax - totalCount,
+            ApptGraph = apptGraph,
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow,
+            CreatedUserId = Guid.Empty,
+            CreatedSessionId = Guid.Empty,
+            UpdatedAt = DateTime.UtcNow,
+            UpdatedUserId = Guid.Empty,
+            UpdatedSessionId = Guid.Empty
         };
 
-        var originalStats = new CalendarDayStats
-        {
-            AmCount = amCount,
-            PmCount = pmCount,
-            AmMax = amMax,
-            PmMax = pmMax,
-            Slots = slots.Select(s => new TimeSlotStats
-            {
-                Time = s.Time,
-                Count = s.Count,
-                Max = s.Max,
-                IsGrayedOut = false
-            }).ToList(),
-            IsGrayedOut = false
-        };
-
-        return (dayStats, originalStats);
+        return new List<AppointmentStats> { stats };
     }
 }

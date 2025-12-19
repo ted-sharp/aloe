@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Data.Entities;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -12,10 +13,16 @@ public partial class MonthView : ComponentBase
     public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     /// <summary>
-    /// 日別統計データ
+    /// Mainリソース統計データ
     /// </summary>
     [Parameter]
-    public Dictionary<string, CalendarDayStats>? DayStats { get; set; }
+    public Dictionary<string, List<AppointmentStats>>? MainStats { get; set; }
+
+    /// <summary>
+    /// グレーアウト状態（フィルター用）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）

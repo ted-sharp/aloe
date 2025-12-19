@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -35,42 +34,20 @@ public class FacilityService : IFacilityService
             .OrderByDescending(fbh => fbh.ActiveFrom) // 最新の設定を優先
             .FirstOrDefaultAsync();
 
-        if (businessHours == null || String.IsNullOrWhiteSpace(businessHours.BusinessHours))
+        if (businessHours == null || businessHours.BusinessHoursData == null)
         {
             // デフォルト値を返す
             return GetDefaultBusinessHoursDto();
         }
 
-        // JSONBをパース
-        try
+        var businessHoursData = businessHours.BusinessHoursData;
+        return new BusinessHoursDto
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-
-            var businessHoursJson = JsonSerializer.Deserialize<BusinessHoursJson>(
-                businessHours.BusinessHours,
-                options);
-
-            if (businessHoursJson == null)
-            {
-                return GetDefaultBusinessHoursDto();
-            }
-
-            return new BusinessHoursDto
-            {
-                StartTime = businessHoursJson.Start ?? "09:00",
-                EndTime = businessHoursJson.End ?? "18:00",
-                LunchStartTime = businessHoursJson.Lunch?.Start ?? "12:00",
-                LunchEndTime = businessHoursJson.Lunch?.End ?? "13:00"
-            };
-        }
-        catch (JsonException)
-        {
-            // JSONパースエラーの場合はデフォルト値を返す
-            return GetDefaultBusinessHoursDto();
-        }
+            StartTime = businessHoursData.Start ?? "09:00",
+            EndTime = businessHoursData.End ?? "18:00",
+            LunchStartTime = businessHoursData.Lunch?.Start ?? "12:00",
+            LunchEndTime = businessHoursData.Lunch?.End ?? "13:00"
+        };
     }
 
     /// <summary>

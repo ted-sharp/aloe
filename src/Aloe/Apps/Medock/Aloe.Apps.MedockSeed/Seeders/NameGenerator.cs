@@ -312,8 +312,8 @@ internal static class NameGenerator
         // カタカナを組み立て
         var prefixKatakana = CompanyPrefixKatakana[prefix];
         var suffixKatakana = CompanySuffixKatakana[suffix];
-        var nameKatakana = suffixKatakana == "" 
-            ? $"{prefixKatakana}{baseNameData.Katakana}" 
+        var nameKatakana = suffixKatakana == ""
+            ? $"{prefixKatakana}{baseNameData.Katakana}"
             : $"{prefixKatakana}{baseNameData.Katakana}{suffixKatakana}";
         var nameKatakanaCompat = nameKatakana.Replace(" ", "").Replace("　", "");
 

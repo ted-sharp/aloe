@@ -1,11 +1,12 @@
 using System.Text.Json.Serialization;
 
-namespace Aloe.Apps.MedockLib.Services;
+namespace Aloe.Apps.MedockLib.Data.Entities;
 
 /// <summary>
-/// 営業時間のJSONB構造
+/// 施設営業時間のJSONB構造
+/// JSONB で保持される営業時間定義のルートクラス
 /// </summary>
-public class BusinessHoursJson
+public class FacilityBusinessHoursRoot
 {
     /// <summary>始業時間（例: "09:00"）</summary>
     [JsonPropertyName("start")]
@@ -17,13 +18,13 @@ public class BusinessHoursJson
 
     /// <summary>昼休憩時間</summary>
     [JsonPropertyName("lunch")]
-    public LunchHoursJson? Lunch { get; set; }
+    public LunchHoursItem? Lunch { get; set; }
 }
 
 /// <summary>
 /// 昼休憩時間のJSONB構造
 /// </summary>
-public class LunchHoursJson
+public class LunchHoursItem
 {
     /// <summary>昼休憩開始時間（例: "12:00"）</summary>
     [JsonPropertyName("start")]

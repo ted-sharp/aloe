@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Constants;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.MedockLib.Repositories;
@@ -35,7 +36,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     }
 
     /// <inheritdoc />
-    public async Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate)
+    public async Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate)
     {
         var results = await this._context.Appointments
             .Where(a => !a.IsDeleted &&
@@ -46,5 +47,18 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             .ToListAsync();
 
         return results.Select(x => (x.ApptDate, x.ApptStartTime)).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
+    {
+        return await this._context.AppointmentStats
+            .Include(s => s.AppointmentResource)
+            .Where(s => !s.IsDeleted &&
+                        !s.AppointmentResource.IsDeleted &&
+                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                        s.ApptDate >= startDate &&
+                        s.ApptDate <= endDate)
+            .ToListAsync();
     }
 }

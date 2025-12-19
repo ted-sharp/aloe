@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 
@@ -28,10 +29,16 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public IEnumerable<AppointmentDto>? Appointments { get; set; }
 
     /// <summary>
-    /// Day statistics (AM/PM counts per day)
+    /// Mainリソース統計データ（日付ごと）
     /// </summary>
     [Parameter]
-    public Dictionary<string, CalendarDayStats>? DayStats { get; set; }
+    public Dictionary<string, List<AppointmentStats>>? MainStats { get; set; }
+
+    /// <summary>
+    /// グレーアウト状態（フィルター用）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
     /// Holidays (date string -> holiday name)
@@ -179,7 +186,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        if (this._isInitialized && (this.Appointments != null || this.DayStats != null))
+        if (this._isInitialized && (this.Appointments != null || this.MainStats != null))
         {
             await this.UpdateDataAsync();
         }
@@ -219,7 +226,8 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
         var data = CalendarCanvasInterop.BuildDataObject(
             this.Appointments,
-            this.DayStats,
+            this.MainStats,
+            this.MainStatsGrayedOut,
             this.Holidays);
         var options = CalendarCanvasInterop.BuildOptions(
             this.WeekDays,
@@ -249,7 +257,8 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
         var data = CalendarCanvasInterop.BuildDataObject(
             this.Appointments,
-            this.DayStats,
+            this.MainStats,
+            this.MainStatsGrayedOut,
             this.Holidays);
         await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
     }

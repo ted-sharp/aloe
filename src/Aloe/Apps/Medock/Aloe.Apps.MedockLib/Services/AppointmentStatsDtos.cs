@@ -1,9 +1,9 @@
 namespace Aloe.Apps.MedockLib.Services;
 
 /// <summary>
-/// 日別統計DTO
+/// Mainリソース統計DTO
 /// </summary>
-public class DayStatsDto
+public class MainStatsDto
 {
     public int AmCount { get; set; }
     public int PmCount { get; set; }

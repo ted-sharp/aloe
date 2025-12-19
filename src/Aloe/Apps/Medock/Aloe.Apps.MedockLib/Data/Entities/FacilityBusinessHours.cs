@@ -2,6 +2,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 /// <summary>
 /// 施設営業時間エンティティ
@@ -22,10 +23,38 @@ public class FacilityBusinessHours : IAuditableEntity
 
     /// <summary>
     /// 営業時間定義（JSONB）
-    /// 例: { "monday": { "open": "09:00", "close": "18:00" }, ... }
+    /// 例: { "start": "09:00", "end": "18:00", "lunch": { "start": "12:00", "end": "13:00" } }
     /// </summary>
     [Column("business_hours")]
     public string BusinessHours { get; set; } = "{}";
+
+    /// <summary>
+    /// 営業時間定義（型安全なアクセサー）
+    /// BusinessHours の JSONB データを型安全にアクセスするためのプロパティ
+    /// </summary>
+    [NotMapped]
+    public FacilityBusinessHoursRoot? BusinessHoursData
+    {
+        get
+        {
+            if (String.IsNullOrWhiteSpace(this.BusinessHours) || this.BusinessHours == "{}")
+                return null;
+            try
+            {
+                return JsonSerializer.Deserialize<FacilityBusinessHoursRoot>(this.BusinessHours);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+        set
+        {
+            this.BusinessHours = value != null
+                ? JsonSerializer.Serialize(value)
+                : "{}";
+        }
+    }
 
     /// <summary>有効フラグ</summary>
     [Column("is_active")]

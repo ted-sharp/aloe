@@ -21,17 +21,17 @@ public class AppointmentStatisticsService : IAppointmentStatisticsService
     }
 
     /// <inheritdoc />
-    public async Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate)
+    public async Task<Dictionary<string, MainStatsDto>> GetMainStatsAsync(DateOnly startDate, DateOnly endDate)
     {
-        var appointments = await this._appointmentStatsRepository.GetForDayStatsAsync(startDate, endDate);
+        var appointments = await this._appointmentStatsRepository.GetForMainStatsAsync(startDate, endDate);
 
-        var result = new Dictionary<string, DayStatsDto>([]);
+        var result = new Dictionary<string, MainStatsDto>([]);
 
         // 指定期間の全日付を初期化
         for (var date = startDate; date <= endDate; date = date.AddDays(1))
         {
             var dateStr = date.ToString("yyyy-MM-dd");
-            result[dateStr] = new DayStatsDto
+            result[dateStr] = new MainStatsDto
             {
                 AmCount = 0,
                 PmCount = 0,

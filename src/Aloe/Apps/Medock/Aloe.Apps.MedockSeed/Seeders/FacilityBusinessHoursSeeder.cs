@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
@@ -21,23 +20,20 @@ internal static class FacilityBusinessHoursSeeder
 
         Console.WriteLine("[INFO] Creating facility business hours seed data...");
 
-        // JSONB構造: 始業・就業・昼休憩時間
-        var businessHoursJson = JsonSerializer.Serialize(new BusinessHoursJson
-        {
-            Start = "09:00",
-            End = "18:00",
-            Lunch = new LunchHoursJson
-            {
-                Start = "12:00",
-                End = "13:00"
-            }
-        });
-
         var facilityBusinessHours = new FacilityBusinessHours
         {
             FacilityBusinessHoursId = Guid.CreateVersion7(),
             FacilityId = facilityId,
-            BusinessHours = businessHoursJson,
+            BusinessHoursData = new FacilityBusinessHoursRoot
+            {
+                Start = "09:00",
+                End = "18:00",
+                Lunch = new LunchHoursItem
+                {
+                    Start = "12:00",
+                    End = "13:00"
+                }
+            },
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today),
             ActiveTo = new DateOnly(9999, 12, 31),

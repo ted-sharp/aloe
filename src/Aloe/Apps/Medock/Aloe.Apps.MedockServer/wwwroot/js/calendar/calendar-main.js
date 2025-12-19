@@ -18,7 +18,7 @@ import { renderWeekView } from './renderers/week-view.js';
 /**
  * Initialize the calendar canvas
  * @param {string} containerId - DOM container ID
- * @param {object} data - Initial data { appointments, dayStats, holidays }
+ * @param {object} data - Initial data { appointments, mainStats, holidays }
  * @param {object} options - Configuration options
  * @param {object} dotNetRef - .NET object reference for callbacks
  */
@@ -138,15 +138,15 @@ function init(containerId, data, options, dotNetRef) {
 
 /**
  * Update calendar data
- * @param {object} data - { appointments: [], dayStats: {}, holidays: {} }
+ * @param {object} data - { appointments: [], mainStats: {}, holidays: {} }
  */
 function updateData(data) {
     if (data.appointments) {
         setState({ appointments: data.appointments });
     }
 
-    if (data.dayStats) {
-        setState({ dayStats: new Map(Object.entries(data.dayStats)) });
+    if (data.mainStats) {
+        setState({ mainStats: new Map(Object.entries(data.mainStats)) });
     }
 
     if (data.holidays) {

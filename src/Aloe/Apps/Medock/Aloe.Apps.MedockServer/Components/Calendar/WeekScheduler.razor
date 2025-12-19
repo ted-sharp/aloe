@@ -36,7 +36,8 @@
             ViewType="week"
             CurrentDate="@CurrentDate"
             Appointments="@Appointments"
-            DayStats="@DayStats"
+            MainStats="@MainStats"
+            MainStatsGrayedOut="@MainStatsGrayedOut"
             Holidays="@Holidays"
             WeekDays="@WeekDays"
             ShowSlots="@ShowSlots"
@@ -81,10 +82,16 @@
     public IEnumerable<AppointmentDto>? Appointments { get; set; }
 
     /// <summary>
-    /// 日別統計データ
+    /// Mainリソース統計データ
     /// </summary>
     [Parameter]
-    public Dictionary<string, CalendarDayStats>? DayStats { get; set; }
+    public Dictionary<string, List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStats>>? MainStats { get; set; }
+
+    /// <summary>
+    /// グレーアウト状態（フィルター用）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）

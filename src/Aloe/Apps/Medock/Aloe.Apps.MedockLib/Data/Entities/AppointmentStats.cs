@@ -2,6 +2,7 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 /// <summary>
 /// 予約統計エンティティ
@@ -42,6 +43,34 @@ public class AppointmentStats : IAuditableEntity
     /// </summary>
     [Column("appt_graph")]
     public string ApptGraph { get; set; } = "{}";
+
+    /// <summary>
+    /// 時間帯枠ごとのグラフデータ（型安全なアクセサー）
+    /// ApptGraph の JSONB データを型安全にアクセスするためのプロパティ
+    /// </summary>
+    [NotMapped]
+    public AppointmentGraphRoot? ApptGraphData
+    {
+        get
+        {
+            if (String.IsNullOrWhiteSpace(this.ApptGraph) || this.ApptGraph == "{}")
+                return null;
+            try
+            {
+                return JsonSerializer.Deserialize<AppointmentGraphRoot>(this.ApptGraph);
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+        set
+        {
+            this.ApptGraph = value != null
+                ? JsonSerializer.Serialize(value)
+                : "{}";
+        }
+    }
 
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]

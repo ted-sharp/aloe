@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 namespace Aloe.Apps.MedockLib.Data.Entities;
 
 /// <summary>
-/// 予約スロットアイテム
-/// 個別のスロット定義を表す
+/// 予約グラフアイテム
+/// 時間帯枠ごとの予約統計を表す
 /// </summary>
-public class AppointmentSlotItem
+public class AppointmentGraphItem
 {
     /// <summary>開始時刻</summary>
     [JsonPropertyName("start")]
@@ -20,8 +20,16 @@ public class AppointmentSlotItem
     [JsonPropertyName("duration")]
     public TimeSpan Duration => this.End - this.Start;
 
+    /// <summary>予約数</summary>
+    [JsonPropertyName("count")]
+    public int Count { get; set; }
+
     /// <summary>最大予約数（キャパシティ）</summary>
     [JsonPropertyName("cap")]
     public int Cap { get; set; }
+
+    /// <summary>利用可能数（Cap - Count）</summary>
+    [JsonPropertyName("available")]
+    public int Available => this.Cap - this.Count;
 }
 

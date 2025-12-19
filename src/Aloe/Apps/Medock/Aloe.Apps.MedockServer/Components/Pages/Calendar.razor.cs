@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Layout;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Calendar;
@@ -106,8 +107,9 @@ public partial class Calendar : ComponentBase
     private DateOnly? SelectedDate => this._state.SelectedDate;
     private (DateOnly Start, DateOnly End)? SelectedDateRange => this._state.SelectedDateRange;
 
-    private Dictionary<string, CalendarDayStats> SampleDayStats => this._state.DayStats;
-    private Dictionary<string, CalendarDayStats> OriginalDayStats => this._state.OriginalDayStats;
+    private Dictionary<string, List<AppointmentStats>> SampleMainStats => this._state.MainStats;
+    private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this._state.OriginalMainStats;
+    private Dictionary<string, bool> MainStatsGrayedOut => this._state.MainStatsGrayedOut;
     private List<AppointmentDto> SampleAppointments => this._state.Appointments;
     private Dictionary<string, string> Holidays => this._state.Holidays;
 
@@ -123,7 +125,11 @@ public partial class Calendar : ComponentBase
     {
         await this.UserService.LoadUserInfoAsync(this._state);
         await this.DataService.LoadBusinessHoursAsync(this._state);
-        this.GenerateSampleData();
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -183,19 +189,15 @@ public partial class Calendar : ComponentBase
         this.RegisterLayoutActions();
     }
 
-    private void GenerateSampleData()
-    {
-        SampleDataGenerator.GenerateDayStats(
-            this._state.DayStats,
-            this._state.OriginalDayStats,
-            this._state.BusinessHours);
-
-        this._state.Appointments = SampleDataGenerator.GenerateAppointments(this._state.BusinessHours);
-    }
 
     private async Task SetView(CalendarViewType view)
     {
         this._state.SetView(view);
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -211,6 +213,11 @@ public partial class Calendar : ComponentBase
     private async Task PreviousPeriod()
     {
         this._state.PreviousPeriod();
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -222,6 +229,11 @@ public partial class Calendar : ComponentBase
     private async Task NextPeriod()
     {
         this._state.NextPeriod();
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -233,6 +245,11 @@ public partial class Calendar : ComponentBase
     private async Task GoToToday()
     {
         this._state.GoToToday();
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -248,6 +265,11 @@ public partial class Calendar : ComponentBase
         {
             this._state.CurrentView = CalendarViewType.Week;
             this._state.WeekDays = 7;
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this._state,
                 this._state.CurrentView,
@@ -258,6 +280,11 @@ public partial class Calendar : ComponentBase
         }
         else
         {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this._state,
                 this._state.CurrentView,
@@ -271,6 +298,11 @@ public partial class Calendar : ComponentBase
     {
         this._state.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
         this._state.CurrentView = CalendarViewType.Month;
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -312,6 +344,11 @@ public partial class Calendar : ComponentBase
         this._state.CurrentDate = date;
         this._state.CurrentView = CalendarViewType.Week;
         this._state.WeekDays = 1;
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -333,8 +370,9 @@ public partial class Calendar : ComponentBase
         this._state.CurrentFilter = filter;
         await this.FilterService.ApplyFilterAsync(
             filter,
-            this._state.DayStats,
-            this._state.OriginalDayStats,
+            this._state.MainStats,
+            this._state.OriginalMainStats,
+            this._state.MainStatsGrayedOut,
             this._state.CurrentView,
             this._state.CurrentDate);
         this.StateHasChanged();
@@ -348,8 +386,9 @@ public partial class Calendar : ComponentBase
 
         await this.FilterService.ApplyFilterAsync(
             filter,
-            this._state.DayStats,
-            this._state.OriginalDayStats,
+            this._state.MainStats,
+            this._state.OriginalMainStats,
+            this._state.MainStatsGrayedOut,
             this._state.CurrentView,
             this._state.CurrentDate);
         this.StateHasChanged();
@@ -368,6 +407,11 @@ public partial class Calendar : ComponentBase
     private async Task HandleWeekDaysChanged(int days)
     {
         this._state.WeekDays = days;
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -401,6 +445,11 @@ public partial class Calendar : ComponentBase
     {
         this.CloseModal();
         // 予約保存後にデータを再取得
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this._state,
             this._state.CurrentView,
@@ -431,6 +480,11 @@ public partial class Calendar : ComponentBase
                     });
 
                 // 予約更新後にデータを再取得
+                await this.DataService.LoadMainStatsAsync(
+                    this._state,
+                    this._state.CurrentView,
+                    this._state.CurrentDate,
+                    this._state.WeekDays);
                 await this.DataService.LoadAppointmentsAsync(
                     this._state,
                     this._state.CurrentView,

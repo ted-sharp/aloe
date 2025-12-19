@@ -8,12 +8,12 @@ namespace Aloe.Apps.MedockLib.Services;
 public interface IAppointmentStatisticsService
 {
     /// <summary>
-    /// 指定期間の日別統計を取得します
+    /// 指定期間のMainリソース統計を取得します
     /// </summary>
     /// <param name="startDate">開始日</param>
     /// <param name="endDate">終了日</param>
     /// <returns>日付文字列をキーとした統計Dictionary</returns>
-    Task<Dictionary<string, DayStatsDto>> GetDayStatsAsync(DateOnly startDate, DateOnly endDate);
+    Task<Dictionary<string, MainStatsDto>> GetMainStatsAsync(DateOnly startDate, DateOnly endDate);
 
     /// <summary>
     /// 指定フロア・日付のステータス別予約件数を取得します

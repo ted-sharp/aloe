@@ -1,8 +1,12 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Repositories;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -13,16 +17,43 @@ public class CalendarDataService
 {
     private readonly IAppointmentService _appointmentService;
     private readonly IFacilityService _facilityService;
+    private readonly IAppointmentStatsRepository _appointmentStatsRepository;
     private readonly AuthenticationStateProvider _authStateProvider;
 
     public CalendarDataService(
         IAppointmentService appointmentService,
         IFacilityService facilityService,
+        IAppointmentStatsRepository appointmentStatsRepository,
         AuthenticationStateProvider authStateProvider)
     {
         this._appointmentService = appointmentService;
         this._facilityService = facilityService;
+        this._appointmentStatsRepository = appointmentStatsRepository;
         this._authStateProvider = authStateProvider;
+    }
+
+    /// <summary>
+    /// グラフデータのJSONB構造（パース用）
+    /// </summary>
+    private class GraphDefinition
+    {
+        [JsonPropertyName("slots")]
+        public List<GraphSlotItem> Slots { get; set; } = new();
+    }
+
+    /// <summary>
+    /// グラフスロットアイテム（パース用）
+    /// </summary>
+    private class GraphSlotItem
+    {
+        [JsonPropertyName("time")]
+        public string Time { get; set; } = String.Empty;
+
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [JsonPropertyName("max")]
+        public int Max { get; set; }
     }
 
     /// <summary>
@@ -103,6 +134,56 @@ public class CalendarDataService
         catch (Exception)
         {
             state.Appointments = [];
+        }
+    }
+
+    /// <summary>
+    /// MainリソースのStatsを日付ごとにグループ化して状態に反映します。
+    /// </summary>
+    public async Task LoadMainStatsAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
+    {
+        try
+        {
+            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
+
+            // 日付ごとにグループ化
+            var statsByDate = mainStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
+
+            // 全日付を初期化
+            state.MainStats.Clear();
+            state.OriginalMainStats.Clear();
+            state.MainStatsGrayedOut.Clear();
+
+            for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                var dateStr = date.ToString("yyyy-MM-dd");
+
+                // その日のMainリソースStatsがあれば設定、なければ空リスト
+                if (statsByDate.TryGetValue(date, out var mainStatsList))
+                {
+                    state.MainStats[dateStr] = mainStatsList;
+                    state.OriginalMainStats[dateStr] = mainStatsList.ToList(); // コピーを作成
+                }
+                else
+                {
+                    state.MainStats[dateStr] = new List<AppointmentStats>();
+                    state.OriginalMainStats[dateStr] = new List<AppointmentStats>();
+                }
+
+                state.MainStatsGrayedOut[dateStr] = false;
+            }
+        }
+        catch (Exception)
+        {
+            // エラー時は空のMainStatsを設定
+            state.MainStats.Clear();
+            state.OriginalMainStats.Clear();
+            state.MainStatsGrayedOut.Clear();
         }
     }
 

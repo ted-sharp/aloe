@@ -37,11 +37,11 @@ public class AppointmentSlot : IAuditableEntity
     {
         get
         {
-            if (string.IsNullOrWhiteSpace(ApptSlots) || ApptSlots == "{}")
+            if (String.IsNullOrWhiteSpace(this.ApptSlots) || this.ApptSlots == "{}")
                 return null;
             try
             {
-                return JsonSerializer.Deserialize<AppointmentSlotRoot>(ApptSlots);
+                return JsonSerializer.Deserialize<AppointmentSlotRoot>(this.ApptSlots);
             }
             catch (JsonException)
             {
@@ -50,7 +50,7 @@ public class AppointmentSlot : IAuditableEntity
         }
         set
         {
-            ApptSlots = value != null
+            this.ApptSlots = value != null
                 ? JsonSerializer.Serialize(value)
                 : "{}";
         }

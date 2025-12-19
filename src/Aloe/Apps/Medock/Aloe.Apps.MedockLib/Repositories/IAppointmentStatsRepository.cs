@@ -16,7 +16,12 @@ public interface IAppointmentStatsRepository
     Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date);
 
     /// <summary>
-    /// 日別統計用の予約データ（日付と開始時間のみ）を取得します。
+    /// Mainリソース統計用の予約データ（日付と開始時間のみ）を取得します。
     /// </summary>
-    Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForDayStatsAsync(DateOnly startDate, DateOnly endDate);
+    Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate);
+
+    /// <summary>
+    /// 指定日付範囲のMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します。
+    /// </summary>
+    Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate);
 }

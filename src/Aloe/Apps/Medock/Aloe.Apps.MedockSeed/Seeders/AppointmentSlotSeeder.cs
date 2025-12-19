@@ -95,7 +95,7 @@ internal static class AppointmentSlotSeeder
     /// </summary>
     private static AppointmentSlot CreateTimeSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int intervalMinutes)
     {
-        // 指定された間隔でスロットを生成（09:00-12:00、13:00-17:00の範囲、1時間の枠で作成）
+        // 指定された間隔でスロットを生成（09:00-12:00、13:00-17:00の範囲）
         var timeSlots = new List<AppointmentSlotItem>();
 
         // 午前のスロット（09:00-12:00）
@@ -104,12 +104,13 @@ internal static class AppointmentSlotSeeder
             // 1時間の枠内で、指定された間隔でスロットを作成
             for (int minute = 0; minute < 60; minute += intervalMinutes)
             {
-                var timeString = $"{hour:D2}:{minute:D2}";
+                var startTime = new TimeOnly(hour, minute);
+                var endTime = startTime.AddMinutes(intervalMinutes);
                 timeSlots.Add(new AppointmentSlotItem
                 {
-                    Time = timeString,
-                    Max = 1,
-                    Duration = intervalMinutes
+                    Start = startTime,
+                    End = endTime,
+                    Cap = 1
                 });
             }
         }
@@ -120,12 +121,13 @@ internal static class AppointmentSlotSeeder
             // 1時間の枠内で、指定された間隔でスロットを作成
             for (int minute = 0; minute < 60; minute += intervalMinutes)
             {
-                var timeString = $"{hour:D2}:{minute:D2}";
+                var startTime = new TimeOnly(hour, minute);
+                var endTime = startTime.AddMinutes(intervalMinutes);
                 timeSlots.Add(new AppointmentSlotItem
                 {
-                    Time = timeString,
-                    Max = 1,
-                    Duration = intervalMinutes
+                    Start = startTime,
+                    End = endTime,
+                    Cap = 1
                 });
             }
         }
@@ -149,6 +151,7 @@ internal static class AppointmentSlotSeeder
 
     /// <summary>
     /// AM/PM制限形式のリソース（エコーなど）を作成
+    /// 時間範囲形式に変更：午前 08:00-12:00、午後 13:00-17:00
     /// </summary>
     private static AppointmentSlot CreateAmPmSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int maxAm, int maxPm)
     {
@@ -156,15 +159,15 @@ internal static class AppointmentSlotSeeder
         {
             new AppointmentSlotItem
             {
-                Time = "AM",
-                Max = maxAm,
-                Duration = 0
+                Start = new TimeOnly(8, 0),
+                End = new TimeOnly(12, 0),
+                Cap = maxAm
             },
             new AppointmentSlotItem
             {
-                Time = "PM",
-                Max = maxPm,
-                Duration = 0
+                Start = new TimeOnly(13, 0),
+                End = new TimeOnly(17, 0),
+                Cap = maxPm
             }
         };
 
@@ -199,27 +202,29 @@ internal static class AppointmentSlotSeeder
         {
             for (int minute = 0; minute < 60; minute += 30)
             {
-                var timeString = $"{hour:D2}:{minute:D2}";
+                var startTime = new TimeOnly(hour, minute);
+                var endTime = startTime.AddMinutes(30);
                 timeSlots.Add(new AppointmentSlotItem
                 {
-                    Time = timeString,
-                    Max = maxPerSlot, // 1スロット10人
-                    Duration = 30 // 30分間隔
+                    Start = startTime,
+                    End = endTime,
+                    Cap = maxPerSlot // 1スロット10人
                 });
             }
         }
 
-        // 午後のスロット（13:00-16:30、30分区切り、4時間=8スロット）
+        // 午後のスロット（13:00-17:00、30分区切り、4時間=8スロット）
         for (int hour = 13; hour < 17; hour++)
         {
             for (int minute = 0; minute < 60; minute += 30)
             {
-                var timeString = $"{hour:D2}:{minute:D2}";
+                var startTime = new TimeOnly(hour, minute);
+                var endTime = startTime.AddMinutes(30);
                 timeSlots.Add(new AppointmentSlotItem
                 {
-                    Time = timeString,
-                    Max = maxPerSlot, // 1スロット10人
-                    Duration = 30 // 30分間隔
+                    Start = startTime,
+                    End = endTime,
+                    Cap = maxPerSlot // 1スロット10人
                 });
             }
         }

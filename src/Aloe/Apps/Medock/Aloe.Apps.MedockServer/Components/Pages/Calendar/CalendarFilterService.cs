@@ -1,5 +1,8 @@
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -8,6 +11,36 @@ namespace Aloe.Apps.MedockServer.Components.Pages;
 /// </summary>
 public class CalendarFilterService
 {
+    /// <summary>
+    /// グラフデータのJSONB構造（パース用）
+    /// </summary>
+    private class GraphDefinition
+    {
+        [JsonPropertyName("slots")]
+        public List<GraphSlotItem> Slots { get; set; } = new();
+    }
+
+    /// <summary>
+    /// グラフスロットアイテム（パース用）
+    /// </summary>
+    private class GraphSlotItem
+    {
+        [JsonPropertyName("start")]
+        public TimeOnly Start { get; set; }
+
+        [JsonPropertyName("end")]
+        public TimeOnly End { get; set; }
+
+        [JsonPropertyName("count")]
+        public int Count { get; set; }
+
+        [JsonPropertyName("cap")]
+        public int Cap { get; set; }
+
+        [JsonPropertyName("available")]
+        public int Available { get; set; }
+    }
+
     public CalendarFilterService()
     {
     }
@@ -17,57 +50,44 @@ public class CalendarFilterService
     /// </summary>
     public async Task ApplyFilterAsync(
         SearchFilterPanel.SearchFilter filter,
-        Dictionary<string, CalendarDayStats> dayStats,
-        Dictionary<string, CalendarDayStats> originalDayStats,
+        Dictionary<string, List<AppointmentStats>> mainStats,
+        Dictionary<string, List<AppointmentStats>> originalMainStats,
+        Dictionary<string, bool> mainStatsGrayedOut,
         CalendarViewType currentView,
         DateOnly currentDate)
     {
         if (!filter.IsActive)
         {
-            this.ResetFilter(dayStats, originalDayStats);
+            this.ResetFilter(mainStatsGrayedOut);
             return;
         }
 
         // 設備条件フィルターは削除されました（AppointmentResourceに統合）
         Dictionary<(DateOnly date, string timeSlot), int>? statsDict = null;
 
-        foreach (var kvp in dayStats)
+        foreach (var kvp in mainStats)
         {
             var dateStr = kvp.Key;
-            var stats = kvp.Value;
+            var statsList = kvp.Value;
             var date = DateOnly.Parse(dateStr);
 
             var isDateGrayed = this.IsDateGrayed(date, filter);
-            var hasAvailableSlot = this.ProcessSlots(stats, filter, statsDict, date, isDateGrayed);
+            var hasAvailableSlot = this.ProcessSlots(statsList, filter, statsDict, date, isDateGrayed);
 
-            stats.IsGrayedOut = isDateGrayed || !hasAvailableSlot;
+            mainStatsGrayedOut[dateStr] = isDateGrayed || !hasAvailableSlot;
         }
     }
 
     /// <summary>
     /// フィルターをリセットする
     /// </summary>
-    public void ResetFilter(
-        Dictionary<string, CalendarDayStats> dayStats,
-        Dictionary<string, CalendarDayStats> originalDayStats)
+    public void ResetFilter(Dictionary<string, bool> mainStatsGrayedOut)
     {
-        foreach (var kvp in originalDayStats)
+        foreach (var key in mainStatsGrayedOut.Keys.ToList())
         {
-            if (dayStats.TryGetValue(kvp.Key, out var stats))
-            {
-                stats.IsGrayedOut = false;
-                if (stats.Slots != null)
-                {
-                    foreach (var slot in stats.Slots)
-                    {
-                        slot.IsGrayedOut = false;
-                        slot.FilteredCount = 0;
-                    }
-                }
-            }
+            mainStatsGrayedOut[key] = false;
         }
     }
-
 
     private bool IsDateGrayed(DateOnly date, SearchFilterPanel.SearchFilter filter)
     {
@@ -76,7 +96,7 @@ public class CalendarFilterService
     }
 
     private bool ProcessSlots(
-        CalendarDayStats stats,
+        List<AppointmentStats> statsList,
         SearchFilterPanel.SearchFilter filter,
         Dictionary<(DateOnly date, string timeSlot), int>? statsDict,
         DateOnly date,
@@ -84,41 +104,84 @@ public class CalendarFilterService
     {
         var hasAvailableSlot = false;
 
-        if (stats.Slots != null)
+        // 全てのMainリソースのApptGraphをパースしてスロットを合算
+        // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）
+        var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
+
+        foreach (var stat in statsList)
         {
-            foreach (var slot in stats.Slots)
+            try
             {
-                var isSlotGrayed = false;
-
-                if (filter.TimeSlots.Any() && !filter.TimeSlots.Contains(slot.Time))
-                    isSlotGrayed = true;
-
-                var availableCapacity = slot.Max - slot.Count;
-                if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
-                    isSlotGrayed = true;
-
-                // 設備条件フィルターのカウントを辞書から取得
-                if (statsDict != null)
+                var graphData = JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+                if (graphData?.Slots != null)
                 {
-                    var key = (date, slot.Time);
-                    slot.FilteredCount = statsDict.TryGetValue(key, out var count) ? count : 0;
+                    foreach (var slot in graphData.Slots)
+                    {
+                        var timeRangeKey = $"{slot.Start:HH:mm}-{slot.End:HH:mm}";
+                        if (slotMap.ContainsKey(timeRangeKey))
+                        {
+                            var existing = slotMap[timeRangeKey];
+                            slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + slot.Count, existing.Cap + slot.Cap);
+                        }
+                        else
+                        {
+                            slotMap[timeRangeKey] = (slot.Start, slot.End, slot.Count, slot.Cap);
+                        }
+                    }
                 }
-                else
-                {
-                    slot.FilteredCount = 0;
-                }
-
-                slot.IsGrayedOut = isSlotGrayed || isDateGrayed;
-
-                if (!slot.IsGrayedOut)
-                    hasAvailableSlot = true;
+            }
+            catch (JsonException)
+            {
+                // JSONパースエラーは無視して続行
             }
         }
-        else
+
+        // スロットごとにフィルターを適用
+        foreach (var kvp in slotMap)
         {
-            var amAvailable = stats.AmMax - stats.AmCount;
-            var pmAvailable = stats.PmMax - stats.PmCount;
-            hasAvailableSlot = amAvailable >= filter.RequiredCapacity || pmAvailable >= filter.RequiredCapacity;
+            var timeRangeKey = kvp.Key;
+            var (start, end, count, cap) = kvp.Value;
+            var isSlotGrayed = false;
+
+            // 時間スロットフィルター: 時間範囲が選択された時間スロットと一致するかチェック
+            if (filter.TimeSlots.Any())
+            {
+                var matchesTimeSlot = false;
+                foreach (var selectedTimeSlot in filter.TimeSlots)
+                {
+                    // selectedTimeSlotが時間範囲形式（"HH:mm-HH:mm"）の場合
+                    if (selectedTimeSlot == timeRangeKey)
+                    {
+                        matchesTimeSlot = true;
+                        break;
+                    }
+                    // selectedTimeSlotが開始時刻形式（"HH:mm"）の場合、時間範囲内に含まれるかチェック
+                    if (TimeOnly.TryParse(selectedTimeSlot, out var selectedTime))
+                    {
+                        if (selectedTime >= start && selectedTime < end)
+                        {
+                            matchesTimeSlot = true;
+                            break;
+                        }
+                    }
+                }
+                if (!matchesTimeSlot)
+                    isSlotGrayed = true;
+            }
+
+            var availableCapacity = cap - count;
+            if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
+                isSlotGrayed = true;
+
+            // 設備条件フィルターのカウントを辞書から取得
+            if (statsDict != null)
+            {
+                var key = (date, timeRangeKey);
+                // statsDictから取得したカウントは使用しない（将来の拡張用）
+            }
+
+            if (!isSlotGrayed && !isDateGrayed)
+                hasAvailableSlot = true;
         }
 
         return hasAvailableSlot;
