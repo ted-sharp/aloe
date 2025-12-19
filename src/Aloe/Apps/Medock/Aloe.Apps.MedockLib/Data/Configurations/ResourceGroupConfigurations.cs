@@ -23,8 +23,9 @@ public class AppointmentResourceGroupConfiguration : IEntityTypeConfiguration<Ap
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
         entity.HasOne(e => e.Facility)
-            .WithMany()
-            .HasForeignKey(e => e.FacilityId);
+            .WithMany(f => f.AppointmentResourceGroups)
+            .HasForeignKey(e => e.FacilityId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         entity.HasIndex(e => e.FacilityId);
     }

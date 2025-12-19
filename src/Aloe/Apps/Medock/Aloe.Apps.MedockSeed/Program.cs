@@ -77,6 +77,7 @@ try
     var tenantId = await TenantSeeder.SeedAsync(context, dateTimeProvider);
     var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
     await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await FacilityAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
     // ユーザー関連（施設が存在する状態で実行）
     var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId);
@@ -84,12 +85,33 @@ try
     // 祝日データ
     await HolidaySeeder.SeedAsync(context);
 
+    // マスタデータ（独立）
+    await InsuranceProviderSeeder.SeedAsync(context, dateTimeProvider);
+    await PlanConditionSeeder.SeedAsync(context, dateTimeProvider);
+
     // 団体・患者関連
     await OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider);
     await PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
+    // 団体・患者の関連データ
+    await OrganizationAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await OrganizationInsuranceSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await PatientAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await PatientInsuranceCardSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await OrganizationMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+
+    // プラン関連
+    await PlanSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await PlanOptionSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await PlanConditionMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+
     // 予約リソース関連（施設・フロアの後）
     var resourceIds = await AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider);
+    await AppointmentResourceGroupSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await AppointmentResourceGroupMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+
+    // プランリソース要件（プラン・リソースの後）
+    await PlanResourceRequirementSeeder.SeedAsync(context, facilityId, dateTimeProvider);
 
     // 予約スロット（リソースの後）
     await AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider);
