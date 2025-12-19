@@ -101,6 +101,10 @@ public class AppointmentSlotConfiguration : IEntityTypeConfiguration<Appointment
 /// <summary>
 /// AppointmentResource エンティティ設定
 /// </summary>
+/// <remarks>
+/// Mainリソース（appt_res_type_code = 1）は、各フロアに1つだけという制約が設定されています。
+/// この制約は、floor_idに対するユニークインデックス（WHERE is_deleted = FALSE AND appt_res_type_code = 1）により実現されています。
+/// </remarks>
 public class AppointmentResourceConfiguration : IEntityTypeConfiguration<AppointmentResource>
 {
     public void Configure(EntityTypeBuilder<AppointmentResource> entity)
@@ -121,7 +125,10 @@ public class AppointmentResourceConfiguration : IEntityTypeConfiguration<Appoint
             .WithMany(f => f.AppointmentResources)
             .HasForeignKey(e => e.FloorId);
 
-        entity.HasIndex(e => e.FloorId);
+        // Mainリソース（appt_res_type_code = 1）は、各フロアに1つだけという制約
+        entity.HasIndex(e => e.FloorId)
+            .IsUnique()
+            .HasFilter("[is_deleted] = 0 AND [appt_res_type_code] = 1");
     }
 }
 

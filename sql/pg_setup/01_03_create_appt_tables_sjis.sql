@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/19 10:09:57
+-- Date/Time    : 2025/12/19 23:56:38
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -1130,8 +1130,8 @@ CREATE TABLE "appointment_resources" (
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
 
-CREATE INDEX "appointment_resources_IX1"
-  ON "appointment_resources"("floor_id");
+CREATE UNIQUE INDEX "appointment_resources_IX1"
+  ON "appointment_resources"("floor_id") WHERE is_deleted = FALSE AND appt_res_type_code = 1;
 
 CREATE UNIQUE INDEX "appointment_resources_PKI"
   ON "appointment_resources"("appt_res_id");
@@ -2091,7 +2091,7 @@ COMMENT ON COLUMN "users"."updated_session_id" IS 'updated_session_id';
 COMMENT ON TABLE "appointment_resources" IS 'appointment_resources';
 COMMENT ON COLUMN "appointment_resources"."appt_res_id" IS 'appt_res_id';
 COMMENT ON COLUMN "appointment_resources"."floor_id" IS 'floor_id';
-COMMENT ON COLUMN "appointment_resources"."appt_res_type_code" IS 'appt_res_type_code:0: None, 1:';
+COMMENT ON COLUMN "appointment_resources"."appt_res_type_code" IS 'appt_res_type_code:0: None, 1: Main, 2: Equipment, 3: Environment, 99: Others';
 COMMENT ON COLUMN "appointment_resources"."appt_res_name" IS 'appt_res_name';
 COMMENT ON COLUMN "appointment_resources"."appt_res_desc" IS 'appt_res_desc';
 COMMENT ON COLUMN "appointment_resources"."appt_res_seq" IS 'appt_res_seq';

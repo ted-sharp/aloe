@@ -317,11 +317,13 @@ Field="appt_res_type_code","appt_res_type_code","@INT","NOT NULL",,"0","0: None,
 Field="appt_res_name","appt_res_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="appt_res_desc","appt_res_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="appt_res_seq","appt_res_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==1,floor_id
+IndexOption=WHERE is_deleted = FALSE AND appt_res_type_code = 1
 Index==0,floor_id
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251219143455
+ModifiedDateTime=20251219235610
 Position="APPT",1500,500
 ZOrder=217
 
