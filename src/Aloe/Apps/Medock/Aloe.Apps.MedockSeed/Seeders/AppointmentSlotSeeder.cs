@@ -30,9 +30,8 @@ internal static class AppointmentSlotSeeder
         Console.WriteLine("[INFO] Creating appointment slot seed data...");
 
         var slots = new List<AppointmentSlot>();
-        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
-        // スロット定義は過去1年～未来2年程度
-        var slotStartDate = dateTimeProvider.TodayDateOnly.AddYears(-1);
+        // スロット定義は過去3年～未来2年程度
+        var slotStartDate = dateTimeProvider.TodayDateOnly.AddYears(-3);
         var slotEndDate = dateTimeProvider.TodayDateOnly.AddYears(2);
 
         foreach (var resource in resources)
