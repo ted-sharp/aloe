@@ -61,6 +61,44 @@ public class UserContextService : IUserContextService
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// ログインスキップ（前回のセッションが維持されている場合）でも正しく動作するよう、
+    /// Cookieにfacility_idが含まれていない場合は、アクセス可能な施設からデフォルトを取得します。
+    /// </remarks>
+    public async Task InitializeFromClaimsAsync(ClaimsPrincipal principal)
+    {
+        // まず同期版でクレームから初期化
+        this.InitializeFromClaims(principal);
+
+        // FacilityIdがない場合のフォールバック処理（ログインスキップ時にも対応）
+        if (this.CurrentUser != null && !this.CurrentUser.FacilityId.HasValue && this.CurrentUser.UserId != Guid.Empty)
+        {
+            Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: FacilityId not found in claims, attempting fallback for UserId={this.CurrentUser.UserId}");
+            var facilities = await this._authService.GetAccessibleFacilitiesAsync(this.CurrentUser.UserId);
+            if (facilities.Any())
+            {
+                var defaultFacility = facilities.First();
+                Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: Fallback facility found: FacilityId={defaultFacility.FacilityId}, FacilityName={defaultFacility.FacilityName}");
+                this.CurrentUser = this.CurrentUser with
+                {
+                    FacilityId = defaultFacility.FacilityId,
+                    FacilityName = defaultFacility.FacilityName,
+                    TenantId = defaultFacility.TenantId,
+                    TenantName = defaultFacility.TenantName
+                };
+            }
+            else
+            {
+                Console.WriteLine($"[WARNING] UserContextService.InitializeFromClaimsAsync: No accessible facilities found for UserId={this.CurrentUser.UserId}");
+            }
+        }
+        else if (this.CurrentUser != null && this.CurrentUser.FacilityId.HasValue)
+        {
+            Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: FacilityId found in claims: FacilityId={this.CurrentUser.FacilityId}");
+        }
+    }
+
+    /// <inheritdoc />
     public void SetSessionId(Guid sessionId)
     {
         this.CurrentSessionId = sessionId;

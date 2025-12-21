@@ -23,6 +23,16 @@ public interface IUserContextService
     void InitializeFromClaims(ClaimsPrincipal principal);
 
     /// <summary>
+    /// 認証クレームからユーザー情報を初期化します（非同期版）。
+    /// FacilityIdがクレームにない場合、アクセス可能な施設からデフォルトを取得します。
+    /// </summary>
+    /// <remarks>
+    /// ログインスキップ（前回のセッションが維持されている場合）でも正しく動作するよう、
+    /// Cookieにfacility_idが含まれていない場合は、DBからアクセス可能な施設を取得してフォールバックします。
+    /// </remarks>
+    Task InitializeFromClaimsAsync(ClaimsPrincipal principal);
+
+    /// <summary>
     /// セッションIDを設定します（ログイン時に呼び出し）。
     /// </summary>
     void SetSessionId(Guid sessionId);

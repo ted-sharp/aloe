@@ -181,6 +181,7 @@ try
 
     // 予約スロット（リソースの後）
     await RunSeederAsync("AppointmentSlotSeeder", () => AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider));
+    await RunSeederAsync("AppointmentSlotOverrideSeeder", () => AppointmentSlotOverrideSeeder.SeedAsync(context, dateTimeProvider));
 
     // 予約データと統計（Mainリソースの予約はAppointmentStatsSeederで生成）
     // AppointmentSeederとAppointmentResourceAssignmentSeederはスキップし、

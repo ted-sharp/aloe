@@ -114,7 +114,6 @@ builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
 
 // Add Calendar Services
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();
-builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarUserService>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarDataService>();
 
 // Add Authentication State Provider

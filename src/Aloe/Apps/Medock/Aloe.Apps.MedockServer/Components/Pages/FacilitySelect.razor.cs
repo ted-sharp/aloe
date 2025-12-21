@@ -36,7 +36,7 @@ public partial class FacilitySelect : ComponentBase
         var httpContext = this.HttpContextAccessor.HttpContext;
         if (httpContext?.User != null)
         {
-            this.UserContextService.InitializeFromClaims(httpContext.User);
+            await this.UserContextService.InitializeFromClaimsAsync(httpContext.User);
             this.userContext = this.UserContextService.CurrentUser;
         }
 

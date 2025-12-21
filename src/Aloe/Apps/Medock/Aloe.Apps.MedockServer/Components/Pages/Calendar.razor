@@ -114,6 +114,10 @@
     {
         <div class="absolute top-16 left-4 right-4 z-50">
             <SearchFilterPanel @ref="filterPanelRef"
+                AvailableFloors="@AvailableFloors"
+                AvailableResourceGroups="@AvailableResourceGroups"
+                AvailablePlans="@AvailablePlans"
+                AvailableOptions="@AvailableOptions"
                 OnFilterApplied="@HandleFilterApplied"
                 OnFilterChangedRealtime="@HandleFilterChangedRealtime"
                 OnClose="@CloseFilterPanel" />

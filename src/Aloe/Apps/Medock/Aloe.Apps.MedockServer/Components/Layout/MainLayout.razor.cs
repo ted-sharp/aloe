@@ -34,7 +34,7 @@ public partial class MainLayout : LayoutComponentBase
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            this.UserContextService.InitializeFromClaims(user);
+            await this.UserContextService.InitializeFromClaimsAsync(user);
             this.userContext = this.UserContextService.CurrentUser;
 
             // アクセス可能な施設一覧を取得

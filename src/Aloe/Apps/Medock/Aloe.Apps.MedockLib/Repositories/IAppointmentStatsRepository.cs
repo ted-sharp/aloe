@@ -24,4 +24,15 @@ public interface IAppointmentStatsRepository
     /// 指定日付範囲のMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します。
     /// </summary>
     Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate);
+
+    /// <summary>
+    /// 指定日付範囲とフィルター条件でMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します。
+    /// </summary>
+    Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeWithFiltersAsync(
+        DateOnly startDate, 
+        DateOnly endDate,
+        List<Guid>? floorIds = null,
+        List<Guid>? resourceGroupIds = null,
+        List<Guid>? planIds = null,
+        List<Guid>? optionPlanIds = null);
 }

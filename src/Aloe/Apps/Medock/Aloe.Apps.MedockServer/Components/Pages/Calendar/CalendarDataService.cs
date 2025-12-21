@@ -2,10 +2,12 @@ using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Text.Json.Serialization;
 
@@ -20,17 +22,20 @@ public class CalendarDataService
     private readonly IFacilityService _facilityService;
     private readonly IAppointmentStatsRepository _appointmentStatsRepository;
     private readonly AuthenticationStateProvider _authStateProvider;
+    private readonly IDbContextFactory<MedockDbContext> _contextFactory;
 
     public CalendarDataService(
         IAppointmentService appointmentService,
         IFacilityService facilityService,
         IAppointmentStatsRepository appointmentStatsRepository,
-        AuthenticationStateProvider authStateProvider)
+        AuthenticationStateProvider authStateProvider,
+        IDbContextFactory<MedockDbContext> contextFactory)
     {
         this._appointmentService = appointmentService;
         this._facilityService = facilityService;
         this._appointmentStatsRepository = appointmentStatsRepository;
         this._authStateProvider = authStateProvider;
+        this._contextFactory = contextFactory;
     }
 
     /// <summary>
@@ -47,14 +52,23 @@ public class CalendarDataService
     /// </summary>
     private class GraphSlotItem
     {
-        [JsonPropertyName("time")]
-        public string Time { get; set; } = String.Empty;
+        [JsonPropertyName("start")]
+        public TimeOnly Start { get; set; }
+
+        [JsonPropertyName("end")]
+        public TimeOnly End { get; set; }
 
         [JsonPropertyName("count")]
         public int Count { get; set; }
 
-        [JsonPropertyName("max")]
-        public int Max { get; set; }
+        [JsonPropertyName("cap")]
+        public int Cap { get; set; }
+
+        [JsonPropertyName("available")]
+        public int Available { get; set; }
+
+        [JsonPropertyName("hasOutsideHours")]
+        public bool HasOutsideHours { get; set; } = false;
     }
 
     /// <summary>
@@ -107,14 +121,99 @@ public class CalendarDataService
     }
 
     /// <summary>
-    /// フィルター用の設備オプションを生成して状態に反映します。
-    /// EquipmentはAppointmentResourceに統合されました。
+    /// フィルター用のオプション（フロア、リソースグループ、プラン、オプション）をロードして状態に反映します。
     /// </summary>
-    public async Task GenerateFilterOptionsAsync(CalendarState state)
+    public async Task LoadFilterOptionsAsync(CalendarState state)
     {
-        // EquipmentはAppointmentResourceに統合されました
-        // このメソッドは将来AppointmentResource用に実装されます
-        await Task.CompletedTask;
+        try
+        {
+            if (!state.CurrentFacilityId.HasValue)
+            {
+                return;
+            }
+
+            using var context = this._contextFactory.CreateDbContext();
+            var facilityId = state.CurrentFacilityId.Value;
+
+            // フロアをロード
+            var floors = await context.Floors
+                .AsNoTracking()
+                .Where(f => f.FacilityId == facilityId && !f.IsDeleted)
+                .OrderBy(f => f.FloorSeq)
+                .ThenBy(f => f.FloorCode)
+                .Select(f => new SearchFilterPanel.FilterItem
+                {
+                    Id = f.FloorId,
+                    Name = f.FloorName
+                })
+                .ToListAsync();
+            state.AvailableFloors = floors;
+
+            // リソースグループをロード
+            var resourceGroups = await context.AppointmentResourceGroups
+                .AsNoTracking()
+                .Where(rg => rg.FacilityId == facilityId && !rg.IsDeleted)
+                .OrderBy(rg => rg.ResGroupSeq)
+                .ThenBy(rg => rg.ResGroupCode)
+                .Select(rg => new SearchFilterPanel.FilterItem
+                {
+                    Id = rg.ApptResGroupId,
+                    Name = rg.ResGroupName
+                })
+                .ToListAsync();
+            state.AvailableResourceGroups = resourceGroups;
+
+            // プランをロード（有効なもののみ）
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var plans = await context.Plans
+                .AsNoTracking()
+                .Where(p => p.FacilityId == facilityId && 
+                           !p.IsDeleted && 
+                           p.IsActive &&
+                           p.ActiveFrom <= today &&
+                           p.ActiveTo >= today)
+                .OrderBy(p => p.PlanCode)
+                .Select(p => new SearchFilterPanel.FilterItem
+                {
+                    Id = p.PlanId,
+                    Name = p.PlanName
+                })
+                .ToListAsync();
+            state.AvailablePlans = plans;
+
+            // オプション（PlanOptionのOptionPlanIdに基づくプラン）をロード
+            var optionPlanIds = await context.PlanOptions
+                .AsNoTracking()
+                .Where(po => !po.IsDeleted)
+                .Select(po => po.OptionPlanId)
+                .Distinct()
+                .ToListAsync();
+
+            var options = await context.Plans
+                .AsNoTracking()
+                .Where(p => optionPlanIds.Contains(p.PlanId) &&
+                           p.FacilityId == facilityId &&
+                           !p.IsDeleted &&
+                           p.IsActive &&
+                           p.ActiveFrom <= today &&
+                           p.ActiveTo >= today)
+                .OrderBy(p => p.PlanCode)
+                .Select(p => new SearchFilterPanel.FilterItem
+                {
+                    Id = p.PlanId,
+                    Name = p.PlanName
+                })
+                .ToListAsync();
+            state.AvailableOptions = options;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"フィルターオプションのロードエラー: {ex.Message}");
+            state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
+            state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
+            state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
+            state.AvailableOptions = new List<SearchFilterPanel.FilterItem>();
+        }
     }
 
     /// <summary>
@@ -134,6 +233,15 @@ public class CalendarDataService
             
             var querySw = Stopwatch.StartNew();
             var appointments = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+            
+            // フロアフィルターを適用
+            if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
+            {
+                appointments = appointments
+                    .Where(a => a.FloorId.HasValue && state.CurrentFilter.SelectedFloorIds.Contains(a.FloorId.Value))
+                    .ToList();
+            }
+            
             querySw.Stop();
             Console.WriteLine($"[Performance] LoadAppointmentsAsync query: {querySw.ElapsedMilliseconds}ms, Count={appointments.Count}");
             
@@ -166,9 +274,40 @@ public class CalendarDataService
             Console.WriteLine($"[Performance] LoadMainStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
             
             var querySw = Stopwatch.StartNew();
-            var mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
+            List<AppointmentStats> mainStats;
+            if (state.CurrentFilter != null && state.CurrentFilter.IsActive)
+            {
+                // フィルターが有効な場合はフィルター付きメソッドを使用
+                mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeWithFiltersAsync(
+                    startDate,
+                    endDate,
+                    state.CurrentFilter.SelectedFloorIds.Any() ? state.CurrentFilter.SelectedFloorIds : null,
+                    state.CurrentFilter.SelectedResourceGroupIds.Any() ? state.CurrentFilter.SelectedResourceGroupIds : null,
+                    state.CurrentFilter.SelectedPlanIds.Any() ? state.CurrentFilter.SelectedPlanIds : null,
+                    state.CurrentFilter.SelectedOptionPlanIds.Any() ? state.CurrentFilter.SelectedOptionPlanIds : null);
+            }
+            else
+            {
+                mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
+            }
             querySw.Stop();
             Console.WriteLine($"[Performance] LoadMainStatsAsync query: {querySw.ElapsedMilliseconds}ms, Count={mainStats.Count}");
+
+            // AppointmentSlotOverrideを取得
+            var overrideSw = Stopwatch.StartNew();
+            using var context = this._contextFactory.CreateDbContext();
+            var slotOverrides = await context.AppointmentSlotOverrides
+                .AsNoTracking()
+                .Where(o => !o.IsDeleted &&
+                           o.ApptDate >= startDate &&
+                           o.ApptDate <= endDate)
+                .Include(o => o.AppointmentResource)
+                .ToListAsync();
+            var overridesByDateAndResource = slotOverrides
+                .GroupBy(o => (o.ApptDate, o.ApptResId))
+                .ToDictionary(g => g.Key, g => g.First());
+            overrideSw.Stop();
+            Console.WriteLine($"[Performance] LoadMainStatsAsync slotOverrides: {overrideSw.ElapsedMilliseconds}ms, Count={slotOverrides.Count}");
 
             // 日付ごとにグループ化
             var groupSw = Stopwatch.StartNew();
@@ -189,8 +328,20 @@ public class CalendarDataService
                 // その日のMainリソースStatsがあれば設定、なければ空リスト
                 if (statsByDate.TryGetValue(date, out var mainStatsList))
                 {
-                    state.MainStats[dateStr] = mainStatsList;
-                    state.OriginalMainStats[dateStr] = mainStatsList.ToList(); // コピーを作成
+                    // AppointmentSlotOverrideがあれば適用
+                    var statsWithOverrides = mainStatsList.Select(stat =>
+                    {
+                        var key = (date, stat.AppointmentResource.ApptResId);
+                        if (overridesByDateAndResource.TryGetValue(key, out var slotOverride))
+                        {
+                            // 上書きされたスロット定義でApptGraphを再構築
+                            return ApplySlotOverride(stat, slotOverride);
+                        }
+                        return stat;
+                    }).ToList();
+
+                    state.MainStats[dateStr] = statsWithOverrides;
+                    state.OriginalMainStats[dateStr] = statsWithOverrides.ToList(); // コピーを作成
                 }
                 else
                 {
@@ -241,5 +392,75 @@ public class CalendarDataService
             ),
             _ => (currentDate, currentDate)
         };
+    }
+
+    /// <summary>
+    /// AppointmentSlotOverrideをAppointmentStatsに適用
+    /// </summary>
+    private static AppointmentStats ApplySlotOverride(AppointmentStats stat, AppointmentSlotOverride slotOverride)
+    {
+        if (slotOverride.ApptSlotsData == null || !slotOverride.ApptSlotsData.Slots.Any())
+        {
+            // 上書きデータが空の場合は、元の統計をそのまま返す
+            return stat;
+        }
+
+        try
+        {
+            // 既存のApptGraphをパース
+            var existingGraph = System.Text.Json.JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+            if (existingGraph == null)
+            {
+                return stat;
+            }
+
+            // 上書きされたスロット定義を使用して新しいグラフを構築
+            var overrideSlots = slotOverride.ApptSlotsData.Slots;
+            var newSlots = new List<GraphSlotItem>();
+
+            // 上書きされたスロット定義を元に、既存のカウントをマッピング
+            foreach (var overrideSlot in overrideSlots)
+            {
+                // 既存のスロットから対応するカウントを取得
+                var matchingSlot = existingGraph.Slots.FirstOrDefault(s =>
+                    s.Start == overrideSlot.Start && s.End == overrideSlot.End);
+
+                newSlots.Add(new GraphSlotItem
+                {
+                    Start = overrideSlot.Start,
+                    End = overrideSlot.End,
+                    Count = matchingSlot?.Count ?? 0,
+                    Cap = overrideSlot.Cap,
+                    HasOutsideHours = overrideSlot.IsOutsideHours
+                });
+            }
+
+            // 新しいグラフを作成
+            var newGraph = new GraphDefinition { Slots = newSlots };
+            var newGraphJson = System.Text.Json.JsonSerializer.Serialize(newGraph);
+
+            // 新しいAppointmentStatsを作成
+            return new AppointmentStats
+            {
+                ApptStatId = stat.ApptStatId,
+                ApptDate = stat.ApptDate,
+                ApptResId = stat.ApptResId,
+                ApptGraph = newGraphJson,
+                AppointmentResource = stat.AppointmentResource,
+                IsDeleted = stat.IsDeleted,
+                CreatedAt = stat.CreatedAt,
+                CreatedUserId = stat.CreatedUserId,
+                CreatedSessionId = stat.CreatedSessionId,
+                UpdatedAt = stat.UpdatedAt,
+                UpdatedUserId = stat.UpdatedUserId,
+                UpdatedSessionId = stat.UpdatedSessionId
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"AppointmentSlotOverride適用エラー: {ex.Message}");
+            // エラー時は元の統計をそのまま返す
+            return stat;
+        }
     }
 }

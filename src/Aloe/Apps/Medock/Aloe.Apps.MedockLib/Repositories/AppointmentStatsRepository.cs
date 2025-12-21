@@ -65,4 +65,89 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                         s.ApptDate <= endDate)
             .ToListAsync();
     }
+
+    /// <inheritdoc />
+    public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeWithFiltersAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? floorIds = null,
+        List<Guid>? resourceGroupIds = null,
+        List<Guid>? planIds = null,
+        List<Guid>? optionPlanIds = null)
+    {
+        var query = this._context.AppointmentStats
+            .AsNoTracking()
+            .Include(s => s.AppointmentResource)
+                .ThenInclude(r => r.Floor)
+            .Include(s => s.AppointmentResource)
+                .ThenInclude(r => r.AppointmentResourceGroupMembers)
+                    .ThenInclude(m => m.AppointmentResourceGroup)
+            .Where(s => !s.IsDeleted &&
+                        !s.AppointmentResource.IsDeleted &&
+                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                        s.ApptDate >= startDate &&
+                        s.ApptDate <= endDate);
+
+        // フロアフィルター
+        if (floorIds != null && floorIds.Any())
+        {
+            query = query.Where(s => floorIds.Contains(s.AppointmentResource.FloorId));
+        }
+
+        // リソースグループフィルター
+        if (resourceGroupIds != null && resourceGroupIds.Any())
+        {
+            query = query.Where(s => s.AppointmentResource.AppointmentResourceGroupMembers
+                .Any(m => !m.IsDeleted && resourceGroupIds.Contains(m.AppointmentResourceGroup.ApptResGroupId)));
+        }
+
+        // プラン・オプションフィルター（PlanResourceRequirementを介してリソースを絞り込み）
+        if (planIds != null && planIds.Any() || optionPlanIds != null && optionPlanIds.Any())
+        {
+            var resourceIdsFromPlans = new HashSet<Guid>();
+            
+            // プランからリソースを取得
+            if (planIds != null && planIds.Any())
+            {
+                var planResourceIds = await this._context.PlanResourceRequirements
+                    .AsNoTracking()
+                    .Where(prr => !prr.IsDeleted && planIds.Contains(prr.PlanId))
+                    .Select(prr => prr.ApptResId)
+                    .Distinct()
+                    .ToListAsync();
+                foreach (var id in planResourceIds)
+                {
+                    resourceIdsFromPlans.Add(id);
+                }
+            }
+
+            // オプションからリソースを取得（PlanOptionのOptionPlanIdに対応するPlanResourceRequirementを検索）
+            if (optionPlanIds != null && optionPlanIds.Any())
+            {
+                // オプションのプランIDから、そのプランのリソース要件を取得
+                var optionResourceIds = await this._context.PlanResourceRequirements
+                    .AsNoTracking()
+                    .Where(prr => !prr.IsDeleted && optionPlanIds.Contains(prr.PlanId))
+                    .Select(prr => prr.ApptResId)
+                    .Distinct()
+                    .ToListAsync();
+                foreach (var id in optionResourceIds)
+                {
+                    resourceIdsFromPlans.Add(id);
+                }
+            }
+
+            if (resourceIdsFromPlans.Any())
+            {
+                query = query.Where(s => resourceIdsFromPlans.Contains(s.AppointmentResource.ApptResId));
+            }
+            else
+            {
+                // プラン・オプションが選択されているが、該当リソースがない場合は空の結果を返す
+                return new List<Data.Entities.AppointmentStats>();
+            }
+        }
+
+        return await query.ToListAsync();
+    }
 }

@@ -22,7 +22,16 @@ public partial class Calendar : ComponentBase
     private CalendarFilterService FilterService { get; set; } = default!;
 
     [Inject]
-    private CalendarUserService UserService { get; set; } = default!;
+    private IUserContextService UserContextService { get; set; } = default!;
+
+    [Inject]
+    private IAuthService AuthService { get; set; } = default!;
+
+    [Inject]
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
     private CalendarDataService DataService { get; set; } = default!;
@@ -124,6 +133,10 @@ public partial class Calendar : ComponentBase
     // AvailableEquipmentsプロパティは削除されました（EquipmentはAppointmentResourceに統合）
     private SearchFilterPanel.SearchFilter? CurrentFilter => this._state.CurrentFilter;
     private int ActiveFilterCount => this._state.ActiveFilterCount;
+    private List<SearchFilterPanel.FilterItem> AvailableFloors => this._state.AvailableFloors;
+    private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this._state.AvailableResourceGroups;
+    private List<SearchFilterPanel.FilterItem> AvailablePlans => this._state.AvailablePlans;
+    private List<SearchFilterPanel.FilterItem> AvailableOptions => this._state.AvailableOptions;
 
     protected override async Task OnInitializedAsync()
     {
@@ -133,7 +146,36 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
         try
         {
-            await this.UserService.LoadUserInfoAsync(this._state);
+            // ユーザー情報をロード（ログインスキップ時：前回のセッションが維持されている場合でも再初期化する）
+            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            if (user.Identity?.IsAuthenticated == true)
+            {
+                // IUserContextServiceを初期化（フォールバック処理込み：Cookieにfacility_idがない場合はDBから取得）
+                await this.UserContextService.InitializeFromClaimsAsync(user);
+                var currentUser = this.UserContextService.CurrentUser;
+                if (currentUser != null)
+                {
+                    this._state.UserDisplayName = currentUser.UserDisplayName;
+                    this._state.UserEmail = currentUser.Email;
+                    this._state.TenantName = currentUser.TenantName;
+                    this._state.FacilityName = currentUser.FacilityName;
+                    this._state.CurrentFacilityId = currentUser.FacilityId;
+                    this._state.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
+                    this._state.UserInitial = currentUser.Initial;
+                    this._state.AvailableFacilities = await this.UserContextService.GetAccessibleFacilitiesAsync();
+                    this._state.HasMultipleFacilities = this._state.AvailableFacilities.Count > 1;
+                }
+                else
+                {
+                    Console.WriteLine("[WARNING] Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
+                }
+            }
+            else
+            {
+                Console.WriteLine("[WARNING] Calendar.OnInitializedAsync: User is not authenticated");
+            }
+
             await this.DataService.LoadBusinessHoursAsync(this._state);
             await this.DataService.LoadMainStatsAsync(
                 this._state,
@@ -145,7 +187,7 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentView,
                 this._state.CurrentDate,
                 this._state.WeekDays);
-            await this.DataService.GenerateFilterOptionsAsync(this._state);
+            await this.DataService.LoadFilterOptionsAsync(this._state);
             await this.DataService.LoadHolidaysAsync(this._state);
         }
         finally
@@ -159,12 +201,45 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleLogout()
     {
-        await this.UserService.HandleLogoutAsync();
+        try
+        {
+            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
+            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
+            {
+                await this.AuthService.LogoutAsync(sessionId);
+            }
+        }
+        catch
+        {
+            // ログアウトAPIの失敗は無視
+        }
+        finally
+        {
+            this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
+        }
     }
 
     private async Task HandleFacilitySwitch(Guid facilityId)
     {
-        await this.UserService.HandleFacilitySwitchAsync(facilityId);
+        var currentUser = this.UserContextService.CurrentUser;
+        if (currentUser == null || currentUser.UserId == Guid.Empty)
+        {
+            return;
+        }
+
+        try
+        {
+            var result = await this.AuthService.SwitchFacilityAsync(currentUser.UserId, facilityId);
+            if (result.IsSuccess)
+            {
+                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+            }
+        }
+        catch
+        {
+            // 施設切替失敗時は何もしない
+        }
     }
 
     protected override void OnAfterRender(bool firstRender)
@@ -469,7 +544,34 @@ public partial class Calendar : ComponentBase
     {
         this._state.CurrentFilter = filter;
 
-        // Equipment関連の処理は削除されました（AppointmentResourceに統合）
+        // フロア、リソースグループ、プラン・オプションのフィルターが変更された場合はデータを再取得
+        var needsReload = filter.SelectedFloorIds.Any() ||
+                         filter.SelectedResourceGroupIds.Any() ||
+                         filter.SelectedPlanIds.Any() ||
+                         filter.SelectedOptionPlanIds.Any();
+
+        if (needsReload)
+        {
+            this._state.IsLoading = true;
+            this.StateHasChanged();
+            try
+            {
+                await this.DataService.LoadMainStatsAsync(
+                    this._state,
+                    this._state.CurrentView,
+                    this._state.CurrentDate,
+                    this._state.WeekDays);
+                await this.DataService.LoadAppointmentsAsync(
+                    this._state,
+                    this._state.CurrentView,
+                    this._state.CurrentDate,
+                    this._state.WeekDays);
+            }
+            finally
+            {
+                this._state.IsLoading = false;
+            }
+        }
 
         await this.FilterService.ApplyFilterAsync(
             filter,

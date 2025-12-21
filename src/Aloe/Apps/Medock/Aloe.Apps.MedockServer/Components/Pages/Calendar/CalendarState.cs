@@ -54,6 +54,10 @@ public class CalendarState
 
     // フィルター
     public SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
+    public List<SearchFilterPanel.FilterItem> AvailableFloors { get; set; } = new();
+    public List<SearchFilterPanel.FilterItem> AvailableResourceGroups { get; set; } = new();
+    public List<SearchFilterPanel.FilterItem> AvailablePlans { get; set; } = new();
+    public List<SearchFilterPanel.FilterItem> AvailableOptions { get; set; } = new();
 
     // ローディング状態
     public bool IsLoading { get; set; } = false;
@@ -64,7 +68,11 @@ public class CalendarState
     public int ActiveFilterCount =>
         (this.CurrentFilter?.SelectedDays.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.TimeSlots.Any() == true ? 1 : 0) +
-        (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0);
+        (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
+        (this.CurrentFilter?.SelectedFloorIds.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.SelectedResourceGroupIds.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.SelectedPlanIds.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.SelectedOptionPlanIds.Any() == true ? 1 : 0);
 
     /// <summary>
     /// 現在の期間のタイトルを取得
