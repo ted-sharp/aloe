@@ -548,7 +548,7 @@ internal static class AppointmentStatsSeeder
         List<Patient> allPatients,
         List<Organization> allOrganizations,
         List<AppointmentSlot> allSlots,
-        Dictionary<Guid, FacilityBusinessHoursRoot> businessHoursDictForGen,
+        Dictionary<Guid, FacilityBusinessHoursRoot?> businessHoursDictForGen,
         HashSet<DateOnly> holidays,
         DateOnly startDate,
         DateOnly endDate,

@@ -23,9 +23,9 @@ public partial class FacilitySelectorModal : ComponentBase
             .OrderBy(g => g.Key)
             .ToDictionary(g => g.Key, g => g.OrderBy(f => f.FacilityName).ToList());
 
-    private void HandleBackdropClick()
+    private async Task HandleBackdropClick()
     {
-        this.Close();
+        await this.Close();
     }
 
     private async Task Close()

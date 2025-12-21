@@ -181,9 +181,9 @@ public partial class Calendar : ComponentBase
             this.CurrentView.ToString().ToLower(),
             async () => { this.OpenNewAppointmentModal(); await Task.CompletedTask; },
             async () => { this.ToggleFilterPanel(); await Task.CompletedTask; },
-            async () => { this.GoToToday(); await Task.CompletedTask; },
-            async () => { this.PreviousPeriod(); await Task.CompletedTask; },
-            async () => { this.NextPeriod(); await Task.CompletedTask; },
+            async () => { await this.GoToToday(); },
+            async () => { await this.PreviousPeriod(); },
+            async () => { await this.NextPeriod(); },
             async (view) => { this.SetViewFromString(view); await Task.CompletedTask; }
         );
     }
@@ -513,9 +513,9 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    private void HandleGoToToday()
+    private async Task HandleGoToToday()
     {
-        this.GoToToday();
+        await this.GoToToday();
     }
 
     private void OpenNewAppointmentModal()
