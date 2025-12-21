@@ -78,7 +78,7 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<AppointmentDto?> UpdateAppointmentAsync(Guid apptId, UpdateAppointmentDto dto)
     {
-        var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
+        var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return null;
@@ -129,7 +129,7 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<bool> DeleteAppointmentAsync(Guid apptId)
     {
-        var appointment = await this._appointmentRepository.FindByIdAsync(apptId);
+        var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
         if (appointment == null || appointment.IsDeleted)
         {
             return false;

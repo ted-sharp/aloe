@@ -17,11 +17,12 @@ public class AppointmentRepository : IAppointmentRepository
     }
 
     /// <summary>
-    /// IDで予約を取得します。
+    /// IDで予約を取得します（読み取り用、変更追跡なし）。
     /// </summary>
     public async Task<Appointment?> GetByIdAsync(Guid apptId)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -34,6 +35,7 @@ public class AppointmentRepository : IAppointmentRepository
     public async Task<List<Appointment>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -52,6 +54,7 @@ public class AppointmentRepository : IAppointmentRepository
     public async Task<List<Appointment>> GetByFloorAndDateAsync(Guid floorId, DateOnly date)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Include(a => a.Patient)
@@ -68,6 +71,7 @@ public class AppointmentRepository : IAppointmentRepository
     public async Task<List<Appointment>> GetByPatientIdAsync(Guid ptId)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Include(a => a.Floor)
             .Include(a => a.Organization)
             .Where(a => !a.IsDeleted && a.PtId == ptId)
@@ -82,6 +86,7 @@ public class AppointmentRepository : IAppointmentRepository
     public async Task<List<Appointment>> GetByOrganizationIdAsync(Guid orgId)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Include(a => a.Floor)
             .Include(a => a.Patient)
             .Where(a => !a.IsDeleted && a.OrgId == orgId)
@@ -124,9 +129,13 @@ public class AppointmentRepository : IAppointmentRepository
 
 
     /// <inheritdoc />
-    public async Task<Appointment?> FindByIdAsync(Guid apptId)
+    public async Task<Appointment?> FindForUpdateAsync(Guid apptId)
     {
-        return await this._context.Appointments.FindAsync(apptId);
+        return await this._context.Appointments
+            .Include(a => a.Floor)
+            .Include(a => a.Organization)
+            .Include(a => a.Patient)
+            .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
     }
 }
 

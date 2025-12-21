@@ -20,6 +20,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     public async Task<int> GetCountByDateAsync(DateOnly date)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .CountAsync(a => !a.IsDeleted && a.ApptDate == date);
     }
 
@@ -27,6 +28,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     public async Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date)
     {
         return await this._context.Appointments
+            .AsNoTracking()
             .Where(a => !a.IsDeleted &&
                         a.FloorId == floorId &&
                         a.ApptDate == date)
@@ -39,6 +41,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     public async Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate)
     {
         var results = await this._context.Appointments
+            .AsNoTracking()
             .Where(a => !a.IsDeleted &&
                         a.ApptDate.HasValue &&
                         a.ApptDate >= startDate &&
@@ -53,6 +56,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
         return await this._context.AppointmentStats
+            .AsNoTracking()
             .Include(s => s.AppointmentResource)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&

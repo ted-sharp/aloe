@@ -5,10 +5,15 @@ namespace Aloe.Apps.MedockLib.Repositories;
 /// <summary>
 /// 予約リポジトリインターフェース
 /// </summary>
+/// <remarks>
+/// 命名規則：
+/// - Get... : 読み取り用（AsNoTracking、変更追跡なし）
+/// - FindForUpdate... : 更新用（Tracking、変更追跡あり）
+/// </remarks>
 public interface IAppointmentRepository
 {
     /// <summary>
-    /// IDで予約を取得します。
+    /// IDで予約を取得します（読み取り用、変更追跡なし）。
     /// </summary>
     Task<Appointment?> GetByIdAsync(Guid apptId);
 
@@ -50,8 +55,8 @@ public interface IAppointmentRepository
 
 
     /// <summary>
-    /// 予約をIDで検索します（更新用）。
+    /// IDで予約を取得します（更新用、変更追跡あり）。
     /// </summary>
-    Task<Appointment?> FindByIdAsync(Guid apptId);
+    Task<Appointment?> FindForUpdateAsync(Guid apptId);
 }
 

@@ -20,6 +20,7 @@ public class HolidayRepository : IHolidayRepository
     public async Task<List<Holiday>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
         return await this._context.Holidays
+            .AsNoTracking()
             .Where(h => !h.IsDeleted &&
                         h.HolidayDate >= startDate &&
                         h.HolidayDate <= endDate)
