@@ -19,6 +19,7 @@ internal static class AppointmentSlotSeeder
 
         var resources = await context.AppointmentResources
             .Where(r => !r.IsDeleted)
+            .Include(r => r.Floor)
             .ToListAsync();
 
         if (!resources.Any())
@@ -26,6 +27,12 @@ internal static class AppointmentSlotSeeder
             Console.WriteLine("[SKIP] AppointmentSlot: No appointment resources found.");
             return;
         }
+
+        // 施設のビジネスアワーを取得
+        var facilityIds = resources.Select(r => r.Floor.FacilityId).Distinct().ToList();
+        var businessHoursDict = await context.FacilityBusinessHours
+            .Where(fbh => facilityIds.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
+            .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
         Console.WriteLine("[INFO] Creating appointment slot seed data...");
 
@@ -36,39 +43,42 @@ internal static class AppointmentSlotSeeder
 
         foreach (var resource in resources)
         {
+            // リソースに対応するビジネスアワーを取得（なければデフォルト値）
+            var businessHours = businessHoursDict.GetValueOrDefault(resource.Floor.FacilityId)
+                ?? new FacilityBusinessHoursRoot();
+
             AppointmentSlot slot;
 
             // リソース名とタイプに応じてスロット定義を作成
             if (resource.ApptResName == "内視鏡" || resource.ApptResName == "内視鏡(外部)")
             {
                 // 胃部内視鏡：20分に1スロット（1時間に3スロット）
-                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20);
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20, businessHours);
             }
             else if (resource.ApptResName == "CT")
             {
                 // CT：10分に1スロット（1時間に6スロット）
-                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 10);
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 10, businessHours);
             }
             else if (resource.ApptResName == "MR")
             {
                 // MR：30分に1スロット（1時間に2スロット）
-                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 30);
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 30, businessHours);
             }
             else if (resource.ApptResName == "腹部エコー" || resource.ApptResName == "乳腺エコー" || resource.ApptResName == "頸動脈エコー")
             {
                 // エコー：15分に1スロット（1時間に4スロット）
-                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 15);
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 15, businessHours);
             }
             else if (resource.AppointmentResourceType == Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main) // ロッカー（Mainタイプ）
             {
-                // 30分区切りで業務時間を分割、1時間当たり20人（1スロット10人）
-                // 午前: 8:00-12:00（4時間）= 8スロット、午後: 13:00-17:00（4時間）= 8スロット
-                slot = CreateMainSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxPerSlot: 10);
+                // 30分区切りで業務時間を分割、1時間当たり40人（1スロット20人）
+                slot = CreateMainSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxPerSlot: 20, businessHours);
             }
             else if (resource.ApptResName == "胃Ba")
             {
                 // 胃Ba：時間スロット形式（デフォルト20分間隔）
-                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20);
+                slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 20, businessHours);
             }
             else
             {
@@ -92,83 +102,91 @@ internal static class AppointmentSlotSeeder
     /// <summary>
     /// 時間スロット形式のリソース（内視鏡、CT、MR、エコー）を作成
     /// </summary>
-    private static AppointmentSlot CreateTimeSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int intervalMinutes)
+    private static AppointmentSlot CreateTimeSlotResource(
+        Guid resourceId,
+        DateOnly startDate,
+        DateOnly endDate,
+        int intervalMinutes,
+        FacilityBusinessHoursRoot businessHours)
     {
-        // 指定された間隔でスロットを生成（09:00-12:00、13:00-17:00の範囲）
         var timeSlots = new List<AppointmentSlotItem>();
 
-        // 午前のスロット（09:00-12:00）
-        for (int hour = 9; hour < 12; hour++)
+        // ビジネスアワーから時刻を取得
+        var businessStart = TimeOnly.Parse(businessHours.Start);
+        var businessEnd = TimeOnly.Parse(businessHours.End);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+
+        // 午前のスロット（businessStart ～ lunchStart）
+        var currentTime = businessStart;
+        while (currentTime < lunchStart)
         {
-            // 1時間の枠内で、指定された間隔でスロットを作成
-            for (int minute = 0; minute < 60; minute += intervalMinutes)
+            var endTime = currentTime.AddMinutes(intervalMinutes);
+            if (endTime > lunchStart) endTime = lunchStart;
+
+            timeSlots.Add(new AppointmentSlotItem
             {
-                var startTime = new TimeOnly(hour, minute);
-                var endTime = startTime.AddMinutes(intervalMinutes);
-                timeSlots.Add(new AppointmentSlotItem
-                {
-                    Start = startTime,
-                    End = endTime,
-                    Cap = 1
-                });
-            }
+                Start = currentTime,
+                End = endTime,
+                Cap = 1
+            });
+            currentTime = endTime;
         }
 
-        // 午後のスロット（13:00-17:00）
-        for (int hour = 13; hour <= 17; hour++)
+        // 午後のスロット（lunchEnd ～ businessEnd）
+        currentTime = lunchEnd;
+        while (currentTime < businessEnd)
         {
-            // 1時間の枠内で、指定された間隔でスロットを作成
-            for (int minute = 0; minute < 60; minute += intervalMinutes)
+            var endTime = currentTime.AddMinutes(intervalMinutes);
+            if (endTime > businessEnd) endTime = businessEnd;
+
+            timeSlots.Add(new AppointmentSlotItem
             {
-                var startTime = new TimeOnly(hour, minute);
-                var endTime = startTime.AddMinutes(intervalMinutes);
-                timeSlots.Add(new AppointmentSlotItem
-                {
-                    Start = startTime,
-                    End = endTime,
-                    Cap = 1
-                });
-            }
+                Start = currentTime,
+                End = endTime,
+                Cap = 1
+            });
+            currentTime = endTime;
         }
 
-        var slotDefinition = new AppointmentSlotRoot
+        // 時間外スロットを追加
+        // 早朝スロット（07:00 ～ businessStart）
+        var outsideHoursStart = new TimeOnly(7, 0);
+        if (businessStart > outsideHoursStart)
         {
-            Slots = timeSlots
-        };
-
-        return new AppointmentSlot
-        {
-            ApptSlotId = Guid.CreateVersion7(),
-            ApptResId = resourceId,
-            ApptSlotsData = slotDefinition,
-            IsActive = true,
-            ActiveFrom = startDate,
-            ActiveTo = endDate,
-            IsDeleted = false
-        };
-    }
-
-    /// <summary>
-    /// AM/PM制限形式のリソース（エコーなど）を作成
-    /// 時間範囲形式に変更：午前 08:00-12:00、午後 13:00-17:00
-    /// </summary>
-    private static AppointmentSlot CreateAmPmSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int maxAm, int maxPm)
-    {
-        var timeSlots = new List<AppointmentSlotItem>
-        {
-            new AppointmentSlotItem
+            timeSlots.Add(new AppointmentSlotItem
             {
-                Start = new TimeOnly(8, 0),
-                End = new TimeOnly(12, 0),
-                Cap = maxAm
-            },
-            new AppointmentSlotItem
+                Start = outsideHoursStart,
+                End = businessStart,
+                Cap = 0,
+                IsOutsideHours = true
+            });
+        }
+
+        // 昼休みスロット（lunchStart ～ lunchEnd）
+        if (lunchEnd > lunchStart)
+        {
+            timeSlots.Add(new AppointmentSlotItem
             {
-                Start = new TimeOnly(13, 0),
-                End = new TimeOnly(17, 0),
-                Cap = maxPm
-            }
-        };
+                Start = lunchStart,
+                End = lunchEnd,
+                Cap = 0,
+                IsOutsideHours = true
+            });
+        }
+
+        // 夕方スロット（businessEnd ～ 19:00）
+        var outsideHoursEnd = new TimeOnly(19, 0);
+        if (businessEnd < outsideHoursEnd)
+        {
+            timeSlots.Add(new AppointmentSlotItem
+            {
+                Start = businessEnd,
+                End = outsideHoursEnd,
+                Cap = 0,
+                IsOutsideHours = true
+            });
+        }
 
         var slotDefinition = new AppointmentSlotRoot
         {
@@ -189,43 +207,93 @@ internal static class AppointmentSlotSeeder
 
     /// <summary>
     /// Mainタイプのリソース（ロッカーなど）を作成
-    /// 30分区切りで業務時間を分割、1時間当たり20人（1スロット10人）
-    /// 午前: 8:00-12:00（4時間）= 8スロット、午後: 13:00-17:00（4時間）= 8スロット
+    /// 30分区切りで業務時間を分割
     /// </summary>
-    private static AppointmentSlot CreateMainSlotResource(Guid resourceId, DateOnly startDate, DateOnly endDate, int maxPerSlot)
+    private static AppointmentSlot CreateMainSlotResource(
+        Guid resourceId,
+        DateOnly startDate,
+        DateOnly endDate,
+        int maxPerSlot,
+        FacilityBusinessHoursRoot businessHours)
     {
         var timeSlots = new List<AppointmentSlotItem>();
+        const int intervalMinutes = 30;
 
-        // 午前のスロット（8:00-12:00、30分区切り）
-        for (int hour = 8; hour < 12; hour++)
+        // ビジネスアワーから時刻を取得
+        var businessStart = TimeOnly.Parse(businessHours.Start);
+        var businessEnd = TimeOnly.Parse(businessHours.End);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+
+        // 午前のスロット（businessStart ～ lunchStart、30分区切り）
+        var currentTime = businessStart;
+        while (currentTime < lunchStart)
         {
-            for (int minute = 0; minute < 60; minute += 30)
+            var endTime = currentTime.AddMinutes(intervalMinutes);
+            if (endTime > lunchStart) endTime = lunchStart;
+
+            timeSlots.Add(new AppointmentSlotItem
             {
-                var startTime = new TimeOnly(hour, minute);
-                var endTime = startTime.AddMinutes(30);
-                timeSlots.Add(new AppointmentSlotItem
-                {
-                    Start = startTime,
-                    End = endTime,
-                    Cap = maxPerSlot // 1スロット10人
-                });
-            }
+                Start = currentTime,
+                End = endTime,
+                Cap = maxPerSlot
+            });
+            currentTime = endTime;
         }
 
-        // 午後のスロット（13:00-17:00、30分区切り、4時間=8スロット）
-        for (int hour = 13; hour < 17; hour++)
+        // 午後のスロット（lunchEnd ～ businessEnd、30分区切り）
+        currentTime = lunchEnd;
+        while (currentTime < businessEnd)
         {
-            for (int minute = 0; minute < 60; minute += 30)
+            var endTime = currentTime.AddMinutes(intervalMinutes);
+            if (endTime > businessEnd) endTime = businessEnd;
+
+            timeSlots.Add(new AppointmentSlotItem
             {
-                var startTime = new TimeOnly(hour, minute);
-                var endTime = startTime.AddMinutes(30);
-                timeSlots.Add(new AppointmentSlotItem
-                {
-                    Start = startTime,
-                    End = endTime,
-                    Cap = maxPerSlot // 1スロット10人
-                });
-            }
+                Start = currentTime,
+                End = endTime,
+                Cap = maxPerSlot
+            });
+            currentTime = endTime;
+        }
+
+        // 時間外スロットを追加
+        // 早朝スロット（07:00 ～ businessStart）
+        var outsideHoursStart = new TimeOnly(7, 0);
+        if (businessStart > outsideHoursStart)
+        {
+            timeSlots.Add(new AppointmentSlotItem
+            {
+                Start = outsideHoursStart,
+                End = businessStart,
+                Cap = 0,
+                IsOutsideHours = true
+            });
+        }
+
+        // 昼休みスロット（lunchStart ～ lunchEnd）
+        if (lunchEnd > lunchStart)
+        {
+            timeSlots.Add(new AppointmentSlotItem
+            {
+                Start = lunchStart,
+                End = lunchEnd,
+                Cap = 0,
+                IsOutsideHours = true
+            });
+        }
+
+        // 夕方スロット（businessEnd ～ 19:00）
+        var outsideHoursEnd = new TimeOnly(19, 0);
+        if (businessEnd < outsideHoursEnd)
+        {
+            timeSlots.Add(new AppointmentSlotItem
+            {
+                Start = businessEnd,
+                End = outsideHoursEnd,
+                Cap = 0,
+                IsOutsideHours = true
+            });
         }
 
         var slotDefinition = new AppointmentSlotRoot

@@ -116,13 +116,9 @@ try
     // 予約スロット（リソースの後）
     await AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider);
 
-    // 予約データ（患者・団体の後）
-    await AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider);
-
-    // 予約リソース関連付け（予約・リソースの後）
-    await AppointmentResourceAssignmentSeeder.SeedAsync(context, dateTimeProvider);
-
-    // 予約統計（予約・リソース関連付けの後）
+    // 予約データと統計（Mainリソースの予約はAppointmentStatsSeederで生成）
+    // AppointmentSeederとAppointmentResourceAssignmentSeederはスキップし、
+    // AppointmentStatsSeederで季節に応じた予約数を生成する
     await AppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
 
     // RBAC関連

@@ -60,46 +60,62 @@ internal static class AppointmentSeeder
 
         Console.WriteLine("[INFO] Creating appointment seed data...");
 
-        var appointments = new List<Appointment>();
-        var currentDate = startDate;
+        // 3ヶ月ごとにバッチ処理
+        var batchStartDate = startDate;
+        var batchEndDate = startDate.AddMonths(3).AddDays(-1);
+        if (batchEndDate > endDate) batchEndDate = endDate;
 
-        while (currentDate <= endDate)
+        var totalAppointments = 0;
+
+        while (batchStartDate <= endDate)
         {
-            var dayContext = GetDayContext(currentDate, holidays);
+            var appointments = new List<Appointment>();
+            var currentDate = batchStartDate;
 
-            // イレギュラーチェック（約1%の確率で例外）
-            var isIrregular = _random.Next(100) < 1;
-            if (isIrregular)
+            while (currentDate <= batchEndDate && currentDate <= endDate)
             {
-                // イレギュラーデータを生成
-                dayContext = ApplyIrregularRule(dayContext, currentDate);
+                var dayContext = GetDayContext(currentDate, holidays);
+
+                // イレギュラーチェック（約1%の確率で例外）
+                var isIrregular = _random.Next(100) < 1;
+                if (isIrregular)
+                {
+                    // イレギュラーデータを生成
+                    dayContext = ApplyIrregularRule(dayContext, currentDate);
+                }
+
+                // 営業日の場合は予約を生成
+                if (dayContext.IsOpen)
+                {
+                    var appointmentsForDay = GenerateAppointmentsForDay(
+                        currentDate,
+                        dayContext,
+                        floor,
+                        patients,
+                        organizations,
+                        dateTimeProvider);
+
+                    appointments.AddRange(appointmentsForDay);
+                }
+
+                currentDate = currentDate.AddDays(1);
             }
 
-            // 営業日の場合は予約を生成
-            if (dayContext.IsOpen)
+            if (appointments.Any())
             {
-                var appointmentsForDay = GenerateAppointmentsForDay(
-                    currentDate,
-                    dayContext,
-                    floor,
-                    patients,
-                    organizations,
-                    dateTimeProvider);
-
-                appointments.AddRange(appointmentsForDay);
+                context.Appointments.AddRange(appointments);
+                await context.SaveChangesAsync();
+                totalAppointments += appointments.Count;
+                Console.WriteLine($"  [BATCH] Committed {appointments.Count} appointments ({batchStartDate:yyyy-MM-dd} to {batchEndDate:yyyy-MM-dd})");
             }
 
-            currentDate = currentDate.AddDays(1);
+            // 次のバッチへ
+            batchStartDate = batchEndDate.AddDays(1);
+            batchEndDate = batchStartDate.AddMonths(3).AddDays(-1);
+            if (batchEndDate > endDate) batchEndDate = endDate;
         }
 
-        Console.WriteLine($"  [+] Appointments: {appointments.Count} entries (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
-
-        context.Appointments.AddRange(appointments);
-
-        if (context.ChangeTracker.HasChanges())
-        {
-            await context.SaveChangesAsync();
-        }
+        Console.WriteLine($"  [+] Appointments: {totalAppointments} entries total (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
     }
 
     /// <summary>
@@ -252,6 +268,104 @@ internal static class AppointmentSeeder
 
             SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
             appointments.Add(appointment);
+        }
+
+        // 時間外スロットへの予約生成（低確率で生成、グラフには描画されないが赤い縦ラインで存在の有無を表示）
+        // 早朝スロット（07:00-09:00）：約10%の確率で1件生成
+        if (_random.Next(100) < 10)
+        {
+            var patient = patients[_random.Next(patients.Count)];
+            var organization = organizations[_random.Next(organizations.Count)];
+            var earlyMorningTimes = SeederHelper.TimeSlots.EarlyMorningSlots;
+            var timeStr = earlyMorningTimes[_random.Next(earlyMorningTimes.Length)];
+            if (TimeOnly.TryParse(timeStr, out var parsedTime))
+            {
+                var startTime = parsedTime;
+                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var endTime = startTime.AddMinutes(durationMin);
+
+                var appointment = new Appointment
+                {
+                    ApptId = Guid.CreateVersion7(),
+                    FloorId = floor.FloorId,
+                    OrgId = organization.OrgId,
+                    PtId = patient.PtId,
+                    ApptDate = date,
+                    ApptStartTime = startTime,
+                    ApptDurationMin = durationMin,
+                    ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
+                    ApptMemo = String.Empty,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
+                appointments.Add(appointment);
+            }
+        }
+
+        // 昼休みスロット（12:00-13:00）：約10%の確率で1件生成
+        if (_random.Next(100) < 10)
+        {
+            var patient = patients[_random.Next(patients.Count)];
+            var organization = organizations[_random.Next(organizations.Count)];
+            var lunchTimes = SeederHelper.TimeSlots.LunchSlots;
+            var timeStr = lunchTimes[_random.Next(lunchTimes.Length)];
+            if (TimeOnly.TryParse(timeStr, out var parsedTime))
+            {
+                var startTime = parsedTime;
+                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var endTime = startTime.AddMinutes(durationMin);
+
+                var appointment = new Appointment
+                {
+                    ApptId = Guid.CreateVersion7(),
+                    FloorId = floor.FloorId,
+                    OrgId = organization.OrgId,
+                    PtId = patient.PtId,
+                    ApptDate = date,
+                    ApptStartTime = startTime,
+                    ApptDurationMin = durationMin,
+                    ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
+                    ApptMemo = String.Empty,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
+                appointments.Add(appointment);
+            }
+        }
+
+        // 夕方スロット（17:00-18:00）：約10%の確率で1件生成
+        if (_random.Next(100) < 10)
+        {
+            var patient = patients[_random.Next(patients.Count)];
+            var organization = organizations[_random.Next(organizations.Count)];
+            // 17:00-17:45の範囲で生成（15分単位）
+            var eveningTimeStrs = new[] { "17:00", "17:15", "17:30", "17:45" };
+            var timeStr = eveningTimeStrs[_random.Next(eveningTimeStrs.Length)];
+            if (TimeOnly.TryParse(timeStr, out var parsedTime))
+            {
+                var startTime = parsedTime;
+                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var endTime = startTime.AddMinutes(durationMin);
+
+                var appointment = new Appointment
+                {
+                    ApptId = Guid.CreateVersion7(),
+                    FloorId = floor.FloorId,
+                    OrgId = organization.OrgId,
+                    PtId = patient.PtId,
+                    ApptDate = date,
+                    ApptStartTime = startTime,
+                    ApptDurationMin = durationMin,
+                    ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
+                    ApptMemo = String.Empty,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
+                appointments.Add(appointment);
+            }
         }
 
         return appointments;

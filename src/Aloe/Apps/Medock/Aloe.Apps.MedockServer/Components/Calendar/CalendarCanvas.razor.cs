@@ -192,7 +192,15 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         if (this._isInitialized && (this.Appointments != null || this.MainStats != null))
         {
-            await this.UpdateDataAsync();
+            try
+            {
+                await this.UpdateDataAsync();
+            }
+            catch (TaskCanceledException)
+            {
+                // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
+                // これは正常な動作なので無視する
+            }
         }
     }
 
@@ -260,36 +268,52 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         if (!this._isInitialized) return;
 
-        var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
-            this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-            this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-            this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-            this.Holidays ?? new Dictionary<string, string>());
-        var data = CalendarCanvasInterop.BuildDataObject(calendarData);
-        await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
+        try
+        {
+            var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+                this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+                this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+                this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+                this.Holidays ?? new Dictionary<string, string>());
+            var data = CalendarCanvasInterop.BuildDataObject(calendarData);
+            await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
+        }
+        catch (TaskCanceledException)
+        {
+            // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
+            // これは正常な動作なので無視する
+        }
     }
 
     private async Task ChangeViewAsync()
     {
         if (!this._isInitialized) return;
 
-        // Update options if weekDays, showSlots, or showSimpleView changed
-        if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView)
+        try
         {
-            var options = CalendarCanvasInterop.BuildOptions(
-                this.WeekDays,
-                this.ShowSlots,
-                this.ShowSimpleView,
-                this.StartHour,
-                this.EndHour,
-                this.BusinessHours);
-            await this.JSRuntime.InvokeVoidAsync("MedockCalendar.setOptions", options);
-        }
+            // Update options if weekDays, showSlots, or showSimpleView changed
+            if (this._lastWeekDays != this.WeekDays || this._lastShowSlots != this.ShowSlots || this._lastShowSimpleView != this.ShowSimpleView)
+            {
+                var options = CalendarCanvasInterop.BuildOptions(
+                    this.WeekDays,
+                    this.ShowSlots,
+                    this.ShowSimpleView,
+                    this.StartHour,
+                    this.EndHour,
+                    this.BusinessHours);
+                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.setOptions", options);
+            }
 
-        await this.JSRuntime.InvokeVoidAsync(
-            "MedockCalendar.changeView",
-            this.ViewType,
-            this.CurrentDate.ToString("yyyy-MM-dd"));
+            await this.JSRuntime.InvokeVoidAsync(
+                "MedockCalendar.changeView",
+                this.ViewType,
+                this.CurrentDate.ToString("yyyy-MM-dd"));
+        }
+        catch (TaskCanceledException)
+        {
+            // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
+            // これは正常な動作なので無視する
+        }
     }
 
     // ============================================================

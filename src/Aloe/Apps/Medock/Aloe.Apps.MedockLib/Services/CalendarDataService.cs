@@ -38,6 +38,16 @@ public class CalendarDataService : ICalendarDataService
 
         [JsonPropertyName("available")]
         public int Available { get; set; }
+
+        /// <summary>
+        /// 時間外の予約が含まれているかどうか
+        /// 
+        /// 注意: スロット定義（AppointmentSlot）は業務時間内（例：09:00-12:00、13:00-17:00）のみ存在しますが、
+        /// 予約データ（Appointments）は時刻を自由に指定できるため、時間外（開始前・終了後・昼休み時間外）の予約も存在し得ます。
+        /// 時間外の予約は、近いスロットに吸収される（集計される）が、このフラグが立つことで時間外の予約が含まれていることを示します。
+        /// </summary>
+        [JsonPropertyName("hasOutsideHours")]
+        public bool HasOutsideHours { get; set; } = false;
     }
 
     /// <inheritdoc />
@@ -90,7 +100,8 @@ public class CalendarDataService : ICalendarDataService
                                 Cap = slot.Cap,
                                 Available = slot.Cap - slot.Count,
                                 IsGrayedOut = false,
-                                FilteredCount = 0
+                                FilteredCount = 0,
+                                IsOutsideHours = slot.HasOutsideHours // 時間外スロットフラグをマッピング
                             }).OrderBy(s => s.Start).ToList();
                         }
                     }

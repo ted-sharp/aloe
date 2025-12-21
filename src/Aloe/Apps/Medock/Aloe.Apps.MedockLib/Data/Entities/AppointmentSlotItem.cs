@@ -23,5 +23,9 @@ public class AppointmentSlotItem
     /// <summary>最大予約数（キャパシティ）</summary>
     [JsonPropertyName("cap")]
     public int Cap { get; set; }
+
+    /// <summary>時間外スロットかどうか</summary>
+    [JsonPropertyName("isOutsideHours")]
+    public bool IsOutsideHours { get; set; } = false;
 }
 

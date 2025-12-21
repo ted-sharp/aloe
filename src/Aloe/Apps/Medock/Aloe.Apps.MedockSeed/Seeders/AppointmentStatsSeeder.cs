@@ -40,6 +40,9 @@ internal static class AppointmentStatsSeeder
             .Where(ara => !ara.IsDeleted)
             .ToListAsync();
 
+        // 祝日データを読み込み（予約生成と統計計算の両方で使用）
+        var holidays = await SeederHelper.LoadHolidaySetAsync(context);
+
         // mainリソースの場合、既存の予約データがない場合に予約データを生成
         // AppointmentResourceTypeは[NotMapped]のため、ApptResTypeCodeを使用
         var mainResources = await context.AppointmentResources
@@ -49,11 +52,22 @@ internal static class AppointmentStatsSeeder
         if (mainResources.Any() && (!appointments.Any() || !resourceAssignments.Any()))
         {
             Console.WriteLine("[INFO] Generating appointment data for main resources...");
-            var holidays = await SeederHelper.LoadHolidaySetAsync(context);
 
-            // Floor、Organization、Patientを取得
+            // 必要なデータを事前に一括取得（ループ内でのawaitを避ける）
             var floors = await context.Floors
                 .Where(f => !f.IsDeleted)
+                .ToListAsync();
+
+            var allPatients = await context.Patients
+                .Where(p => !p.IsDeleted)
+                .ToListAsync();
+
+            var allOrganizations = await context.Organizations
+                .Where(o => !o.IsDeleted)
+                .ToListAsync();
+
+            var allSlots = await context.AppointmentSlots
+                .Where(s => !s.IsDeleted && s.IsActive)
                 .ToListAsync();
 
             if (!floors.Any())
@@ -62,6 +76,12 @@ internal static class AppointmentStatsSeeder
             }
             else
             {
+                // ビジネスアワーを事前に取得
+                var facilityIdsForGen = floors.Select(f => f.FacilityId).Distinct().ToList();
+                var businessHoursDictForGen = await context.FacilityBusinessHours
+                    .Where(fbh => facilityIdsForGen.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
+                    .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
+
                 foreach (var mainResource in mainResources)
                 {
                     var floor = floors.FirstOrDefault(f => f.FloorId == mainResource.FloorId);
@@ -71,13 +91,9 @@ internal static class AppointmentStatsSeeder
                         continue;
                     }
 
-                    var patients = await context.Patients
-                        .Where(p => !p.IsDeleted && p.FacilityId == floor.FacilityId)
-                        .ToListAsync();
-
-                    var organizations = await context.Organizations
-                        .Where(o => !o.IsDeleted && o.FacilityId == floor.FacilityId)
-                        .ToListAsync();
+                    // メモリ内でフィルタリング
+                    var patients = allPatients.Where(p => p.FacilityId == floor.FacilityId).ToList();
+                    var organizations = allOrganizations.Where(o => o.FacilityId == floor.FacilityId).ToList();
 
                     if (!patients.Any() || !organizations.Any())
                     {
@@ -85,10 +101,8 @@ internal static class AppointmentStatsSeeder
                         continue;
                     }
 
-                    // スロット定義を取得
-                    var slot = await context.AppointmentSlots
-                        .Where(s => !s.IsDeleted && s.IsActive && s.ApptResId == mainResource.ApptResId)
-                        .FirstOrDefaultAsync();
+                    // メモリ内でスロット定義を取得
+                    var slot = allSlots.FirstOrDefault(s => s.ApptResId == mainResource.ApptResId);
 
                     if (slot?.ApptSlotsData == null || !slot.ApptSlotsData.Slots.Any())
                     {
@@ -96,32 +110,60 @@ internal static class AppointmentStatsSeeder
                         continue;
                     }
 
-                    // 予約データを生成
-                    var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
-                        mainResource,
-                        startDate,
-                        endDate,
-                        slot.ApptSlotsData,
-                        slot.ActiveFrom,
-                        slot.ActiveTo,
-                        holidays,
-                        floor,
-                        patients,
-                        organizations,
-                        dateTimeProvider);
+                    // ビジネスアワーを取得
+                    var businessHoursForGen = businessHoursDictForGen.GetValueOrDefault(floor.FacilityId)
+                        ?? new FacilityBusinessHoursRoot();
 
-                    if (generatedAppointments.Any())
+                    // 3ヶ月ごとにバッチ処理
+                    var batchStartDate = startDate;
+                    var batchEndDate = startDate.AddMonths(3).AddDays(-1);
+                    if (batchEndDate > endDate) batchEndDate = endDate;
+
+                    var totalAppointments = 0;
+
+                    while (batchStartDate <= endDate)
                     {
-                        context.Appointments.AddRange(generatedAppointments);
-                        context.AppointmentResourceAssignments.AddRange(generatedAssignments);
-                        Console.WriteLine($"  [+] Generated {generatedAppointments.Count} appointments for {mainResource.ApptResName}");
-                    }
-                }
+                        // バッチの日付範囲がスロットの有効期間内に収まるように調整
+                        var effectiveBatchStart = batchStartDate < slot.ActiveFrom ? slot.ActiveFrom : batchStartDate;
+                        var effectiveBatchEnd = batchEndDate > slot.ActiveTo ? slot.ActiveTo : batchEndDate;
 
-                // 生成した予約データを保存
-                if (context.ChangeTracker.HasChanges())
-                {
-                    await context.SaveChangesAsync();
+                        if (effectiveBatchStart <= effectiveBatchEnd)
+                        {
+                            // 予約データを生成
+                            var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
+                                mainResource,
+                                effectiveBatchStart,
+                                effectiveBatchEnd,
+                                slot.ApptSlotsData,
+                                slot.ActiveFrom,
+                                slot.ActiveTo,
+                                holidays,
+                                floor,
+                                patients,
+                                organizations,
+                                dateTimeProvider,
+                                businessHoursForGen);
+
+                            if (generatedAppointments.Any())
+                            {
+                                context.Appointments.AddRange(generatedAppointments);
+                                context.AppointmentResourceAssignments.AddRange(generatedAssignments);
+                                await context.SaveChangesAsync();
+                                totalAppointments += generatedAppointments.Count;
+                                Console.WriteLine($"  [BATCH] Committed {generatedAppointments.Count} appointments for {mainResource.ApptResName} ({effectiveBatchStart:yyyy-MM-dd} to {effectiveBatchEnd:yyyy-MM-dd})");
+                            }
+                        }
+
+                        // 次のバッチへ
+                        batchStartDate = batchEndDate.AddDays(1);
+                        batchEndDate = batchStartDate.AddMonths(3).AddDays(-1);
+                        if (batchEndDate > endDate) batchEndDate = endDate;
+                    }
+
+                    if (totalAppointments > 0)
+                    {
+                        Console.WriteLine($"  [+] Generated {totalAppointments} appointments total for {mainResource.ApptResName}");
+                    }
                 }
 
                 // 予約データを再取得
@@ -163,7 +205,14 @@ internal static class AppointmentStatsSeeder
 
         var resources = await context.AppointmentResources
             .Where(r => !r.IsDeleted)
+            .Include(r => r.Floor)
             .ToListAsync();
+
+        // 施設のビジネスアワーを取得
+        var facilityIds = resources.Select(r => r.Floor.FacilityId).Distinct().ToList();
+        var businessHoursDict = await context.FacilityBusinessHours
+            .Where(fbh => facilityIds.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
+            .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
         Console.WriteLine("[INFO] Creating appointment stats seed data...");
 
@@ -231,9 +280,24 @@ internal static class AppointmentStatsSeeder
 
         foreach (var resource in resources)
         {
+            // ビジネスアワーをDBから取得（なければデフォルト値）- リソースごとに1回だけ取得
+            var businessHours = businessHoursDict.GetValueOrDefault(resource.Floor.FacilityId)
+                ?? new FacilityBusinessHoursRoot();
+            var businessStartTime = TimeOnly.Parse(businessHours.Start);
+            var businessEndTime = TimeOnly.Parse(businessHours.End);
+            var lunchStartTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
+            var lunchEndTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+
             var currentDate = startDate;
             while (currentDate <= endDate)
             {
+                // 休診日（日曜・祝日）はスキップ
+                if (!SeederHelper.IsBusinessDay(currentDate, holidays))
+                {
+                    currentDate = currentDate.AddDays(1);
+                    continue;
+                }
+
                 var key = (currentDate, resource.ApptResId);
 
                 // スロット定義を取得（overrideがあれば優先）
@@ -253,6 +317,16 @@ internal static class AppointmentStatsSeeder
 
                 if (slotDef != null && slotDef.Slots.Any())
                 {
+                    // 水曜・土曜は半日営業（午前のみ）
+                    var dayOfWeek = currentDate.DayOfWeek;
+                    var isHalfDay = dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday;
+
+                    // 半日営業の場合、昼休み開始前のスロットのみを対象とする
+                    // 時間外スロット（IsOutsideHours = true）は除外する（別途処理するため）
+                    var activeSlots = isHalfDay
+                        ? slotDef.Slots.Where(s => s.Start < lunchStartTime && !s.IsOutsideHours).ToList()
+                        : slotDef.Slots.Where(s => !s.IsOutsideHours).ToList();
+
                     if (!statsMap.ContainsKey(key))
                     {
                         statsMap[key] = new AppointmentStatsData
@@ -266,19 +340,42 @@ internal static class AppointmentStatsSeeder
 
                     var statsData = statsMap[key];
 
-                    // キャパシティを計算（各スロットのCap値を合計）
-                    statsData.Capacity = slotDef.Slots.Sum(s => s.Cap);
+                    // キャパシティを計算（営業時間内のスロットのみ）
+                    statsData.Capacity = activeSlots.Sum(s => s.Cap);
 
-                    // グラフデータを生成
+                    // グラフデータを生成（営業時間内のスロット + 時間外スロット）
+                    // 時間外の予約は時間外スロットに集計する
                     var graphSlots = new List<AppointmentGraphItem>();
-                    foreach (var slotItem in slotDef.Slots)
+
+                    // 時間外スロットを取得（スロット定義から動的に取得）
+                    var outsideHoursSlots = slotDef.Slots.Where(s => s.IsOutsideHours).ToList();
+                    var morningSlot = outsideHoursSlots.FirstOrDefault(s => s.End <= businessStartTime);
+                    var lunchSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= lunchStartTime && s.End <= lunchEndTime);
+                    var eveningSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= businessEndTime);
+                    
+                    // 通常のスロット（営業時間内）を処理
+                    // 時間外の予約は除外する（時間外スロットに集計される）
+                    foreach (var slotItem in activeSlots)
                     {
-                        // スロットの時間範囲内にある予約数をカウント
+                        // スロットの時間範囲内にある予約数をカウント（時間外の予約は除外）
                         int count = 0;
+
                         foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
                         {
                             if (TimeOnly.TryParse(timeKey, out var appointmentTime))
                             {
+                                // 時間外の予約を除外
+                                // ビジネスアワー開始前、昼休み時間帯、ビジネスアワー終了後の予約は除外
+                                bool isOutsideHours =
+                                    appointmentTime < businessStartTime || // ビジネスアワー開始前（早朝）
+                                    (appointmentTime >= lunchStartTime && appointmentTime < lunchEndTime) || // 昼休み時間帯
+                                    appointmentTime >= businessEndTime; // ビジネスアワー終了後（夕方）
+
+                                if (isOutsideHours)
+                                {
+                                    continue; // 時間外の予約は通常のスロットに含めない
+                                }
+
                                 // 予約の開始時刻がスロットの時間範囲内にあるかチェック
                                 if (appointmentTime >= slotItem.Start && appointmentTime < slotItem.End)
                                 {
@@ -292,7 +389,84 @@ internal static class AppointmentStatsSeeder
                             Start = slotItem.Start,
                             End = slotItem.End,
                             Count = count,
-                            Cap = slotItem.Cap
+                            Cap = slotItem.Cap,
+                            HasOutsideHours = false
+                        });
+                    }
+
+                    // 時間外スロットを処理
+                    // 早朝スロット（businessStart以前）
+                    if (morningSlot != null)
+                    {
+                        int count = 0;
+                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
+                        {
+                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                            {
+                                // ビジネスアワー開始前の予約を集計
+                                if (appointmentTime < businessStartTime)
+                                {
+                                    count += cnt;
+                                }
+                            }
+                        }
+                        graphSlots.Add(new AppointmentGraphItem
+                        {
+                            Start = morningSlot.Start,
+                            End = morningSlot.End,
+                            Count = count,
+                            Cap = morningSlot.Cap,
+                            HasOutsideHours = true // 時間外スロットであることを示す
+                        });
+                    }
+
+                    // 昼休みスロット（lunchStart ～ lunchEnd）
+                    if (lunchSlot != null)
+                    {
+                        int count = 0;
+                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
+                        {
+                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                            {
+                                // 昼休み時間帯の予約を集計
+                                if (appointmentTime >= lunchStartTime && appointmentTime < lunchEndTime)
+                                {
+                                    count += cnt;
+                                }
+                            }
+                        }
+                        graphSlots.Add(new AppointmentGraphItem
+                        {
+                            Start = lunchSlot.Start,
+                            End = lunchSlot.End,
+                            Count = count,
+                            Cap = lunchSlot.Cap,
+                            HasOutsideHours = true // 時間外スロットであることを示す
+                        });
+                    }
+
+                    // 夕方スロット（businessEnd以降）
+                    if (eveningSlot != null)
+                    {
+                        int count = 0;
+                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
+                        {
+                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                            {
+                                // ビジネスアワー終了後の予約を集計
+                                if (appointmentTime >= businessEndTime)
+                                {
+                                    count += cnt;
+                                }
+                            }
+                        }
+                        graphSlots.Add(new AppointmentGraphItem
+                        {
+                            Start = eveningSlot.Start,
+                            End = eveningSlot.End,
+                            Count = count,
+                            Cap = eveningSlot.Cap,
+                            HasOutsideHours = true // 時間外スロットであることを示す
                         });
                     }
 
@@ -349,8 +523,14 @@ internal static class AppointmentStatsSeeder
         Floor floor,
         List<Patient> patients,
         List<Organization> organizations,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        FacilityBusinessHoursRoot businessHours)
     {
+        // ビジネスアワーから時刻を取得
+        var businessStartTime = TimeOnly.Parse(businessHours.Start);
+        var businessEndTime = TimeOnly.Parse(businessHours.End);
+        var lunchStartTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
+        var lunchEndTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
         var appointments = new List<Appointment>();
         var assignments = new List<AppointmentResourceAssignment>();
 
@@ -364,25 +544,135 @@ internal static class AppointmentStatsSeeder
                 continue;
             }
 
-            // 営業日判定
+            // 営業日判定（日曜・祝日は休診）
             var isBusinessDay = SeederHelper.IsBusinessDay(currentDate, holidays);
-            
-            // 忙しい時期（営業日）か閑散期（週末・祝日）かを判定
-            var isBusyPeriod = isBusinessDay;
-            
+            var isHoliday = holidays.Contains(currentDate);
+            var isSunday = currentDate.DayOfWeek == DayOfWeek.Sunday;
+
+            // 休診日の場合は緊急予約をチェックしてからスキップ
+            if (!isBusinessDay)
+            {
+                // 日曜・祝日に稀に緊急予約を生成（0.5-1%の確率）
+                if ((isSunday || isHoliday) && _random.Next(1000) < 8) // 0.8%の確率
+                {
+                    var emergencyCount = _random.Next(1, 4); // 1-3件
+
+                    for (int i = 0; i < emergencyCount; i++)
+                    {
+                        var patient = patients[_random.Next(patients.Count)];
+                        var organization = organizations[_random.Next(organizations.Count)];
+
+                        // 緊急予約の時間はランダム（早朝・午前・午後・夕方）- ビジネスアワーに基づく
+                        TimeOnly emergencyTime;
+                        var timePattern = _random.Next(4);
+                        var outsideHoursStart = new TimeOnly(7, 0);
+                        var outsideHoursEnd = new TimeOnly(19, 0);
+                        switch (timePattern)
+                        {
+                            case 0: // 早朝（07:00 ～ businessStart）
+                                var morningRange = (int)(businessStartTime - outsideHoursStart).TotalMinutes;
+                                if (morningRange > 0)
+                                {
+                                    emergencyTime = outsideHoursStart.AddMinutes(_random.Next(0, morningRange));
+                                }
+                                else
+                                {
+                                    emergencyTime = businessStartTime;
+                                }
+                                break;
+                            case 1: // 午前（businessStart ～ lunchStart）
+                                var amRange = (int)(lunchStartTime - businessStartTime).TotalMinutes;
+                                emergencyTime = businessStartTime.AddMinutes(_random.Next(0, amRange));
+                                break;
+                            case 2: // 午後（lunchEnd ～ businessEnd）
+                                var pmRange = (int)(businessEndTime - lunchEndTime).TotalMinutes;
+                                emergencyTime = lunchEndTime.AddMinutes(_random.Next(0, pmRange));
+                                break;
+                            default: // 夕方（businessEnd ～ 19:00）
+                                var eveningRange = (int)(outsideHoursEnd - businessEndTime).TotalMinutes;
+                                if (eveningRange > 0)
+                                {
+                                    emergencyTime = businessEndTime.AddMinutes(_random.Next(0, eveningRange));
+                                }
+                                else
+                                {
+                                    emergencyTime = businessEndTime;
+                                }
+                                break;
+                        }
+
+                        var emergencyAppointment = new Appointment
+                        {
+                            ApptId = Guid.CreateVersion7(),
+                            FloorId = floor.FloorId,
+                            OrgId = organization.OrgId,
+                            PtId = patient.PtId,
+                            ApptDate = currentDate,
+                            ApptStartTime = emergencyTime,
+                            ApptDurationMin = 30,
+                            ApptStatusCode = 0,
+                            ApptMemo = "緊急予約",
+                            IsDeleted = false
+                        };
+
+                        SeederHelper.InitializeAuditFields(emergencyAppointment, dateTimeProvider);
+                        appointments.Add(emergencyAppointment);
+
+                        var emergencyAssignment = new AppointmentResourceAssignment
+                        {
+                            ApptResAssignId = Guid.CreateVersion7(),
+                            ApptId = emergencyAppointment.ApptId,
+                            ApptResId = resource.ApptResId,
+                            ApptStartTime = emergencyTime,
+                            IsDeleted = false
+                        };
+
+                        SeederHelper.InitializeAuditFields(emergencyAssignment, dateTimeProvider);
+                        assignments.Add(emergencyAssignment);
+                    }
+                }
+
+                currentDate = currentDate.AddDays(1);
+                continue;
+            }
+
+            // 水曜・土曜は半日営業（午前のみ）
+            var dayOfWeek = currentDate.DayOfWeek;
+            var isHalfDay = dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday;
+
+            // 季節による繁忙度を取得して予約数を決定
+            var seasonalRate = GetSeasonalOccupancyRate(currentDate.Month);
+            // 日ごとの変動率を取得（±20-30%の変動）
+            var dailyVariationRate = GetDailyVariationRate();
+
             foreach (var slotItem in slotDef.Slots)
             {
-                // 埋まり具合を決定
-                int appointmentCount;
-                if (isBusyPeriod)
+                // 半日営業の場合、午後のスロット（12:00以降）はスキップ
+                if (isHalfDay && slotItem.Start >= lunchStartTime)
                 {
-                    // 忙しい時期: Cap値の100%（10割埋まる）
-                    appointmentCount = slotItem.Cap;
+                    continue;
                 }
-                else
+
+                // 時間帯ごとの充足率を取得（時間帯による偏りを反映）
+                var timeSlotRate = GetTimeSlotOccupancyRate(slotItem.Start);
+                // スロットごとの微細な変動（±5%）
+                var slotVariationRate = 0.95 + _random.NextDouble() * 0.1;
+
+                // 埋まり具合を決定（季節 + 日ごとの変動 + 時間帯の偏り + スロットごとの変動）
+                var effectiveRate = seasonalRate * dailyVariationRate * timeSlotRate * slotVariationRate;
+                // 最低でもキャパシティの30%は埋まるようにする（極端に少なくならないように）
+                effectiveRate = Math.Max(effectiveRate, 0.3);
+                var appointmentCount = (int)Math.Ceiling(slotItem.Cap * effectiveRate);
+
+                // キャパオーバー：基本的に1件、ごくまれに2件（2%の確率で1件、0.5%の確率で2件）
+                var overCapacityChance = _random.Next(1000);
+                if (overCapacityChance < 5) // 0.5%の確率で2件
                 {
-                    // 閑散期: Cap値の50%（半分埋まる、切り上げ）
-                    appointmentCount = (int)Math.Ceiling(slotItem.Cap * 0.5);
+                    appointmentCount += 2;
+                }
+                else if (overCapacityChance < 25) // 2%の確率で1件
+                {
+                    appointmentCount += 1;
                 }
 
                 // 予約を生成
@@ -403,7 +693,7 @@ internal static class AppointmentStatsSeeder
                         ApptStartTime = slotItem.Start,
                         ApptDurationMin = (int)slotItem.Duration.TotalMinutes,
                         ApptStatusCode = 0,
-                        ApptMemo = $"Generated for main resource: {resource.ApptResName}",
+                        ApptMemo = String.Empty,
                         IsDeleted = false
                     };
 
@@ -425,10 +715,176 @@ internal static class AppointmentStatsSeeder
                 }
             }
 
+            // たまに時間外・お昼休みのイレギュラー予約を生成（3-5%の確率）
+            // 早朝（～businessStart）、お昼休み（lunchStart～lunchEnd）、夕方（businessEnd～）の3パターン
+            var irregularChance = _random.Next(100);
+            if (irregularChance < 4) // 4%の確率
+            {
+                var patient = patients[_random.Next(patients.Count)];
+                var organization = organizations[_random.Next(organizations.Count)];
+
+                TimeOnly irregularTime;
+                string memo;
+                var outsideHoursStart = new TimeOnly(7, 0);
+
+                // 3パターンからランダムに選択
+                var pattern = _random.Next(3);
+                switch (pattern)
+                {
+                    case 0: // 早朝（07:00 ～ businessStart）
+                        var earlyRange = (int)(businessStartTime - outsideHoursStart).TotalMinutes;
+                        irregularTime = earlyRange > 0
+                            ? outsideHoursStart.AddMinutes(_random.Next(0, earlyRange))
+                            : businessStartTime.AddMinutes(-30);
+                        memo = "時間外予約（早朝）";
+                        break;
+                    case 1: // お昼休み（lunchStart ～ lunchEnd）
+                        var lunchRange = (int)(lunchEndTime - lunchStartTime).TotalMinutes;
+                        irregularTime = lunchStartTime.AddMinutes(_random.Next(0, lunchRange));
+                        memo = "時間外予約（お昼休み）";
+                        break;
+                    default: // 夕方（businessEnd ～ businessEnd+1h）
+                        irregularTime = businessEndTime.AddMinutes(_random.Next(0, 60));
+                        memo = "時間外予約（夕方）";
+                        break;
+                }
+
+                var irregularAppointment = new Appointment
+                {
+                    ApptId = Guid.CreateVersion7(),
+                    FloorId = floor.FloorId,
+                    OrgId = organization.OrgId,
+                    PtId = patient.PtId,
+                    ApptDate = currentDate,
+                    ApptStartTime = irregularTime,
+                    ApptDurationMin = 30,
+                    ApptStatusCode = 0,
+                    ApptMemo = memo,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(irregularAppointment, dateTimeProvider);
+                appointments.Add(irregularAppointment);
+
+                var irregularAssignment = new AppointmentResourceAssignment
+                {
+                    ApptResAssignId = Guid.CreateVersion7(),
+                    ApptId = irregularAppointment.ApptId,
+                    ApptResId = resource.ApptResId,
+                    ApptStartTime = irregularTime,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(irregularAssignment, dateTimeProvider);
+                assignments.Add(irregularAssignment);
+            }
+
             currentDate = currentDate.AddDays(1);
         }
 
         return (appointments, assignments);
+    }
+
+    /// <summary>
+    /// 月に応じた繁忙度（予約充足率）を取得
+    /// ランダム性を持たせて現実的なデータを生成
+    /// </summary>
+    private static double GetSeasonalOccupancyRate(int month)
+    {
+        // 基準となる充足率
+        var baseRate = month switch
+        {
+            // 最繁忙期（秋）: 9〜12月 → 95〜100%
+            9 or 10 or 11 or 12 => 0.95,
+            // 繁忙期（春）: 4〜6月 → 80〜90%
+            4 or 5 or 6 => 0.85,
+            // 閑散期: 1〜3月, 7〜8月 → 40〜60%
+            _ => 0.50
+        };
+
+        // ±10%のランダム変動を追加（0.9〜1.1倍）
+        var randomFactor = 0.9 + _random.NextDouble() * 0.2;
+        var rate = baseRate * randomFactor;
+
+        // 0〜1の範囲に収める
+        return Math.Clamp(rate, 0.0, 1.0);
+    }
+
+    /// <summary>
+    /// 日ごとの変動率を取得（±20-30%の変動）
+    /// 日々の予約数を分散させるために使用
+    /// </summary>
+    private static double GetDailyVariationRate()
+    {
+        // ±25%のランダム変動を追加（0.75〜1.25倍）
+        var variationFactor = 0.75 + _random.NextDouble() * 0.5;
+        return variationFactor;
+    }
+
+    /// <summary>
+    /// 時間帯ごとの充足率を取得（時間帯による偏りを反映）
+    /// 午前の早い時間や午後の遅い時間など、時間帯ごとに異なる混雑度を表現
+    /// </summary>
+    private static double GetTimeSlotOccupancyRate(TimeOnly startTime)
+    {
+        var hour = startTime.Hour;
+        var minute = startTime.Minute;
+        var totalMinutes = hour * 60 + minute;
+
+        // 時間帯ごとの基準充足率（1.0を基準として、時間帯による偏りを表現）
+        double baseRate;
+
+        if (totalMinutes < 8 * 60) // 8:00より前（早朝）
+        {
+            baseRate = 0.6; // 空いている
+        }
+        else if (totalMinutes < 9 * 60) // 8:00-9:00
+        {
+            baseRate = 0.75; // やや空いている
+        }
+        else if (totalMinutes < 10 * 60) // 9:00-10:00
+        {
+            baseRate = 1.05; // 混雑し始める
+        }
+        else if (totalMinutes < 11 * 60) // 10:00-11:00
+        {
+            baseRate = 1.15; // 最も混雑
+        }
+        else if (totalMinutes < 12 * 60) // 11:00-12:00
+        {
+            baseRate = 1.05; // 混雑
+        }
+        else if (totalMinutes < 13 * 60) // 12:00-13:00（お昼休み）
+        {
+            baseRate = 0.3; // 非常に空いている
+        }
+        else if (totalMinutes < 14 * 60) // 13:00-14:00
+        {
+            baseRate = 0.95; // やや混雑
+        }
+        else if (totalMinutes < 15 * 60) // 14:00-15:00
+        {
+            baseRate = 1.0; // 標準
+        }
+        else if (totalMinutes < 16 * 60) // 15:00-16:00
+        {
+            baseRate = 0.9; // やや空いている
+        }
+        else if (totalMinutes < 17 * 60) // 16:00-17:00
+        {
+            baseRate = 0.8; // 空いている
+        }
+        else // 17:00以降（夕方）
+        {
+            baseRate = 0.5; // 非常に空いている
+        }
+
+        // ±10%のランダム変動を追加して、同じ時間帯でも多少のばらつきを持たせる
+        var randomFactor = 0.9 + _random.NextDouble() * 0.2;
+        var rate = baseRate * randomFactor;
+
+        // 0.5〜1.2の範囲に収める（マイナス側を小さくし、キャパオーバーも控えめに）
+        return Math.Clamp(rate, 0.5, 1.2);
     }
 
     /// <summary>

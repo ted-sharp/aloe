@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aloe.Apps.MedockLib.Services.Dtos;
 
 /// <summary>
@@ -49,5 +51,15 @@ public class SlotDataDto
     public int Available { get; set; }
     public bool IsGrayedOut { get; set; }
     public int FilteredCount { get; set; }
+    
+    /// <summary>
+    /// 時間外スロットかどうか（時間外スロットはグラフには描画されず、赤い縦ラインで存在の有無のみ表示）
+    /// 
+    /// 注意: スロット定義（AppointmentSlot）は業務時間内（例：09:00-12:00、13:00-17:00）のみ存在しますが、
+    /// 予約データ（Appointments）は時刻を自由に指定できるため、時間外（開始前・終了後・昼休み時間外）の予約も存在し得ます。
+    /// 時間外スロットは、グラフには描画されず、赤い縦ラインで存在の有無のみを表示します。
+    /// </summary>
+    [JsonPropertyName("isOutsideHours")]
+    public bool IsOutsideHours { get; set; } = false;
 }
 
