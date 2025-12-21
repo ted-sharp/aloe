@@ -2,8 +2,10 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Services;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Diagnostics;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
@@ -11,7 +13,7 @@ internal static class AppointmentStatsSeeder
 {
     private static readonly Random _random = new Random();
 
-    public static async Task SeedAsync(MedockDbContext context, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(MedockDbContext context, IDbContextFactory<MedockDbContext> contextFactory, IDateTimeProvider dateTimeProvider)
     {
         // テーブルが存在するか確認
         try
@@ -31,12 +33,17 @@ internal static class AppointmentStatsSeeder
         // 日付範囲を取得（後続の処理で使用）
         var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
-        // 必要なデータを取得
+        var dataLoadStopwatch = Stopwatch.StartNew();
+        Console.WriteLine("[INFO] Loading initial data...");
+
+        // 必要なデータを取得（AsNoTrackingでパフォーマンス向上）
         var appointments = await context.Appointments
+            .AsNoTracking()
             .Where(a => !a.IsDeleted && a.ApptDate.HasValue)
             .ToListAsync();
 
         var resourceAssignments = await context.AppointmentResourceAssignments
+            .AsNoTracking()
             .Where(ara => !ara.IsDeleted)
             .ToListAsync();
 
@@ -46,29 +53,42 @@ internal static class AppointmentStatsSeeder
         // mainリソースの場合、既存の予約データがない場合に予約データを生成
         // AppointmentResourceTypeは[NotMapped]のため、ApptResTypeCodeを使用
         var mainResources = await context.AppointmentResources
+            .AsNoTracking()
             .Where(r => !r.IsDeleted && r.ApptResTypeCode == (int)AppointmentResourceType.Main)
             .ToListAsync();
+
+        dataLoadStopwatch.Stop();
+        Console.WriteLine($"  [+] Initial data loaded - took {dataLoadStopwatch.Elapsed.TotalSeconds:F2}s");
 
         if (mainResources.Any() && (!appointments.Any() || !resourceAssignments.Any()))
         {
             Console.WriteLine("[INFO] Generating appointment data for main resources...");
+            var generationStopwatch = Stopwatch.StartNew();
 
-            // 必要なデータを事前に一括取得（ループ内でのawaitを避ける）
+            // 必要なデータを事前に一括取得（ループ内でのawaitを避ける、AsNoTrackingでパフォーマンス向上）
+            var preloadStopwatch = Stopwatch.StartNew();
             var floors = await context.Floors
+                .AsNoTracking()
                 .Where(f => !f.IsDeleted)
                 .ToListAsync();
 
             var allPatients = await context.Patients
+                .AsNoTracking()
                 .Where(p => !p.IsDeleted)
                 .ToListAsync();
 
             var allOrganizations = await context.Organizations
+                .AsNoTracking()
                 .Where(o => !o.IsDeleted)
                 .ToListAsync();
 
             var allSlots = await context.AppointmentSlots
+                .AsNoTracking()
                 .Where(s => !s.IsDeleted && s.IsActive)
                 .ToListAsync();
+
+            preloadStopwatch.Stop();
+            Console.WriteLine($"  [+] Preloaded {floors.Count} floors, {allPatients.Count} patients, {allOrganizations.Count} organizations, {allSlots.Count} slots - took {preloadStopwatch.Elapsed.TotalSeconds:F2}s");
 
             if (!floors.Any())
             {
@@ -76,104 +96,77 @@ internal static class AppointmentStatsSeeder
             }
             else
             {
-                // ビジネスアワーを事前に取得
+                // ビジネスアワーを事前に取得（AsNoTrackingでパフォーマンス向上）
                 var facilityIdsForGen = floors.Select(f => f.FacilityId).Distinct().ToList();
                 var businessHoursDictForGen = await context.FacilityBusinessHours
+                    .AsNoTracking()
                     .Where(fbh => facilityIdsForGen.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
                     .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
-                foreach (var mainResource in mainResources)
+                // 並列処理：Mainリソースが複数の場合、各リソースごとに独立したDbContextを使用して並列処理
+                if (mainResources.Count > 1)
                 {
-                    var floor = floors.FirstOrDefault(f => f.FloorId == mainResource.FloorId);
-                    if (floor == null)
+                    Console.WriteLine($"  [INFO] Processing {mainResources.Count} resources in parallel...");
+                    var parallelTasks = mainResources.Select(async (mainResource, index) =>
                     {
-                        Console.WriteLine($"  [!] Floor not found for resource: {mainResource.ApptResName}");
-                        continue;
-                    }
-
-                    // メモリ内でフィルタリング
-                    var patients = allPatients.Where(p => p.FacilityId == floor.FacilityId).ToList();
-                    var organizations = allOrganizations.Where(o => o.FacilityId == floor.FacilityId).ToList();
-
-                    if (!patients.Any() || !organizations.Any())
+                        await using var resourceContext = await contextFactory.CreateDbContextAsync();
+                        await ProcessResourceAsync(
+                            resourceContext,
+                            mainResource,
+                            index + 1,
+                            mainResources.Count,
+                            floors,
+                            allPatients,
+                            allOrganizations,
+                            allSlots,
+                            businessHoursDictForGen,
+                            holidays,
+                            startDate,
+                            endDate,
+                            dateTimeProvider);
+                    }).ToArray();
+                    await Task.WhenAll(parallelTasks);
+                }
+                else
+                {
+                    // リソースが1つの場合は並列化しない（オーバーヘッドを避ける）
+                    var resourceIndex = 0;
+                    foreach (var mainResource in mainResources)
                     {
-                        Console.WriteLine($"  [!] Patients or Organizations not found for resource: {mainResource.ApptResName}");
-                        continue;
-                    }
-
-                    // メモリ内でスロット定義を取得
-                    var slot = allSlots.FirstOrDefault(s => s.ApptResId == mainResource.ApptResId);
-
-                    if (slot?.ApptSlotsData == null || !slot.ApptSlotsData.Slots.Any())
-                    {
-                        Console.WriteLine($"  [!] Slot definition not found for resource: {mainResource.ApptResName}");
-                        continue;
-                    }
-
-                    // ビジネスアワーを取得
-                    var businessHoursForGen = businessHoursDictForGen.GetValueOrDefault(floor.FacilityId)
-                        ?? new FacilityBusinessHoursRoot();
-
-                    // 3ヶ月ごとにバッチ処理
-                    var batchStartDate = startDate;
-                    var batchEndDate = startDate.AddMonths(3).AddDays(-1);
-                    if (batchEndDate > endDate) batchEndDate = endDate;
-
-                    var totalAppointments = 0;
-
-                    while (batchStartDate <= endDate)
-                    {
-                        // バッチの日付範囲がスロットの有効期間内に収まるように調整
-                        var effectiveBatchStart = batchStartDate < slot.ActiveFrom ? slot.ActiveFrom : batchStartDate;
-                        var effectiveBatchEnd = batchEndDate > slot.ActiveTo ? slot.ActiveTo : batchEndDate;
-
-                        if (effectiveBatchStart <= effectiveBatchEnd)
-                        {
-                            // 予約データを生成
-                            var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
-                                mainResource,
-                                effectiveBatchStart,
-                                effectiveBatchEnd,
-                                slot.ApptSlotsData,
-                                slot.ActiveFrom,
-                                slot.ActiveTo,
-                                holidays,
-                                floor,
-                                patients,
-                                organizations,
-                                dateTimeProvider,
-                                businessHoursForGen);
-
-                            if (generatedAppointments.Any())
-                            {
-                                context.Appointments.AddRange(generatedAppointments);
-                                context.AppointmentResourceAssignments.AddRange(generatedAssignments);
-                                await context.SaveChangesAsync();
-                                totalAppointments += generatedAppointments.Count;
-                                Console.WriteLine($"  [BATCH] Committed {generatedAppointments.Count} appointments for {mainResource.ApptResName} ({effectiveBatchStart:yyyy-MM-dd} to {effectiveBatchEnd:yyyy-MM-dd})");
-                            }
-                        }
-
-                        // 次のバッチへ
-                        batchStartDate = batchEndDate.AddDays(1);
-                        batchEndDate = batchStartDate.AddMonths(3).AddDays(-1);
-                        if (batchEndDate > endDate) batchEndDate = endDate;
-                    }
-
-                    if (totalAppointments > 0)
-                    {
-                        Console.WriteLine($"  [+] Generated {totalAppointments} appointments total for {mainResource.ApptResName}");
+                        resourceIndex++;
+                        await ProcessResourceAsync(
+                            context,
+                            mainResource,
+                            resourceIndex,
+                            mainResources.Count,
+                            floors,
+                            allPatients,
+                            allOrganizations,
+                            allSlots,
+                            businessHoursDictForGen,
+                            holidays,
+                            startDate,
+                            endDate,
+                            dateTimeProvider);
                     }
                 }
 
-                // 予約データを再取得
+                generationStopwatch.Stop();
+                Console.WriteLine($"  [+] Appointment generation completed - took {generationStopwatch.Elapsed.TotalSeconds:F2}s");
+
+                // 予約データを再取得（AsNoTrackingでパフォーマンス向上）
+                var reloadStopwatch = Stopwatch.StartNew();
                 appointments = await context.Appointments
+                    .AsNoTracking()
                     .Where(a => !a.IsDeleted && a.ApptDate.HasValue)
                     .ToListAsync();
 
                 resourceAssignments = await context.AppointmentResourceAssignments
+                    .AsNoTracking()
                     .Where(ara => !ara.IsDeleted)
                     .ToListAsync();
+                reloadStopwatch.Stop();
+                Console.WriteLine($"  [+] Reloaded {appointments.Count} appointments and {resourceAssignments.Count} assignments - took {reloadStopwatch.Elapsed.TotalSeconds:F2}s");
             }
         }
 
@@ -189,7 +182,9 @@ internal static class AppointmentStatsSeeder
             return;
         }
 
+        var statsDataLoadStopwatch = Stopwatch.StartNew();
         var slots = await context.AppointmentSlots
+            .AsNoTracking()
             .Where(s => !s.IsDeleted && s.IsActive)
             .ToListAsync();
 
@@ -200,26 +195,34 @@ internal static class AppointmentStatsSeeder
         }
 
         var slotOverrides = await context.AppointmentSlotOverrides
+            .AsNoTracking()
             .Where(so => !so.IsDeleted)
             .ToListAsync();
 
         var resources = await context.AppointmentResources
-            .Where(r => !r.IsDeleted)
+            .AsNoTracking()
             .Include(r => r.Floor)
+            .Where(r => !r.IsDeleted)
             .ToListAsync();
 
-        // 施設のビジネスアワーを取得
+        // 施設のビジネスアワーを取得（AsNoTrackingでパフォーマンス向上）
         var facilityIds = resources.Select(r => r.Floor.FacilityId).Distinct().ToList();
         var businessHoursDict = await context.FacilityBusinessHours
+            .AsNoTracking()
             .Where(fbh => facilityIds.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
             .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
-        Console.WriteLine("[INFO] Creating appointment stats seed data...");
+        statsDataLoadStopwatch.Stop();
+        Console.WriteLine($"  [+] Stats data loaded - took {statsDataLoadStopwatch.Elapsed.TotalSeconds:F2}s");
 
+        Console.WriteLine("[INFO] Creating appointment stats seed data...");
+        var statsStopwatch = Stopwatch.StartNew();
+
+        var aggregationStopwatch = Stopwatch.StartNew();
         // 日付・リソースごとにグループ化
         var statsMap = new Dictionary<(DateOnly Date, Guid ResourceId), AppointmentStatsData>();
 
-        // 1. 予約数を集計（appointment_resource_assignmentsとappointmentsをJOIN）
+        // 1. 予約数を集計（最適化：appointmentDictを先に作成し、GroupByで効率化）
         var appointmentDict = appointments.ToDictionary(a => a.ApptId);
         var assignmentGroups = resourceAssignments
             .Where(ara => appointmentDict.ContainsKey(ara.ApptId))
@@ -229,6 +232,8 @@ internal static class AppointmentStatsSeeder
                 ResourceId = ara.ApptResId
             })
             .ToList();
+        aggregationStopwatch.Stop();
+        Console.WriteLine($"  [+] Aggregation completed - took {aggregationStopwatch.Elapsed.TotalSeconds:F2}s");
 
         foreach (var group in assignmentGroups)
         {
@@ -273,20 +278,42 @@ internal static class AppointmentStatsSeeder
         }
 
         // 2. キャパシティとグラフデータを計算（appointment_slotsから）
+        var capacityCalcStopwatch = Stopwatch.StartNew();
         var slotDict = slots.ToDictionary(s => s.ApptResId);
         var overrideDict = slotOverrides
             .GroupBy(so => (so.ApptDate, so.ApptResId))
             .ToDictionary(g => g.Key, g => g.First());
 
+        // ビジネスアワーのパース結果をメモ化（リソースごとに1回だけパース）
+        var parsedBusinessHoursByFacility = new Dictionary<Guid, ParsedBusinessHours>();
+        foreach (var facilityId in facilityIds)
+        {
+            var businessHours = businessHoursDict.GetValueOrDefault(facilityId)
+                ?? new FacilityBusinessHoursRoot();
+            parsedBusinessHoursByFacility[facilityId] = new ParsedBusinessHours
+            {
+                BusinessStartTime = TimeOnly.Parse(businessHours.Start),
+                BusinessEndTime = TimeOnly.Parse(businessHours.End),
+                LunchStartTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0),
+                LunchEndTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0)
+            };
+        }
+
         foreach (var resource in resources)
         {
-            // ビジネスアワーをDBから取得（なければデフォルト値）- リソースごとに1回だけ取得
-            var businessHours = businessHoursDict.GetValueOrDefault(resource.Floor.FacilityId)
-                ?? new FacilityBusinessHoursRoot();
-            var businessStartTime = TimeOnly.Parse(businessHours.Start);
-            var businessEndTime = TimeOnly.Parse(businessHours.End);
-            var lunchStartTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-            var lunchEndTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+            // メモ化されたビジネスアワーを使用
+            var parsedBusinessHours = parsedBusinessHoursByFacility.GetValueOrDefault(resource.Floor.FacilityId)
+                ?? new ParsedBusinessHours
+                {
+                    BusinessStartTime = new TimeOnly(9, 0),
+                    BusinessEndTime = new TimeOnly(17, 0),
+                    LunchStartTime = new TimeOnly(12, 0),
+                    LunchEndTime = new TimeOnly(13, 0)
+                };
+            var businessStartTime = parsedBusinessHours.BusinessStartTime;
+            var businessEndTime = parsedBusinessHours.BusinessEndTime;
+            var lunchStartTime = parsedBusinessHours.LunchStartTime;
+            var lunchEndTime = parsedBusinessHours.LunchEndTime;
 
             var currentDate = startDate;
             while (currentDate <= endDate)
@@ -353,34 +380,52 @@ internal static class AppointmentStatsSeeder
                     var lunchSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= lunchStartTime && s.End <= lunchEndTime);
                     var eveningSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= businessEndTime);
                     
+                    // 最適化：TimeSlotCountsをTimeOnlyに変換（1回だけパース）
+                    var parsedTimeSlotCounts = new List<(TimeOnly Time, int Count)>();
+                    foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
+                    {
+                        if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                        {
+                            parsedTimeSlotCounts.Add((appointmentTime, cnt));
+                        }
+                    }
+
+                    // 時間外予約を事前に分類（重複判定を避ける）
+                    var morningAppointments = new List<(TimeOnly Time, int Count)>();
+                    var lunchAppointments = new List<(TimeOnly Time, int Count)>();
+                    var eveningAppointments = new List<(TimeOnly Time, int Count)>();
+                    var businessHoursAppointments = new List<(TimeOnly Time, int Count)>();
+
+                    foreach (var (appointmentTime, cnt) in parsedTimeSlotCounts)
+                    {
+                        if (appointmentTime < businessStartTime)
+                        {
+                            morningAppointments.Add((appointmentTime, cnt));
+                        }
+                        else if (appointmentTime >= lunchStartTime && appointmentTime < lunchEndTime)
+                        {
+                            lunchAppointments.Add((appointmentTime, cnt));
+                        }
+                        else if (appointmentTime >= businessEndTime)
+                        {
+                            eveningAppointments.Add((appointmentTime, cnt));
+                        }
+                        else
+                        {
+                            businessHoursAppointments.Add((appointmentTime, cnt));
+                        }
+                    }
+
                     // 通常のスロット（営業時間内）を処理
-                    // 時間外の予約は除外する（時間外スロットに集計される）
                     foreach (var slotItem in activeSlots)
                     {
-                        // スロットの時間範囲内にある予約数をカウント（時間外の予約は除外）
+                        // スロットの時間範囲内にある予約数をカウント
                         int count = 0;
-
-                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
+                        foreach (var (appointmentTime, cnt) in businessHoursAppointments)
                         {
-                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
+                            if (appointmentTime >= slotItem.Start && appointmentTime < slotItem.End)
                             {
-                                // 時間外の予約を除外
-                                // ビジネスアワー開始前、昼休み時間帯、ビジネスアワー終了後の予約は除外
-                                bool isOutsideHours =
-                                    appointmentTime < businessStartTime || // ビジネスアワー開始前（早朝）
-                                    (appointmentTime >= lunchStartTime && appointmentTime < lunchEndTime) || // 昼休み時間帯
-                                    appointmentTime >= businessEndTime; // ビジネスアワー終了後（夕方）
-
-                                if (isOutsideHours)
-                                {
-                                    continue; // 時間外の予約は通常のスロットに含めない
-                                }
-
-                                // 予約の開始時刻がスロットの時間範囲内にあるかチェック
-                                if (appointmentTime >= slotItem.Start && appointmentTime < slotItem.End)
-                                {
-                                    count += cnt;
-                                }
+                                count += cnt;
                             }
                         }
 
@@ -394,79 +439,43 @@ internal static class AppointmentStatsSeeder
                         });
                     }
 
-                    // 時間外スロットを処理
-                    // 早朝スロット（businessStart以前）
+                    // 時間外スロットを処理（事前分類済みのリストを使用）
                     if (morningSlot != null)
                     {
-                        int count = 0;
-                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
-                        {
-                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
-                            {
-                                // ビジネスアワー開始前の予約を集計
-                                if (appointmentTime < businessStartTime)
-                                {
-                                    count += cnt;
-                                }
-                            }
-                        }
+                        var count = morningAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
                             Start = morningSlot.Start,
                             End = morningSlot.End,
                             Count = count,
                             Cap = morningSlot.Cap,
-                            HasOutsideHours = true // 時間外スロットであることを示す
+                            HasOutsideHours = true
                         });
                     }
 
-                    // 昼休みスロット（lunchStart ～ lunchEnd）
                     if (lunchSlot != null)
                     {
-                        int count = 0;
-                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
-                        {
-                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
-                            {
-                                // 昼休み時間帯の予約を集計
-                                if (appointmentTime >= lunchStartTime && appointmentTime < lunchEndTime)
-                                {
-                                    count += cnt;
-                                }
-                            }
-                        }
+                        var count = lunchAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
                             Start = lunchSlot.Start,
                             End = lunchSlot.End,
                             Count = count,
                             Cap = lunchSlot.Cap,
-                            HasOutsideHours = true // 時間外スロットであることを示す
+                            HasOutsideHours = true
                         });
                     }
 
-                    // 夕方スロット（businessEnd以降）
                     if (eveningSlot != null)
                     {
-                        int count = 0;
-                        foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
-                        {
-                            if (TimeOnly.TryParse(timeKey, out var appointmentTime))
-                            {
-                                // ビジネスアワー終了後の予約を集計
-                                if (appointmentTime >= businessEndTime)
-                                {
-                                    count += cnt;
-                                }
-                            }
-                        }
+                        var count = eveningAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
                             Start = eveningSlot.Start,
                             End = eveningSlot.End,
                             Count = count,
                             Cap = eveningSlot.Cap,
-                            HasOutsideHours = true // 時間外スロットであることを示す
+                            HasOutsideHours = true
                         });
                     }
 
@@ -476,6 +485,8 @@ internal static class AppointmentStatsSeeder
                 currentDate = currentDate.AddDays(1);
             }
         }
+        capacityCalcStopwatch.Stop();
+        Console.WriteLine($"  [+] Capacity and graph data calculation completed - took {capacityCalcStopwatch.Elapsed.TotalSeconds:F2}s");
 
         // 3. AppointmentStatsエンティティを作成
         var statsList = new List<AppointmentStats>();
@@ -499,15 +510,162 @@ internal static class AppointmentStatsSeeder
             statsList.Add(stat);
         }
 
-        context.AppointmentStats.AddRange(statsList);
-        Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} entries");
-
-        if (context.ChangeTracker.HasChanges())
+        if (statsList.Any())
         {
-            await context.SaveChangesAsync();
+            var insertStatsStopwatch = Stopwatch.StartNew();
+            await context.BulkInsertAsync(statsList, new BulkConfig
+            {
+                SetOutputIdentity = false,
+                BatchSize = 5000 // パフォーマンス向上のため1000→5000に変更
+            });
+            insertStatsStopwatch.Stop();
+            statsStopwatch.Stop();
+            Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} entries - took {statsStopwatch.Elapsed.TotalSeconds:F2}s (insert: {insertStatsStopwatch.Elapsed.TotalSeconds:F2}s)");
         }
     }
 
+
+    /// <summary>
+    /// パース済みビジネスアワー情報（メモ化用）
+    /// </summary>
+    private class ParsedBusinessHours
+    {
+        public TimeOnly BusinessStartTime { get; set; }
+        public TimeOnly BusinessEndTime { get; set; }
+        public TimeOnly LunchStartTime { get; set; }
+        public TimeOnly LunchEndTime { get; set; }
+    }
+
+    /// <summary>
+    /// リソースごとの予約データ生成処理（並列処理対応）
+    /// </summary>
+    private static async Task ProcessResourceAsync(
+        MedockDbContext resourceContext,
+        AppointmentResource mainResource,
+        int resourceIndex,
+        int totalResources,
+        List<Floor> floors,
+        List<Patient> allPatients,
+        List<Organization> allOrganizations,
+        List<AppointmentSlot> allSlots,
+        Dictionary<Guid, FacilityBusinessHoursRoot> businessHoursDictForGen,
+        HashSet<DateOnly> holidays,
+        DateOnly startDate,
+        DateOnly endDate,
+        IDateTimeProvider dateTimeProvider)
+    {
+        var floor = floors.FirstOrDefault(f => f.FloorId == mainResource.FloorId);
+        if (floor == null)
+        {
+            Console.WriteLine($"  [!] Floor not found for resource: {mainResource.ApptResName}");
+            return;
+        }
+
+        // メモリ内でフィルタリング
+        var patients = allPatients.Where(p => p.FacilityId == floor.FacilityId).ToList();
+        var organizations = allOrganizations.Where(o => o.FacilityId == floor.FacilityId).ToList();
+
+        if (!patients.Any() || !organizations.Any())
+        {
+            Console.WriteLine($"  [!] Patients or Organizations not found for resource: {mainResource.ApptResName}");
+            return;
+        }
+
+        // メモリ内でスロット定義を取得
+        var slot = allSlots.FirstOrDefault(s => s.ApptResId == mainResource.ApptResId);
+
+        if (slot?.ApptSlotsData == null || !slot.ApptSlotsData.Slots.Any())
+        {
+            Console.WriteLine($"  [!] Slot definition not found for resource: {mainResource.ApptResName}");
+            return;
+        }
+
+        // ビジネスアワーを取得して事前に解析（メモ化）
+        var businessHoursForGen = businessHoursDictForGen.GetValueOrDefault(floor.FacilityId)
+            ?? new FacilityBusinessHoursRoot();
+        var businessStartTime = TimeOnly.Parse(businessHoursForGen.Start);
+        var businessEndTime = TimeOnly.Parse(businessHoursForGen.End);
+        var lunchStartTime = businessHoursForGen.Lunch != null ? TimeOnly.Parse(businessHoursForGen.Lunch.Start) : new TimeOnly(12, 0);
+        var lunchEndTime = businessHoursForGen.Lunch != null ? TimeOnly.Parse(businessHoursForGen.Lunch.End) : new TimeOnly(13, 0);
+        
+        // パース済みの値を直接渡す（メモ化された値を使用）
+        var parsedBusinessHours = new ParsedBusinessHours
+        {
+            BusinessStartTime = businessStartTime,
+            BusinessEndTime = businessEndTime,
+            LunchStartTime = lunchStartTime,
+            LunchEndTime = lunchEndTime
+        };
+
+        // バッチ数を事前に計算（進捗表示用、6ヶ月ごとに変更）
+        var totalMonths = (endDate.Year - startDate.Year) * 12 + (endDate.Month - startDate.Month) + 1;
+        var totalBatches = (int)Math.Ceiling(totalMonths / 6.0);
+        var currentBatch = 0;
+
+        // 6ヶ月ごとにバッチ処理（パフォーマンス向上のため3ヶ月→6ヶ月に変更）
+        var batchStartDate = startDate;
+        var batchEndDate = startDate.AddMonths(6).AddDays(-1);
+        if (batchEndDate > endDate) batchEndDate = endDate;
+
+        var totalAppointments = 0;
+
+        while (batchStartDate <= endDate)
+        {
+            currentBatch++;
+            var batchStopwatch = Stopwatch.StartNew();
+            // バッチの日付範囲がスロットの有効期間内に収まるように調整
+            var effectiveBatchStart = batchStartDate < slot.ActiveFrom ? slot.ActiveFrom : batchStartDate;
+            var effectiveBatchEnd = batchEndDate > slot.ActiveTo ? slot.ActiveTo : batchEndDate;
+
+            if (effectiveBatchStart <= effectiveBatchEnd)
+            {
+                // 予約データを生成（パース済みのbusinessHoursを渡す）
+                var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
+                    mainResource,
+                    effectiveBatchStart,
+                    effectiveBatchEnd,
+                    slot.ApptSlotsData,
+                    slot.ActiveFrom,
+                    slot.ActiveTo,
+                    holidays,
+                    floor,
+                    patients,
+                    organizations,
+                    dateTimeProvider,
+                    parsedBusinessHours);
+
+                if (generatedAppointments.Any())
+                {
+                    var insertStopwatch = Stopwatch.StartNew();
+                    await resourceContext.BulkInsertAsync(generatedAppointments, new BulkConfig
+                    {
+                        SetOutputIdentity = false,
+                        BatchSize = 5000 // パフォーマンス向上のため1000→5000に変更
+                    });
+                    await resourceContext.BulkInsertAsync(generatedAssignments, new BulkConfig
+                    {
+                        SetOutputIdentity = false,
+                        BatchSize = 5000 // パフォーマンス向上のため1000→5000に変更
+                    });
+                    insertStopwatch.Stop();
+                    totalAppointments += generatedAppointments.Count;
+                    batchStopwatch.Stop();
+                    var progressPercent = (int)((double)currentBatch / totalBatches * 100);
+                    Console.WriteLine($"  [BATCH] Resource {resourceIndex}/{totalResources} - Batch {currentBatch}/{totalBatches} ({progressPercent}%) - Committed {generatedAppointments.Count} appointments for {mainResource.ApptResName} ({effectiveBatchStart:yyyy-MM-dd} to {effectiveBatchEnd:yyyy-MM-dd}) - took {batchStopwatch.Elapsed.TotalSeconds:F2}s (insert: {insertStopwatch.Elapsed.TotalSeconds:F2}s)");
+                }
+            }
+
+            // 次のバッチへ（6ヶ月ごと）
+            batchStartDate = batchEndDate.AddDays(1);
+            batchEndDate = batchStartDate.AddMonths(6).AddDays(-1);
+            if (batchEndDate > endDate) batchEndDate = endDate;
+        }
+
+        if (totalAppointments > 0)
+        {
+            Console.WriteLine($"  [+] Generated {totalAppointments} appointments total for {mainResource.ApptResName}");
+        }
+    }
 
     /// <summary>
     /// Mainリソース用の予約データを生成
@@ -524,13 +682,13 @@ internal static class AppointmentStatsSeeder
         List<Patient> patients,
         List<Organization> organizations,
         IDateTimeProvider dateTimeProvider,
-        FacilityBusinessHoursRoot businessHours)
+        ParsedBusinessHours parsedBusinessHours)
     {
-        // ビジネスアワーから時刻を取得
-        var businessStartTime = TimeOnly.Parse(businessHours.Start);
-        var businessEndTime = TimeOnly.Parse(businessHours.End);
-        var lunchStartTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-        var lunchEndTime = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+        // パース済みのビジネスアワーを使用（メモ化された値）
+        var businessStartTime = parsedBusinessHours.BusinessStartTime;
+        var businessEndTime = parsedBusinessHours.BusinessEndTime;
+        var lunchStartTime = parsedBusinessHours.LunchStartTime;
+        var lunchEndTime = parsedBusinessHours.LunchEndTime;
         var appointments = new List<Appointment>();
         var assignments = new List<AppointmentResourceAssignment>();
 

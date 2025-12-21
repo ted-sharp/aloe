@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Npgsql;
+using System.Diagnostics;
 
 Console.WriteLine("=== Aloe Medock Seed Tool ===");
 Console.WriteLine();
@@ -27,7 +29,15 @@ if (String.IsNullOrEmpty(connectionString))
     return 1;
 }
 
-Console.WriteLine($"[INFO] Database: {connectionString.Split(';').FirstOrDefault(s => s.StartsWith("Database="))}");
+// 接続文字列にパフォーマンス設定を追加
+var connectionStringBuilder = new NpgsqlConnectionStringBuilder(connectionString)
+{
+    CommandTimeout = 0 // タイムアウトなし（大量データ処理用）
+    // Poolingはデフォルトで有効、MaxPoolSizeは接続文字列に直接指定（必要に応じて）
+};
+var optimizedConnectionString = connectionStringBuilder.ConnectionString;
+
+Console.WriteLine($"[INFO] Database: {optimizedConnectionString.Split(';').FirstOrDefault(s => s.StartsWith("Database="))}");
 
 // ログレベルを設定（Seed実行中のEFログを抑制）
 builder.Services.AddLogging(logging =>
@@ -39,9 +49,20 @@ builder.Services.AddLogging(logging =>
     logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
 });
 
-// サービス登録
+// サービス登録（DbContextFactoryも追加して並列処理に対応）
 builder.Services.AddDbContext<MedockDbContext>(options =>
-    options.UseNpgsql(connectionString), ServiceLifetime.Scoped);
+{
+    options.UseNpgsql(optimizedConnectionString);
+    // 読み取り専用クエリが多いため、NoTrackingをデフォルトに
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+}, ServiceLifetime.Scoped);
+
+builder.Services.AddDbContextFactory<MedockDbContext>(options =>
+{
+    options.UseNpgsql(optimizedConnectionString);
+    // 読み取り専用クエリが多いため、NoTrackingをデフォルトに
+    options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
+});
 builder.Services.AddSingleton(_ => PasswordHasher.Default);
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
 
@@ -50,6 +71,7 @@ var host = builder.Build();
 // サービス取得
 using var scope = host.Services.CreateScope();
 var context = scope.ServiceProvider.GetRequiredService<MedockDbContext>();
+var contextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<MedockDbContext>>();
 var passwordHasher = scope.ServiceProvider.GetRequiredService<PasswordHasher>();
 var dateTimeProvider = scope.ServiceProvider.GetRequiredService<IDateTimeProvider>();
 
@@ -73,60 +95,105 @@ try
     Console.WriteLine();
     Console.WriteLine("[INFO] Checking existing seed data...");
 
+    var totalStopwatch = Stopwatch.StartNew();
+    var seederCount = 0;
+    var totalSeeders = 20; // 概算値（実際のSeeder数に合わせて調整）
+
+    // ヘルパー関数：Seeder実行と時間計測
+    async Task<T> RunSeederWithResultAsync<T>(string seederName, Func<Task<T>> seederAction)
+    {
+        seederCount++;
+        Console.WriteLine($"[{seederCount}/{totalSeeders}] {seederName}...");
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var result = await seederAction();
+            sw.Stop();
+            Console.WriteLine($"  ✓ {seederName} completed - took {sw.Elapsed.TotalSeconds:F2}s");
+            return result;
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Console.WriteLine($"  ✗ {seederName} failed after {sw.Elapsed.TotalSeconds:F2}s: {ex.Message}");
+            throw;
+        }
+    }
+
+    async Task RunSeederAsync(string seederName, Func<Task> seederAction)
+    {
+        seederCount++;
+        Console.WriteLine($"[{seederCount}/{totalSeeders}] {seederName}...");
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            await seederAction();
+            sw.Stop();
+            Console.WriteLine($"  ✓ {seederName} completed - took {sw.Elapsed.TotalSeconds:F2}s");
+        }
+        catch (Exception ex)
+        {
+            sw.Stop();
+            Console.WriteLine($"  ✗ {seederName} failed after {sw.Elapsed.TotalSeconds:F2}s: {ex.Message}");
+            throw;
+        }
+    }
+
     // テナント・施設関連（ユーザーより先に作成する必要がある）
-    var tenantId = await TenantSeeder.SeedAsync(context, dateTimeProvider);
-    var (facilityId, floorId) = await FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider);
-    await FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await FacilityAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    var tenantId = await RunSeederWithResultAsync<Guid>("TenantSeeder", () => TenantSeeder.SeedAsync(context, dateTimeProvider));
+    var (facilityId, floorId) = await RunSeederWithResultAsync<(Guid, Guid)>("FacilitySeeder", () => FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider));
+    await RunSeederAsync("FacilityBusinessHoursSeeder", () => FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("FacilityAddressSeeder", () => FacilityAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // ユーザー関連（施設が存在する状態で実行）
-    var needsUserSeed = await UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId);
+    var needsUserSeed = await RunSeederWithResultAsync<bool>("UserSeeder", () => UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId));
 
     // 祝日データ
-    await HolidaySeeder.SeedAsync(context);
+    await RunSeederAsync("HolidaySeeder", () => HolidaySeeder.SeedAsync(context));
 
     // マスタデータ（独立）
-    await InsuranceProviderSeeder.SeedAsync(context, dateTimeProvider);
-    await PlanConditionSeeder.SeedAsync(context, dateTimeProvider);
+    await RunSeederAsync("InsuranceProviderSeeder", () => InsuranceProviderSeeder.SeedAsync(context, dateTimeProvider));
+    await RunSeederAsync("PlanConditionSeeder", () => PlanConditionSeeder.SeedAsync(context, dateTimeProvider));
 
     // 団体・患者関連
-    await OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await RunSeederAsync("OrganizationSeeder", () => OrganizationSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("PatientSeeder", () => PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // 団体・患者の関連データ
-    await OrganizationAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await OrganizationInsuranceSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await PatientAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await PatientInsuranceCardSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await OrganizationMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await RunSeederAsync("OrganizationAddressSeeder", () => OrganizationAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("OrganizationInsuranceSeeder", () => OrganizationInsuranceSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("PatientAddressSeeder", () => PatientAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("PatientInsuranceCardSeeder", () => PatientInsuranceCardSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("OrganizationMemberSeeder", () => OrganizationMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // プラン関連
-    await PlanSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await PlanOptionSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await PlanConditionMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await RunSeederAsync("PlanSeeder", () => PlanSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("PlanOptionSeeder", () => PlanOptionSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("PlanConditionMemberSeeder", () => PlanConditionMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // 予約リソース関連（施設・フロアの後）
-    var resourceIds = await AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider);
-    await AppointmentResourceGroupSeeder.SeedAsync(context, facilityId, dateTimeProvider);
-    await AppointmentResourceGroupMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    var resourceIds = await RunSeederWithResultAsync<Dictionary<string, Guid>>("AppointmentResourceSeeder", () => AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider));
+    await RunSeederAsync("AppointmentResourceGroupSeeder", () => AppointmentResourceGroupSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("AppointmentResourceGroupMemberSeeder", () => AppointmentResourceGroupMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // プランリソース要件（プラン・リソースの後）
-    await PlanResourceRequirementSeeder.SeedAsync(context, facilityId, dateTimeProvider);
+    await RunSeederAsync("PlanResourceRequirementSeeder", () => PlanResourceRequirementSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // 予約スロット（リソースの後）
-    await AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider);
+    await RunSeederAsync("AppointmentSlotSeeder", () => AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider));
 
     // 予約データと統計（Mainリソースの予約はAppointmentStatsSeederで生成）
     // AppointmentSeederとAppointmentResourceAssignmentSeederはスキップし、
     // AppointmentStatsSeederで季節に応じた予約数を生成する
-    await AppointmentStatsSeeder.SeedAsync(context, dateTimeProvider);
+    await RunSeederAsync("AppointmentStatsSeeder", () => AppointmentStatsSeeder.SeedAsync(context, contextFactory, dateTimeProvider));
 
     // RBAC関連
-    await FeatureSeeder.SeedAsync(context, dateTimeProvider);
-    await RoleSeeder.SeedAsync(context, dateTimeProvider);
+    await RunSeederAsync("FeatureSeeder", () => FeatureSeeder.SeedAsync(context, dateTimeProvider));
+    await RunSeederAsync("RoleSeeder", () => RoleSeeder.SeedAsync(context, dateTimeProvider));
 
+    totalStopwatch.Stop();
     Console.WriteLine();
-    Console.WriteLine("=== Seed completed ===");
+    Console.WriteLine($"=== Seed completed in {totalStopwatch.Elapsed.TotalSeconds:F2}s ===");
 
     if (needsUserSeed)
     {

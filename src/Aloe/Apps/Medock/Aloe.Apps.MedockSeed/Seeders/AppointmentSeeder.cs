@@ -1,8 +1,10 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Diagnostics;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
@@ -59,6 +61,12 @@ internal static class AppointmentSeeder
         var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
 
         Console.WriteLine("[INFO] Creating appointment seed data...");
+        var stopwatch = Stopwatch.StartNew();
+
+        // バッチ数を事前に計算（進捗表示用）
+        var totalMonths = (endDate.Year - startDate.Year) * 12 + (endDate.Month - startDate.Month) + 1;
+        var totalBatches = (int)Math.Ceiling(totalMonths / 3.0);
+        var currentBatch = 0;
 
         // 3ヶ月ごとにバッチ処理
         var batchStartDate = startDate;
@@ -69,6 +77,8 @@ internal static class AppointmentSeeder
 
         while (batchStartDate <= endDate)
         {
+            currentBatch++;
+            var batchStopwatch = Stopwatch.StartNew();
             var appointments = new List<Appointment>();
             var currentDate = batchStartDate;
 
@@ -103,10 +113,15 @@ internal static class AppointmentSeeder
 
             if (appointments.Any())
             {
-                context.Appointments.AddRange(appointments);
-                await context.SaveChangesAsync();
+                await context.BulkInsertAsync(appointments, new BulkConfig
+                {
+                    SetOutputIdentity = false,
+                    BatchSize = 1000
+                });
                 totalAppointments += appointments.Count;
-                Console.WriteLine($"  [BATCH] Committed {appointments.Count} appointments ({batchStartDate:yyyy-MM-dd} to {batchEndDate:yyyy-MM-dd})");
+                batchStopwatch.Stop();
+                var progressPercent = (int)((double)currentBatch / totalBatches * 100);
+                Console.WriteLine($"  [BATCH] {currentBatch}/{totalBatches} ({progressPercent}%) - Committed {appointments.Count} appointments ({batchStartDate:yyyy-MM-dd} to {batchEndDate:yyyy-MM-dd}) - took {batchStopwatch.Elapsed.TotalSeconds:F2}s");
             }
 
             // 次のバッチへ
@@ -115,7 +130,8 @@ internal static class AppointmentSeeder
             if (batchEndDate > endDate) batchEndDate = endDate;
         }
 
-        Console.WriteLine($"  [+] Appointments: {totalAppointments} entries total (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd})");
+        stopwatch.Stop();
+        Console.WriteLine($"  [+] Appointments: {totalAppointments} entries total (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}) - took {stopwatch.Elapsed.TotalSeconds:F2}s");
     }
 
     /// <summary>
