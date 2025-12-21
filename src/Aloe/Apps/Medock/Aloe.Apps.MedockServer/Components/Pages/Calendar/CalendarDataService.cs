@@ -68,14 +68,20 @@ public class CalendarDataService
     /// <summary>
     /// 休日情報をロードして状態に反映します。
     /// </summary>
-    public async Task LoadHolidaysAsync(CalendarState state)
+    public async Task LoadHolidaysAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
     {
         try
         {
-            var startDate = new DateOnly(state.CurrentDate.Year, 1, 1);
-            var endDate = new DateOnly(state.CurrentDate.Year, 12, 31);
+            // 表示範囲に基づいて祝日を取得
+            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
             var holidays = await this._appointmentService.GetHolidaysAsync(startDate, endDate);
 
+            // 既存の祝日をクリアしてから新しいデータを設定
+            state.Holidays.Clear();
             state.Holidays = holidays.ToDictionary(
                 h => h.Date.ToString("yyyy-MM-dd"),
                 h => h.Name
@@ -83,7 +89,7 @@ public class CalendarDataService
         }
         catch (Exception)
         {
-            state.Holidays = [];
+            state.Holidays.Clear();
         }
     }
 

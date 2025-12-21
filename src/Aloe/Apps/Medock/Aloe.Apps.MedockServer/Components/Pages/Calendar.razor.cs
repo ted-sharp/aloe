@@ -188,7 +188,11 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentDate,
                 this._state.WeekDays);
             await this.DataService.LoadFilterOptionsAsync(this._state);
-            await this.DataService.LoadHolidaysAsync(this._state);
+            await this.DataService.LoadHolidaysAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
         }
         finally
         {
@@ -302,6 +306,11 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentView,
                 this._state.CurrentDate,
                 this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
             this.Layout?.UpdateCurrentView(view.ToString().ToLower());
             this.RegisterLayoutActions();
         }
@@ -333,6 +342,11 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentView,
                 this._state.CurrentDate,
                 this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
         }
         finally
         {
@@ -354,6 +368,11 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentDate,
                 this._state.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
                 this._state,
                 this._state.CurrentView,
                 this._state.CurrentDate,
@@ -475,6 +494,11 @@ public partial class Calendar : ComponentBase
                 this._state.CurrentDate,
                 this._state.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
                 this._state,
                 this._state.CurrentView,
                 this._state.CurrentDate,
