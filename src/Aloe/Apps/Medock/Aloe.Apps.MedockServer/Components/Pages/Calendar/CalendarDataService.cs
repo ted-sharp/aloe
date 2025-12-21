@@ -9,7 +9,7 @@ using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Text.Json.Serialization;
+using System.Text.Json;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -36,39 +36,6 @@ public class CalendarDataService
         this._appointmentStatsRepository = appointmentStatsRepository;
         this._authStateProvider = authStateProvider;
         this._contextFactory = contextFactory;
-    }
-
-    /// <summary>
-    /// グラフデータのJSONB構造（パース用）
-    /// </summary>
-    private class GraphDefinition
-    {
-        [JsonPropertyName("slots")]
-        public List<GraphSlotItem> Slots { get; set; } = new();
-    }
-
-    /// <summary>
-    /// グラフスロットアイテム（パース用）
-    /// </summary>
-    private class GraphSlotItem
-    {
-        [JsonPropertyName("start")]
-        public TimeOnly Start { get; set; }
-
-        [JsonPropertyName("end")]
-        public TimeOnly End { get; set; }
-
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [JsonPropertyName("cap")]
-        public int Cap { get; set; }
-
-        [JsonPropertyName("available")]
-        public int Available { get; set; }
-
-        [JsonPropertyName("hasOutsideHours")]
-        public bool HasOutsideHours { get; set; } = false;
     }
 
     /// <summary>
@@ -408,7 +375,7 @@ public class CalendarDataService
         try
         {
             // 既存のApptGraphをパース
-            var existingGraph = System.Text.Json.JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+            var existingGraph = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
             if (existingGraph == null)
             {
                 return stat;
@@ -416,7 +383,7 @@ public class CalendarDataService
 
             // 上書きされたスロット定義を使用して新しいグラフを構築
             var overrideSlots = slotOverride.ApptSlotsData.Slots;
-            var newSlots = new List<GraphSlotItem>();
+            var newSlots = new List<AppointmentGraphItem>();
 
             // 上書きされたスロット定義を元に、既存のカウントをマッピング
             foreach (var overrideSlot in overrideSlots)
@@ -425,7 +392,7 @@ public class CalendarDataService
                 var matchingSlot = existingGraph.Slots.FirstOrDefault(s =>
                     s.Start == overrideSlot.Start && s.End == overrideSlot.End);
 
-                newSlots.Add(new GraphSlotItem
+                newSlots.Add(new AppointmentGraphItem
                 {
                     Start = overrideSlot.Start,
                     End = overrideSlot.End,
@@ -436,8 +403,8 @@ public class CalendarDataService
             }
 
             // 新しいグラフを作成
-            var newGraph = new GraphDefinition { Slots = newSlots };
-            var newGraphJson = System.Text.Json.JsonSerializer.Serialize(newGraph);
+            var newGraph = new AppointmentGraphRoot { Slots = newSlots };
+            var newGraphJson = JsonSerializer.Serialize(newGraph);
 
             // 新しいAppointmentStatsを作成
             return new AppointmentStats

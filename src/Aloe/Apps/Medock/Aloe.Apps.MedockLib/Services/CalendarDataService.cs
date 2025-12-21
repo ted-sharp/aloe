@@ -1,7 +1,6 @@
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -10,46 +9,6 @@ namespace Aloe.Apps.MedockLib.Services;
 /// </summary>
 public class CalendarDataService : ICalendarDataService
 {
-    /// <summary>
-    /// グラフデータのJSONB構造（パース用）
-    /// </summary>
-    private class GraphDefinition
-    {
-        [JsonPropertyName("slots")]
-        public List<GraphSlotItem> Slots { get; set; } = new();
-    }
-
-    /// <summary>
-    /// グラフスロットアイテム（パース用）
-    /// </summary>
-    private class GraphSlotItem
-    {
-        [JsonPropertyName("start")]
-        public TimeOnly Start { get; set; }
-
-        [JsonPropertyName("end")]
-        public TimeOnly End { get; set; }
-
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [JsonPropertyName("cap")]
-        public int Cap { get; set; }
-
-        [JsonPropertyName("available")]
-        public int Available { get; set; }
-
-        /// <summary>
-        /// 時間外の予約が含まれているかどうか
-        /// 
-        /// 注意: スロット定義（AppointmentSlot）は業務時間内（例：09:00-12:00、13:00-17:00）のみ存在しますが、
-        /// 予約データ（Appointments）は時刻を自由に指定できるため、時間外（開始前・終了後・昼休み時間外）の予約も存在し得ます。
-        /// 時間外の予約は、近いスロットに吸収される（集計される）が、このフラグが立つことで時間外の予約が含まれていることを示します。
-        /// </summary>
-        [JsonPropertyName("hasOutsideHours")]
-        public bool HasOutsideHours { get; set; } = false;
-    }
-
     /// <inheritdoc />
     public Task<CalendarDataDto> BuildCalendarDataAsync(
         IEnumerable<AppointmentDto> appointments,
@@ -89,7 +48,7 @@ public class CalendarDataService : ICalendarDataService
                 {
                     try
                     {
-                        var graphData = JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+                        var graphData = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
                         if (graphData?.Slots != null)
                         {
                             slots = graphData.Slots.Select(slot => new SlotDataDto

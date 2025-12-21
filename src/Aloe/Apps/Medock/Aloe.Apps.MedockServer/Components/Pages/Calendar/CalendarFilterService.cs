@@ -2,7 +2,6 @@ using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -11,36 +10,6 @@ namespace Aloe.Apps.MedockServer.Components.Pages;
 /// </summary>
 public class CalendarFilterService
 {
-    /// <summary>
-    /// グラフデータのJSONB構造（パース用）
-    /// </summary>
-    private class GraphDefinition
-    {
-        [JsonPropertyName("slots")]
-        public List<GraphSlotItem> Slots { get; set; } = new();
-    }
-
-    /// <summary>
-    /// グラフスロットアイテム（パース用）
-    /// </summary>
-    private class GraphSlotItem
-    {
-        [JsonPropertyName("start")]
-        public TimeOnly Start { get; set; }
-
-        [JsonPropertyName("end")]
-        public TimeOnly End { get; set; }
-
-        [JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [JsonPropertyName("cap")]
-        public int Cap { get; set; }
-
-        [JsonPropertyName("available")]
-        public int Available { get; set; }
-    }
-
     public CalendarFilterService()
     {
     }
@@ -112,7 +81,7 @@ public class CalendarFilterService
         {
             try
             {
-                var graphData = JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
+                var graphData = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
                 if (graphData?.Slots != null)
                 {
                     foreach (var slot in graphData.Slots)
