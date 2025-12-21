@@ -6,6 +6,7 @@ using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Diagnostics;
 using System.Text.Json.Serialization;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
@@ -125,15 +126,27 @@ public class CalendarDataService
         DateOnly currentDate,
         int weekDays = 7)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            Console.WriteLine($"[Performance] LoadAppointmentsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+            
+            var querySw = Stopwatch.StartNew();
             var appointments = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+            querySw.Stop();
+            Console.WriteLine($"[Performance] LoadAppointmentsAsync query: {querySw.ElapsedMilliseconds}ms, Count={appointments.Count}");
+            
             state.Appointments = appointments;
         }
         catch (Exception)
         {
             state.Appointments = [];
+        }
+        finally
+        {
+            sw.Stop();
+            Console.WriteLine($"[Performance] LoadAppointmentsAsync total: {sw.ElapsedMilliseconds}ms");
         }
     }
 
@@ -146,19 +159,29 @@ public class CalendarDataService
         DateOnly currentDate,
         int weekDays = 7)
     {
+        var sw = Stopwatch.StartNew();
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            Console.WriteLine($"[Performance] LoadMainStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+            
+            var querySw = Stopwatch.StartNew();
             var mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
+            querySw.Stop();
+            Console.WriteLine($"[Performance] LoadMainStatsAsync query: {querySw.ElapsedMilliseconds}ms, Count={mainStats.Count}");
 
             // 日付ごとにグループ化
+            var groupSw = Stopwatch.StartNew();
             var statsByDate = mainStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
+            groupSw.Stop();
+            Console.WriteLine($"[Performance] LoadMainStatsAsync grouping: {groupSw.ElapsedMilliseconds}ms");
 
             // 全日付を初期化
             state.MainStats.Clear();
             state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
 
+            var initSw = Stopwatch.StartNew();
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
                 var dateStr = date.ToString("yyyy-MM-dd");
@@ -177,6 +200,8 @@ public class CalendarDataService
 
                 state.MainStatsGrayedOut[dateStr] = false;
             }
+            initSw.Stop();
+            Console.WriteLine($"[Performance] LoadMainStatsAsync initialization: {initSw.ElapsedMilliseconds}ms, Days={endDate.DayNumber - startDate.DayNumber + 1}");
         }
         catch (Exception)
         {
@@ -184,6 +209,11 @@ public class CalendarDataService
             state.MainStats.Clear();
             state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
+        }
+        finally
+        {
+            sw.Stop();
+            Console.WriteLine($"[Performance] LoadMainStatsAsync total: {sw.ElapsedMilliseconds}ms");
         }
     }
 

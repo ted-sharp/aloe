@@ -10,6 +10,8 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 
 // DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
@@ -41,16 +43,57 @@ builder.Services.AddScoped(sp =>
 // Configure Cookie Settings
 builder.Services.Configure<CookieSettings>(builder.Configuration.GetSection(CookieSettings.SectionName));
 
+// SQLログ表示設定（appsettings.jsonまたは環境変数で制御）
+var showSqlLogs = builder.Configuration.GetValue<bool>("Features:ShowSqlLogs", false);
+// 環境変数で上書き可能（例: Features__ShowSqlLogs=true）
+if (Environment.GetEnvironmentVariable("Features__ShowSqlLogs") != null)
+{
+    if (Boolean.TryParse(Environment.GetEnvironmentVariable("Features__ShowSqlLogs"), out var envValue))
+    {
+        showSqlLogs = envValue;
+    }
+}
+
+// SQLログのログレベルを動的に設定
+if (!showSqlLogs)
+{
+    builder.Logging.AddFilter("Microsoft.EntityFrameworkCore.Database.Command", LogLevel.None);
+}
+
 // Add DbContext Factory (Blazor Server では各操作で短命なコンテキストを生成)
 builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    
+    if (!showSqlLogs)
+    {
+        // SQLログを出力しない
+        options.UseLoggerFactory(NullLoggerFactory.Instance);
+    }
+    else if (builder.Environment.IsDevelopment())
+    {
+        // 開発環境でSQLログを有効にする場合、詳細な情報も表示
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
+    }
 }, ServiceLifetime.Scoped);
 
 // Add DbContext (リポジトリで使用)
 builder.Services.AddDbContext<MedockDbContext>((services, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    
+    if (!showSqlLogs)
+    {
+        // SQLログを出力しない
+        options.UseLoggerFactory(NullLoggerFactory.Instance);
+    }
+    else if (builder.Environment.IsDevelopment())
+    {
+        // 開発環境でSQLログを有効にする場合、詳細な情報も表示
+        options.EnableDetailedErrors();
+        options.EnableSensitiveDataLogging();
+    }
 }, ServiceLifetime.Scoped);
 
 // Add Repositories

@@ -6,6 +6,7 @@ using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using System.Diagnostics;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -84,6 +85,8 @@ public partial class Calendar : ComponentBase
         set => this._state.ShowSimpleView = value;
     }
 
+    private bool IsLoading => this._state.IsLoading;
+
     // ShowEquipmentGraphプロパティは削除されました（EquipmentはAppointmentResourceに統合）
 
     private string UserInitial => this._state.UserInitial;
@@ -124,20 +127,34 @@ public partial class Calendar : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        await this.UserService.LoadUserInfoAsync(this._state);
-        await this.DataService.LoadBusinessHoursAsync(this._state);
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.GenerateFilterOptionsAsync(this._state);
-        await this.DataService.LoadHolidaysAsync(this._state);
+        var sw = Stopwatch.StartNew();
+        Console.WriteLine($"[Performance] Calendar.OnInitializedAsync start: ViewType={this._state.CurrentView}");
+        this._state.IsLoading = true;
+        this.StateHasChanged();
+        try
+        {
+            await this.UserService.LoadUserInfoAsync(this._state);
+            await this.DataService.LoadBusinessHoursAsync(this._state);
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.GenerateFilterOptionsAsync(this._state);
+            await this.DataService.LoadHolidaysAsync(this._state);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            sw.Stop();
+            Console.WriteLine($"[Performance] Calendar.OnInitializedAsync total: {sw.ElapsedMilliseconds}ms");
+            this.StateHasChanged();
+        }
     }
 
     private async Task HandleLogout()
@@ -193,20 +210,33 @@ public partial class Calendar : ComponentBase
 
     private async Task SetView(CalendarViewType view)
     {
+        var sw = Stopwatch.StartNew();
+        Console.WriteLine($"[Performance] Calendar.SetView start: ViewType={view}");
         this._state.SetView(view);
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        this.Layout?.UpdateCurrentView(view.ToString().ToLower());
-        this.RegisterLayoutActions();
+        this._state.IsLoading = true;
         this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            this.Layout?.UpdateCurrentView(view.ToString().ToLower());
+            this.RegisterLayoutActions();
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            sw.Stop();
+            Console.WriteLine($"[Performance] Calendar.SetView total: {sw.ElapsedMilliseconds}ms");
+            this.StateHasChanged();
+        }
     }
 
     private string GetCurrentPeriodTitle() => this._state.GetCurrentPeriodTitle();
@@ -214,49 +244,76 @@ public partial class Calendar : ComponentBase
     private async Task PreviousPeriod()
     {
         this._state.PreviousPeriod();
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+        this._state.IsLoading = true;
         this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
     }
 
     private async Task NextPeriod()
     {
         this._state.NextPeriod();
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+        this._state.IsLoading = true;
         this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
     }
 
     private async Task GoToToday()
     {
         this._state.GoToToday();
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+        this._state.IsLoading = true;
         this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
     }
 
     private async Task HandleDateClick(DateOnly date)
@@ -333,17 +390,26 @@ public partial class Calendar : ComponentBase
     private async Task HandleYearSelected(int year)
     {
         this._state.CurrentDate = new DateOnly(year, this._state.CurrentDate.Month, this._state.CurrentDate.Day);
-        await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+        this._state.IsLoading = true;
         this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
     }
 
     private void HandleSimpleViewChanged(bool showSimpleView)

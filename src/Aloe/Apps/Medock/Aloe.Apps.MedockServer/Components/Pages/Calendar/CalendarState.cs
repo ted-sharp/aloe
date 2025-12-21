@@ -55,6 +55,9 @@ public class CalendarState
     // フィルター
     public SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
 
+    // ローディング状態
+    public bool IsLoading { get; set; } = false;
+
     /// <summary>
     /// アクティブなフィルター数（ナビバーのバッジ表示用）
     /// </summary>
