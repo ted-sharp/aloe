@@ -49,11 +49,19 @@ src/Aloe/
 - Entities follow snake_case naming for DB columns (e.g., `user_id`, `created_at`)
 - Automatic audit tracking via `IAuditableEntity` interface
 - Soft deletes via `is_deleted` flag
+- Primary keys use `Guid.CreateVersion7()` for time-ordered UUIDs
+- JSONB support for complex data (e.g., `appt_graph` column)
+
+**DbContext Lifecycle (Blazor Server):**
+- `IDbContextFactory<MedockDbContext>` for components (short-lived contexts)
+- Scoped `MedockDbContext` for repositories
+- Audit fields auto-updated in `SaveChangesAsync()` via `IUserContextService`
 
 **Authentication:**
 - Cookie authentication with ASP.NET Core
 - Support for Issue, Refresh, Revoke operations
 - Session tracking with `sessions` table
+- PBKDF2-SHA256 password hashing (10,000 iterations)
 
 ## Development Commands
 
@@ -139,9 +147,10 @@ entity.Property(e => e.UserCode).HasColumnName("user_code").HasMaxLength(100);
 
 1. Login via `AuthService.LoginAsync()` creates a session
 2. Session created in `sessions` table with `session_id`
-3. Cookie authentication with claims: `user_id`, `user_code`, `email`, `tenant_id`, `roles`
+3. Cookie authentication with claims: `sub` (user_id), `user_code`, `email`, `tenant_id`, `facility_id`, `roles`, `session_id`
 4. Session refresh via `RefreshTokenAsync()` updates cookie expiration
 5. Account lockout after 5 failed attempts (15 minutes)
+6. `CustomAuthenticationStateProvider` revalidates every 5 minutes
 
 ### Audit Tracking
 
@@ -154,9 +163,11 @@ Set audit context via `MedockDbContext.SetAuditInfo(userId, sessionId)` before `
 ### Multi-Tenant Design
 
 - Users belong to tenants via `tenant_users` table
-- System admins (`is_system_admin = true`) can access multiple tenants
+- `FacilityUser` links users to facilities; `FacilityUserRole` assigns roles
+- System admins (`is_system_admin = true`) can access multiple tenants/facilities
 - Regular users typically have one tenant
 - Tenant selection screen shown only for multi-tenant users
+- `UserContextService.InitializeFromClaimsAsync()` handles facility fallback
 
 ### CSS Framework (No Node.js)
 
@@ -197,10 +208,11 @@ For closed network deployments, self-host M PLUS 1 Code font:
 
 1. **EF Column Names:** Always specify `.HasColumnName()` - database uses snake_case
 2. **Audit Info:** Call `SetAuditInfo()` before any SaveChanges if you need audit tracking
-3. **Soft Deletes:** Use `is_deleted` flag, never hard delete
+3. **Soft Deletes:** Use `is_deleted` flag, never hard delete. Use filtered unique indexes: `.IsUnique().HasFilter("[is_deleted] = 0")`
 4. **Tenant Context:** Always filter by `tenant_id` for multi-tenant queries
 5. **Cookie Configuration:** Ensure `CookieSettings` section exists in `appsettings.json`
 6. **Connection Strings:** Use User Secrets for sensitive config in development
+7. **Read Operations:** Use `.AsNoTracking()` for queries; use `FindForUpdateAsync()` when modifications needed
 
 ## User Secrets
 
@@ -224,3 +236,7 @@ This project follows a test-first philosophy:
 3. Refactor while keeping tests green (Refactor)
 
 Test framework: xUnit with Moq, FluentAssertions, and EF InMemory provider.
+
+## Debugging
+
+**SQL Logging:** Control via `Features:ShowSqlLogs` in appsettings.json or environment variable `Features__ShowSqlLogs`. Default is false.
