@@ -32,8 +32,7 @@ export function renderMonthView() {
         headerHeight: 40,
         dayHeaderStyle: 'large',
         showEmptyCells: true,
-        gridStyle: 'full',
-        showWeekendBackground: false
+        gridStyle: 'full'
     });
 
     layers.grid.batchDraw();

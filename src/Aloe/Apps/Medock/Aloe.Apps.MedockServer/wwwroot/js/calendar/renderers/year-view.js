@@ -71,8 +71,7 @@ export function renderYearView() {
                 }
             },
             dayHeaderStyle: 'small',
-            gridStyle: 'minimal',
-            showWeekendBackground: true
+            gridStyle: 'minimal'
         });
     }
 

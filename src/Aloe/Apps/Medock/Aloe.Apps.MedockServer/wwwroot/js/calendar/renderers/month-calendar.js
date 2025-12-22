@@ -24,7 +24,6 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
         dayHeaderStyle: 'small',
         showEmptyCells: false,
         gridStyle: 'minimal',
-        showWeekendBackground: true,
         ...options
     };
 
@@ -208,23 +207,6 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
                 const cellLeft = x + col * cellWidth;
                 const cellTop = dayGridTop + row * cellHeight;
 
-                if (opts.showWeekendBackground && row < rows) {
-                    let bgColor = null;
-                    if (col === 0) bgColor = 'rgba(239, 68, 68, 0.08)';
-                    else if (col === 6) bgColor = 'rgba(59, 130, 246, 0.08)';
-
-                    if (bgColor) {
-                        const weekendBg = new Konva.Rect({
-                            x: cellLeft,
-                            y: cellTop,
-                            width: cellWidth,
-                            height: cellHeight,
-                            fill: bgColor
-                        });
-                        layers.background.add(weekendBg);
-                    }
-                }
-
                 if (col > 0) {
                     const vLine = new Konva.Line({
                         points: [snapToPixel(cellLeft), snapToPixel(dayGridTop), snapToPixel(cellLeft), snapToPixel(dayGridTop + rows * cellHeight)],
@@ -246,6 +228,22 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
         }
 
         if (rows > 0) {
+            // 左端の縦線
+            const leftLine = new Konva.Line({
+                points: [snapToPixel(x), snapToPixel(dayGridTop), snapToPixel(x), snapToPixel(dayGridTop + rows * cellHeight)],
+                stroke: '#e5e7eb',
+                strokeWidth: 1
+            });
+            layers.grid.add(leftLine);
+
+            // 右端の縦線
+            const rightLine = new Konva.Line({
+                points: [snapToPixel(x + width), snapToPixel(dayGridTop), snapToPixel(x + width), snapToPixel(dayGridTop + rows * cellHeight)],
+                stroke: '#e5e7eb',
+                strokeWidth: 1
+            });
+            layers.grid.add(rightLine);
+
             const headerBottomLine = new Konva.Line({
                 points: [snapToPixel(x), snapToPixel(dayGridTop), snapToPixel(x + width), snapToPixel(dayGridTop)],
                 stroke: '#e5e7eb',
