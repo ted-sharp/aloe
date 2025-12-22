@@ -176,6 +176,46 @@
                 </div>
             }
 
+            <!-- リソース選択 -->
+            @if (AvailableResources != null)
+            {
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">リソース</span>
+                        @if (AvailableResources.Any())
+                        {
+                            <div class="flex gap-1">
+                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllResources">全選択</button>
+                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllResources">全解除</button>
+                            </div>
+                        }
+                    </label>
+                    @if (AvailableResources.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                            @foreach (var resource in AvailableResources)
+                            {
+                                <label class="cursor-pointer">
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                           checked="@SelectedResourceIds.Contains(resource.Id)"
+                                           @onchange="() => ToggleResource(resource.Id)" />
+                                    <span class="badge @(SelectedResourceIds.Contains(resource.Id) ? "badge-primary" : "badge-outline")">
+                                        @resource.Name
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-sm text-base-content/60 py-2">
+                            データがありません
+                        </div>
+                    }
+                </div>
+            }
+
             <!-- プラン選択 -->
             @if (AvailablePlans != null)
             {

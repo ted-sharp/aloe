@@ -135,6 +135,7 @@ public partial class Calendar : ComponentBase
     private int ActiveFilterCount => this._state.ActiveFilterCount;
     private List<SearchFilterPanel.FilterItem> AvailableFloors => this._state.AvailableFloors;
     private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this._state.AvailableResourceGroups;
+    private List<SearchFilterPanel.FilterItem> AvailableResources => this._state.AvailableResources;
     private List<SearchFilterPanel.FilterItem> AvailablePlans => this._state.AvailablePlans;
     private List<SearchFilterPanel.FilterItem> AvailableOptions => this._state.AvailableOptions;
 
@@ -568,9 +569,10 @@ public partial class Calendar : ComponentBase
     {
         this._state.CurrentFilter = filter;
 
-        // フロア、リソースグループ、プラン・オプションのフィルターが変更された場合はデータを再取得
+        // フロア、リソースグループ、リソース、プラン・オプションのフィルターが変更された場合はデータを再取得
         var needsReload = filter.SelectedFloorIds.Any() ||
                          filter.SelectedResourceGroupIds.Any() ||
+                         filter.SelectedResourceIds.Any() ||
                          filter.SelectedPlanIds.Any() ||
                          filter.SelectedOptionPlanIds.Any();
 

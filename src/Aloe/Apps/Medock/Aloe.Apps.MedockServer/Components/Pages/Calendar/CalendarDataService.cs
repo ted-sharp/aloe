@@ -136,6 +136,22 @@ public class CalendarDataService
                 .ToListAsync();
             state.AvailableResourceGroups = resourceGroups;
 
+            // リソースをロード（Mainリソースのみ）
+            var resources = await context.AppointmentResources
+                .AsNoTracking()
+                .Where(r => r.Floor.FacilityId == facilityId && 
+                           !r.IsDeleted &&
+                           r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main)
+                .OrderBy(r => r.ApptResSeq)
+                .ThenBy(r => r.ApptResName)
+                .Select(r => new SearchFilterPanel.FilterItem
+                {
+                    Id = r.ApptResId,
+                    Name = r.ApptResName
+                })
+                .ToListAsync();
+            state.AvailableResources = resources;
+
             // プランをロード（有効なもののみ）
             var today = DateOnly.FromDateTime(DateTime.Today);
             var plans = await context.Plans
@@ -184,6 +200,7 @@ public class CalendarDataService
             Console.WriteLine($"フィルターオプションのロードエラー: {ex.Message}");
             state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
+            state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
             state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
             state.AvailableOptions = new List<SearchFilterPanel.FilterItem>();
         }
@@ -256,6 +273,7 @@ public class CalendarDataService
                     endDate,
                     state.CurrentFilter.SelectedFloorIds.Any() ? state.CurrentFilter.SelectedFloorIds : null,
                     state.CurrentFilter.SelectedResourceGroupIds.Any() ? state.CurrentFilter.SelectedResourceGroupIds : null,
+                    state.CurrentFilter.SelectedResourceIds.Any() ? state.CurrentFilter.SelectedResourceIds : null,
                     state.CurrentFilter.SelectedPlanIds.Any() ? state.CurrentFilter.SelectedPlanIds : null,
                     state.CurrentFilter.SelectedOptionPlanIds.Any() ? state.CurrentFilter.SelectedOptionPlanIds : null);
             }

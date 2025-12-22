@@ -72,6 +72,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         DateOnly endDate,
         List<Guid>? floorIds = null,
         List<Guid>? resourceGroupIds = null,
+        List<Guid>? resourceIds = null,
         List<Guid>? planIds = null,
         List<Guid>? optionPlanIds = null)
     {
@@ -99,6 +100,12 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         {
             query = query.Where(s => s.AppointmentResource.AppointmentResourceGroupMembers
                 .Any(m => !m.IsDeleted && resourceGroupIds.Contains(m.AppointmentResourceGroup.ApptResGroupId)));
+        }
+
+        // リソースフィルター
+        if (resourceIds != null && resourceIds.Any())
+        {
+            query = query.Where(s => resourceIds.Contains(s.AppointmentResource.ApptResId));
         }
 
         // プラン・オプションフィルター（PlanResourceRequirementを介してリソースを絞り込み）

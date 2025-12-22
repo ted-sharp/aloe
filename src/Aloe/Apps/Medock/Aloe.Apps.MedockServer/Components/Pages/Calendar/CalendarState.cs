@@ -56,6 +56,7 @@ public class CalendarState
     public SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
     public List<SearchFilterPanel.FilterItem> AvailableFloors { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailableResourceGroups { get; set; } = new();
+    public List<SearchFilterPanel.FilterItem> AvailableResources { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailablePlans { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailableOptions { get; set; } = new();
 
@@ -71,6 +72,7 @@ public class CalendarState
         (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
         (this.CurrentFilter?.SelectedFloorIds.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.SelectedResourceGroupIds.Any() == true ? 1 : 0) +
+        (this.CurrentFilter?.SelectedResourceIds.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.SelectedPlanIds.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.SelectedOptionPlanIds.Any() == true ? 1 : 0);
 

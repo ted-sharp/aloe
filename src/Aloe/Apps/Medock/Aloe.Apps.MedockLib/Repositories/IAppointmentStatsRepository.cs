@@ -33,6 +33,7 @@ public interface IAppointmentStatsRepository
         DateOnly endDate,
         List<Guid>? floorIds = null,
         List<Guid>? resourceGroupIds = null,
+        List<Guid>? resourceIds = null,
         List<Guid>? planIds = null,
         List<Guid>? optionPlanIds = null);
 }

@@ -31,6 +31,7 @@ public partial class SearchFilterPanel : ComponentBase
     private int RequiredCapacity { get; set; } = 1;
     private HashSet<Guid> SelectedFloorIds { get; set; } = new(); // フロア選択
     private HashSet<Guid> SelectedResourceGroupIds { get; set; } = new(); // リソースグループ選択
+    private HashSet<Guid> SelectedResourceIds { get; set; } = new(); // リソース選択
     private HashSet<Guid> SelectedPlanIds { get; set; } = new(); // プラン選択
     private HashSet<Guid> SelectedOptionPlanIds { get; set; } = new(); // オプション（プラン）選択
 
@@ -40,6 +41,9 @@ public partial class SearchFilterPanel : ComponentBase
 
     [Parameter]
     public List<FilterItem>? AvailableResourceGroups { get; set; }
+
+    [Parameter]
+    public List<FilterItem>? AvailableResources { get; set; }
 
     [Parameter]
     public List<FilterItem>? AvailablePlans { get; set; }
@@ -57,6 +61,7 @@ public partial class SearchFilterPanel : ComponentBase
         (this.RequiredCapacity > 1 ? 1 : 0) +
         (this.SelectedFloorIds.Any() ? 1 : 0) +
         (this.SelectedResourceGroupIds.Any() ? 1 : 0) +
+        (this.SelectedResourceIds.Any() ? 1 : 0) +
         (this.SelectedPlanIds.Any() ? 1 : 0) +
         (this.SelectedOptionPlanIds.Any() ? 1 : 0);
 
@@ -100,6 +105,7 @@ public partial class SearchFilterPanel : ComponentBase
         this.RequiredCapacity = 1;
         this.SelectedFloorIds.Clear();
         this.SelectedResourceGroupIds.Clear();
+        this.SelectedResourceIds.Clear();
         this.SelectedPlanIds.Clear();
         this.SelectedOptionPlanIds.Clear();
         this.OnFilterChanged();
@@ -121,6 +127,7 @@ public partial class SearchFilterPanel : ComponentBase
             RequiredCapacity = this.RequiredCapacity,
             SelectedFloorIds = this.SelectedFloorIds.ToList(),
             SelectedResourceGroupIds = this.SelectedResourceGroupIds.ToList(),
+            SelectedResourceIds = this.SelectedResourceIds.ToList(),
             SelectedPlanIds = this.SelectedPlanIds.ToList(),
             SelectedOptionPlanIds = this.SelectedOptionPlanIds.ToList()
         };
@@ -148,6 +155,19 @@ public partial class SearchFilterPanel : ComponentBase
         else
         {
             this.SelectedResourceGroupIds.Add(groupId);
+        }
+        this.OnFilterChanged();
+    }
+
+    private void ToggleResource(Guid resourceId)
+    {
+        if (this.SelectedResourceIds.Contains(resourceId))
+        {
+            this.SelectedResourceIds.Remove(resourceId);
+        }
+        else
+        {
+            this.SelectedResourceIds.Add(resourceId);
         }
         this.OnFilterChanged();
     }
@@ -205,6 +225,21 @@ public partial class SearchFilterPanel : ComponentBase
     private void ClearAllResourceGroups()
     {
         this.SelectedResourceGroupIds.Clear();
+        this.OnFilterChanged();
+    }
+
+    private void SelectAllResources()
+    {
+        if (this.AvailableResources != null)
+        {
+            this.SelectedResourceIds = this.AvailableResources.Select(r => r.Id).ToHashSet();
+        }
+        this.OnFilterChanged();
+    }
+
+    private void ClearAllResources()
+    {
+        this.SelectedResourceIds.Clear();
         this.OnFilterChanged();
     }
 
@@ -283,6 +318,7 @@ public partial class SearchFilterPanel : ComponentBase
         public int RequiredCapacity { get; set; } = 1;
         public List<Guid> SelectedFloorIds { get; set; } = new();
         public List<Guid> SelectedResourceGroupIds { get; set; } = new();
+        public List<Guid> SelectedResourceIds { get; set; } = new();
         public List<Guid> SelectedPlanIds { get; set; } = new();
         public List<Guid> SelectedOptionPlanIds { get; set; } = new();
 
@@ -295,6 +331,7 @@ public partial class SearchFilterPanel : ComponentBase
             this.RequiredCapacity > 1 ||
             this.SelectedFloorIds.Any() ||
             this.SelectedResourceGroupIds.Any() ||
+            this.SelectedResourceIds.Any() ||
             this.SelectedPlanIds.Any() ||
             this.SelectedOptionPlanIds.Any();
     }
