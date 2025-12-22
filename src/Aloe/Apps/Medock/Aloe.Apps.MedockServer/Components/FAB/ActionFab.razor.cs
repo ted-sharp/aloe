@@ -46,6 +46,8 @@ public partial class ActionFab : ComponentBase
 
         var prevIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>""";
 
+        var nextIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>""";
+
         var weekIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>""";
 
         var monthIcon = """<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>""";
@@ -54,25 +56,31 @@ public partial class ActionFab : ComponentBase
         {
             "year" =>
             [
-                new("今日", todayIcon, async () => await this.OnGoToToday.InvokeAsync()),
                 new("フィルター", filterIcon, async () => await this.OnToggleFilter.InvokeAsync()),
+                new("月表示", monthIcon, async () => await this.OnViewChange.InvokeAsync("month")),
                 new("前年", prevIcon, async () => await this.OnPreviousPeriod.InvokeAsync()),
+                new("次年", nextIcon, async () => await this.OnNextPeriod.InvokeAsync()),
             ],
             "month" =>
             [
-                new("今日", todayIcon, async () => await this.OnGoToToday.InvokeAsync()),
+                new("フィルター", filterIcon, async () => await this.OnToggleFilter.InvokeAsync()),
                 new("週表示", weekIcon, async () => await this.OnViewChange.InvokeAsync("week")),
                 new("前月", prevIcon, async () => await this.OnPreviousPeriod.InvokeAsync()),
+                new("次月", nextIcon, async () => await this.OnNextPeriod.InvokeAsync()),
             ],
             "week" =>
             [
-                new("今日", todayIcon, async () => await this.OnGoToToday.InvokeAsync()),
-                new("月表示", monthIcon, async () => await this.OnViewChange.InvokeAsync("month")),
+                new("フィルター", filterIcon, async () => await this.OnToggleFilter.InvokeAsync()),
+                new("年表示", monthIcon, async () => await this.OnViewChange.InvokeAsync("year")),
                 new("前へ", prevIcon, async () => await this.OnPreviousPeriod.InvokeAsync()),
+                new("次へ", nextIcon, async () => await this.OnNextPeriod.InvokeAsync()),
             ],
             _ =>
             [
                 new("今日", todayIcon, async () => await this.OnGoToToday.InvokeAsync()),
+                new("年表示", monthIcon, async () => await this.OnViewChange.InvokeAsync("year")),
+                new("月表示", monthIcon, async () => await this.OnViewChange.InvokeAsync("month")),
+                new("週表示", weekIcon, async () => await this.OnViewChange.InvokeAsync("week")),
             ]
         };
     }

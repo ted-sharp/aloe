@@ -1,22 +1,13 @@
 @* 右下アクションFAB（daisyUI v5 fab-flower） *@
 
 <div class="fab fab-flower fab-bottom-right">
-    <!-- メイントリガー: Safariバグ対策でdivを使用 -->
-    <div tabindex="0" role="button" class="btn btn-lg btn-primary btn-circle">
-        <!-- + アイコン -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-    </div>
+    <!-- メイントリガー -->
+    <div tabindex="0" role="button" class="btn btn-lg btn-primary btn-circle">F</div>
 
-    <!-- メインアクション（新規予約） -->
-    <button class="fab-main-action btn btn-circle btn-lg btn-success"
-            @onclick="HandleNewAppointment"
-            aria-label="新規予約">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-    </button>
+    <!-- メインアクション（閉じる） -->
+    <div class="fab-close">
+        <span class="btn btn-circle btn-lg btn-error">✕</span>
+    </div>
 
     <!-- サブアクション（最大4つ） -->
     @foreach (var action in GetContextActions())
