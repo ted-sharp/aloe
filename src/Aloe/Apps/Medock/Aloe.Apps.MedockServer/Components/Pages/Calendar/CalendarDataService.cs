@@ -136,12 +136,12 @@ public class CalendarDataService
                 .ToListAsync();
             state.AvailableResourceGroups = resourceGroups;
 
-            // リソースをロード（Mainリソースのみ）
+            // リソースをロード（Equipmentリソースのみ）
             var resources = await context.AppointmentResources
                 .AsNoTracking()
                 .Where(r => r.Floor.FacilityId == facilityId && 
                            !r.IsDeleted &&
-                           r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main)
+                           r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment)
                 .OrderBy(r => r.ApptResSeq)
                 .ThenBy(r => r.ApptResName)
                 .Select(r => new SearchFilterPanel.FilterItem
