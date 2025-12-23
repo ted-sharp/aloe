@@ -68,10 +68,15 @@ export function renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight
     // 日付数字のフォントサイズをビューに応じて決定
     const dateFontSize = isYearView ? CONFIG.font.sizeDateYear : CONFIG.font.sizeDateMonth;
     // 日付テキスト表示エリア（小さなセルでも計算しておく）
+    // 日付はグラフエリア内に表示しないため、セルの上部のみに配置
     const dayTextHeight = dateFontSize + 4;
     const barAreaTop = cellTop + dayTextHeight;
     const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 10 : 12) : 0;
     const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight); // 下部余白4px + ラベルエリア、負の値を防止
+    
+    // グラフエリアの範囲を計算（日付がグラフエリア内に表示されないようにするため）
+    const graphAreaTop = barAreaTop;
+    const graphAreaBottom = barAreaTop + barAreaHeight;
 
     // 小さなセルの場合は描画をスキップ
     if (!isTooSmall) {
@@ -104,6 +109,8 @@ export function renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight
             textColor = '#374151';
         }
 
+        // 日付テキストはグラフエリアの外（セルの上部）にのみ表示
+        // グラフエリア内には表示しない
         const dayText = new Konva.Text({
             x: cellLeft + 1,
             y: cellTop + 2,

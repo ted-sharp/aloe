@@ -15,6 +15,42 @@ import { parseSlotTimeRange } from './slot-time-utils.js';
 import { getWinterColorFromAvailable } from '../../utils/winter-colormap.js';
 
 /**
+ * 時刻（時間単位）をHH:mm形式の文字列に変換
+ * @param {number} hours - 時刻（時間単位、例：9.5 = 9:30）
+ * @returns {string} HH:mm形式の時刻文字列
+ */
+function formatTime(hours) {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+/**
+ * 背景色に応じたテキスト色を取得
+ * 暗い色（青系）の場合は白、明るい色（緑系）の場合は黒
+ * @param {string} bgColor - 背景色（#RRGGBB形式）
+ * @returns {string} テキスト色（#RRGGBB形式）
+ */
+function getTextColorForBackground(bgColor) {
+    // #を除去してRGB値を取得
+    const hex = bgColor.replace('#', '');
+    if (hex.length !== 6) {
+        // 不正な形式の場合はデフォルトの黒を返す
+        return '#000000';
+    }
+    
+    const r = parseInt(hex.substring(0, 2), 16);
+    const g = parseInt(hex.substring(2, 4), 16);
+    const b = parseInt(hex.substring(4, 6), 16);
+    
+    // 輝度を計算（0.299*R + 0.587*G + 0.114*B）
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    
+    // 輝度が0.5未満（暗い）の場合は白、それ以外は黒
+    return luminance < 0.5 ? '#ffffff' : '#000000';
+}
+
+/**
  * 詳細棒グラフを描画（集約しないバージョン）
  * GraphData通りのスロットを個別に描画
  * @param {object} params - 描画パラメータ
@@ -127,10 +163,10 @@ export function renderDetailBarChart({
         const isOutsideHours = slot.isOutsideHours || false; // 時間外スロットフラグ
         const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
 
-        // 時間外スロットの判定（グラフには描画せず、赤い縦ラインで存在の有無のみ表示）
+        // イレギュラースロット（isOutsideHours）を追跡
         if (isOutsideHours) {
             slotsOutsideHours.push(slot);
-            // 時間外スロットに件数がある場合、対応する縦ラインを赤くする（グラフには描画しない）
+            // 時間外スロットの存在を追跡（縦ライン描画用）
             if (count > 0) {
                 // 早朝スロット（businessStart以前）
                 if (slotEnd <= startHour) {
@@ -146,10 +182,9 @@ export function renderDetailBarChart({
                     hasOutsideHoursLunch = true;
                 }
             }
-            return; // 時間外スロットはここで処理を終了（グラフには描画しない）
         }
 
-        // 通常のスロットの分類
+        // イレギュラースロットも含めて全てのスロットを分類
         // 昼休み時間帯かどうかを判定
         const isInLunchTime = lunchStartHour !== null && lunchEndHour !== null &&
             ((slotStart >= lunchStartHour && slotStart < lunchEndHour) ||
@@ -171,7 +206,7 @@ export function renderDetailBarChart({
         }
     });
 
-    // 集約せず、各スロットを個別に描画対象に追加
+    // 集約せず、各スロットを個別に描画対象に追加（イレギュラースロットも含む）
     const slotsToRender = [];
     // ビジネスアワー前のスロットを個別に追加
     slotsBefore.forEach(slot => {
@@ -185,8 +220,27 @@ export function renderDetailBarChart({
     slotsAfter.forEach(slot => {
         slotsToRender.push({ ...slot, position: 'after' });
     });
-    // 時間外スロットはグラフには描画しない（赤い縦ラインで存在の有無のみ表示）
-    // 昼休みのスロットは描画しない（グラフ幅を取らない）
+    // イレギュラースロット（isOutsideHours）も描画対象に追加
+    slotsOutsideHours.forEach(slot => {
+        const timeRange = parseSlotTimeRange(slot, startHour, endHour);
+        const slotStart = timeRange.start;
+        const slotEnd = timeRange.end;
+        
+        // 位置を判定
+        if (slotEnd <= startHour) {
+            slotsToRender.push({ ...slot, position: 'before' });
+        } else if (slotStart >= endHour) {
+            slotsToRender.push({ ...slot, position: 'after' });
+        } else if (lunchStartHour !== null && lunchEndHour !== null &&
+                   slotStart >= lunchStartHour && slotEnd <= lunchEndHour) {
+            // 昼休み時間帯のイレギュラースロットも描画（位置は昼休み開始位置）
+            slotsToRender.push({ ...slot, position: 'lunch' });
+        } else {
+            // ビジネスアワー内のイレギュラースロット
+            slotsToRender.push({ ...slot, position: 'in' });
+        }
+    });
+    // 昼休みの通常スロットは描画しない（グラフ幅を取らない）
 
     // 全スロットの最大値（max(cap, count)）を計算してスケーリングに使用
     let maxValue = 0;
@@ -203,6 +257,44 @@ export function renderDetailBarChart({
 
     // セルの下端（基準線）のY座標
     const baselineY = barAreaTop + barAreaHeight;
+
+    // Y軸メモリを描画
+    const yAxisLabelWidth = 25; // Y軸ラベルの幅
+    const yAxisLeft = cellLeft - yAxisLabelWidth - 2; // Y軸の左端位置（セルの左端から少し外側）
+    const numTicks = 5; // メモリの数
+    const tickFontSize = isYearView ? 7 : 8;
+    
+    for (let i = 0; i <= numTicks; i++) {
+        const value = (maxValue / numTicks) * i;
+        const y = baselineY - (value / maxValue) * barAreaHeight;
+        
+        // メモリ線を描画（グラフエリアの左端に）
+        const tickLine = new Konva.Line({
+            points: [businessStartX - 4, y, businessStartX, y],
+            stroke: '#d1d5db',
+            strokeWidth: 1,
+            opacity: 0.6
+        });
+        layers.content.add(tickLine);
+        
+        // 値のラベルを描画
+        if (i > 0 || value === 0) { // 0または値がある場合のみ表示
+            const tickLabel = new Konva.Text({
+                x: yAxisLeft,
+                y: y - tickFontSize / 2,
+                width: yAxisLabelWidth,
+                text: String(Math.round(value)),
+                fontSize: tickFontSize,
+                fontFamily: CONFIG.font.numberFamily,
+                fill: isDateGrayed ? '#9ca3af' : '#6b7280',
+                align: 'right',
+                verticalAlign: 'middle',
+                wrap: 'none',
+                opacity: isDateGrayed ? 0.6 : 0.8
+            });
+            layers.content.add(tickLabel);
+        }
+    }
 
     // ビジネスアワー外のスロット用の固定幅
     const outsideBarWidth = Math.max(2, Math.min(8, barAreaWidth * 0.05)); // 幅の5%、最小2px、最大8px
@@ -224,28 +316,52 @@ export function renderDetailBarChart({
             // ビジネスアワー後のスロット：終了位置に配置
             barX = businessEndX - outsideBarWidth;
             barWidth = outsideBarWidth;
+        } else if (slot.position === 'lunch') {
+            // 昼休み時間帯のイレギュラースロット：昼休み開始位置に配置
+            if (lunchStartHour !== null) {
+                const lunchStartX = timeToX(lunchStartHour);
+                barX = lunchStartX;
+                barWidth = outsideBarWidth;
+            } else {
+                return; // 昼休み時間が定義されていない場合は描画しない
+            }
         } else {
             // ビジネスアワー内のスロット：時刻に基づいて配置（昼休みを除外）
             const timeRange = parseSlotTimeRange(slot, startHour, endHour);
-            let slotStart = Math.max(startHour, timeRange.start);
-            let slotEnd = Math.min(endHour, timeRange.end);
+            let slotStart = timeRange.start; // イレギュラースロットも含めて実際の開始時刻を使用
+            let slotEnd = timeRange.end; // イレギュラースロットも含めて実際の終了時刻を使用
+            
+            // ビジネスアワー外のスロットも描画するため、範囲制限を緩和
+            // ただし、グラフエリア内に収まるように調整
+            const actualSlotStart = slotStart;
+            const actualSlotEnd = slotEnd;
             
             // 昼休み時間帯と重なる場合は分割または調整
             if (lunchStartHour !== null && lunchEndHour !== null) {
-                if (slotStart < lunchStartHour && slotEnd > lunchEndHour) {
+                if (actualSlotStart < lunchStartHour && actualSlotEnd > lunchEndHour) {
                     // 昼休みをまたぐ場合：昼休み前と後の2つに分割（ここでは開始位置のみ使用）
-                    slotStart = Math.max(startHour, slotStart);
-                    slotEnd = Math.min(lunchStartHour, slotEnd);
-                } else if (slotStart >= lunchStartHour && slotEnd <= lunchEndHour) {
+                    slotStart = Math.max(startHour, actualSlotStart);
+                    slotEnd = Math.min(lunchStartHour, actualSlotEnd);
+                } else if (actualSlotStart >= lunchStartHour && actualSlotEnd <= lunchEndHour) {
                     // 完全に昼休み内：描画しない（既に除外されているはず）
                     return;
-                } else if (slotStart < lunchStartHour && slotEnd > lunchStartHour) {
+                } else if (actualSlotStart < lunchStartHour && actualSlotEnd > lunchStartHour) {
                     // 昼休み開始と重なる：昼休み開始まで
+                    slotStart = Math.max(startHour, actualSlotStart);
                     slotEnd = lunchStartHour;
-                } else if (slotStart < lunchEndHour && slotEnd > lunchEndHour) {
+                } else if (actualSlotStart < lunchEndHour && actualSlotEnd > lunchEndHour) {
                     // 昼休み終了と重なる：昼休み終了から
                     slotStart = lunchEndHour;
+                    slotEnd = Math.min(endHour, actualSlotEnd);
+                } else {
+                    // 昼休みと重ならない場合
+                    slotStart = Math.max(startHour, Math.min(endHour, actualSlotStart));
+                    slotEnd = Math.max(startHour, Math.min(endHour, actualSlotEnd));
                 }
+            } else {
+                // 昼休み時間帯がない場合
+                slotStart = Math.max(startHour, Math.min(endHour, actualSlotStart));
+                slotEnd = Math.max(startHour, Math.min(endHour, actualSlotEnd));
             }
             
             const slotStartX = timeToX(slotStart);
@@ -267,10 +383,12 @@ export function renderDetailBarChart({
         }
 
         // 空き数に基づいて棒グラフを描画
+        let barTopY = baselineY; // バーの上端Y座標（デフォルトは基準線）
         if (available > 0) {
             // 空き数が正の場合: WinterColormapに基づく色の棒グラフを上方向に描画
             const barHeight = (available / maxValue) * barAreaHeight;
             const barY = baselineY - barHeight;
+            barTopY = barY; // バーの上端を記録
             const slotColor = isSlotGrayed ? '#9ca3af' : getWinterColorFromAvailable(available, cap);
 
             const bar = new Konva.Rect({
@@ -288,6 +406,7 @@ export function renderDetailBarChart({
             const overflowAmount = Math.abs(available);
             const barHeight = (overflowAmount / maxValue) * barAreaHeight;
             const barY = baselineY; // セルの下端から開始
+            barTopY = barY; // バーの上端を記録
 
             const overflowBar = new Konva.Rect({
                 x: barX,
@@ -299,38 +418,115 @@ export function renderDetailBarChart({
                 opacity: isSlotGrayed ? 0.4 : 1
             });
             layers.content.add(overflowBar);
+        } else {
+            // 空き数が0の場合：キャパシティラインの位置を使用
+            if (cap > 0) {
+                const capacityY = baselineY - (cap / maxValue) * barAreaHeight;
+                barTopY = capacityY;
+            }
         }
 
-        // 各スロットの開始時刻ラベルを描画（セルが十分大きい場合のみ）
-        if (labelAreaHeight > 0 && slot.position === 'in') {
-            // ビジネスアワー内のスロットのみラベルを表示
+        // n/m表記とパーセンテージをグラフ上（バーの上）に大きく表示
+        if (cap > 0 && barWidth >= 25) {
+            // n/m表記と空き率%を計算
+            const vacancyRate = Math.round((available / cap) * 100);
+            const countCapText = `${count}/${cap}`;
+            const vacancyText = `${vacancyRate}%`;
+            
+            // グラフ上のラベルのフォントサイズ（大きく表示）
+            const graphLabelFontSize = isYearView ? 9 : 12;
+            
+            // バーの上に配置（バーの上端から十分な余白を取る）
+            const labelSpacing = 12; // バーの上端からの余白をさらに大きく
+            const lineHeight = graphLabelFontSize + 4; // 行の高さ
+            
+            // グラフエリアの上端を超えないように調整
+            const minLabelY = barAreaTop - lineHeight * 2 - labelSpacing;
+            
+            // テキスト色は常に黒（背景色に関係なく）
+            const graphLabelColor = isSlotGrayed ? '#6b7280' : '#374151';
+            
+            // スロットの幅に応じて表示内容を調整
+            const canShowFullInfo = barWidth >= 35;
+            const canShowCountCap = barWidth >= 25;
+            
+            // n/m表記を描画（1行目）
+            if (canShowCountCap) {
+                let countCapLabelY = barTopY - labelSpacing - lineHeight;
+                // グラフエリアの上端を超えないように調整
+                countCapLabelY = Math.max(minLabelY, countCapLabelY);
+                const countCapLabel = new Konva.Text({
+                    x: barX,
+                    y: countCapLabelY,
+                    width: barWidth,
+                    text: countCapText,
+                    fontSize: graphLabelFontSize,
+                    fontFamily: CONFIG.font.numberFamily,
+                    fill: graphLabelColor,
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    wrap: 'none',
+                    opacity: isSlotGrayed ? 0.7 : 1
+                });
+                layers.content.add(countCapLabel);
+            }
+            
+            // パーセンテージを描画（2行目）
+            if (canShowFullInfo) {
+                let vacancyLabelY = barTopY - labelSpacing;
+                // グラフエリアの上端を超えないように調整
+                vacancyLabelY = Math.max(minLabelY + lineHeight, vacancyLabelY);
+                const vacancyLabel = new Konva.Text({
+                    x: barX,
+                    y: vacancyLabelY,
+                    width: barWidth,
+                    text: vacancyText,
+                    fontSize: graphLabelFontSize,
+                    fontFamily: CONFIG.font.numberFamily,
+                    fill: graphLabelColor,
+                    align: 'center',
+                    verticalAlign: 'bottom',
+                    wrap: 'none',
+                    opacity: isSlotGrayed ? 0.7 : 1
+                });
+                layers.content.add(vacancyLabel);
+            }
+        }
+
+        // 各スロットの開始時刻ラベルを下部に描画（セルが十分大きい場合のみ）
+        if (labelAreaHeight > 0) {
             const timeRange = parseSlotTimeRange(slot, startHour, endHour);
-            const hourValue = Math.floor(timeRange.start);
+            const slotStartTime = timeRange.start;
             
-            // ラベルのフォントサイズを開始・終了時刻ラベルと同じくらい小さく（6-7px程度）
-            const labelFontSize = isYearView ? 6 : 7;
+            // 開始時刻をHH:mm形式で取得
+            const timeText = formatTime(slotStartTime);
             
-            // スロットの幅が狭い場合（二桁が入らない場合）は一の位のみを表示
-            // 二桁が入るには最低でも12-14px程度の幅が必要なので、15px未満の場合は一の位のみ
-            const canShowTwoDigits = barWidth >= 15;
-            const labelText = canShowTwoDigits ? String(hourValue) : String(hourValue % 10);
+            // ラベルのフォントサイズ（大きく表示）
+            const labelFontSize = isYearView ? 8 : 10;
             
+            // ラベルの配置：バーの下に表示
             const labelY = baselineY + 2; // バーの下に2pxの余白を設ける
             const labelColor = isSlotGrayed ? '#d1d5db' : '#9ca3af';
-
-            const slotLabel = new Konva.Text({
-                x: barX,
-                y: labelY,
-                width: barWidth,
-                text: labelText,
-                fontSize: labelFontSize,
-                fontFamily: CONFIG.font.numberFamily,
-                fill: labelColor,
-                align: 'center',
-                wrap: 'none', // 改行を防ぐ
-                opacity: isSlotGrayed ? 0.6 : 1
-            });
-            layers.content.add(slotLabel);
+            
+            // スロットの幅に応じて表示内容を調整
+            const canShowTime = barWidth >= 30;
+            
+            // 時刻ラベルを描画
+            if (canShowTime) {
+                const slotLabel = new Konva.Text({
+                    x: barX,
+                    y: labelY,
+                    width: barWidth,
+                    text: timeText,
+                    fontSize: labelFontSize,
+                    fontFamily: CONFIG.font.numberFamily,
+                    fill: labelColor,
+                    align: 'center',
+                    wrap: 'none', // 改行を防ぐ
+                    opacity: isSlotGrayed ? 0.6 : 1
+                });
+                layers.content.add(slotLabel);
+            }
         }
     });
 
