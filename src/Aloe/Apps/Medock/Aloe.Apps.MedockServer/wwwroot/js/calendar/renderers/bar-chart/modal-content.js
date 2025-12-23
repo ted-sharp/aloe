@@ -4,62 +4,125 @@
  * モーダル表示用のコンテンツHTML生成
  */
 
+import { getState, setState } from '../../state.js';
+import { renderDayDetailBarChart } from './index.js';
+
 /**
- * モーダル表示用のコンテンツHTMLを生成
+ * モーダル内にKonva.jsのStageを作成して棒グラフを描画
  * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
  * @param {Array|null} slots - 時間帯枠データ
  * @param {object} state - カレンダーの状態
- * @returns {string} HTML文字列
+ * @returns {Konva.Stage|null} 作成したStageインスタンス（エラー時はnull）
  */
 export function buildModalContent(dateStr, slots, state) {
-    let content = '';
-
-    if (slots && slots.length > 0) {
-        const totalCount = slots.reduce((sum, s) => sum + (s.count || 0), 0);
-        const totalCap = slots.reduce((sum, s) => sum + (s.cap || 0), 0);
-        content += `<p class="text-base mb-2">予約: ${totalCount}/${totalCap}件</p>`;
-
-        // Show room filter summary
-        const hasRoomFilter = slots.some(s => s.filteredCount > 0);
-        if (hasRoomFilter) {
-            const totalFiltered = slots.reduce((sum, s) => sum + (s.filteredCount || 0), 0);
-            content += `<p class="text-warning mb-2">選択部屋: ${totalFiltered}件</p>`;
-        }
-
-        // 時間帯別の予約状況
-        content += '<div class="space-y-3 mt-4">';
-        slots.forEach(s => {
-            // 空き率を計算（1 - 使用率）
-            const cap = (s.cap !== undefined && s.cap !== null && s.cap > 0) ? s.cap : 1;
-            const vacancyRatio = cap > 0 ? (1 - s.count / cap) * 100 : 0;
-            // 空き率に基づいて色クラスを決定（空きが多い→青、空きが少ない→緑）
-            const colorClass = vacancyRatio >= 70 ? 'bg-info' : vacancyRatio >= 30 ? 'bg-accent' : vacancyRatio > 0 ? 'bg-success' : '';
-
-            // Show room-filtered count in each slot
-            let roomInfo = '';
-            if (s.filteredCount > 0) {
-                roomInfo = ` <span class="text-warning">[部屋:${s.filteredCount}]</span>`;
-            }
-
-            // 時間範囲の表示（start-end形式）
-            const timeRange = s.start && s.end ? `${s.start}-${s.end}` : (s.time || '');
-
-            // 空き率が0%の場合は表示しない
-            if (vacancyRatio > 0) {
-                content += `
-                    <div>
-                        <div class="flex justify-between text-sm mb-1">
-                            <span>${timeRange}</span>
-                            <span>${s.count}/${cap} (空き:${Math.round(vacancyRatio)}%)${roomInfo}</span>
-                        </div>
-                        <progress class="progress ${colorClass} w-full" value="${vacancyRatio}" max="100"></progress>
-                    </div>
-                `;
-            }
-        });
-        content += '</div>';
+    const container = document.getElementById('medock-modal-chart-container');
+    if (!container) {
+        console.error('MedockCalendar: Modal chart container not found');
+        return null;
     }
 
-    return content;
+    // 既存のStageがあれば破棄
+    const existingStage = container.querySelector('canvas');
+    if (existingStage) {
+        const stage = existingStage.getStage ? existingStage.getStage() : null;
+        if (stage) {
+            stage.destroy();
+        }
+    }
+
+    // コンテナの実際のサイズを取得（画面サイズに応じて動的に計算）
+    // モーダルが表示された後にサイズを取得するため、少し待機
+    const getContainerSize = () => {
+        const rect = container.getBoundingClientRect();
+        // パディングやマージンを考慮してサイズを計算
+        const padding = 32; // py-4のパディング + マージン
+        const headerHeight = 40; // タイトルとボタンの高さ
+        const footerHeight = 60; // モーダルアクションの高さ
+        const availableWidth = Math.max(800, rect.width - padding);
+        const availableHeight = Math.max(500, rect.height - padding - headerHeight - footerHeight);
+        return {
+            width: availableWidth,
+            height: availableHeight
+        };
+    };
+
+    // サイズを取得（モーダルが表示された直後はサイズが0の場合があるため、少し待機）
+    let containerSize = getContainerSize();
+    if (containerSize.width === 0 || containerSize.height === 0) {
+        // サイズが取得できない場合は、デフォルト値を使用
+        containerSize = {
+            width: Math.max(800, window.innerWidth * 0.85),
+            height: Math.max(500, window.innerHeight * 0.75)
+        };
+    }
+
+    const containerWidth = containerSize.width;
+    const containerHeight = containerSize.height;
+
+    // モーダル用のKonva Stageを作成
+    const modalStage = new Konva.Stage({
+        container: 'medock-modal-chart-container',
+        width: containerWidth,
+        height: containerHeight
+    });
+
+    // モーダル用のlayersを作成
+    const modalLayers = {
+        background: new Konva.Layer(),
+        grid: new Konva.Layer(),
+        content: new Konva.Layer(),
+        interaction: new Konva.Layer()
+    };
+
+    // Stageにlayersを追加
+    modalStage.add(modalLayers.background);
+    modalStage.add(modalLayers.grid);
+    modalStage.add(modalLayers.content);
+    modalStage.add(modalLayers.interaction);
+
+    // 元のstate.layersを保存
+    const originalLayers = state.layers;
+    const originalStage = state.stage;
+
+    try {
+        // 一時的にstate.layersをモーダル用のlayersに置き換え
+        setState({
+            layers: modalLayers,
+            stage: modalStage
+        });
+
+        // 日付から日数を取得
+        const date = new Date(dateStr);
+        const dayNumber = date.getDate();
+        const isHoliday = state.holidays.has(dateStr);
+
+        // セルのサイズを設定（モーダル内の描画エリア全体を使用）
+        const cellLeft = 0;
+        const cellTop = 0;
+        const cellWidth = containerWidth;
+        const cellHeight = containerHeight;
+
+        // renderDayDetailBarChartを呼び出して棒グラフを描画
+        renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight, dateStr, dayNumber, isHoliday);
+
+        // レイヤーを描画
+        modalLayers.background.batchDraw();
+        modalLayers.grid.batchDraw();
+        modalLayers.content.batchDraw();
+        modalLayers.interaction.batchDraw();
+
+        return modalStage;
+    } catch (error) {
+        console.error('MedockCalendar: Failed to render bar chart in modal', error);
+        // エラー時はStageを破棄
+        modalStage.destroy();
+        return null;
+    } finally {
+        // 元のstate.layersを復元
+        setState({
+            layers: originalLayers,
+            stage: originalStage
+        });
+    }
 }
 

@@ -1,7 +1,12 @@
 /**
- * Bar Chart Rendering
- *
- * 棒グラフの描画ロジック
+ * Day Bar Chart Rendering (Aggregated)
+ * 
+ * 年間/月間カレンダー用の棒グラフ描画（集約版）
+ * - 使用ビュー: 年間ビュー、月間ビュー
+ * - 特徴: スロットを集約して表示（aggregateSlotsを使用）
+ * - 関数: renderBarChart()
+ * 
+ * 注意: 日詳細ビューでは使用しない（day-detail-bar-rendering.jsを使用）
  */
 
 import { getState } from '../../state.js';
