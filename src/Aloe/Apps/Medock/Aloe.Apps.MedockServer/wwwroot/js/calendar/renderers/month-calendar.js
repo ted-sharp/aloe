@@ -276,21 +276,6 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
             const isHoliday = state.holidays.has(dateStr);
             const dayOfWeek = col; // col === 0 が日曜日
 
-            // 日曜日（col === 0）の場合、データがなければ描画をスキップ
-            if (dayOfWeek === 0) {
-                const stats = state.mainStats.get(dateStr);
-                const hasData = stats && stats.slots && stats.slots.length > 0 && stats.slots.some(slot => {
-                    const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
-                    const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-                    return cap > 0 || count > 0;
-                });
-                // データがない場合は描画をスキップ（ただし祝日または今日の場合は表示）
-                if (!hasData && !isHoliday && !isToday(dateStr)) {
-                    day++;
-                    continue;
-                }
-            }
-
             const safeCellWidth = Math.max(0, cellWidth - 2);
             const safeCellHeight = Math.max(0, cellHeight - 2);
             const cellCornerRadius = Math.max(0, Math.min(2, safeCellWidth / 2, safeCellHeight / 2));
