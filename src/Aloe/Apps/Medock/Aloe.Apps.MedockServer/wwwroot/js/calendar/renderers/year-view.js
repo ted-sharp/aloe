@@ -10,7 +10,7 @@
 import { getState } from '../state.js';
 import { CONFIG } from '../config.js';
 import { getFirstDayOfMonth, getLastDayOfMonth, isToday } from '../utils/date-utils.js';
-import { renderDayBarChart } from './bar-chart.js';
+import { renderDayBarChart } from './bar-chart/index.js';
 import { renderMonthCalendar } from './month-calendar.js';
 
 /**
