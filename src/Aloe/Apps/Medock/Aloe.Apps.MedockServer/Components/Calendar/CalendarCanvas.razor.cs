@@ -191,7 +191,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        if (this._isInitialized && (this.Appointments != null || this.MainStats != null))
+        if (this._isInitialized && (this.Appointments != null || this.MainStats != null || this.MainStatsGrayedOut != null))
         {
             try
             {
