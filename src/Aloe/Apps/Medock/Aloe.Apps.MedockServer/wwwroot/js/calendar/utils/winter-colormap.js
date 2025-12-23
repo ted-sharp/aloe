@@ -1,0 +1,111 @@
+/**
+ * Winter Colormap Utilities
+ *
+ * Winterカラーマップの実装
+ * 空室率（0.0-1.0）に基づいて色を取得
+ * 空室率1.0（空室）→青、空室率0.0（満室）→緑
+ * キャパオーバー（マイナス値）→赤
+ *
+ * Winterカラーマップは、青から緑への線形補間を提供するカラーマップです。
+ * matplotlibの標準的なWinterカラーマップの実装に基づいています。
+ */
+
+/**
+ * Winterカラーマップの256色RGBルックアップテーブル
+ * 値は0.0（青）から1.0（緑）への連続的な色変化を提供
+ * R = 0, G = ratio, B = 1 - ratio の線形補間
+ */
+const WINTER_COLORMAP = [];
+
+// 256色のルックアップテーブルを生成
+for (let i = 0; i < 256; i++) {
+    const ratio = i / 255.0;
+    WINTER_COLORMAP[i] = [0.0, ratio, 1.0 - ratio];
+}
+
+/**
+ * RGB値を16進数カラーコードに変換
+ * @param {number} r - 赤（0-1）
+ * @param {number} g - 緑（0-1）
+ * @param {number} b - 青（0-1）
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+function rgbToHex(r, g, b) {
+    const rInt = Math.round(r * 255);
+    const gInt = Math.round(g * 255);
+    const bInt = Math.round(b * 255);
+    return '#' + [rInt, gInt, bInt].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+}
+
+/**
+ * Winterカラーマップから色を取得
+ * @param {number} ratio - 値（0.0-1.0、範囲外の値も許容）
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function getWinterColor(ratio) {
+    // 値を0-1の範囲にクランプ
+    const clampedRatio = Math.max(0, Math.min(1, ratio));
+    
+    // 0-255のインデックスに変換（配列の範囲内に保証）
+    const index = Math.max(0, Math.min(255, Math.floor(clampedRatio * 255)));
+    
+    // ルックアップテーブルからRGB値を取得（安全性チェック）
+    const color = WINTER_COLORMAP[index];
+    if (!color || color.length !== 3) {
+        // フォールバック: エラー時はグレーを返す
+        return '#9ca3af';
+    }
+    
+    const [r, g, b] = color;
+    
+    // 16進数カラーコードに変換
+    return rgbToHex(r, g, b);
+}
+
+/**
+ * 空室率からWinterカラーマップの色を取得
+ * 空室率1.0（空室）→青、空室率0.0（満室）→緑
+ * @param {number} vacancyRatio - 空室率（0.0-1.0）
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function getWinterColorFromVacancyRatio(vacancyRatio) {
+    // 空室率を反転して使用（空室率1.0→Winter 0.0→青、空室率0.0→Winter 1.0→緑）
+    return getWinterColor(1.0 - vacancyRatio);
+}
+
+/**
+ * 空き数とキャパシティからWinterカラーマップの色を取得
+ * 空室率1.0（空室）→青、空室率0.0（満室）→緑
+ * マイナス値（オーバーキャパシティ）の場合は赤色を返す
+ * @param {number} available - 空き数（負の値も許容：オーバーキャパシティ）
+ * @param {number} cap - キャパシティ
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function getWinterColorFromAvailable(available, cap) {
+    if (cap <= 0) return '#9ca3af'; // キャパシティが0以下の場合はグレー
+    
+    // マイナス値（オーバーキャパシティ）の場合は赤色を返す
+    if (available < 0) {
+        return '#FF0000'; // 赤
+    }
+    
+    const vacancyRatio = available / cap;
+    // 空室率が1.0を超える場合もクランプされるが、明示的に処理
+    return getWinterColorFromVacancyRatio(Math.max(0, Math.min(1, vacancyRatio)));
+}
+
+/**
+ * 使用率からWinterカラーマップの色を取得
+ * 使用率0.0（空室）→青、使用率1.0（満室）→緑
+ * @param {number} usageRatio - 使用率（0.0-1.0）
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function getWinterColorFromUsageRatio(usageRatio) {
+    // 使用率をそのまま使用（使用率0.0→Winter 0.0→青、使用率1.0→Winter 1.0→緑）
+    // 使用率0.0 = 空室率1.0 → 青、使用率1.0 = 空室率0.0 → 緑
+    return getWinterColor(usageRatio);
+}
+

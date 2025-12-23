@@ -8,7 +8,7 @@ import { getState } from '../../state.js';
 import { CONFIG } from '../../config.js';
 import { parseSlotTimeRange } from './slot-time-utils.js';
 import { aggregateSlots } from './slot-aggregation.js';
-import { getSlotColorFromAvailable } from './slot-colors.js';
+import { getWinterColorFromAvailable } from '../../utils/winter-colormap.js';
 
 /**
  * 棒グラフを描画
@@ -285,10 +285,10 @@ export function renderBarChart({
 
         // 空き数に基づいて棒グラフを描画
         if (available > 0) {
-            // 空き数が正の場合: 緑色の棒グラフを上方向に描画
+            // 空き数が正の場合: WinterColormapに基づく色の棒グラフを上方向に描画
             const barHeight = (available / maxValue) * barAreaHeight;
             const barY = baselineY - barHeight;
-            const slotColor = isSlotGrayed ? '#9ca3af' : getSlotColorFromAvailable(available, cap);
+            const slotColor = isSlotGrayed ? '#9ca3af' : getWinterColorFromAvailable(available, cap);
 
             const bar = new Konva.Rect({
                 x: barX,
