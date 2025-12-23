@@ -32,7 +32,9 @@ export const CONFIG = {
         numberFamily: '"Playwrite Norge", cursive',
         sizeSmall: 10,
         sizeMedium: 12,
-        sizeLarge: 14
+        sizeLarge: 14,
+        sizeDateYear: 12,   // 年間カレンダー用の日付数字フォントサイズ
+        sizeDateMonth: 16   // 月間カレンダー用の日付数字フォントサイズ
     },
     animation: {
         duration: 150

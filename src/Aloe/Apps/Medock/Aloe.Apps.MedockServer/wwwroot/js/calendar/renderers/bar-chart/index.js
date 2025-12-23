@@ -58,11 +58,13 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     let bgRect = null; // 小さなセルの場合でもhitAreaで参照できるようにする
 
-    // 日付テキスト表示エリア（小さなセルでも計算しておく）
-    const dayTextHeight = CONFIG.font.sizeSmall + 4;
-    const barAreaTop = cellTop + dayTextHeight;
     // ラベル表示用のスペースを確保（年間ビューはより厳しい条件、月間ビューは標準）
     const isYearView = state.currentView === 'year';
+    // 日付数字のフォントサイズをビューに応じて決定
+    const dateFontSize = isYearView ? CONFIG.font.sizeDateYear : CONFIG.font.sizeDateMonth;
+    // 日付テキスト表示エリア（小さなセルでも計算しておく）
+    const dayTextHeight = dateFontSize + 4;
+    const barAreaTop = cellTop + dayTextHeight;
     const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 10 : 12) : 0;
     const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight); // 下部余白4px + ラベルエリア、負の値を防止
 
@@ -102,7 +104,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
             y: cellTop + 2,
             width: cellWidth - 2,
             text: String(dayNumber),
-            fontSize: CONFIG.font.sizeSmall,
+            fontSize: dateFontSize,
             fontFamily: CONFIG.font.numberFamily,
             fill: textColor,
             align: 'center',
