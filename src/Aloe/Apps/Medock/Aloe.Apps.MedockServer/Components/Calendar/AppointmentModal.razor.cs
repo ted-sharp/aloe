@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Microsoft.AspNetCore.Components;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -79,8 +80,8 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = DateOnly.FromDateTime(DateTime.Today),
-                StartTimeString = "09:00",
-                EndTimeString = "10:00",
+                StartTimeString = BusinessHoursConstants.DefaultAppointmentStartTime,
+                EndTimeString = BusinessHoursConstants.DefaultAppointmentEndTime,
                 Status = 0,
                 PatientName = "編集中の患者",
                 OrganizationName = "団体名"
@@ -92,8 +93,8 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = this.SelectedDate ?? DateOnly.FromDateTime(DateTime.Today),
-                StartTimeString = this.SelectedTime?.ToString("HH:mm") ?? "09:00",
-                EndTimeString = this.SelectedTime?.AddHours(1).ToString("HH:mm") ?? "10:00",
+                StartTimeString = this.SelectedTime?.ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentStartTime,
+                EndTimeString = this.SelectedTime?.AddHours(1).ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentEndTime,
                 Status = 0,
                 PatientName = String.Empty,
                 OrganizationName = String.Empty
@@ -172,8 +173,8 @@ public partial class AppointmentModal : ComponentBase
     public class AppointmentFormModel
     {
         public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
-        public string StartTimeString { get; set; } = "09:00";
-        public string EndTimeString { get; set; } = "10:00";
+        public string StartTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentStartTime;
+        public string EndTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentEndTime;
         public int Status { get; set; } = 0;
         public string PatientName { get; set; } = String.Empty;
         public string? OrganizationName { get; set; }

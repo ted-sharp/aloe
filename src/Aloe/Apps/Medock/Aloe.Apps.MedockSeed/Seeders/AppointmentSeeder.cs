@@ -139,11 +139,10 @@ internal static class AppointmentSeeder
     /// </summary>
     private static AppointmentDayContext GetDayContext(DateOnly date, HashSet<DateOnly> holidays)
     {
-        var dayOfWeek = date.DayOfWeek;
         var isHoliday = holidays.Contains(date);
 
         // 日曜または祝日は休み
-        if (dayOfWeek == DayOfWeek.Sunday || isHoliday)
+        if (SeederHelper.IsSunday(date) || isHoliday)
         {
             return new AppointmentDayContext
             {
@@ -154,7 +153,7 @@ internal static class AppointmentSeeder
         }
 
         // 水曜・土曜は午前のみ
-        if (dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday)
+        if (SeederHelper.IsHalfDay(date))
         {
             return new AppointmentDayContext
             {
@@ -240,7 +239,7 @@ internal static class AppointmentSeeder
                 if (TimeOnly.TryParse(timeStr, out var parsedTime))
                 {
                     startTime = parsedTime;
-                    durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                    durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
                     endTime = startTime.Value.AddMinutes(durationMin.Value);
                 }
             }
@@ -255,7 +254,7 @@ internal static class AppointmentSeeder
                 if (TimeOnly.TryParse(timeStr, out var parsedTime))
                 {
                     startTime = parsedTime;
-                    durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                    durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
                     endTime = startTime.Value.AddMinutes(durationMin.Value);
                 }
             }
@@ -297,7 +296,7 @@ internal static class AppointmentSeeder
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
                 var startTime = parsedTime;
-                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
                 var endTime = startTime.AddMinutes(durationMin);
 
                 var appointment = new Appointment
@@ -329,7 +328,7 @@ internal static class AppointmentSeeder
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
                 var startTime = parsedTime;
-                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
                 var endTime = startTime.AddMinutes(durationMin);
 
                 var appointment = new Appointment
@@ -362,7 +361,7 @@ internal static class AppointmentSeeder
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
                 var startTime = parsedTime;
-                var durationMin = 30 + _random.Next(3) * 15; // 30, 45, 60分
+                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
                 var endTime = startTime.AddMinutes(durationMin);
 
                 var appointment = new Appointment

@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
@@ -44,10 +45,10 @@ public class FacilityService : IFacilityService
         var businessHoursData = businessHours.BusinessHoursData;
         return new BusinessHoursDto
         {
-            StartTime = businessHoursData.Start ?? "09:00",
-            EndTime = businessHoursData.End ?? "18:00",
-            LunchStartTime = businessHoursData.Lunch?.Start ?? "12:00",
-            LunchEndTime = businessHoursData.Lunch?.End ?? "13:00"
+            StartTime = businessHoursData.Start ?? BusinessHoursConstants.DefaultStartTime,
+            EndTime = businessHoursData.End ?? BusinessHoursConstants.DefaultEndTime,
+            LunchStartTime = businessHoursData.Lunch?.Start ?? BusinessHoursConstants.DefaultLunchStartTime,
+            LunchEndTime = businessHoursData.Lunch?.End ?? BusinessHoursConstants.DefaultLunchEndTime
         };
     }
 
@@ -58,10 +59,10 @@ public class FacilityService : IFacilityService
     {
         return new BusinessHoursDto
         {
-            StartTime = "09:00",
-            EndTime = "18:00",
-            LunchStartTime = "12:00",
-            LunchEndTime = "13:00"
+            StartTime = BusinessHoursConstants.DefaultStartTime,
+            EndTime = BusinessHoursConstants.DefaultEndTime,
+            LunchStartTime = BusinessHoursConstants.DefaultLunchStartTime,
+            LunchEndTime = BusinessHoursConstants.DefaultLunchEndTime
         };
     }
 }

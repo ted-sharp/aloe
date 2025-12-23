@@ -1,6 +1,7 @@
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using static Aloe.Apps.MedockLib.Data.Entities.AppointmentExtensions;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -13,12 +14,6 @@ public class AppointmentService : IAppointmentService
     private readonly IHolidayRepository _holidayRepository;
     private readonly IUserContextService _userContextService;
     private readonly IDateTimeProvider _dateTimeProvider;
-
-    // AM/PM の時間境界
-    private const int AmStartHour = 8;
-    private const int AmEndHour = 12;
-    private const int PmStartHour = 13;
-    private const int PmEndHour = 18;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
@@ -157,9 +152,7 @@ public class AppointmentService : IAppointmentService
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
             StartTime = appointment.ApptStartTime,
-            EndTime = appointment.ApptStartTime.HasValue && appointment.ApptDurationMin.HasValue
-                ? appointment.ApptStartTime.Value.AddMinutes(appointment.ApptDurationMin.Value)
-                : null,
+            EndTime = appointment.CalculateEndTime(),
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,
             OrganizationId = appointment.OrgId,

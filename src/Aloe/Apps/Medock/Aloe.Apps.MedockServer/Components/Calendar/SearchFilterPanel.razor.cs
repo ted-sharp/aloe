@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Microsoft.AspNetCore.Components;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
@@ -53,7 +54,7 @@ public partial class SearchFilterPanel : ComponentBase
 
     // 定数
     private readonly string[] DayNames = { "日", "月", "火", "水", "木", "金", "土" };
-    private readonly string[] TimeSlots = { "08:00", "09:00", "10:00", "11:00", "13:00", "14:00", "15:00", "16:00" };
+    private readonly string[] TimeSlots = TimeSlotConstants.FilterTimeSlots;
 
     private int ActiveFilterCount =>
         (this.SelectedDays.Any() ? 1 : 0) +

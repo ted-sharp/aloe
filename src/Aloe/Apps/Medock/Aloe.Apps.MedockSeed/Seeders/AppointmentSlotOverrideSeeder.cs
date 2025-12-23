@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
@@ -186,10 +187,10 @@ internal static class AppointmentSlotOverrideSeeder
         bool morningOnly)
     {
         var slots = new List<AppointmentSlotItem>();
-        var businessStart = TimeOnly.Parse(businessHours.Start ?? "09:00");
-        var businessEnd = TimeOnly.Parse(businessHours.End ?? "18:00");
-        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+        var businessStart = TimeOnly.Parse(businessHours.Start ?? BusinessHoursConstants.DefaultStartTime);
+        var businessEnd = TimeOnly.Parse(businessHours.End ?? BusinessHoursConstants.DefaultEndTime);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchStartTime);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchEndTime);
 
         const int intervalMinutes = 30;
         const int maxPerSlot = 20;
@@ -242,10 +243,10 @@ internal static class AppointmentSlotOverrideSeeder
         double multiplier)
     {
         var slots = new List<AppointmentSlotItem>();
-        var businessStart = TimeOnly.Parse(businessHours.Start ?? "09:00");
-        var businessEnd = TimeOnly.Parse(businessHours.End ?? "18:00");
-        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+        var businessStart = TimeOnly.Parse(businessHours.Start ?? BusinessHoursConstants.DefaultStartTime);
+        var businessEnd = TimeOnly.Parse(businessHours.End ?? BusinessHoursConstants.DefaultEndTime);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchStartTime);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchEndTime);
 
         const int intervalMinutes = 30;
         const int baseMaxPerSlot = 20;
@@ -293,10 +294,10 @@ internal static class AppointmentSlotOverrideSeeder
         FacilityBusinessHoursRoot businessHours)
     {
         var slots = new List<AppointmentSlotItem>();
-        var businessStart = TimeOnly.Parse(businessHours.Start ?? "09:00");
-        var businessEnd = TimeOnly.Parse(businessHours.End ?? "18:00");
-        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+        var businessStart = TimeOnly.Parse(businessHours.Start ?? BusinessHoursConstants.DefaultStartTime);
+        var businessEnd = TimeOnly.Parse(businessHours.End ?? BusinessHoursConstants.DefaultEndTime);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchStartTime);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchEndTime);
 
         // 早朝スロット（07:00-09:00、20分区切り）
         var earlyStart = new TimeOnly(7, 0);
@@ -375,10 +376,10 @@ internal static class AppointmentSlotOverrideSeeder
         FacilityBusinessHoursRoot businessHours)
     {
         var slots = new List<AppointmentSlotItem>();
-        var businessStart = TimeOnly.Parse(businessHours.Start ?? "09:00");
-        var businessEnd = TimeOnly.Parse(businessHours.End ?? "18:00");
-        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : new TimeOnly(12, 0);
-        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : new TimeOnly(13, 0);
+        var businessStart = TimeOnly.Parse(businessHours.Start ?? BusinessHoursConstants.DefaultStartTime);
+        var businessEnd = TimeOnly.Parse(businessHours.End ?? BusinessHoursConstants.DefaultEndTime);
+        var lunchStart = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.Start) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchStartTime);
+        var lunchEnd = businessHours.Lunch != null ? TimeOnly.Parse(businessHours.Lunch.End) : TimeOnly.Parse(BusinessHoursConstants.DefaultLunchEndTime);
 
         const int intervalMinutes = 15;
         const int maxPerSlot = 25; // 通常より多い

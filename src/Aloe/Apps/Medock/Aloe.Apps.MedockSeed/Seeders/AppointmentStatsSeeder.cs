@@ -345,8 +345,7 @@ internal static class AppointmentStatsSeeder
                 if (slotDef != null && slotDef.Slots.Any())
                 {
                     // 水曜・土曜は半日営業（午前のみ）
-                    var dayOfWeek = currentDate.DayOfWeek;
-                    var isHalfDay = dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday;
+                    var isHalfDay = SeederHelper.IsHalfDay(currentDate);
 
                     // 半日営業の場合、昼休み開始前のスロットのみを対象とする
                     // 時間外スロット（IsOutsideHours = true）は除外する（別途処理するため）
@@ -795,8 +794,7 @@ internal static class AppointmentStatsSeeder
             }
 
             // 水曜・土曜は半日営業（午前のみ）
-            var dayOfWeek = currentDate.DayOfWeek;
-            var isHalfDay = dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday;
+            var isHalfDay = SeederHelper.IsHalfDay(currentDate);
 
             // 季節による繁忙度を取得して予約数を決定
             var seasonalRate = GetSeasonalOccupancyRate(currentDate.Month);

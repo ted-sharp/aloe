@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using System.Text.Json;
@@ -20,8 +21,8 @@ public class CalendarDataService : ICalendarDataService
         {
             Id = a.Id.ToString(),
             Date = a.Date.ToString("yyyy-MM-dd"),
-            StartTime = a.StartTime?.ToString("HH:mm") ?? "09:00",
-            EndTime = a.EndTime?.ToString("HH:mm") ?? "10:00",
+            StartTime = a.StartTime?.ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentStartTime,
+            EndTime = a.EndTime?.ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentEndTime,
             PatientName = a.PatientName,
             OrganizationName = a.OrganizationName,
             Status = a.Status,

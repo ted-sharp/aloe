@@ -99,6 +99,33 @@ internal static class SeederHelper
     }
 
     /// <summary>
+    /// 半日営業日かどうかを判定（水曜・土曜は午前のみ）
+    /// </summary>
+    public static bool IsHalfDay(DateOnly date)
+    {
+        var dayOfWeek = date.DayOfWeek;
+        return dayOfWeek == DayOfWeek.Wednesday || dayOfWeek == DayOfWeek.Saturday;
+    }
+
+    /// <summary>
+    /// 水曜日かどうかを判定
+    /// </summary>
+    public static bool IsWednesday(DateOnly date)
+    {
+        return date.DayOfWeek == DayOfWeek.Wednesday;
+    }
+
+    /// <summary>
+    /// ランダムな予約継続時間を生成（30, 45, 60分のいずれか）
+    /// </summary>
+    /// <param name="random">乱数生成器</param>
+    /// <returns>継続時間（分）</returns>
+    public static int GenerateRandomDurationMinutes(Random random)
+    {
+        return 30 + random.Next(3) * 15; // 30, 45, 60分
+    }
+
+    /// <summary>
     /// 標準営業時間のスロット（15分単位）
     /// </summary>
     public static class TimeSlots

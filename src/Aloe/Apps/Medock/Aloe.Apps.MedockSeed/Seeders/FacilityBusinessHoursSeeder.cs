@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
@@ -26,12 +27,12 @@ internal static class FacilityBusinessHoursSeeder
             FacilityId = facilityId,
             BusinessHoursData = new FacilityBusinessHoursRoot
             {
-                Start = "09:00",
-                End = "18:00",
+                Start = BusinessHoursConstants.DefaultStartTime,
+                End = BusinessHoursConstants.DefaultEndTime,
                 Lunch = new LunchHoursItem
                 {
-                    Start = "12:00",
-                    End = "13:00"
+                    Start = BusinessHoursConstants.DefaultLunchStartTime,
+                    End = BusinessHoursConstants.DefaultLunchEndTime
                 }
             },
             IsActive = true,

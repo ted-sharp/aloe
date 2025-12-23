@@ -1,3 +1,5 @@
+using Aloe.Apps.MedockLib.Constants;
+
 namespace Aloe.Apps.MedockLib.Services.Dtos;
 
 /// <summary>
@@ -6,16 +8,16 @@ namespace Aloe.Apps.MedockLib.Services.Dtos;
 public class BusinessHoursDto
 {
     /// <summary>始業時間（例: "09:00"）</summary>
-    public string StartTime { get; set; } = "09:00";
+    public string StartTime { get; set; } = BusinessHoursConstants.DefaultStartTime;
 
     /// <summary>就業時間（例: "18:00"）</summary>
-    public string EndTime { get; set; } = "18:00";
+    public string EndTime { get; set; } = BusinessHoursConstants.DefaultEndTime;
 
     /// <summary>昼休み開始時間（例: "12:00"）</summary>
-    public string LunchStartTime { get; set; } = "12:00";
+    public string LunchStartTime { get; set; } = BusinessHoursConstants.DefaultLunchStartTime;
 
     /// <summary>昼休み終了時間（例: "13:00"）</summary>
-    public string LunchEndTime { get; set; } = "13:00";
+    public string LunchEndTime { get; set; } = BusinessHoursConstants.DefaultLunchEndTime;
 
     /// <summary>
     /// 始業時間をTimeOnlyに変換
