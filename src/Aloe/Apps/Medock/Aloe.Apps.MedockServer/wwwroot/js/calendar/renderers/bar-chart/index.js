@@ -118,11 +118,13 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
 
     // 簡易表示モードの場合
     if (!isTooSmall && showSimpleView) {
-        // 時間帯枠データから空き率を計算（フィルタ条件を考慮）
+        // 時間帯枠データから空き率、空き数、キャパシティを計算（フィルタ条件を考慮）
         let overallVacancyRatio = 0;
+        let totalAvailable = 0; // 合計空き数
+        let totalCapacity = 0;   // 合計キャパシティ
         
         if (slots && slots.length > 0) {
-            // 全スロットの平均空き率を計算
+            // 全スロットの平均空き率と合計空き数/キャパシティを計算
             let totalVacancy = 0;
             let slotCount = 0;
             
@@ -138,6 +140,10 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / cap)));
                 totalVacancy += vacancyRatio;
                 slotCount++;
+                
+                // 空き数とキャパシティを合計
+                totalCapacity += cap;
+                totalAvailable += (cap - count);
             });
             
             if (slotCount > 0) {
@@ -147,7 +153,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         
         // 記号を決定して描画
         const symbolType = getSymbolFromVacancyRatio(overallVacancyRatio);
-        renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateStr, symbolType, isDateGrayed, overallVacancyRatio);
+        renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateStr, symbolType, isDateGrayed, overallVacancyRatio, totalAvailable, totalCapacity);
     }
     // 詳細表示モード（棒グラフ描画）
     else if (!isTooSmall && slots && slots.length > 0) {
