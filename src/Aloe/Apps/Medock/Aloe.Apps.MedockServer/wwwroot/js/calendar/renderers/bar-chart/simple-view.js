@@ -9,11 +9,11 @@ import { CONFIG } from '../../config.js';
 
 /**
  * 空き率から記号を決定
- * @param {number} vacancyRatio - 空き率（0.0 ～ 1.0）
+ * @param {number} vacancyRatio - 空き率（マイナス値も許容）
  * @returns {string} 記号の種類: 'x', 'triangle', 'circle', 'double-circle'
  */
 export function getSymbolFromVacancyRatio(vacancyRatio) {
-    if (vacancyRatio === 0) {
+    if (vacancyRatio <= 0) {
         return 'x'; // ×（バツ）
     } else if (vacancyRatio < 0.3) {
         return 'triangle'; // △（三角）
@@ -69,6 +69,10 @@ export function renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight,
     switch (symbolType) {
         case 'x':
             // ×（バツ）- 赤色
+            // データがない場合（available === 0 かつ capacity === 0）は×を描画しない
+            if (available === 0 && capacity === 0) {
+                break;
+            }
             const xFontSize = symbolSize * 1.2;
             const xSymbol = new Konva.Text({
                 x: cellLeft,

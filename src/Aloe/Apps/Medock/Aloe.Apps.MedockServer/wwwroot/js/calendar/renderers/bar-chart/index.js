@@ -124,10 +124,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         let totalCapacity = 0;   // 合計キャパシティ
         
         if (slots && slots.length > 0) {
-            // 全スロットの平均空き率と合計空き数/キャパシティを計算
-            let totalVacancy = 0;
-            let slotCount = 0;
-            
+            // 全スロットの空き数とキャパシティを合計
             slots.forEach(slot => {
                 // グレーアウトされたスロットは除外
                 if (slot.isGrayedOut || isDateGrayed) {
@@ -137,17 +134,14 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
                 const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 1;
                 const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
                 
-                const vacancyRatio = Math.max(0, Math.min(1, 1 - (count / cap)));
-                totalVacancy += vacancyRatio;
-                slotCount++;
-                
                 // 空き数とキャパシティを合計
                 totalCapacity += cap;
                 totalAvailable += (cap - count);
             });
             
-            if (slotCount > 0) {
-                overallVacancyRatio = totalVacancy / slotCount;
+            // totalAvailableとtotalCapacityから空き率を計算（マイナスを許容）
+            if (totalCapacity > 0) {
+                overallVacancyRatio = totalAvailable / totalCapacity;
             }
         }
         
