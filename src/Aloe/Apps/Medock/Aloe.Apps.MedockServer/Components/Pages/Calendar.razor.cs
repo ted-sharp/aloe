@@ -120,6 +120,10 @@ public partial class Calendar : ComponentBase
     private DateOnly? SelectedDate => this._state.SelectedDate;
     private (DateOnly Start, DateOnly End)? SelectedDateRange => this._state.SelectedDateRange;
 
+    // 日詳細ダイアログの状態
+    private bool IsDayDetailOpen { get; set; }
+    private DateOnly? DayDetailDate { get; set; }
+
     private Dictionary<string, List<AppointmentStats>> MainStats => this._state.MainStats;
     private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this._state.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this._state.MainStatsGrayedOut;
@@ -712,5 +716,47 @@ public partial class Calendar : ComponentBase
         {
             Console.WriteLine($"予約移動エラー: {ex.Message}");
         }
+    }
+
+    private void HandleShowDayDetail(DateOnly date)
+    {
+        this.DayDetailDate = date;
+        this.IsDayDetailOpen = true;
+        this.StateHasChanged();
+    }
+
+    private void CloseDayDetail()
+    {
+        this.IsDayDetailOpen = false;
+        this.DayDetailDate = null;
+        this.StateHasChanged();
+    }
+
+    private List<AppointmentStats>? GetDayDetailStats()
+    {
+        if (!this.DayDetailDate.HasValue) return null;
+        var dateStr = this.DayDetailDate.Value.ToString("yyyy-MM-dd");
+        return this.MainStats.TryGetValue(dateStr, out var stats) ? stats : null;
+    }
+
+    private async Task HandleDayDetailGoToWeekView(DateOnly date)
+    {
+        this.CloseDayDetail();
+        this._state.CurrentDate = date;
+        this._state.CurrentView = CalendarViewType.Week;
+        this._state.WeekDays = 1;
+        await this.DataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
+        await this.DataService.LoadAppointmentsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
+        this.Layout?.UpdateCurrentView("week");
+        this.RegisterLayoutActions();
+        this.StateHasChanged();
     }
 }

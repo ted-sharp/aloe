@@ -33,7 +33,7 @@
 
     <!-- Canvas カレンダー -->
     <div class="flex-1 min-h-0">
-        <CalendarCanvas 
+        <CalendarCanvas
             ViewType="week"
             CurrentDate="@CurrentDate"
             Appointments="@Appointments"
@@ -48,7 +48,8 @@
             OnDateSelected="@HandleDateSelected"
             OnAppointmentClicked="@HandleAppointmentClicked"
             OnCreateRequested="@HandleCreateRequested"
-            OnAppointmentMoved="@HandleAppointmentMoved" />
+            OnAppointmentMoved="@HandleAppointmentMoved"
+            OnShowDayDetail="@HandleShowDayDetail" />
     </div>
 </div>
 
@@ -160,6 +161,12 @@
     [Parameter]
     public EventCallback OnGoToToday { get; set; }
 
+    /// <summary>
+    /// 日詳細ダイアログ表示時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnShowDayDetail { get; set; }
+
     private async Task SetWeekDays(int days)
     {
         WeekDays = days;
@@ -195,6 +202,11 @@
     private async Task HandleGoToToday()
     {
         await OnGoToToday.InvokeAsync();
+    }
+
+    private async Task HandleShowDayDetail(DateOnly date)
+    {
+        await OnShowDayDetail.InvokeAsync(date);
     }
 }
 

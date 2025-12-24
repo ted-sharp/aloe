@@ -93,6 +93,12 @@ public partial class MonthView : ComponentBase
     [Parameter]
     public EventCallback OnGoToToday { get; set; }
 
+    /// <summary>
+    /// 日詳細ダイアログ表示時のコールバック
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnShowDayDetail { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await this.OnDateClick.InvokeAsync(date);
@@ -119,6 +125,11 @@ public partial class MonthView : ComponentBase
     private async Task HandleGoToToday()
     {
         await this.OnGoToToday.InvokeAsync();
+    }
+
+    private async Task HandleShowDayDetail(DateOnly date)
+    {
+        await this.OnShowDayDetail.InvokeAsync(date);
     }
 }
 

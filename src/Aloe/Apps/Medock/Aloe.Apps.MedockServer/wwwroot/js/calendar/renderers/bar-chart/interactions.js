@@ -7,7 +7,6 @@
 import { getState, setState } from '../../state.js';
 import { CONFIG } from '../../config.js';
 import { isToday, isDateInRange } from '../../utils/date-utils.js';
-import { showDayModal } from '../../ui/modal.js';
 
 /**
  * インタラクションエリア（hitArea）を作成してイベントハンドラを設定
@@ -71,8 +70,10 @@ export function createInteractionArea({ cellLeft, cellTop, cellWidth, cellHeight
             if (isDoubleClick) {
                 console.log('MedockCalendar: Double click detected', { dateStr, hasDotNetRef: !!state.dotNetRef });
                 setState({ lastClickTime: 0, lastClickDate: null });
-                // モーダルダイアログを表示
-                showDayModal(dateStr, slots, state.dotNetRef);
+                // Blazor側で日詳細ダイアログを表示
+                if (state.dotNetRef) {
+                    state.dotNetRef.invokeMethodAsync('ShowDayDetail', dateStr);
+                }
             } else {
                 // ダブルクリック判定用に時刻と日付を記録
                 setState({
@@ -87,8 +88,10 @@ export function createInteractionArea({ cellLeft, cellTop, cellWidth, cellHeight
         if (isDoubleClick) {
             console.log('MedockCalendar: Double click detected', { dateStr, hasDotNetRef: !!state.dotNetRef });
             setState({ lastClickTime: 0, lastClickDate: null });
-            // モーダルダイアログを表示
-            showDayModal(dateStr, slots, state.dotNetRef);
+            // Blazor側で日詳細ダイアログを表示
+            if (state.dotNetRef) {
+                state.dotNetRef.invokeMethodAsync('ShowDayDetail', dateStr);
+            }
         } else if (isShiftClick && state.selectedDate) {
             const range = { start: state.selectedDate, end: dateStr };
             if (state.dotNetRef) {

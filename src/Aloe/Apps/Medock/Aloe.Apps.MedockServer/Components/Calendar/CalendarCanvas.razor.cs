@@ -150,6 +150,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     [Parameter]
     public EventCallback<(DateOnly Start, DateOnly End)> OnDateRangeSelected { get; set; }
 
+    /// <summary>
+    /// Callback when day detail popup should be shown (double-click on date)
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnShowDayDetail { get; set; }
+
     private string ContainerId { get; } = $"calendar-canvas-{Guid.CreateVersion7():N}";
     private DotNetObjectReference<CalendarCanvas>? _dotNetRef;
     private bool _isInitialized = false;

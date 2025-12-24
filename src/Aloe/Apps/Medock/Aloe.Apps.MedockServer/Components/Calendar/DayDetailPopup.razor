@@ -1,5 +1,6 @@
-@* 日付詳細ポップアップ - 通常予約を表示 *@
-@* EquipmentはAppointmentResourceに統合されました *@
+@* 日付詳細ポップアップ - Konva.jsグラフ表示版 *@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
 
 @if (IsOpen)
 {
@@ -7,60 +8,43 @@
         <!-- 背景ぼかし -->
         <div class="modal-backdrop backdrop-blur-sm bg-black/30" @onclick="HandleClose"></div>
 
-        <div class="modal-box max-w-4xl h-[80vh] overflow-hidden flex flex-col">
+        <div class="modal-box max-w-[90vw] max-h-[90vh] w-[90vw] h-[90vh] overflow-hidden flex flex-col bg-base-100/90 backdrop-blur-md">
             <!-- ヘッダー -->
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="font-bold text-lg">
-                    @if (SelectedDate.HasValue)
-                    {
-                        @SelectedDate.Value.ToString("yyyy年MM月dd日 (ddd)")
-                    }
-                </h3>
+            <div class="flex items-start justify-between mb-2 flex-shrink-0">
+                @if (SelectedDate.HasValue)
+                {
+                    <div class="flex flex-col">
+                        <!-- 年月日を大きめに表示 -->
+                        <h3 class="font-bold text-2xl">
+                            @SelectedDate.Value.ToString("yyyy年MM月dd日")
+                        </h3>
+                        <!-- 曜日 + 件数 + 割合 + 記号 -->
+                        <div class="flex items-center gap-2 text-base mt-1">
+                            <span>@GetDayOfWeekJapanese(SelectedDate.Value)</span>
+                            <span>@GetTotalCount()件</span>
+                            <span>空き@(Math.Round(GetOverallVacancyRatio() * 100))%</span>
+                            <span class="font-bold text-lg @GetSymbolColorClass()">@GetSymbol()</span>
+                        </div>
+                    </div>
+                }
                 <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleClose">✕</button>
             </div>
 
-            <div class="flex-1 overflow-hidden">
-                <!-- 通常予約の横棒グラフ -->
-                <div class="flex flex-col overflow-hidden">
-                    <h4 class="font-semibold mb-2">通常予約</h4>
-                    <div class="overflow-y-auto space-y-3">
-                        @if (MainStats != null && MainStats.Any())
-                        {
-                            @foreach (var slot in GetSlotsFromStats())
-                            {
-                                // 空き率を計算（1 - 使用率）
-                                var vacancyRatio = slot.Cap > 0 ? (1 - slot.Count / (double)slot.Cap) * 100 : 0;
-                                // 空き率が0%より大きい場合のみ表示
-                                if (vacancyRatio > 0)
-                                {
-                                    var color = GetBarColor(vacancyRatio);
-
-                                    <div>
-                                        <div class="flex justify-between text-sm mb-1">
-                                            <span class="font-medium">@slot.Time</span>
-                                            <span>@slot.Count/@slot.Cap (空き:@Math.Round(vacancyRatio)%)</span>
-                                        </div>
-                                        <div class="bg-base-200 h-6 rounded overflow-hidden">
-                                            <div class="h-full transition-all vacancy-bar"
-                                                 style="--bar-width: @(vacancyRatio)%; --bar-color: @color;"></div>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                        }
-                        else
-                        {
-                            <div class="text-center text-base-content/60 py-8">
-                                データがありません
-                            </div>
-                        }
-                    </div>
-                </div>
+            <!-- Konvaキャンバスコンテナ -->
+            <div class="flex-1 overflow-hidden" style="min-height: 0;">
+                <div id="@ChartContainerId" style="width: 100%; height: 100%;"></div>
             </div>
 
             <!-- フッター -->
-            <div class="modal-action">
-                <button class="btn btn-ghost" @onclick="HandleClose">閉じる</button>
+            <div class="modal-action justify-between flex-shrink-0 mt-4">
+                <div class="flex gap-2">
+                    <button class="btn btn-outline btn-primary" disabled>仮予約（仮）</button>
+                    <button class="btn btn-primary" disabled>予約（仮）</button>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" @onclick="HandleGoToWeekView">週表示へ</button>
+                    <button class="btn btn-ghost" @onclick="HandleClose">閉じる</button>
+                </div>
             </div>
         </div>
     </div>
@@ -71,15 +55,78 @@
     [Parameter] public DateOnly? SelectedDate { get; set; }
     [Parameter] public List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStats>? MainStats { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<DateOnly> OnGoToWeekView { get; set; }
 
-    // Equipment関連のパラメータとメソッドは削除されました（AppointmentResourceに統合）
+    private string ChartContainerId { get; } = $"day-detail-chart-{Guid.CreateVersion7():N}";
+    private bool _isChartRendered;
+    private bool _wasOpen;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // モーダルが開いた時にグラフを描画
+        if (IsOpen && !_wasOpen && SelectedDate.HasValue)
+        {
+            _wasOpen = true;
+            await RenderChartAsync();
+        }
+        else if (!IsOpen && _wasOpen)
+        {
+            _wasOpen = false;
+            _isChartRendered = false;
+            await DestroyChartAsync();
+        }
+    }
+
+    private async Task RenderChartAsync()
+    {
+        if (!SelectedDate.HasValue || _isChartRendered)
+            return;
+
+        try
+        {
+            // MedockCalendarが読み込まれるまで待機
+            var isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.renderDayDetailPopup !== 'undefined'");
+            if (!isReady)
+            {
+                // フォールバック: 少し待機して再試行
+                await Task.Delay(100);
+                isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined'");
+            }
+
+            if (isReady)
+            {
+                var dateStr = SelectedDate.Value.ToString("yyyy-MM-dd");
+                await JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", ChartContainerId, dateStr);
+                _isChartRendered = true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DayDetailPopup: Failed to render chart: {ex.Message}");
+        }
+    }
+
+    private async Task DestroyChartAsync()
+    {
+        try
+        {
+            var isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.destroyDayDetailPopup !== 'undefined'");
+            if (isReady)
+            {
+                await JSRuntime.InvokeVoidAsync("MedockCalendar.destroyDayDetailPopup", ChartContainerId);
+            }
+        }
+        catch
+        {
+            // 破棄時のエラーは無視
+        }
+    }
 
     private List<TimeSlotStats> GetSlotsFromStats()
     {
         if (MainStats == null || !MainStats.Any())
             return new List<TimeSlotStats>();
 
-        // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）
         var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
 
         foreach (var stat in MainStats)
@@ -106,7 +153,7 @@
             }
             catch (System.Text.Json.JsonException)
             {
-                // JSONパースエラーは無視して続行
+                // JSONパースエラーは無視
             }
         }
 
@@ -144,22 +191,62 @@
         public int Available { get; set; }
     }
 
-    private string GetBarColor(double vacancyRatio)
+    private static readonly string[] DayOfWeekNames = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"];
+
+    private string GetDayOfWeekJapanese(DateOnly date)
     {
-        // 空き率に基づいて色を決定（空きが多い→目立つ色、空きが少ない→目立たない色）
+        return DayOfWeekNames[(int)date.DayOfWeek];
+    }
+
+    private int GetTotalCount()
+    {
+        var slots = GetSlotsFromStats();
+        return slots.Sum(s => s.Count);
+    }
+
+    private double GetOverallVacancyRatio()
+    {
+        var slots = GetSlotsFromStats();
+        var totalCount = slots.Sum(s => s.Count);
+        var totalCap = slots.Sum(s => s.Cap);
+        if (totalCap == 0) return 0;
+        return (double)(totalCap - totalCount) / totalCap;
+    }
+
+    private string GetSymbol()
+    {
+        var vacancyRatio = GetOverallVacancyRatio();
         return vacancyRatio switch
         {
-            >= 70 => "#10b981",  // 緑 (空きが多い - 目立つ)
-            >= 30 => "#34d399",  // エメラルド (空きあり)
-            > 0 => "#9ca3af",    // グレー (空き少ない - 目立たない)
-            _ => "#6b7280"       // ダークグレー (満杯 - 表示されない想定)
+            <= 0 => "×",
+            < 0.3 => "△",
+            < 0.6 => "○",
+            _ => "◎"
         };
     }
 
-    // GetCoarseSlotLabelメソッドは削除されました（Equipment関連）
+    private string GetSymbolColorClass()
+    {
+        var vacancyRatio = GetOverallVacancyRatio();
+        return vacancyRatio switch
+        {
+            <= 0 => "text-red-500",
+            < 0.3 => "text-yellow-500",
+            _ => "text-emerald-500"
+        };
+    }
 
     private async Task HandleClose()
     {
         await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleGoToWeekView()
+    {
+        if (SelectedDate.HasValue)
+        {
+            await OnGoToWeekView.InvokeAsync(SelectedDate.Value);
+        }
+        await HandleClose();
     }
 }

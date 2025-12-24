@@ -90,5 +90,14 @@ public partial class CalendarCanvas
             await this.OnDateRangeSelected.InvokeAsync((startDate, endDate));
         }
     }
+
+    [JSInvokable("ShowDayDetail")]
+    public async Task ShowDayDetailFromJs(string dateStr)
+    {
+        if (DateOnly.TryParse(dateStr, out var date))
+        {
+            await this.OnShowDayDetail.InvokeAsync(date);
+        }
+    }
 }
 

@@ -39,7 +39,7 @@
 
     <!-- Canvas カレンダー -->
     <div class="flex-1 min-h-0">
-        <CalendarCanvas 
+        <CalendarCanvas
             ViewType="year"
             CurrentDate="@CurrentDate"
             MainStats="@MainStats"
@@ -52,7 +52,8 @@
             OnMonthClicked="@HandleMonthClicked"
             OnDateSelectedSingle="@HandleDateSelectedSingle"
             OnDateDoubleClicked="@HandleDateDoubleClicked"
-            OnDateRangeSelected="@HandleDateRangeSelected" />
+            OnDateRangeSelected="@HandleDateRangeSelected"
+            OnShowDayDetail="@HandleShowDayDetail" />
     </div>
 </div>
 

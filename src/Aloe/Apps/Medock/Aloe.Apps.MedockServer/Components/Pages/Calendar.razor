@@ -3,6 +3,7 @@
 @using Aloe.Apps.MedockLib.Services
 @using Aloe.Apps.MedockServer.Components.Layout
 @using Aloe.Apps.MedockServer.Components.FAB
+@using Aloe.Apps.MedockServer.Components.Calendar
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
 
@@ -153,7 +154,8 @@
                 OnDateRangeSelect="@HandleDateRangeSelect"
                 OnYearSelected="@HandleYearSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnGoToToday="@HandleGoToToday" />
+                OnGoToToday="@HandleGoToToday"
+                OnShowDayDetail="@HandleShowDayDetail" />
         }
         else if (CurrentView == CalendarViewType.Month)
         {
@@ -169,7 +171,8 @@
                 OnDateDoubleClick="@HandleDateDoubleClick"
                 OnMonthSelected="@HandleMonthSelected"
                 OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnGoToToday="@HandleGoToToday" />
+                OnGoToToday="@HandleGoToToday"
+                OnShowDayDetail="@HandleShowDayDetail" />
         }
         else
         {
@@ -190,7 +193,8 @@
                 OnWeekDaysChanged="@HandleWeekDaysChanged"
                 OnShowSlotsChanged="@HandleShowSlotsChanged"
                 OnAppointmentMoved="@HandleAppointmentMoved"
-                OnGoToToday="@HandleGoToToday" />
+                OnGoToToday="@HandleGoToToday"
+                OnShowDayDetail="@HandleShowDayDetail" />
         }
     </div>
 </div>
@@ -205,4 +209,15 @@
         AppointmentId="@SelectedAppointmentId"
         OnClose="@CloseModal"
         OnSave="@HandleSaveAppointment" />
+}
+
+<!-- 日詳細ダイアログ -->
+@if (IsDayDetailOpen)
+{
+    <DayDetailPopup
+        IsOpen="@IsDayDetailOpen"
+        SelectedDate="@DayDetailDate"
+        MainStats="@GetDayDetailStats()"
+        OnClose="@CloseDayDetail"
+        OnGoToWeekView="@HandleDayDetailGoToWeekView" />
 }
