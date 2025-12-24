@@ -71,7 +71,7 @@ export function renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight
     // 日付はグラフエリア内に表示しないため、セルの上部のみに配置
     const dayTextHeight = dateFontSize + 4;
     const barAreaTop = cellTop + dayTextHeight;
-    const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 10 : 12) : 0;
+    const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 16 : 22) : 0;
     const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight); // 下部余白4px + ラベルエリア、負の値を防止
     
     // グラフエリアの範囲を計算（日付がグラフエリア内に表示されないようにするため）

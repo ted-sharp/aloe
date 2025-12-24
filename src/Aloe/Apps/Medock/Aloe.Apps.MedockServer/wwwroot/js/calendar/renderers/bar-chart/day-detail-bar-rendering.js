@@ -103,11 +103,12 @@ export function renderDetailBarChart({
     }
 
     const totalHours = endHour - startHour;
-    const barAreaWidth = cellWidth - 4; // 左右余白2px
-    
+    const yAxisWidth = 30; // Y軸ラベル用スペース
+    const barAreaWidth = cellWidth - 4 - yAxisWidth; // 左右余白2px + Y軸スペース
+
     // ビジネスアワーの開始・終了位置を固定X座標として計算
-    const businessStartX = cellLeft + 2; // 開始位置
-    const businessEndX = cellLeft + 2 + barAreaWidth; // 終了位置
+    const businessStartX = cellLeft + 2 + yAxisWidth; // 開始位置（Y軸スペース分右にオフセット）
+    const businessEndX = cellLeft + 2 + yAxisWidth + barAreaWidth; // 終了位置
     
     // 昼休み時間帯の長さを計算（昼休みを除外した実効時間を計算するため）
     const lunchDuration = (lunchStartHour !== null && lunchEndHour !== null) 
@@ -258,31 +259,31 @@ export function renderDetailBarChart({
     // セルの下端（基準線）のY座標
     const baselineY = barAreaTop + barAreaHeight;
 
-    // Y軸メモリを描画
-    const yAxisLabelWidth = 25; // Y軸ラベルの幅
-    const yAxisLeft = cellLeft - yAxisLabelWidth - 2; // Y軸の左端位置（セルの左端から少し外側）
+    // Y軸メモリを描画（セル内に配置）
+    const yAxisLabelWidth = 28; // Y軸ラベルの幅
+    const yAxisLeft = cellLeft + 2; // Y軸の左端位置（セル内左側）
     const numTicks = 5; // メモリの数
-    const tickFontSize = isYearView ? 7 : 8;
-    
+    const tickFontSize = isYearView ? 8 : 10;
+
     for (let i = 0; i <= numTicks; i++) {
         const value = (maxValue / numTicks) * i;
         const y = baselineY - (value / maxValue) * barAreaHeight;
-        
+
         // メモリ線を描画（グラフエリアの左端に）
         const tickLine = new Konva.Line({
-            points: [businessStartX - 4, y, businessStartX, y],
-            stroke: '#d1d5db',
+            points: [businessStartX - 6, y, businessStartX, y],
+            stroke: '#9ca3af',
             strokeWidth: 1,
-            opacity: 0.6
+            opacity: 0.8
         });
         layers.content.add(tickLine);
-        
+
         // 値のラベルを描画
         if (i > 0 || value === 0) { // 0または値がある場合のみ表示
             const tickLabel = new Konva.Text({
                 x: yAxisLeft,
                 y: y - tickFontSize / 2,
-                width: yAxisLabelWidth,
+                width: yAxisLabelWidth - 4,
                 text: String(Math.round(value)),
                 fontSize: tickFontSize,
                 fontFamily: CONFIG.font.numberFamily,
@@ -290,7 +291,7 @@ export function renderDetailBarChart({
                 align: 'right',
                 verticalAlign: 'middle',
                 wrap: 'none',
-                opacity: isDateGrayed ? 0.6 : 0.8
+                opacity: isDateGrayed ? 0.6 : 0.9
             });
             layers.content.add(tickLabel);
         }
@@ -434,10 +435,10 @@ export function renderDetailBarChart({
             const vacancyText = `${vacancyRate}%`;
             
             // グラフ上のラベルのフォントサイズ（大きく表示）
-            const graphLabelFontSize = isYearView ? 9 : 12;
+            const graphLabelFontSize = isYearView ? 12 : 16;
             
             // バーの上に配置（バーの上端から十分な余白を取る）
-            const labelSpacing = 12; // バーの上端からの余白をさらに大きく
+            const labelSpacing = 20; // バーの上端からの余白
             const lineHeight = graphLabelFontSize + 4; // 行の高さ
             
             // グラフエリアの上端を超えないように調整
@@ -502,10 +503,10 @@ export function renderDetailBarChart({
             const timeText = formatTime(slotStartTime);
             
             // ラベルのフォントサイズ（大きく表示）
-            const labelFontSize = isYearView ? 8 : 10;
+            const labelFontSize = isYearView ? 10 : 13;
             
             // ラベルの配置：バーの下に表示
-            const labelY = baselineY + 2; // バーの下に2pxの余白を設ける
+            const labelY = baselineY + 8; // バーの下に余白を設ける
             const labelColor = isSlotGrayed ? '#d1d5db' : '#9ca3af';
             
             // スロットの幅に応じて表示内容を調整
@@ -528,6 +529,15 @@ export function renderDetailBarChart({
                 layers.content.add(slotLabel);
             }
         }
+
+        // スロット間の区切り線を描画
+        const slotSeparatorLine = new Konva.Line({
+            points: [barX + barWidth, barAreaTop, barX + barWidth, baselineY],
+            stroke: '#e5e7eb',
+            strokeWidth: 1,
+            opacity: 0.8
+        });
+        layers.content.add(slotSeparatorLine);
     });
 
     // 業務時間の開始・終了位置に縦ラインを描画（昼休みの縦ラインと同様に常に表示）
