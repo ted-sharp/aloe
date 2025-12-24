@@ -243,12 +243,11 @@ export function renderDetailBarChart({
     });
     // 昼休みの通常スロットは描画しない（グラフ幅を取らない）
 
-    // 全スロットの最大値（max(cap, count)）を計算してスケーリングに使用
+    // 全スロットの最大値（capの最大値）を計算してスケーリングに使用
     let maxValue = 0;
     slotsToRender.forEach(slot => {
         const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-        maxValue = Math.max(maxValue, cap, count);
+        maxValue = Math.max(maxValue, cap);
     });
 
     // 最大値が0の場合は描画しない
@@ -278,6 +277,15 @@ export function renderDetailBarChart({
         });
         layers.content.add(tickLine);
 
+        // Y軸メモリ位置に横線を描画（グラフエリア全体に）
+        const gridLine = new Konva.Line({
+            points: [businessStartX, y, businessEndX, y],
+            stroke: '#d1d5db',
+            strokeWidth: 1,
+            opacity: 0.8
+        });
+        layers.content.add(gridLine);
+
         // 値のラベルを描画
         if (i > 0 || value === 0) { // 0または値がある場合のみ表示
             const tickLabel = new Konva.Text({
@@ -296,6 +304,15 @@ export function renderDetailBarChart({
             layers.content.add(tickLabel);
         }
     }
+
+    // Y=0の位置に基準線を描画（他のメモリ線と同じスタイル）
+    const baselineGridLine = new Konva.Line({
+        points: [businessStartX, baselineY, businessEndX, baselineY],
+        stroke: '#d1d5db',
+        strokeWidth: 1,
+        opacity: 0.8
+    });
+    layers.content.add(baselineGridLine);
 
     // ビジネスアワー外のスロット用の固定幅
     const outsideBarWidth = Math.max(2, Math.min(8, barAreaWidth * 0.05)); // 幅の5%、最小2px、最大8px
@@ -420,11 +437,8 @@ export function renderDetailBarChart({
             });
             layers.content.add(overflowBar);
         } else {
-            // 空き数が0の場合：キャパシティラインの位置を使用
-            if (cap > 0) {
-                const capacityY = baselineY - (cap / maxValue) * barAreaHeight;
-                barTopY = capacityY;
-            }
+            // 空き数が0（0%）の場合：capの値に関係なく、常に一番下に配置
+            barTopY = baselineY;
         }
 
         // n/m表記とパーセンテージをグラフ上（バーの上）に大きく表示

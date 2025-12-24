@@ -299,8 +299,8 @@ function renderDayDetailPopup(containerId, dateStr) {
         const dayNumber = date.getDate();
         const isHoliday = state.holidays.has(dateStr);
 
-        // グラフを描画
-        renderDayDetailBarChart(0, 0, width, height, dateStr, dayNumber, isHoliday);
+        // グラフを描画（日詳細ポップアップでは日付テキストを表示しない）
+        renderDayDetailBarChart(0, 0, width, height, dateStr, dayNumber, isHoliday, false);
 
         // レイヤーを描画
         popupLayers.background.batchDraw();
@@ -337,7 +337,7 @@ function renderDayDetailPopup(containerId, dateStr) {
                         popupLayers.content.destroyChildren();
                         popupLayers.interaction.destroyChildren();
 
-                        renderDayDetailBarChart(0, 0, newWidth, newHeight, dateStr, dayNumber, isHoliday);
+                        renderDayDetailBarChart(0, 0, newWidth, newHeight, dateStr, dayNumber, isHoliday, false);
 
                         popupLayers.background.batchDraw();
                         popupLayers.grid.batchDraw();

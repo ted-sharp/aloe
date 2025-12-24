@@ -193,12 +193,11 @@ export function renderBarChart({
     // 時間外スロットはグラフには描画しない（赤い縦ラインで存在の有無のみ表示）
     // 昼休みのスロットは集約するが、描画はしない（グラフ幅を取らない）
 
-    // 全スロットの最大値（max(cap, count)）を計算してスケーリングに使用
+    // 全スロットの最大値（capの最大値）を計算してスケーリングに使用
     let maxValue = 0;
     slotsToRender.forEach(slot => {
         const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-        maxValue = Math.max(maxValue, cap, count);
+        maxValue = Math.max(maxValue, cap);
     });
 
     // 最大値が0の場合は描画しない
