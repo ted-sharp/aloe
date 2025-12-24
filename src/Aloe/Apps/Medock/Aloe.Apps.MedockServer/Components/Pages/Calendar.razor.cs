@@ -390,6 +390,66 @@ public partial class Calendar : ComponentBase
         }
     }
 
+    private async Task PreviousBigPeriod()
+    {
+        this._state.PreviousBigPeriod();
+        this._state.IsLoading = true;
+        this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
+    }
+
+    private async Task NextBigPeriod()
+    {
+        this._state.NextBigPeriod();
+        this._state.IsLoading = true;
+        this.StateHasChanged();
+        try
+        {
+            await this.DataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+            await this.DataService.LoadHolidaysAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
+        }
+        finally
+        {
+            this._state.IsLoading = false;
+            this.StateHasChanged();
+        }
+    }
+
     private async Task GoToToday()
     {
         this._state.GoToToday();

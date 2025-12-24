@@ -18,80 +18,93 @@
         </div>
 
         <!-- 中央: ナビゲーションバー -->
-        <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm">
-            <!-- 期間移動 -->
-            <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousPeriod" title="前へ">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                </svg>
-            </button>
-            <span class="font-bold text-base-content text-sm text-center">@GetCurrentPeriodTitle()</span>
-            <button class="btn btn-xs btn-ghost btn-square" @onclick="NextPeriod" title="次へ">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </button>
+        <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-1">
+            <!-- 1行目: ビュー切り替え、簡易詳細、フィルター -->
+            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm">
+                <!-- ビュー切り替え -->
+                <div class="join">
+                    <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
+                            @onclick="() => SetView(CalendarViewType.Year)">
+                        年
+                    </button>
+                    <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
+                            @onclick="() => SetView(CalendarViewType.Month)">
+                        月
+                    </button>
+                    <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
+                            @onclick="() => SetView(CalendarViewType.Week)">
+                        週
+                    </button>
+                </div>
 
-            <div class="divider divider-horizontal mx-0"></div>
+                <div class="divider divider-horizontal mx-0"></div>
 
-            <!-- フィルターボタン -->
-            <button class="btn btn-xs btn-square @(ShowFilterPanel ? "btn-primary" : "btn-ghost") relative" @onclick="ToggleFilterPanel" title="フィルター">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
-                </svg>
-                @if (ActiveFilterCount > 0)
+                <!-- 簡易｜詳細切り替え -->
+                @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
                 {
-                    <span class="badge badge-xs badge-secondary absolute -top-1 -right-1">@ActiveFilterCount</span>
+                    <div class="join">
+                        <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
+                                @onclick="() => HandleSimpleViewChanged(true)">
+                            簡易
+                        </button>
+                        <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
+                                @onclick="() => HandleSimpleViewChanged(false)">
+                            詳細
+                        </button>
+                    </div>
                 }
-            </button>
+                else if (CurrentView == CalendarViewType.Week)
+                {
+                    <div class="join">
+                        <button class="btn btn-xs join-item @(ShowSlots ? "btn-active btn-primary" : "")"
+                                @onclick="() => HandleShowSlotsChanged(true)">
+                            簡易
+                        </button>
+                        <button class="btn btn-xs join-item @(!ShowSlots ? "btn-active btn-primary" : "")"
+                                @onclick="() => HandleShowSlotsChanged(false)">
+                            詳細
+                        </button>
+                    </div>
+                }
 
-            <div class="divider divider-horizontal mx-0"></div>
+                <div class="divider divider-horizontal mx-0"></div>
 
-            <!-- ビュー切り替え -->
-            <div class="join">
-                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
-                        @onclick="() => SetView(CalendarViewType.Year)">
-                    年
-                </button>
-                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
-                        @onclick="() => SetView(CalendarViewType.Month)">
-                    月
-                </button>
-                <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
-                        @onclick="() => SetView(CalendarViewType.Week)">
-                    週
+                <!-- フィルターボタン -->
+                <button class="btn btn-xs btn-square @(ShowFilterPanel ? "btn-primary" : "btn-ghost") relative" @onclick="ToggleFilterPanel" title="フィルター">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    @if (ActiveFilterCount > 0)
+                    {
+                        <span class="badge badge-xs badge-secondary absolute -top-1 -right-1">@ActiveFilterCount</span>
+                    }
                 </button>
             </div>
 
-            <div class="divider divider-horizontal mx-0"></div>
-
-            <!-- 簡易｜詳細切り替え -->
-            @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
-            {
-                <div class="join">
-                    <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
-                            @onclick="() => HandleSimpleViewChanged(true)">
-                        簡易
-                    </button>
-                    <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
-                            @onclick="() => HandleSimpleViewChanged(false)">
-                        詳細
-                    </button>
-                </div>
-            }
-            else if (CurrentView == CalendarViewType.Week)
-            {
-                <div class="join">
-                    <button class="btn btn-xs join-item @(ShowSlots ? "btn-active btn-primary" : "")"
-                            @onclick="() => HandleShowSlotsChanged(true)">
-                        簡易
-                    </button>
-                    <button class="btn btn-xs join-item @(!ShowSlots ? "btn-active btn-primary" : "")"
-                            @onclick="() => HandleShowSlotsChanged(false)">
-                        詳細
-                    </button>
-                </div>
-            }
+            <!-- 2行目: 期間移動 -->
+            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm">
+                <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousBigPeriod" title="前の年/月/週">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                    </svg>
+                </button>
+                <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousPeriod" title="前へ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
+                <span class="font-bold text-base-content text-sm text-center min-w-[120px]">@GetCurrentPeriodTitle()</span>
+                <button class="btn btn-xs btn-ghost btn-square" @onclick="NextPeriod" title="次へ">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+                <button class="btn btn-xs btn-ghost btn-square" @onclick="NextBigPeriod" title="次の年/月/週">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
         <!-- 右側: UserAvatarFab領域 -->

@@ -121,6 +121,34 @@ public class CalendarState
     }
 
     /// <summary>
+    /// 前の大きな期間へ移動（年ビューなら-1年、月ビューなら-1年、週ビューなら-1月）
+    /// </summary>
+    public void PreviousBigPeriod()
+    {
+        this.CurrentDate = this.CurrentView switch
+        {
+            CalendarViewType.Year => this.CurrentDate.AddYears(-1),
+            CalendarViewType.Month => this.CurrentDate.AddYears(-1),
+            CalendarViewType.Week => this.CurrentDate.AddMonths(-1),
+            _ => this.CurrentDate
+        };
+    }
+
+    /// <summary>
+    /// 次の大きな期間へ移動（年ビューなら+1年、月ビューなら+1年、週ビューなら+1月）
+    /// </summary>
+    public void NextBigPeriod()
+    {
+        this.CurrentDate = this.CurrentView switch
+        {
+            CalendarViewType.Year => this.CurrentDate.AddYears(1),
+            CalendarViewType.Month => this.CurrentDate.AddYears(1),
+            CalendarViewType.Week => this.CurrentDate.AddMonths(1),
+            _ => this.CurrentDate
+        };
+    }
+
+    /// <summary>
     /// 今日へ移動
     /// </summary>
     public void GoToToday()
