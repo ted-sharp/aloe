@@ -105,6 +105,93 @@
                     </svg>
                 </button>
             </div>
+
+            <!-- 3行目: ビュー別ボタン群 -->
+            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm flex-nowrap min-w-fit">
+                @if (CurrentView == CalendarViewType.Year)
+                {
+                    <!-- 年間カレンダー: 今日ボタン + 年選択 -->
+                    <button class="btn btn-xs btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="ml-1">今日</span>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <span class="text-xs font-medium text-base-content/70 whitespace-nowrap">年:</span>
+                    <div class="join">
+                        @{
+                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            var years = new[] { today.Year - 1, today.Year, today.Year + 1 };
+                            foreach (var year in years)
+                            {
+                                var isCurrent = year == CurrentDate.Year;
+                                <button class="btn btn-xs join-item @(isCurrent ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleYearSelected(year)">
+                                    @(year)年
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                else if (CurrentView == CalendarViewType.Month)
+                {
+                    <!-- 月間カレンダー: 今日ボタン + 月選択 -->
+                    <button class="btn btn-xs btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="ml-1">今日</span>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <span class="text-xs font-medium text-base-content/70 whitespace-nowrap">月:</span>
+                    <div class="join">
+                        @{
+                            var todayMonth = DateOnly.FromDateTime(DateTime.Today);
+                            var currentMonth = new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
+                            for (int i = -1; i <= 6; i++)
+                            {
+                                var monthDate = todayMonth.AddMonths(i);
+                                var isCurrent = monthDate.Year == currentMonth.Year && monthDate.Month == currentMonth.Month;
+                                <button class="btn btn-xs join-item @(isCurrent ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleMonthSelected((monthDate.Year, monthDate.Month))">
+                                    @(monthDate.Month)月
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                else if (CurrentView == CalendarViewType.Week)
+                {
+                    <!-- 週間カレンダー: 今日ボタン + 表示日数選択 -->
+                    <button class="btn btn-xs btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span class="ml-1">今日</span>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <span class="text-xs font-medium text-base-content/70 whitespace-nowrap">表示日数:</span>
+                    <div class="join">
+                        @{
+                            var dayOptions = new[] { 1, 3, 7, 14, 31 };
+                            foreach (var days in dayOptions)
+                            {
+                                <button class="btn btn-xs join-item @(WeekDays == days ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleWeekDaysChanged(days)">
+                                    @(days)日
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+            </div>
         </div>
 
         <!-- 右側: UserAvatarFab領域 -->

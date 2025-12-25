@@ -4,39 +4,6 @@
 *@
 
 <div class="year-view flex flex-col h-full">
-    <!-- 年選択ボタンと設備表示スイッチ -->
-    <div class="flex items-center gap-2 mb-4 flex-shrink-0">
-        <!-- 今日ボタン -->
-        <button class="btn btn-sm btn-outline btn-primary px-3" @onclick="HandleGoToToday" title="今日">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <span class="ml-1">今日</span>
-        </button>
-        
-        <div class="divider divider-horizontal mx-2"></div>
-        
-        <span class="text-sm font-medium text-base-content/70">年:</span>
-        <div class="btn-group">
-            @{
-                var today = DateOnly.FromDateTime(DateTime.Today);
-                var years = new[] { today.Year - 1, today.Year, today.Year + 1 };
-                foreach (var year in years)
-                {
-                    var isCurrent = year == CurrentDate.Year;
-                    <button class="btn btn-sm @(isCurrent ? "btn-active btn-primary" : "")"
-                            @onclick="() => HandleYearSelected(year)">
-                        @(year)年
-                    </button>
-                }
-            }
-        </div>
-        
-        <div class="divider divider-horizontal mx-2"></div>
-        
-        @* 設備表示スイッチは削除されました（EquipmentはAppointmentResourceに統合） *@
-    </div>
-
     <!-- Canvas カレンダー -->
     <div class="flex-1 min-h-0">
         <CalendarCanvas
