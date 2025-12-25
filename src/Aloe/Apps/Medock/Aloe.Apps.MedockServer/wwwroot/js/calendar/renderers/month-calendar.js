@@ -280,18 +280,6 @@ export function renderMonthCalendar(year, month, x, y, width, height, options = 
             const safeCellHeight = Math.max(0, cellHeight - 2);
             const cellCornerRadius = Math.max(0, Math.min(2, safeCellWidth / 2, safeCellHeight / 2));
 
-            if (isHoliday && !isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
-                const holidayBg = new Konva.Rect({
-                    x: cellLeft + 1,
-                    y: cellTop + 1,
-                    width: safeCellWidth,
-                    height: safeCellHeight,
-                    fill: 'rgba(239, 68, 68, 0.12)',
-                    cornerRadius: cellCornerRadius
-                });
-                layers.grid.add(holidayBg);
-            }
-
             if (isToday(dateStr) && safeCellWidth > 0 && safeCellHeight > 0) {
                 const todayBg = new Konva.Rect({
                     x: cellLeft + 1,
