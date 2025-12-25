@@ -91,6 +91,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public BusinessHoursDto? BusinessHours { get; set; }
 
     /// <summary>
+    /// フィルター用の時間帯リスト（"09:00"形式）
+    /// </summary>
+    [Parameter]
+    public List<string>? FilterTimeSlots { get; set; }
+
+    /// <summary>
     /// Height of the canvas container
     /// </summary>
     [Parameter]

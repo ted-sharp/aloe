@@ -20,7 +20,8 @@ public partial class CalendarCanvas
                 this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
                 this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
                 this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-                this.Holidays ?? new Dictionary<string, string>());
+                this.Holidays ?? new Dictionary<string, string>(),
+                this.FilterTimeSlots);
             buildSw.Stop();
             Console.WriteLine($"[Performance] CalendarCanvas.UpdateDataAsync BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
 

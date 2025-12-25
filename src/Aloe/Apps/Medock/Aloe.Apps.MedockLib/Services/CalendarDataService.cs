@@ -15,7 +15,8 @@ public class CalendarDataService : ICalendarDataService
         IEnumerable<AppointmentDto> appointments,
         Dictionary<string, List<AppointmentStats>> mainStats,
         Dictionary<string, bool> mainStatsGrayedOut,
-        Dictionary<string, string> holidays)
+        Dictionary<string, string> holidays,
+        List<string>? filterTimeSlots = null)
     {
         var appointmentArray = appointments?.Select(a => new AppointmentDataDto
         {
@@ -31,6 +32,20 @@ public class CalendarDataService : ICalendarDataService
             FloorName = a.FloorName,
             FloorId = a.FloorId
         }).ToList() ?? new List<AppointmentDataDto>();
+
+        // フィルター時間帯のHour値を事前に計算（パフォーマンス向上のため）
+        HashSet<int>? filterHours = null;
+        if (filterTimeSlots != null && filterTimeSlots.Count > 0)
+        {
+            filterHours = new HashSet<int>();
+            foreach (var timeSlot in filterTimeSlots)
+            {
+                if (TimeOnly.TryParse(timeSlot, out var time))
+                {
+                    filterHours.Add(time.Hour);
+                }
+            }
+        }
 
         var mainStatsDict = new Dictionary<string, MainStatsDataDto>();
         if (mainStats != null)
@@ -52,16 +67,27 @@ public class CalendarDataService : ICalendarDataService
                         var graphData = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
                         if (graphData?.Slots != null)
                         {
-                            slots = graphData.Slots.Select(slot => new SlotDataDto
+                            slots = graphData.Slots.Select(slot =>
                             {
-                                Start = slot.Start.ToString("HH:mm"),
-                                End = slot.End.ToString("HH:mm"),
-                                Count = slot.Count,
-                                Cap = slot.Cap,
-                                Available = slot.Cap - slot.Count,
-                                IsGrayedOut = false,
-                                FilteredCount = 0,
-                                IsOutsideHours = slot.HasOutsideHours // 時間外スロットフラグをマッピング
+                                // スロットの開始時刻がフィルター時間帯にマッチするかをチェック
+                                var isSlotGrayed = false;
+                                if (filterHours != null && filterHours.Count > 0)
+                                {
+                                    // フィルターがある場合、スロットの開始時刻のHourがフィルターに含まれていなければグレーアウト
+                                    isSlotGrayed = !filterHours.Contains(slot.Start.Hour);
+                                }
+
+                                return new SlotDataDto
+                                {
+                                    Start = slot.Start.ToString("HH:mm"),
+                                    End = slot.End.ToString("HH:mm"),
+                                    Count = slot.Count,
+                                    Cap = slot.Cap,
+                                    Available = slot.Cap - slot.Count,
+                                    IsGrayedOut = isSlotGrayed,
+                                    FilteredCount = 0,
+                                    IsOutsideHours = slot.HasOutsideHours // 時間外スロットフラグをマッピング
+                                };
                             }).OrderBy(s => s.Start).ToList();
                         }
                     }

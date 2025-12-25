@@ -138,6 +138,7 @@ public partial class Calendar : ComponentBase
     // AvailableEquipmentsプロパティは削除されました（EquipmentはAppointmentResourceに統合）
     private SearchFilterPanel.SearchFilter? CurrentFilter => this.State.CurrentFilter;
     private int ActiveFilterCount => this.State.ActiveFilterCount;
+    private List<string>? FilterTimeSlots => this.State.CurrentFilter?.TimeSlots;
     private List<SearchFilterPanel.FilterItem> AvailableFloors => this.State.AvailableFloors;
     private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this.State.AvailableResourceGroups;
     private List<SearchFilterPanel.FilterItem> AvailableResources => this.State.AvailableResources;
@@ -317,6 +318,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
             this.Layout?.UpdateCurrentView(view.ToString().ToLower());
             this.RegisterLayoutActions();
         }
@@ -353,6 +355,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -383,6 +386,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -413,6 +417,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -443,6 +448,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -468,6 +474,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -493,6 +500,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
             this.Layout?.UpdateCurrentView("week");
             this.RegisterLayoutActions();
         }
@@ -508,6 +516,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         this.StateHasChanged();
     }
@@ -526,6 +535,7 @@ public partial class Calendar : ComponentBase
             this.State.CurrentView,
             this.State.CurrentDate,
             this.State.WeekDays);
+        await this.ReapplyCurrentFilterAsync();
         this.Layout?.UpdateCurrentView("month");
         this.RegisterLayoutActions();
         this.StateHasChanged();
@@ -544,6 +554,7 @@ public partial class Calendar : ComponentBase
             this.State.CurrentView,
             this.State.CurrentDate,
             this.State.WeekDays);
+        await this.ReapplyCurrentFilterAsync();
         this.StateHasChanged();
     }
 
@@ -569,6 +580,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.ReapplyCurrentFilterAsync();
         }
         finally
         {
@@ -620,14 +632,27 @@ public partial class Calendar : ComponentBase
     private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
         this.State.CurrentFilter = filter;
+        await this.ReapplyCurrentFilterAsync();
+        this.StateHasChanged();
+    }
+
+    /// <summary>
+    /// 現在のフィルターを再適用する（月切り替えやビュー変更後に呼び出す）
+    /// </summary>
+    private async Task ReapplyCurrentFilterAsync()
+    {
+        if (this.State.CurrentFilter is null)
+        {
+            return;
+        }
+
         await this.FilterService.ApplyFilterAsync(
-            filter,
+            this.State.CurrentFilter,
             this.State.MainStats,
             this.State.OriginalMainStats,
             this.State.MainStatsGrayedOut,
             this.State.CurrentView,
             this.State.CurrentDate);
-        this.StateHasChanged();
     }
 
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
@@ -664,13 +689,7 @@ public partial class Calendar : ComponentBase
             }
         }
 
-        await this.FilterService.ApplyFilterAsync(
-            filter,
-            this.State.MainStats,
-            this.State.OriginalMainStats,
-            this.State.MainStatsGrayedOut,
-            this.State.CurrentView,
-            this.State.CurrentDate);
+        await this.ReapplyCurrentFilterAsync();
         this.StateHasChanged();
     }
 

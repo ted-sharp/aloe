@@ -51,6 +51,12 @@ public partial class MonthView : ComponentBase
     public BusinessHoursDto? BusinessHours { get; set; }
 
     /// <summary>
+    /// フィルター用の時間帯リスト（"09:00"形式）
+    /// </summary>
+    [Parameter]
+    public List<string>? FilterTimeSlots { get; set; }
+
+    /// <summary>
     /// カレンダーの高さ
     /// </summary>
     [Parameter]

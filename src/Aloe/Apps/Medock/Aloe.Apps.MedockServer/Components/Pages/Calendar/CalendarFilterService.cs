@@ -124,10 +124,12 @@ public class CalendarFilterService
                         matchesTimeSlot = true;
                         break;
                     }
-                    // selectedTimeSlotが開始時刻形式（"HH:mm"）の場合、時間範囲内に含まれるかチェック
+
+                    // selectedTimeSlotが時刻形式（"HH:mm"）の場合、1時間範囲として比較
+                    // 例: "09:00"が選択されている場合、スロットの開始時刻が9時台（9:00〜9:59）ならマッチ
                     if (TimeOnly.TryParse(selectedTimeSlot, out var selectedTime))
                     {
-                        if (selectedTime >= start && selectedTime < end)
+                        if (start.Hour == selectedTime.Hour)
                         {
                             matchesTimeSlot = true;
                             break;
@@ -135,7 +137,9 @@ public class CalendarFilterService
                     }
                 }
                 if (!matchesTimeSlot)
+                {
                     isSlotGrayed = true;
+                }
             }
 
             var availableCapacity = cap - count;
