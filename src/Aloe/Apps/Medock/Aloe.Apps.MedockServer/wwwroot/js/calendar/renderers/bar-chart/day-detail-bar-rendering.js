@@ -1,12 +1,12 @@
 /**
  * Day Detail Bar Chart Rendering
- * 
- * 日詳細ビュー用の棒グラフ描画（詳細版）
- * - 使用ビュー: 日詳細ビュー
+ *
+ * ポップアップ/モーダル用の棒グラフ描画（詳細版）
+ * - 使用場面: 日詳細ポップアップ、モーダル
  * - 特徴: スロットを集約せず個別に表示（GraphData通りのスロットを描画）
  * - 関数: renderDetailBarChart()
- * 
- * 注意: 年間/月間カレンダーでは使用しない（day-bar-rendering.jsを使用）
+ *
+ * 注意: 年間/月間カレンダーでは使用しない（day-calendar-bar-rendering.jsを使用）
  */
 
 import { getState } from '../../state.js';

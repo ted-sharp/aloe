@@ -1,12 +1,12 @@
 /**
- * Day Bar Chart Rendering (Aggregated)
- * 
+ * Day Calendar Bar Chart Rendering
+ *
  * 年間/月間カレンダー用の棒グラフ描画（集約版）
- * - 使用ビュー: 年間ビュー、月間ビュー
+ * - 使用場面: 年間ビュー、月間ビュー
  * - 特徴: スロットを集約して表示（aggregateSlotsを使用）
  * - 関数: renderBarChart()
- * 
- * 注意: 日詳細ビューでは使用しない（day-detail-bar-rendering.jsを使用）
+ *
+ * 注意: ポップアップ/モーダルでは使用しない（day-detail-bar-rendering.jsを使用）
  */
 
 import { getState } from '../../state.js';

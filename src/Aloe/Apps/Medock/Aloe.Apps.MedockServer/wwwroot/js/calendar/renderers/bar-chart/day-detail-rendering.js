@@ -1,23 +1,24 @@
 /**
- * Day Cell Rendering (Aggregated)
- * 
- * 年間/月間カレンダー用の日付セル全体の描画
- * - 使用ビュー: 年間ビュー、月間ビュー
- * - 特徴: 背景、日付テキスト、簡易表示モード、棒グラフ（集約版）、インタラクションエリアを含む
- * - 関数: renderDayBarChart()
- * 
- * 注意: 日詳細ビューでは使用しない（day-detail-cell-rendering.jsを使用）
+ * Day Detail Rendering
+ *
+ * ポップアップ/モーダル用の日詳細描画
+ * - 使用場面: 日詳細ポップアップ、モーダル
+ * - 特徴: 背景、日付テキスト、簡易表示モード、棒グラフ（詳細版）、インタラクションエリアを含む
+ * - 関数: renderDayDetailBarChart()
+ *
+ * 注意: 年間/月間カレンダーでは使用しない（day-calendar-rendering.jsを使用）
  */
 
 import { getState } from '../../state.js';
 import { CONFIG } from '../../config.js';
 import { isDateInRange } from '../../utils/date-utils.js';
 import { getSymbolFromVacancyRatio, renderSimpleViewSymbol } from './simple-view.js';
-import { renderBarChart } from './day-bar-rendering.js';
+import { renderDetailBarChart } from './day-detail-bar-rendering.js';
 import { createInteractionArea } from './interactions.js';
 
 /**
- * 棒グラフ形式で日付セルを描画
+ * 詳細棒グラフ形式で日付セルを描画（集約しないバージョン）
+ * GraphData通りのスロットを個別に描画
  * @param {number} cellLeft - セルの左端X座標
  * @param {number} cellTop - セルの上端Y座標
  * @param {number} cellWidth - セル幅
@@ -25,8 +26,9 @@ import { createInteractionArea } from './interactions.js';
  * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
  * @param {number} dayNumber - 日にち
  * @param {boolean} isHoliday - 祝日フラグ
+ * @param {boolean} showDateText - 日付テキストを表示するかどうか（デフォルト: true）
  */
-export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, dateStr, dayNumber, isHoliday = false) {
+export function renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight, dateStr, dayNumber, isHoliday = false, showDateText = true) {
     const state = getState();
     const { layers } = state;
 
@@ -67,10 +69,17 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
     // 日付数字のフォントサイズをビューに応じて決定
     const dateFontSize = isYearView ? CONFIG.font.sizeDateYear : CONFIG.font.sizeDateMonth;
     // 日付テキスト表示エリア（小さなセルでも計算しておく）
-    const dayTextHeight = dateFontSize + 4;
-    const barAreaTop = cellTop + dayTextHeight;
-    const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 10 : 12) : 0;
-    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight); // 下部余白4px + ラベルエリア、負の値を防止
+    // 日付はグラフエリア内に表示しないため、セルの上部のみに配置
+    const dayTextHeight = showDateText ? (dateFontSize + 4) : 0;
+    // Y軸ラベル用の上部余白を追加（フォントサイズ + 10px）
+    const yAxisTopPadding = (isYearView ? 8 : 10) + 10; // フォントサイズ + 余白
+    const barAreaTop = showDateText ? (cellTop + dayTextHeight + yAxisTopPadding) : (cellTop + yAxisTopPadding);
+    const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 16 : 22) : 0;
+    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - yAxisTopPadding - 4 - labelAreaHeight); // 上部余白 + 下部余白4px + ラベルエリア、負の値を防止
+    
+    // グラフエリアの範囲を計算（日付がグラフエリア内に表示されないようにするため）
+    const graphAreaTop = barAreaTop;
+    const graphAreaBottom = barAreaTop + barAreaHeight;
 
     // 小さなセルの場合は描画をスキップ
     if (!isTooSmall) {
@@ -90,31 +99,35 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         });
         layers.content.add(bgRect);
 
-        // 日付テキスト
-        const dayOfWeek = new Date(dateStr).getDay();
-        let textColor;
-        if (isDateGrayed) {
-            textColor = '#9ca3af';
-        } else if (isHoliday || dayOfWeek === 0) {
-            textColor = CONFIG.colors.weekend.sun;
-        } else if (dayOfWeek === 6) {
-            textColor = CONFIG.colors.weekend.sat;
-        } else {
-            textColor = '#374151';
-        }
+        // 日付テキスト（showDateTextがtrueの場合のみ表示）
+        if (showDateText) {
+            const dayOfWeek = new Date(dateStr).getDay();
+            let textColor;
+            if (isDateGrayed) {
+                textColor = '#9ca3af';
+            } else if (isHoliday || dayOfWeek === 0) {
+                textColor = CONFIG.colors.weekend.sun;
+            } else if (dayOfWeek === 6) {
+                textColor = CONFIG.colors.weekend.sat;
+            } else {
+                textColor = '#374151';
+            }
 
-        const dayText = new Konva.Text({
-            x: cellLeft + 1,
-            y: cellTop + 2,
-            width: cellWidth - 2,
-            text: String(dayNumber),
-            fontSize: dateFontSize,
-            fontFamily: CONFIG.font.numberFamily,
-            fill: textColor,
-            align: 'center',
-            wrap: 'none'
-        });
-        layers.content.add(dayText);
+            // 日付テキストはグラフエリアの外（セルの上部）にのみ表示
+            // グラフエリア内には表示しない
+            const dayText = new Konva.Text({
+                x: cellLeft + 1,
+                y: cellTop + 2,
+                width: cellWidth - 2,
+                text: String(dayNumber),
+                fontSize: dateFontSize,
+                fontFamily: CONFIG.font.numberFamily,
+                fill: textColor,
+                align: 'center',
+                wrap: 'none'
+            });
+            layers.content.add(dayText);
+        }
     }
 
     // 簡易表示モードの判定
@@ -159,7 +172,7 @@ export function renderDayBarChart(cellLeft, cellTop, cellWidth, cellHeight, date
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
 
-        const rendered = renderBarChart({
+        const rendered = renderDetailBarChart({
             cellLeft,
             cellTop,
             cellWidth,
