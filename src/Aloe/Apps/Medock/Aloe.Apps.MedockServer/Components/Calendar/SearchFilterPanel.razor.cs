@@ -1,4 +1,5 @@
 using Aloe.Apps.MedockLib.Constants;
+using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
@@ -7,6 +8,9 @@ public partial class SearchFilterPanel : ComponentBase
 {
     // EquipmentはAppointmentResourceに統合されました
     // AvailableEquipmentsパラメータは削除されました
+
+    [Inject]
+    private CalendarState CalendarState { get; set; } = default!;
 
     /// <summary>
     /// フィルター変更時のコールバック
@@ -26,15 +30,19 @@ public partial class SearchFilterPanel : ComponentBase
     [Parameter]
     public EventCallback OnClose { get; set; }
 
-    // フィルター値
-    private HashSet<int> SelectedDays { get; set; } = new(); // デフォルト全オフ
-    private HashSet<string> SelectedTimeSlots { get; set; } = new(); // 時間帯複数選択
-    private int RequiredCapacity { get; set; } = 1;
-    private HashSet<Guid> SelectedFloorIds { get; set; } = new(); // フロア選択
-    private HashSet<Guid> SelectedResourceGroupIds { get; set; } = new(); // リソースグループ選択
-    private HashSet<Guid> SelectedResourceIds { get; set; } = new(); // リソース選択
-    private HashSet<Guid> SelectedPlanIds { get; set; } = new(); // プラン選択
-    private HashSet<Guid> SelectedOptionPlanIds { get; set; } = new(); // オプション（プラン）選択
+    // フィルター値（CalendarState から参照 - セッション中保持）
+    private HashSet<int> SelectedDays => this.CalendarState.FilterSelectedDays;
+    private HashSet<string> SelectedTimeSlots => this.CalendarState.FilterSelectedTimeSlots;
+    private int RequiredCapacity
+    {
+        get => this.CalendarState.FilterRequiredCapacity;
+        set => this.CalendarState.FilterRequiredCapacity = value;
+    }
+    private HashSet<Guid> SelectedFloorIds => this.CalendarState.FilterSelectedFloorIds;
+    private HashSet<Guid> SelectedResourceGroupIds => this.CalendarState.FilterSelectedResourceGroupIds;
+    private HashSet<Guid> SelectedResourceIds => this.CalendarState.FilterSelectedResourceIds;
+    private HashSet<Guid> SelectedPlanIds => this.CalendarState.FilterSelectedPlanIds;
+    private HashSet<Guid> SelectedOptionPlanIds => this.CalendarState.FilterSelectedOptionPlanIds;
 
     // 選択肢データ（外部から注入）
     [Parameter]
@@ -75,14 +83,7 @@ public partial class SearchFilterPanel : ComponentBase
 
     private void ClearFilters()
     {
-        this.SelectedDays = new();
-        this.SelectedTimeSlots.Clear();
-        this.RequiredCapacity = 1;
-        this.SelectedFloorIds.Clear();
-        this.SelectedResourceGroupIds.Clear();
-        this.SelectedResourceIds.Clear();
-        this.SelectedPlanIds.Clear();
-        this.SelectedOptionPlanIds.Clear();
+        this.CalendarState.ClearFilterSelections();
         this.OnFilterChanged();
     }
 

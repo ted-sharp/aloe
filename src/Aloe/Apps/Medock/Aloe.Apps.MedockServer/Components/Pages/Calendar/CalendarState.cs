@@ -60,6 +60,16 @@ public class CalendarState
     public List<SearchFilterPanel.FilterItem> AvailablePlans { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailableOptions { get; set; } = new();
 
+    // フィルター選択状態（SearchFilterPanel用 - セッション中保持）
+    public HashSet<int> FilterSelectedDays { get; set; } = new();
+    public HashSet<string> FilterSelectedTimeSlots { get; set; } = new();
+    public int FilterRequiredCapacity { get; set; } = 1;
+    public HashSet<Guid> FilterSelectedFloorIds { get; set; } = new();
+    public HashSet<Guid> FilterSelectedResourceGroupIds { get; set; } = new();
+    public HashSet<Guid> FilterSelectedResourceIds { get; set; } = new();
+    public HashSet<Guid> FilterSelectedPlanIds { get; set; } = new();
+    public HashSet<Guid> FilterSelectedOptionPlanIds { get; set; } = new();
+
     // ローディング状態
     public bool IsLoading { get; set; } = false;
 
@@ -198,5 +208,21 @@ public class CalendarState
         this.SelectedAppointmentId = null;
         this.ModalDate = null;
         this.ModalTime = null;
+    }
+
+    /// <summary>
+    /// フィルター選択状態をクリア
+    /// </summary>
+    public void ClearFilterSelections()
+    {
+        this.FilterSelectedDays.Clear();
+        this.FilterSelectedTimeSlots.Clear();
+        this.FilterRequiredCapacity = 1;
+        this.FilterSelectedFloorIds.Clear();
+        this.FilterSelectedResourceGroupIds.Clear();
+        this.FilterSelectedResourceIds.Clear();
+        this.FilterSelectedPlanIds.Clear();
+        this.FilterSelectedOptionPlanIds.Clear();
+        this.CurrentFilter = null;
     }
 }

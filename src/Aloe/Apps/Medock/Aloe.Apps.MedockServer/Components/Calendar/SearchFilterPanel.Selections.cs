@@ -4,7 +4,11 @@ public partial class SearchFilterPanel
 {
     private void SelectAllDays()
     {
-        this.SelectedDays = Enumerable.Range(0, 7).ToHashSet();
+        this.CalendarState.FilterSelectedDays.Clear();
+        foreach (var i in Enumerable.Range(0, 7))
+        {
+            this.CalendarState.FilterSelectedDays.Add(i);
+        }
         this.OnFilterChanged();
     }
 
@@ -16,7 +20,11 @@ public partial class SearchFilterPanel
 
     private void SelectAllTimeSlots()
     {
-        this.SelectedTimeSlots = this.TimeSlots.ToHashSet();
+        this.CalendarState.FilterSelectedTimeSlots.Clear();
+        foreach (var slot in this.TimeSlots)
+        {
+            this.CalendarState.FilterSelectedTimeSlots.Add(slot);
+        }
         this.OnFilterChanged();
     }
 
@@ -30,7 +38,11 @@ public partial class SearchFilterPanel
     {
         if (this.AvailableFloors != null)
         {
-            this.SelectedFloorIds = this.AvailableFloors.Select(f => f.Id).ToHashSet();
+            this.CalendarState.FilterSelectedFloorIds.Clear();
+            foreach (var floor in this.AvailableFloors)
+            {
+                this.CalendarState.FilterSelectedFloorIds.Add(floor.Id);
+            }
         }
         this.OnFilterChanged();
     }
@@ -45,7 +57,11 @@ public partial class SearchFilterPanel
     {
         if (this.AvailableResourceGroups != null)
         {
-            this.SelectedResourceGroupIds = this.AvailableResourceGroups.Select(g => g.Id).ToHashSet();
+            this.CalendarState.FilterSelectedResourceGroupIds.Clear();
+            foreach (var group in this.AvailableResourceGroups)
+            {
+                this.CalendarState.FilterSelectedResourceGroupIds.Add(group.Id);
+            }
         }
         this.OnFilterChanged();
     }
@@ -60,7 +76,11 @@ public partial class SearchFilterPanel
     {
         if (this.AvailableResources != null)
         {
-            this.SelectedResourceIds = this.AvailableResources.Select(r => r.Id).ToHashSet();
+            this.CalendarState.FilterSelectedResourceIds.Clear();
+            foreach (var resource in this.AvailableResources)
+            {
+                this.CalendarState.FilterSelectedResourceIds.Add(resource.Id);
+            }
         }
         this.OnFilterChanged();
     }
@@ -75,7 +95,11 @@ public partial class SearchFilterPanel
     {
         if (this.AvailablePlans != null)
         {
-            this.SelectedPlanIds = this.AvailablePlans.Select(p => p.Id).ToHashSet();
+            this.CalendarState.FilterSelectedPlanIds.Clear();
+            foreach (var plan in this.AvailablePlans)
+            {
+                this.CalendarState.FilterSelectedPlanIds.Add(plan.Id);
+            }
         }
         this.OnFilterChanged();
     }
@@ -90,7 +114,11 @@ public partial class SearchFilterPanel
     {
         if (this.AvailableOptions != null)
         {
-            this.SelectedOptionPlanIds = this.AvailableOptions.Select(o => o.Id).ToHashSet();
+            this.CalendarState.FilterSelectedOptionPlanIds.Clear();
+            foreach (var option in this.AvailableOptions)
+            {
+                this.CalendarState.FilterSelectedOptionPlanIds.Add(option.Id);
+            }
         }
         this.OnFilterChanged();
     }
@@ -101,4 +129,3 @@ public partial class SearchFilterPanel
         this.OnFilterChanged();
     }
 }
-

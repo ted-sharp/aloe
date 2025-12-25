@@ -112,6 +112,7 @@ builder.Services.AddScoped<IFacilityService, FacilityService>();
 builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
 
 // Add Calendar Services
+builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarState>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarDataService>();
 

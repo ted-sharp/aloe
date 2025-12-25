@@ -36,8 +36,9 @@ public partial class Calendar : ComponentBase
     [Inject]
     private CalendarDataService DataService { get; set; } = default!;
 
-    // 状態管理
-    private readonly CalendarState _state = new();
+    // 状態管理（Scoped Service として DI 注入）
+    [Inject]
+    private CalendarState State { get; set; } = default!;
 
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
@@ -60,94 +61,94 @@ public partial class Calendar : ComponentBase
     // プロパティ（razorファイルとの互換性維持）
     private DateOnly CurrentDate
     {
-        get => this._state.CurrentDate;
-        set => this._state.CurrentDate = value;
+        get => this.State.CurrentDate;
+        set => this.State.CurrentDate = value;
     }
 
     private CalendarViewType CurrentView
     {
-        get => this._state.CurrentView;
-        set => this._state.CurrentView = value;
+        get => this.State.CurrentView;
+        set => this.State.CurrentView = value;
     }
 
     private int WeekDays
     {
-        get => this._state.WeekDays;
-        set => this._state.WeekDays = value;
+        get => this.State.WeekDays;
+        set => this.State.WeekDays = value;
     }
 
     private bool ShowSlots
     {
-        get => this._state.ShowSlots;
-        set => this._state.ShowSlots = value;
+        get => this.State.ShowSlots;
+        set => this.State.ShowSlots = value;
     }
 
     private bool ShowFilterPanel
     {
-        get => this._state.ShowFilterPanel;
-        set => this._state.ShowFilterPanel = value;
+        get => this.State.ShowFilterPanel;
+        set => this.State.ShowFilterPanel = value;
     }
 
     private bool ShowSimpleView
     {
-        get => this._state.ShowSimpleView;
-        set => this._state.ShowSimpleView = value;
+        get => this.State.ShowSimpleView;
+        set => this.State.ShowSimpleView = value;
     }
 
-    private bool IsLoading => this._state.IsLoading;
+    private bool IsLoading => this.State.IsLoading;
 
     // ShowEquipmentGraphプロパティは削除されました（EquipmentはAppointmentResourceに統合）
 
-    private string UserInitial => this._state.UserInitial;
-    private string UserDisplayName => this._state.UserDisplayName;
-    private string UserEmail => this._state.UserEmail;
-    private string TenantName => this._state.TenantName;
-    private string FacilityName => this._state.FacilityName;
-    private string UserRole => this._state.UserRole;
-    private Guid? CurrentFacilityId => this._state.CurrentFacilityId;
-    private bool HasMultipleFacilities => this._state.HasMultipleFacilities;
-    private List<FacilityInfo>? AvailableFacilities => this._state.AvailableFacilities;
+    private string UserInitial => this.State.UserInitial;
+    private string UserDisplayName => this.State.UserDisplayName;
+    private string UserEmail => this.State.UserEmail;
+    private string TenantName => this.State.TenantName;
+    private string FacilityName => this.State.FacilityName;
+    private string UserRole => this.State.UserRole;
+    private Guid? CurrentFacilityId => this.State.CurrentFacilityId;
+    private bool HasMultipleFacilities => this.State.HasMultipleFacilities;
+    private List<FacilityInfo>? AvailableFacilities => this.State.AvailableFacilities;
 
     private bool IsModalOpen
     {
-        get => this._state.IsModalOpen;
-        set => this._state.IsModalOpen = value;
+        get => this.State.IsModalOpen;
+        set => this.State.IsModalOpen = value;
     }
 
-    private DateOnly? ModalDate => this._state.ModalDate;
-    private TimeOnly? ModalTime => this._state.ModalTime;
-    private Guid? SelectedAppointmentId => this._state.SelectedAppointmentId;
-    private DateOnly? SelectedDate => this._state.SelectedDate;
-    private (DateOnly Start, DateOnly End)? SelectedDateRange => this._state.SelectedDateRange;
+    private DateOnly? ModalDate => this.State.ModalDate;
+    private TimeOnly? ModalTime => this.State.ModalTime;
+    private Guid? SelectedAppointmentId => this.State.SelectedAppointmentId;
+    private DateOnly? SelectedDate => this.State.SelectedDate;
+    private (DateOnly Start, DateOnly End)? SelectedDateRange => this.State.SelectedDateRange;
 
     // 日詳細ダイアログの状態
     private bool IsDayDetailOpen { get; set; }
     private DateOnly? DayDetailDate { get; set; }
 
-    private Dictionary<string, List<AppointmentStats>> MainStats => this._state.MainStats;
-    private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this._state.OriginalMainStats;
-    private Dictionary<string, bool> MainStatsGrayedOut => this._state.MainStatsGrayedOut;
-    private List<AppointmentDto> Appointments => this._state.Appointments;
-    private Dictionary<string, string> Holidays => this._state.Holidays;
+    private Dictionary<string, List<AppointmentStats>> MainStats => this.State.MainStats;
+    private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this.State.OriginalMainStats;
+    private Dictionary<string, bool> MainStatsGrayedOut => this.State.MainStatsGrayedOut;
+    private List<AppointmentDto> Appointments => this.State.Appointments;
+    private Dictionary<string, string> Holidays => this.State.Holidays;
 
-    private BusinessHoursDto? BusinessHours => this._state.BusinessHours;
-    private int StartHour => this._state.StartHour;
-    private int EndHour => this._state.EndHour;
+    private BusinessHoursDto? BusinessHours => this.State.BusinessHours;
+    private int StartHour => this.State.StartHour;
+    private int EndHour => this.State.EndHour;
 
     // AvailableEquipmentsプロパティは削除されました（EquipmentはAppointmentResourceに統合）
-    private SearchFilterPanel.SearchFilter? CurrentFilter => this._state.CurrentFilter;
-    private int ActiveFilterCount => this._state.ActiveFilterCount;
-    private List<SearchFilterPanel.FilterItem> AvailableFloors => this._state.AvailableFloors;
-    private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this._state.AvailableResourceGroups;
-    private List<SearchFilterPanel.FilterItem> AvailableResources => this._state.AvailableResources;
-    private List<SearchFilterPanel.FilterItem> AvailablePlans => this._state.AvailablePlans;
-    private List<SearchFilterPanel.FilterItem> AvailableOptions => this._state.AvailableOptions;
+    private SearchFilterPanel.SearchFilter? CurrentFilter => this.State.CurrentFilter;
+    private int ActiveFilterCount => this.State.ActiveFilterCount;
+    private List<SearchFilterPanel.FilterItem> AvailableFloors => this.State.AvailableFloors;
+    private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this.State.AvailableResourceGroups;
+    private List<SearchFilterPanel.FilterItem> AvailableResources => this.State.AvailableResources;
+    private List<SearchFilterPanel.FilterItem> AvailablePlans => this.State.AvailablePlans;
+    private List<SearchFilterPanel.FilterItem> AvailableOptions => this.State.AvailableOptions;
 
     protected override async Task OnInitializedAsync()
     {
         var sw = Stopwatch.StartNew();
-        Console.WriteLine($"[Performance] Calendar.OnInitializedAsync start: ViewType={this._state.CurrentView}");
-        this._state.IsLoading = true;
+        Console.WriteLine($"[Performance] Calendar.OnInitializedAsync start: ViewType={this.State.CurrentView}");
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
@@ -161,15 +162,15 @@ public partial class Calendar : ComponentBase
                 var currentUser = this.UserContextService.CurrentUser;
                 if (currentUser != null)
                 {
-                    this._state.UserDisplayName = currentUser.UserDisplayName;
-                    this._state.UserEmail = currentUser.Email;
-                    this._state.TenantName = currentUser.TenantName;
-                    this._state.FacilityName = currentUser.FacilityName;
-                    this._state.CurrentFacilityId = currentUser.FacilityId;
-                    this._state.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
-                    this._state.UserInitial = currentUser.Initial;
-                    this._state.AvailableFacilities = await this.UserContextService.GetAccessibleFacilitiesAsync();
-                    this._state.HasMultipleFacilities = this._state.AvailableFacilities.Count > 1;
+                    this.State.UserDisplayName = currentUser.UserDisplayName;
+                    this.State.UserEmail = currentUser.Email;
+                    this.State.TenantName = currentUser.TenantName;
+                    this.State.FacilityName = currentUser.FacilityName;
+                    this.State.CurrentFacilityId = currentUser.FacilityId;
+                    this.State.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
+                    this.State.UserInitial = currentUser.Initial;
+                    this.State.AvailableFacilities = await this.UserContextService.GetAccessibleFacilitiesAsync();
+                    this.State.HasMultipleFacilities = this.State.AvailableFacilities.Count > 1;
                 }
                 else
                 {
@@ -181,27 +182,27 @@ public partial class Calendar : ComponentBase
                 Console.WriteLine("[WARNING] Calendar.OnInitializedAsync: User is not authenticated");
             }
 
-            await this.DataService.LoadBusinessHoursAsync(this._state);
+            await this.DataService.LoadBusinessHoursAsync(this.State);
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
-            await this.DataService.LoadFilterOptionsAsync(this._state);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadFilterOptionsAsync(this.State);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             sw.Stop();
             Console.WriteLine($"[Performance] Calendar.OnInitializedAsync total: {sw.ElapsedMilliseconds}ms");
             this.StateHasChanged();
@@ -274,19 +275,19 @@ public partial class Calendar : ComponentBase
 
     private void ToggleFilterPanel()
     {
-        this._state.ShowFilterPanel = !this._state.ShowFilterPanel;
+        this.State.ShowFilterPanel = !this.State.ShowFilterPanel;
         this.StateHasChanged();
     }
 
     private void CloseFilterPanel()
     {
-        this._state.ShowFilterPanel = false;
+        this.State.ShowFilterPanel = false;
         this.StateHasChanged();
     }
 
     private void SetViewFromString(string view)
     {
-        this._state.SetViewFromString(view);
+        this.State.SetViewFromString(view);
         this.Layout?.UpdateCurrentView(this.CurrentView.ToString().ToLower());
         this.RegisterLayoutActions();
     }
@@ -296,235 +297,235 @@ public partial class Calendar : ComponentBase
     {
         var sw = Stopwatch.StartNew();
         Console.WriteLine($"[Performance] Calendar.SetView start: ViewType={view}");
-        this._state.SetView(view);
-        this._state.IsLoading = true;
+        this.State.SetView(view);
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             this.Layout?.UpdateCurrentView(view.ToString().ToLower());
             this.RegisterLayoutActions();
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             sw.Stop();
             Console.WriteLine($"[Performance] Calendar.SetView total: {sw.ElapsedMilliseconds}ms");
             this.StateHasChanged();
         }
     }
 
-    private string GetCurrentPeriodTitle() => this._state.GetCurrentPeriodTitle();
+    private string GetCurrentPeriodTitle() => this.State.GetCurrentPeriodTitle();
 
     private async Task PreviousPeriod()
     {
-        this._state.PreviousPeriod();
-        this._state.IsLoading = true;
+        this.State.PreviousPeriod();
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private async Task NextPeriod()
     {
-        this._state.NextPeriod();
-        this._state.IsLoading = true;
+        this.State.NextPeriod();
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private async Task PreviousBigPeriod()
     {
-        this._state.PreviousBigPeriod();
-        this._state.IsLoading = true;
+        this.State.PreviousBigPeriod();
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private async Task NextBigPeriod()
     {
-        this._state.NextBigPeriod();
-        this._state.IsLoading = true;
+        this.State.NextBigPeriod();
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private async Task GoToToday()
     {
-        this._state.GoToToday();
-        this._state.IsLoading = true;
+        this.State.GoToToday();
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private async Task HandleDateClick(DateOnly date)
     {
-        this._state.CurrentDate = date;
-        if (this._state.CurrentView == CalendarViewType.Month)
+        this.State.CurrentDate = date;
+        if (this.State.CurrentView == CalendarViewType.Month)
         {
-            this._state.CurrentView = CalendarViewType.Week;
-            this._state.WeekDays = 7;
+            this.State.CurrentView = CalendarViewType.Week;
+            this.State.WeekDays = 7;
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             this.Layout?.UpdateCurrentView("week");
             this.RegisterLayoutActions();
         }
         else
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         this.StateHasChanged();
     }
 
     private async Task HandleMonthClick((int Year, int Month) yearMonth)
     {
-        this._state.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
-        this._state.CurrentView = CalendarViewType.Month;
+        this.State.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        this.State.CurrentView = CalendarViewType.Month;
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.Layout?.UpdateCurrentView("month");
         this.RegisterLayoutActions();
         this.StateHasChanged();
@@ -532,53 +533,53 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleMonthSelected((int Year, int Month) yearMonth)
     {
-        this._state.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
+        this.State.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.StateHasChanged();
     }
 
     private async Task HandleYearSelected(int year)
     {
-        this._state.CurrentDate = new DateOnly(year, this._state.CurrentDate.Month, this._state.CurrentDate.Day);
-        this._state.IsLoading = true;
+        this.State.CurrentDate = new DateOnly(year, this.State.CurrentDate.Month, this.State.CurrentDate.Day);
+        this.State.IsLoading = true;
         this.StateHasChanged();
         try
         {
             await this.DataService.LoadMainStatsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadHolidaysAsync(
-                this._state,
-                this._state.CurrentView,
-                this._state.CurrentDate,
-                this._state.WeekDays);
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
         }
         finally
         {
-            this._state.IsLoading = false;
+            this.State.IsLoading = false;
             this.StateHasChanged();
         }
     }
 
     private void HandleSimpleViewChanged(bool showSimpleView)
     {
-        this._state.ShowSimpleView = showSimpleView;
+        this.State.ShowSimpleView = showSimpleView;
         this.StateHasChanged();
     }
 
@@ -586,25 +587,25 @@ public partial class Calendar : ComponentBase
 
     private void HandleDateSelect(DateOnly date)
     {
-        this._state.SelectedDate = date;
-        this._state.SelectedDateRange = null;
+        this.State.SelectedDate = date;
+        this.State.SelectedDateRange = null;
     }
 
     private async Task HandleDateDoubleClick(DateOnly date)
     {
-        this._state.CurrentDate = date;
-        this._state.CurrentView = CalendarViewType.Week;
-        this._state.WeekDays = 1;
+        this.State.CurrentDate = date;
+        this.State.CurrentView = CalendarViewType.Week;
+        this.State.WeekDays = 1;
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.Layout?.UpdateCurrentView("week");
         this.RegisterLayoutActions();
         this.StateHasChanged();
@@ -612,26 +613,26 @@ public partial class Calendar : ComponentBase
 
     private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
     {
-        this._state.SelectedDate = null;
-        this._state.SelectedDateRange = range;
+        this.State.SelectedDate = null;
+        this.State.SelectedDateRange = range;
     }
 
     private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
-        this._state.CurrentFilter = filter;
+        this.State.CurrentFilter = filter;
         await this.FilterService.ApplyFilterAsync(
             filter,
-            this._state.MainStats,
-            this._state.OriginalMainStats,
-            this._state.MainStatsGrayedOut,
-            this._state.CurrentView,
-            this._state.CurrentDate);
+            this.State.MainStats,
+            this.State.OriginalMainStats,
+            this.State.MainStatsGrayedOut,
+            this.State.CurrentView,
+            this.State.CurrentDate);
         this.StateHasChanged();
     }
 
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
-        this._state.CurrentFilter = filter;
+        this.State.CurrentFilter = filter;
 
         // フロア、リソースグループ、リソース、プラン・オプションのフィルターが変更された場合はデータを再取得
         var needsReload = filter.SelectedFloorIds.Any() ||
@@ -642,66 +643,66 @@ public partial class Calendar : ComponentBase
 
         if (needsReload)
         {
-            this._state.IsLoading = true;
+            this.State.IsLoading = true;
             this.StateHasChanged();
             try
             {
                 await this.DataService.LoadMainStatsAsync(
-                    this._state,
-                    this._state.CurrentView,
-                    this._state.CurrentDate,
-                    this._state.WeekDays);
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
                 await this.DataService.LoadAppointmentsAsync(
-                    this._state,
-                    this._state.CurrentView,
-                    this._state.CurrentDate,
-                    this._state.WeekDays);
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
             }
             finally
             {
-                this._state.IsLoading = false;
+                this.State.IsLoading = false;
             }
         }
 
         await this.FilterService.ApplyFilterAsync(
             filter,
-            this._state.MainStats,
-            this._state.OriginalMainStats,
-            this._state.MainStatsGrayedOut,
-            this._state.CurrentView,
-            this._state.CurrentDate);
+            this.State.MainStats,
+            this.State.OriginalMainStats,
+            this.State.MainStatsGrayedOut,
+            this.State.CurrentView,
+            this.State.CurrentDate);
         this.StateHasChanged();
     }
 
     private void HandleAppointmentClick(Guid apptId)
     {
-        this._state.OpenModal(this._state.CurrentDate, new TimeOnly(9, 0), apptId);
+        this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0), apptId);
     }
 
     private void HandleCreateRequest((DateOnly Date, TimeOnly Time) request)
     {
-        this._state.OpenModal(request.Date, request.Time);
+        this.State.OpenModal(request.Date, request.Time);
     }
 
     private async Task HandleWeekDaysChanged(int days)
     {
-        this._state.WeekDays = days;
+        this.State.WeekDays = days;
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.StateHasChanged();
     }
 
     private void HandleShowSlotsChanged(bool showSlots)
     {
-        this._state.ShowSlots = showSlots;
+        this.State.ShowSlots = showSlots;
         this.StateHasChanged();
     }
 
@@ -712,12 +713,12 @@ public partial class Calendar : ComponentBase
 
     private void OpenNewAppointmentModal()
     {
-        this._state.OpenModal(this._state.CurrentDate, new TimeOnly(9, 0));
+        this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0));
     }
 
     private void CloseModal()
     {
-        this._state.CloseModal();
+        this.State.CloseModal();
     }
 
     private async Task HandleSaveAppointment()
@@ -725,15 +726,15 @@ public partial class Calendar : ComponentBase
         this.CloseModal();
         // 予約保存後にデータを再取得
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.StateHasChanged();
     }
 
@@ -741,7 +742,7 @@ public partial class Calendar : ComponentBase
     {
         try
         {
-            var appt = this._state.Appointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
+            var appt = this.State.Appointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
             if (appt != null)
             {
                 var duration = appt.EndTime.HasValue && appt.StartTime.HasValue
@@ -760,15 +761,15 @@ public partial class Calendar : ComponentBase
 
                 // 予約更新後にデータを再取得
                 await this.DataService.LoadMainStatsAsync(
-                    this._state,
-                    this._state.CurrentView,
-                    this._state.CurrentDate,
-                    this._state.WeekDays);
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
                 await this.DataService.LoadAppointmentsAsync(
-                    this._state,
-                    this._state.CurrentView,
-                    this._state.CurrentDate,
-                    this._state.WeekDays);
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
                 this.StateHasChanged();
             }
         }
@@ -802,19 +803,19 @@ public partial class Calendar : ComponentBase
     private async Task HandleDayDetailGoToWeekView(DateOnly date)
     {
         this.CloseDayDetail();
-        this._state.CurrentDate = date;
-        this._state.CurrentView = CalendarViewType.Week;
-        this._state.WeekDays = 1;
+        this.State.CurrentDate = date;
+        this.State.CurrentView = CalendarViewType.Week;
+        this.State.WeekDays = 1;
         await this.DataService.LoadMainStatsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
-            this._state,
-            this._state.CurrentView,
-            this._state.CurrentDate,
-            this._state.WeekDays);
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         this.Layout?.UpdateCurrentView("week");
         this.RegisterLayoutActions();
         this.StateHasChanged();
