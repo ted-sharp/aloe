@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/26 22:13:02
+-- Date/Time    : 2025/12/26 22:36:10
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -188,6 +188,9 @@ CREATE TABLE "appointment_stat_slots" (
 CREATE INDEX "appointment_stat_slots_IX1"
   ON "appointment_stat_slots"("appt_stat_id","appt_date","appt_res_id");
 
+CREATE INDEX "appointment_stat_slots_IX2"
+  ON "appointment_stat_slots"("appt_date","appt_res_id","updated_at");
+
 CREATE UNIQUE INDEX "appointment_stat_slots_PKI"
   ON "appointment_stat_slots"("appt_stat_slot_id");
 
@@ -217,6 +220,9 @@ CREATE TABLE "appointment_stats" (
 
 CREATE UNIQUE INDEX "appointment_stats_IX1"
   ON "appointment_stats"("appt_date","appt_res_id") WHERE is_deleted = FALSE;
+
+CREATE INDEX "appointment_stats_IX2"
+  ON "appointment_stats"("appt_date","appt_res_id","updated_at");
 
 CREATE UNIQUE INDEX "appointment_stats_PKI"
   ON "appointment_stats"("appt_stat_id");

@@ -907,10 +907,11 @@ Field="appt_count","appt_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="appt_available","appt_available","@INT","NOT NULL",,"","",$00FFCC66,"GENERATED ALWAYS AS (appt_cap - appt_count) STORED"
 Index==1,appt_date,appt_res_id
 IndexOption=WHERE is_deleted = FALSE
+Index==0,appt_date,appt_res_id,updated_at
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251226221148
+ModifiedDateTime=20251226223557
 Position="APPT",3000,1400
 ZOrder=311
 
@@ -2142,10 +2143,11 @@ Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="slot_count","slot_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="slot_available","slot_available","@INT","NOT NULL",,"","",$00FFCC66,"GENERATED ALWAYS AS (slot_cap - slot_count) STORED"
 Index==0,appt_stat_id,appt_date,appt_res_id
+Index==0,appt_date,appt_res_id,updated_at
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251226221135
+ModifiedDateTime=20251226223538
 Position="appt",3000,1900
 ZOrder=393
 
