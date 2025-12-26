@@ -59,6 +59,7 @@ public class MedockDbContext : DbContext
     public DbSet<AppointmentSlotOverride> AppointmentSlotOverrides => this.Set<AppointmentSlotOverride>();
     public DbSet<AppointmentResourceAssignment> AppointmentResourceAssignments => this.Set<AppointmentResourceAssignment>();
     public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
+    public DbSet<AppointmentStatSlots> AppointmentStatSlots => this.Set<AppointmentStatSlots>();
     public DbSet<Plan> Plans => this.Set<Plan>();
     public DbSet<PlanCondition> PlanConditions => this.Set<PlanCondition>();
     public DbSet<PlanConditionMember> PlanConditionMembers => this.Set<PlanConditionMember>();

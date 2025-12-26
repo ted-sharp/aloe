@@ -9,7 +9,6 @@ using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
-using System.Text.Json;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -325,7 +324,7 @@ public class CalendarDataService
                         var key = (date, stat.AppointmentResource.ApptResId);
                         if (overridesByDateAndResource.TryGetValue(key, out var slotOverride))
                         {
-                            // 上書きされたスロット定義でApptGraphを再構築
+                            // 上書きされたスロット定義でAppointmentStatSlotsを再構築
                             return ApplySlotOverride(stat, slotOverride);
                         }
                         return stat;
@@ -398,46 +397,53 @@ public class CalendarDataService
 
         try
         {
-            // 既存のApptGraphをパース
-            var existingGraph = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
-            if (existingGraph == null)
-            {
-                return stat;
-            }
+            // 既存のAppointmentStatSlotsを取得
+            var existingSlots = stat.AppointmentStatSlots?.Where(s => !s.IsDeleted).ToList() ?? new List<AppointmentStatSlots>();
 
-            // 上書きされたスロット定義を使用して新しいグラフを構築
+            // 上書きされたスロット定義を使用して新しいAppointmentStatSlotsを構築
             var overrideSlots = slotOverride.ApptSlotsData.Slots;
-            var newSlots = new List<AppointmentGraphItem>();
+            var newStatSlots = new List<AppointmentStatSlots>();
 
             // 上書きされたスロット定義を元に、既存のカウントをマッピング
             foreach (var overrideSlot in overrideSlots)
             {
                 // 既存のスロットから対応するカウントを取得
-                var matchingSlot = existingGraph.Slots.FirstOrDefault(s =>
-                    s.Start == overrideSlot.Start && s.End == overrideSlot.End);
+                var slotStartMinutes = overrideSlot.Start.Hour * 60 + overrideSlot.Start.Minute;
+                var slotEndMinutes = overrideSlot.End.Hour * 60 + overrideSlot.End.Minute;
+                
+                var matchingSlot = existingSlots.FirstOrDefault(s =>
+                    s.SlotStart == slotStartMinutes && s.SlotEnd == slotEndMinutes);
 
-                newSlots.Add(new AppointmentGraphItem
+                newStatSlots.Add(new AppointmentStatSlots
                 {
-                    Start = overrideSlot.Start,
-                    End = overrideSlot.End,
-                    Count = matchingSlot?.Count ?? 0,
-                    Cap = overrideSlot.Cap,
-                    HasOutsideHours = overrideSlot.IsOutsideHours
+                    ApptStatSlotId = Guid.CreateVersion7(),
+                    ApptStatId = stat.ApptStatId,
+                    ApptDate = stat.ApptDate,
+                    ApptResId = stat.ApptResId,
+                    SlotStart = slotStartMinutes,
+                    SlotEnd = slotEndMinutes,
+                    SlotCount = matchingSlot?.SlotCount ?? 0,
+                    SlotCap = overrideSlot.Cap,
+                    IsDeleted = false,
+                    CreatedAt = matchingSlot?.CreatedAt ?? DateTime.UtcNow,
+                    CreatedUserId = matchingSlot?.CreatedUserId ?? Guid.Empty,
+                    CreatedSessionId = matchingSlot?.CreatedSessionId ?? Guid.Empty,
+                    UpdatedAt = DateTime.UtcNow,
+                    UpdatedUserId = Guid.Empty,
+                    UpdatedSessionId = Guid.Empty
                 });
             }
 
-            // 新しいグラフを作成
-            var newGraph = new AppointmentGraphRoot { Slots = newSlots };
-            var newGraphJson = JsonSerializer.Serialize(newGraph);
-
-            // 新しいAppointmentStatsを作成
+            // 新しいAppointmentStatsを作成（AppointmentStatSlotsを含む）
             return new AppointmentStats
             {
                 ApptStatId = stat.ApptStatId,
                 ApptDate = stat.ApptDate,
                 ApptResId = stat.ApptResId,
-                ApptGraph = newGraphJson,
+                ApptCap = stat.ApptCap,
+                ApptCount = stat.ApptCount,
                 AppointmentResource = stat.AppointmentResource,
+                AppointmentStatSlots = newStatSlots,
                 IsDeleted = stat.IsDeleted,
                 CreatedAt = stat.CreatedAt,
                 CreatedUserId = stat.CreatedUserId,

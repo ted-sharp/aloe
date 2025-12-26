@@ -2,15 +2,16 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
 
 /// <summary>
 /// 予約統計エンティティ
-/// 日別の予約状況（時間帯枠ごとの予約数/最大数）をJSONBで保持
+/// 日別の予約状況（時間帯枠ごとの予約数/最大数）を保持
 /// 
 /// 注意: 年間カレンダー表示などのパフォーマンス向上のため、このエンティティは
 /// AppointmentResourceやAppointmentSlotを直接使用せず、事前に集計された統計データを保持します。
 /// これにより、毎回の集計処理のコストを削減し、表示速度を向上させています。
+/// 
+/// 時間帯枠ごとの詳細データは AppointmentStatSlots テーブルで管理されます。
 /// </summary>
 [Table("appointment_stats")]
 public class AppointmentStats : IAuditableEntity
@@ -41,41 +42,6 @@ public class AppointmentStats : IAuditableEntity
     [Column("appt_available")]
     public int ApptAvailable { get; set; }
 
-    /// <summary>
-    /// 時間帯枠ごとのグラフデータ（JSONB）
-    /// 例: { "slots": [{ "time": "08:00", "count": 3, "max": 5 }, ...] }
-    /// </summary>
-    [Column("appt_graph")]
-    public string ApptGraph { get; set; } = "{}";
-
-    /// <summary>
-    /// 時間帯枠ごとのグラフデータ（型安全なアクセサー）
-    /// ApptGraph の JSONB データを型安全にアクセスするためのプロパティ
-    /// </summary>
-    [NotMapped]
-    public AppointmentGraphRoot? ApptGraphData
-    {
-        get
-        {
-            if (String.IsNullOrWhiteSpace(this.ApptGraph) || this.ApptGraph == "{}")
-                return null;
-            try
-            {
-                return JsonSerializer.Deserialize<AppointmentGraphRoot>(this.ApptGraph);
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-        set
-        {
-            this.ApptGraph = value != null
-                ? JsonSerializer.Serialize(value)
-                : "{}";
-        }
-    }
-
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
     public bool IsDeleted { get; set; }
@@ -96,5 +62,6 @@ public class AppointmentStats : IAuditableEntity
 
     // Navigation Properties
     public virtual AppointmentResource AppointmentResource { get; set; } = null!;
+    public virtual ICollection<AppointmentStatSlots> AppointmentStatSlots { get; set; } = new List<AppointmentStatSlots>();
 }
 

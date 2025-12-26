@@ -487,8 +487,9 @@ internal static class AppointmentStatsSeeder
         capacityCalcStopwatch.Stop();
         Console.WriteLine($"  [+] Capacity and graph data calculation completed - took {capacityCalcStopwatch.Elapsed.TotalSeconds:F2}s");
 
-        // 3. AppointmentStatsエンティティを作成
+        // 3. AppointmentStatsエンティティとAppointmentStatSlotsエンティティを作成
         var statsList = new List<AppointmentStats>();
+        var statSlotsList = new List<AppointmentStatSlots>();
         foreach (var (key, statsData) in statsMap)
         {
             var stat = new AppointmentStats
@@ -498,15 +499,31 @@ internal static class AppointmentStatsSeeder
                 ApptResId = statsData.ResourceId,
                 ApptCap = statsData.Capacity,
                 ApptCount = statsData.AppointmentCount,
-                ApptGraphData = new AppointmentGraphRoot
-                {
-                    Slots = statsData.GraphData
-                },
                 IsDeleted = false
             };
 
             SeederHelper.InitializeAuditFields(stat, dateTimeProvider);
             statsList.Add(stat);
+
+            // AppointmentStatSlotsエンティティを作成
+            foreach (var graphSlot in statsData.GraphData)
+            {
+                var statSlot = new AppointmentStatSlots
+                {
+                    ApptStatSlotId = Guid.CreateVersion7(),
+                    ApptStatId = stat.ApptStatId,
+                    ApptDate = statsData.Date,
+                    ApptResId = statsData.ResourceId,
+                    SlotStart = graphSlot.Start.Hour * 60 + graphSlot.Start.Minute,
+                    SlotEnd = graphSlot.End.Hour * 60 + graphSlot.End.Minute,
+                    SlotCap = graphSlot.Cap,
+                    SlotCount = graphSlot.Count,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(statSlot, dateTimeProvider);
+                statSlotsList.Add(statSlot);
+            }
         }
 
         if (statsList.Any())
@@ -520,6 +537,18 @@ internal static class AppointmentStatsSeeder
             insertStatsStopwatch.Stop();
             statsStopwatch.Stop();
             Console.WriteLine($"  [+] AppointmentStats: {statsList.Count} entries - took {statsStopwatch.Elapsed.TotalSeconds:F2}s (insert: {insertStatsStopwatch.Elapsed.TotalSeconds:F2}s)");
+        }
+
+        if (statSlotsList.Any())
+        {
+            var insertStatSlotsStopwatch = Stopwatch.StartNew();
+            await context.BulkInsertAsync(statSlotsList, new BulkConfig
+            {
+                SetOutputIdentity = false,
+                BatchSize = 5000
+            });
+            insertStatSlotsStopwatch.Stop();
+            Console.WriteLine($"  [+] AppointmentStatSlots: {statSlotsList.Count} entries - took {insertStatSlotsStopwatch.Elapsed.TotalSeconds:F2}s");
         }
     }
 

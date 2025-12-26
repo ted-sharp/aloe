@@ -58,7 +58,6 @@ public class AppointmentStatsConfiguration : IEntityTypeConfiguration<Appointmen
         entity.Property(e => e.ApptAvailable)
             .HasColumnName("appt_available")
             .HasComputedColumnSql("appt_cap - appt_count", stored: true);
-        entity.Property(e => e.ApptGraph).HasColumnName("appt_graph").HasColumnType("jsonb").HasDefaultValue("{}");
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
@@ -66,9 +65,51 @@ public class AppointmentStatsConfiguration : IEntityTypeConfiguration<Appointmen
             .WithMany(ar => ar.AppointmentStats)
             .HasForeignKey(e => e.ApptResId);
 
+        entity.HasMany(e => e.AppointmentStatSlots)
+            .WithOne(s => s.AppointmentStats)
+            .HasForeignKey(s => s.ApptStatId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         entity.HasIndex(e => new { e.ApptDate, e.ApptResId })
             .IsUnique()
             .HasFilter("[is_deleted] = 0");
+    }
+}
+
+/// <summary>
+/// AppointmentStatSlots エンティティ設定
+/// </summary>
+public class AppointmentStatSlotsConfiguration : IEntityTypeConfiguration<AppointmentStatSlots>
+{
+    public void Configure(EntityTypeBuilder<AppointmentStatSlots> entity)
+    {
+        entity.ToTable("appointment_stat_slots");
+        entity.HasKey(e => e.ApptStatSlotId);
+        entity.Property(e => e.ApptStatSlotId).HasColumnName("appt_stat_slot_id");
+        entity.Property(e => e.ApptStatId).HasColumnName("appt_stat_id");
+        entity.Property(e => e.ApptDate).HasColumnName("appt_date");
+        entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
+        entity.Property(e => e.SlotStart).HasColumnName("slot_start").HasDefaultValue(0);
+        entity.Property(e => e.SlotEnd).HasColumnName("slot_end").HasDefaultValue(0);
+        entity.Property(e => e.SlotCap).HasColumnName("slot_cap").HasDefaultValue(0);
+        entity.Property(e => e.SlotCount).HasColumnName("slot_count").HasDefaultValue(0);
+        entity.Property(e => e.SlotAvailable)
+            .HasColumnName("slot_available")
+            .HasComputedColumnSql("slot_cap - slot_count", stored: true);
+        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
+        ConfigurationHelper.ConfigureAuditableEntity(entity);
+
+        entity.HasOne(e => e.AppointmentStats)
+            .WithMany(s => s.AppointmentStatSlots)
+            .HasForeignKey(e => e.ApptStatId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        entity.HasOne(e => e.AppointmentResource)
+            .WithMany()
+            .HasForeignKey(e => e.ApptResId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        entity.HasIndex(e => new { e.ApptStatId, e.ApptDate, e.ApptResId });
     }
 }
 

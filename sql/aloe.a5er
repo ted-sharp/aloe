@@ -904,14 +904,13 @@ Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000000FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="appt_cap","appt_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="appt_count","appt_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Field="appt_available","appt_available","@INT","NOT NULL",,"","",$FFFFFFFF,"GENERATED ALWAYS AS (appt_cap - appt_count) STORED"
-Field="appt_graph","appt_graph","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
+Field="appt_available","appt_available","@INT","NOT NULL",,"","",$00FFCC66,"GENERATED ALWAYS AS (appt_cap - appt_count) STORED"
 Index==1,appt_date,appt_res_id
 IndexOption=WHERE is_deleted = FALSE
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251216220729
+ModifiedDateTime=20251226221148
 Position="APPT",3000,1400
 ZOrder=311
 
@@ -1423,7 +1422,7 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=3000
-Top=1900
+Top=2500
 Field="appt_res_assign_id","appt_res_assign_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_id","appt_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -1434,7 +1433,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251218204729
-Position="APPT",3000,1900
+Position="APPT",3000,2500
 ZOrder=357
 
 [Entity]
@@ -1537,23 +1536,6 @@ Left=320
 Top=1791
 ZOrder=363
 Width=828
-Height=1008
-
-[Comment]
-Comment=```jsonb\n{\n  "appt_graph": [\n    {\n      "start": "09:00",\n      "end": "09:30",\n      "cap": 10,\n      "count": 6,\n      "available": 4,\n    },\n    {\n      "start": "09:30",\n      "end": "10:00",\n      "cap": 10,\n      "count": 7,\n      "available": 3,\n    },\n  ]\n}\n```
-FontName=Tahoma
-FontBold=0
-FontItalic=0
-FontUnderline=0
-FontSize=9
-FontColor=$000000
-LineColor=$000000
-BkColor=$FFFFFF
-Page=appt
-Left=1304
-Top=1789
-ZOrder=364
-Width=407
 Height=1008
 
 [Entity]
@@ -2134,9 +2116,56 @@ Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=90
+Bar1=690
 Bar2=910
-Bar3=167
+Bar3=108
 TermPos1=R
-TermPos2=L
+TermPos2=R
 ZOrder=392
+
+[Entity]
+PName=appointment_stat_slots
+LName=appointment_stat_slots
+Comment=
+TableInnerOption=
+TableOption=
+Page=appt
+Left=3000
+Top=1900
+Field="appt_stat_slot_id","appt_stat_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_stat_id","appt_stat_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000099FF,""
+Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="slot_start","slot_start","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot_end","slot_end","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot_count","slot_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Field="slot_available","slot_available","@INT","NOT NULL",,"","",$00FFCC66,"GENERATED ALWAYS AS (slot_cap - slot_count) STORED"
+Index==0,appt_stat_id,appt_date,appt_res_id
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20251226221135
+Position="appt",3000,1900
+ZOrder=393
+
+[Relation]
+Entity1=appointment_stats
+Entity2=appointment_stat_slots
+RelationType1=2
+RelationType2=3
+Fields1=appt_stat_id
+Fields2=appt_stat_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,1701,6699,1553,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=170
+Bar2=670
+Bar3=155
+TermPos1=R
+TermPos2=R
+ZOrder=394

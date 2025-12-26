@@ -131,29 +131,24 @@
 
         foreach (var stat in MainStats)
         {
-            try
+            if (stat.AppointmentStatSlots != null)
             {
-                var graphData = System.Text.Json.JsonSerializer.Deserialize<GraphDefinition>(stat.ApptGraph);
-                if (graphData?.Slots != null)
+                foreach (var statSlot in stat.AppointmentStatSlots.Where(s => !s.IsDeleted))
                 {
-                    foreach (var slot in graphData.Slots)
+                    var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                    var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                    var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+                    
+                    if (slotMap.ContainsKey(timeRangeKey))
                     {
-                        var timeRangeKey = $"{slot.Start:HH:mm}-{slot.End:HH:mm}";
-                        if (slotMap.ContainsKey(timeRangeKey))
-                        {
-                            var existing = slotMap[timeRangeKey];
-                            slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + slot.Count, existing.Cap + slot.Cap);
-                        }
-                        else
-                        {
-                            slotMap[timeRangeKey] = (slot.Start, slot.End, slot.Count, slot.Cap);
-                        }
+                        var existing = slotMap[timeRangeKey];
+                        slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
+                    }
+                    else
+                    {
+                        slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
                     }
                 }
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                // JSONパースエラーは無視
             }
         }
 
@@ -165,30 +160,6 @@
             IsGrayedOut = false,
             FilteredCount = 0
         }).OrderBy(s => s.Time).ToList();
-    }
-
-    private class GraphDefinition
-    {
-        [System.Text.Json.Serialization.JsonPropertyName("slots")]
-        public List<GraphSlotItem> Slots { get; set; } = new();
-    }
-
-    private class GraphSlotItem
-    {
-        [System.Text.Json.Serialization.JsonPropertyName("start")]
-        public TimeOnly Start { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("end")]
-        public TimeOnly End { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("count")]
-        public int Count { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("cap")]
-        public int Cap { get; set; }
-
-        [System.Text.Json.Serialization.JsonPropertyName("available")]
-        public int Available { get; set; }
     }
 
     private static readonly string[] DayOfWeekNames = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"];

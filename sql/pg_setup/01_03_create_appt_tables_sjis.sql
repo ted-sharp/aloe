@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/19 23:56:38
+-- Date/Time    : 2025/12/26 22:13:02
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -161,6 +161,39 @@ CREATE UNIQUE INDEX "appointment_slots_PKI"
 ALTER TABLE "appointment_slots"
   ADD CONSTRAINT "appointment_slots_PKC" PRIMARY KEY ("appt_slot_id");
 
+-- appointment_stat_slots
+-- * BackupToTempTable
+DROP TABLE if exists "appointment_stat_slots" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "appointment_stat_slots" (
+  "appt_stat_slot_id" UUID DEFAULT uuidv7() NOT NULL
+  , "appt_stat_id" UUID NOT NULL
+  , "appt_date" date NOT NULL
+  , "appt_res_id" UUID NOT NULL
+  , "slot_start" integer DEFAULT 0 NOT NULL
+  , "slot_end" integer DEFAULT 0 NOT NULL
+  , "slot_cap" integer DEFAULT 0 NOT NULL
+  , "slot_count" integer DEFAULT 0 NOT NULL
+  , "slot_available" integer NOT NULL GENERATED ALWAYS AS (slot_cap - slot_count) STORED
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "appointment_stat_slots_IX1"
+  ON "appointment_stat_slots"("appt_stat_id","appt_date","appt_res_id");
+
+CREATE UNIQUE INDEX "appointment_stat_slots_PKI"
+  ON "appointment_stat_slots"("appt_stat_slot_id");
+
+ALTER TABLE "appointment_stat_slots"
+  ADD CONSTRAINT "appointment_stat_slots_PKC" PRIMARY KEY ("appt_stat_slot_id");
+
 -- appointment_stats
 -- * BackupToTempTable
 DROP TABLE if exists "appointment_stats" CASCADE;
@@ -173,7 +206,6 @@ CREATE TABLE "appointment_stats" (
   , "appt_cap" integer DEFAULT 0 NOT NULL
   , "appt_count" integer DEFAULT 0 NOT NULL
   , "appt_available" integer NOT NULL GENERATED ALWAYS AS (appt_cap - appt_count) STORED
-  , "appt_graph" JSONB DEFAULT '{}' NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -1375,6 +1407,11 @@ ALTER TABLE "appointment_slots"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "appointment_stat_slots"
+  ADD CONSTRAINT "appointment_stat_slots_FK1" FOREIGN KEY ("appt_stat_id") REFERENCES "appointment_stats"("appt_stat_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "appointment_stats"
   ADD CONSTRAINT "appointment_stats_FK1" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
   ON DELETE CASCADE
@@ -1623,6 +1660,24 @@ COMMENT ON COLUMN "appointment_slots"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointment_slots"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_slots"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "appointment_stat_slots" IS 'appointment_stat_slots';
+COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_slot_id" IS 'appt_stat_slot_id';
+COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_id" IS 'appt_stat_id';
+COMMENT ON COLUMN "appointment_stat_slots"."appt_date" IS 'appt_date';
+COMMENT ON COLUMN "appointment_stat_slots"."appt_res_id" IS 'appt_res_id';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_start" IS 'slot_start';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_end" IS 'slot_end';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_cap" IS 'slot_cap';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_count" IS 'slot_count';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_available" IS 'slot_available';
+COMMENT ON COLUMN "appointment_stat_slots"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "appointment_stat_slots"."created_at" IS 'created_at';
+COMMENT ON COLUMN "appointment_stat_slots"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "appointment_stat_slots"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "appointment_stat_slots"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "appointment_stat_slots"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "appointment_stat_slots"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "appointment_stats" IS 'appointment_stats';
 COMMENT ON COLUMN "appointment_stats"."appt_stat_id" IS 'appt_stat_id';
 COMMENT ON COLUMN "appointment_stats"."appt_date" IS 'appt_date';
@@ -1630,7 +1685,6 @@ COMMENT ON COLUMN "appointment_stats"."appt_res_id" IS 'appt_res_id';
 COMMENT ON COLUMN "appointment_stats"."appt_cap" IS 'appt_cap';
 COMMENT ON COLUMN "appointment_stats"."appt_count" IS 'appt_count';
 COMMENT ON COLUMN "appointment_stats"."appt_available" IS 'appt_available';
-COMMENT ON COLUMN "appointment_stats"."appt_graph" IS 'appt_graph';
 COMMENT ON COLUMN "appointment_stats"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointment_stats"."created_at" IS 'created_at';
 COMMENT ON COLUMN "appointment_stats"."created_user_id" IS 'created_user_id';

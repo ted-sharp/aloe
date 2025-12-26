@@ -58,6 +58,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         return await this._context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
+            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
@@ -83,6 +84,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             .Include(s => s.AppointmentResource)
                 .ThenInclude(r => r.AppointmentResourceGroupMembers)
                     .ThenInclude(m => m.AppointmentResourceGroup)
+            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&

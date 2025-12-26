@@ -1,7 +1,6 @@
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
-using System.Text.Json;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -73,35 +72,30 @@ public class CalendarFilterService
     {
         var hasAvailableSlot = false;
 
-        // 全てのMainリソースのApptGraphをパースしてスロットを合算
+        // 全てのMainリソースのAppointmentStatSlotsを取得してスロットを合算
         // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）
         var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
 
         foreach (var stat in statsList)
         {
-            try
+            if (stat.AppointmentStatSlots != null)
             {
-                var graphData = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
-                if (graphData?.Slots != null)
+                foreach (var statSlot in stat.AppointmentStatSlots.Where(s => !s.IsDeleted))
                 {
-                    foreach (var slot in graphData.Slots)
+                    var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                    var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                    var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+                    
+                    if (slotMap.ContainsKey(timeRangeKey))
                     {
-                        var timeRangeKey = $"{slot.Start:HH:mm}-{slot.End:HH:mm}";
-                        if (slotMap.ContainsKey(timeRangeKey))
-                        {
-                            var existing = slotMap[timeRangeKey];
-                            slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + slot.Count, existing.Cap + slot.Cap);
-                        }
-                        else
-                        {
-                            slotMap[timeRangeKey] = (slot.Start, slot.End, slot.Count, slot.Cap);
-                        }
+                        var existing = slotMap[timeRangeKey];
+                        slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
+                    }
+                    else
+                    {
+                        slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
                     }
                 }
-            }
-            catch (JsonException)
-            {
-                // JSONパースエラーは無視して続行
             }
         }
 

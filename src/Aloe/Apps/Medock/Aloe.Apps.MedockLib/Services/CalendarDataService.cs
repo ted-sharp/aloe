@@ -1,7 +1,6 @@
 using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
-using System.Text.Json;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -56,45 +55,40 @@ public class CalendarDataService : ICalendarDataService
                 var statsList = kvp.Value;
 
                 // Mainリソースは各Floorに1つだけのため、合算処理は不要
-                // 最初の要素（唯一の要素）のApptGraphをそのまま使用
+                // 最初の要素（唯一の要素）のAppointmentStatSlotsをそのまま使用
                 var stat = statsList.FirstOrDefault();
                 List<SlotDataDto> slots = new();
 
-                if (stat != null)
+                if (stat != null && stat.AppointmentStatSlots != null)
                 {
-                    try
-                    {
-                        var graphData = JsonSerializer.Deserialize<AppointmentGraphRoot>(stat.ApptGraph);
-                        if (graphData?.Slots != null)
+                    slots = stat.AppointmentStatSlots
+                        .Where(s => !s.IsDeleted)
+                        .Select(statSlot =>
                         {
-                            slots = graphData.Slots.Select(slot =>
-                            {
-                                // スロットの開始時刻がフィルター時間帯にマッチするかをチェック
-                                var isSlotGrayed = false;
-                                if (filterHours != null && filterHours.Count > 0)
-                                {
-                                    // フィルターがある場合、スロットの開始時刻のHourがフィルターに含まれていなければグレーアウト
-                                    isSlotGrayed = !filterHours.Contains(slot.Start.Hour);
-                                }
+                            // スロットの開始時刻を分単位からTimeOnlyに変換
+                            var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                            var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
 
-                                return new SlotDataDto
-                                {
-                                    Start = slot.Start.ToString("HH:mm"),
-                                    End = slot.End.ToString("HH:mm"),
-                                    Count = slot.Count,
-                                    Cap = slot.Cap,
-                                    Available = slot.Cap - slot.Count,
-                                    IsGrayedOut = isSlotGrayed,
-                                    FilteredCount = 0,
-                                    IsOutsideHours = slot.HasOutsideHours // 時間外スロットフラグをマッピング
-                                };
-                            }).OrderBy(s => s.Start).ToList();
-                        }
-                    }
-                    catch (JsonException)
-                    {
-                        // JSONパースエラーは無視して続行（空のslotsリストのまま）
-                    }
+                            // スロットの開始時刻がフィルター時間帯にマッチするかをチェック
+                            var isSlotGrayed = false;
+                            if (filterHours != null && filterHours.Count > 0)
+                            {
+                                // フィルターがある場合、スロットの開始時刻のHourがフィルターに含まれていなければグレーアウト
+                                isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
+                            }
+
+                            return new SlotDataDto
+                            {
+                                Start = slotStartTime.ToString("HH:mm"),
+                                End = slotEndTime.ToString("HH:mm"),
+                                Count = statSlot.SlotCount,
+                                Cap = statSlot.SlotCap,
+                                Available = statSlot.SlotAvailable,
+                                IsGrayedOut = isSlotGrayed,
+                                FilteredCount = 0,
+                                IsOutsideHours = false // TODO: 時間外スロットフラグの判定が必要な場合は追加
+                            };
+                        }).OrderBy(s => s.Start).ToList();
                 }
 
                 var isGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;
