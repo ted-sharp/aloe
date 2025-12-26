@@ -3,6 +3,7 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components;
+using Aloe.Apps.MedockServer.Hubs;
 using Aloe.Apps.MedockServer.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components;
@@ -64,7 +65,7 @@ if (!showSqlLogs)
 builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    
+
     if (!showSqlLogs)
     {
         // SQLログを出力しない
@@ -82,7 +83,7 @@ builder.Services.AddDbContextFactory<MedockDbContext>((services, options) =>
 builder.Services.AddDbContext<MedockDbContext>((services, options) =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
-    
+
     if (!showSqlLogs)
     {
         // SQLログを出力しない
@@ -115,6 +116,12 @@ builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarState>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarDataService>();
+
+// Add SignalR
+builder.Services.AddSignalR();
+
+// Add AppointmentStats Notification Service
+builder.Services.AddScoped<IAppointmentStatsNotificationService, AppointmentStatsNotificationService>();
 
 // Add Authentication State Provider
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
@@ -160,6 +167,10 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 app.MapControllers();
+
+// Map SignalR Hub
+app.MapHub<AppointmentStatsHub>("/hubs/appointmentStats");
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 

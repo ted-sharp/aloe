@@ -138,7 +138,7 @@ public class CalendarDataService
             // リソースをロード（Equipmentリソースのみ）
             var resources = await context.AppointmentResources
                 .AsNoTracking()
-                .Where(r => r.Floor.FacilityId == facilityId && 
+                .Where(r => r.Floor.FacilityId == facilityId &&
                            !r.IsDeleted &&
                            r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment)
                 .OrderBy(r => r.ApptResSeq)
@@ -155,8 +155,8 @@ public class CalendarDataService
             var today = DateOnly.FromDateTime(DateTime.Today);
             var plans = await context.Plans
                 .AsNoTracking()
-                .Where(p => p.FacilityId == facilityId && 
-                           !p.IsDeleted && 
+                .Where(p => p.FacilityId == facilityId &&
+                           !p.IsDeleted &&
                            p.IsActive &&
                            p.ActiveFrom <= today &&
                            p.ActiveTo >= today)
@@ -219,10 +219,10 @@ public class CalendarDataService
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
             Console.WriteLine($"[Performance] LoadAppointmentsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
-            
+
             var querySw = Stopwatch.StartNew();
             var appointments = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
-            
+
             // フロアフィルターを適用
             if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
             {
@@ -230,10 +230,10 @@ public class CalendarDataService
                     .Where(a => a.FloorId.HasValue && state.CurrentFilter.SelectedFloorIds.Contains(a.FloorId.Value))
                     .ToList();
             }
-            
+
             querySw.Stop();
             Console.WriteLine($"[Performance] LoadAppointmentsAsync query: {querySw.ElapsedMilliseconds}ms, Count={appointments.Count}");
-            
+
             state.Appointments = appointments;
         }
         catch (Exception)
@@ -261,7 +261,7 @@ public class CalendarDataService
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
             Console.WriteLine($"[Performance] LoadMainStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
-            
+
             var querySw = Stopwatch.StartNew();
             List<AppointmentStats> mainStats;
             if (state.CurrentFilter != null && state.CurrentFilter.IsActive)
@@ -410,7 +410,7 @@ public class CalendarDataService
                 // 既存のスロットから対応するカウントを取得
                 var slotStartMinutes = overrideSlot.Start.Hour * 60 + overrideSlot.Start.Minute;
                 var slotEndMinutes = overrideSlot.End.Hour * 60 + overrideSlot.End.Minute;
-                
+
                 var matchingSlot = existingSlots.FirstOrDefault(s =>
                     s.SlotStart == slotStartMinutes && s.SlotEnd == slotEndMinutes);
 

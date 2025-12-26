@@ -40,19 +40,19 @@ public static class WinterColormap
     {
         // 値を0-1の範囲にクランプ
         var clampedRatio = Math.Max(0.0, Math.Min(1.0, ratio));
-        
+
         // 0-255のインデックスに変換（配列の範囲内に保証）
         var index = Math.Max(0, Math.Min(255, (int)Math.Floor(clampedRatio * 255)));
-        
+
         // ルックアップテーブルからRGB値を取得（安全性チェック）
         if (index < 0 || index >= Colormap.Length)
         {
             // フォールバック: エラー時はグレーを返す
             return "#9ca3af";
         }
-        
+
         var (r, g, b) = Colormap[index];
-        
+
         // 16進数カラーコードに変換
         return RgbToHex(r, g, b);
     }
@@ -80,13 +80,13 @@ public static class WinterColormap
     public static string GetWinterColorFromAvailable(int available, int cap)
     {
         if (cap <= 0) return "#9ca3af"; // キャパシティが0以下の場合はグレー
-        
+
         // マイナス値（オーバーキャパシティ）の場合は赤色を返す
         if (available < 0)
         {
             return "#FF0000"; // 赤
         }
-        
+
         var vacancyRatio = (double)available / cap;
         // 空室率が1.0を超える場合もクランプされるが、明示的に処理
         return GetWinterColorFromVacancyRatio(Math.Max(0.0, Math.Min(1.0, vacancyRatio)));

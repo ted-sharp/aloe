@@ -29,11 +29,18 @@ public interface IAppointmentStatsRepository
     /// 指定日付範囲とフィルター条件でMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します。
     /// </summary>
     Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeWithFiltersAsync(
-        DateOnly startDate, 
+        DateOnly startDate,
         DateOnly endDate,
         List<Guid>? floorIds = null,
         List<Guid>? resourceGroupIds = null,
         List<Guid>? resourceIds = null,
         List<Guid>? planIds = null,
         List<Guid>? optionPlanIds = null);
+
+    /// <summary>
+    /// 指定日付とリソースIDでMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します（差分取得用）。
+    /// </summary>
+    Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateAndResourcesAsync(
+        DateOnly date,
+        List<Guid> resourceIds);
 }

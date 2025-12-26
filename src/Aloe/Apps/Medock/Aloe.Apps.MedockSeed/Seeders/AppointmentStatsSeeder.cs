@@ -378,7 +378,7 @@ internal static class AppointmentStatsSeeder
                     var morningSlot = outsideHoursSlots.FirstOrDefault(s => s.End <= businessStartTime);
                     var lunchSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= lunchStartTime && s.End <= lunchEndTime);
                     var eveningSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= businessEndTime);
-                    
+
                     // 最適化：TimeSlotCountsをTimeOnlyに変換（1回だけパース）
                     var parsedTimeSlotCounts = new List<(TimeOnly Time, int Count)>();
                     foreach (var (timeKey, cnt) in statsData.TimeSlotCounts)
@@ -615,7 +615,7 @@ internal static class AppointmentStatsSeeder
         var businessEndTime = TimeOnly.Parse(businessHoursForGen.End);
         var lunchStartTime = businessHoursForGen.Lunch != null ? TimeOnly.Parse(businessHoursForGen.Lunch.Start) : new TimeOnly(12, 0);
         var lunchEndTime = businessHoursForGen.Lunch != null ? TimeOnly.Parse(businessHoursForGen.Lunch.End) : new TimeOnly(13, 0);
-        
+
         // パース済みの値を直接渡す（メモ化された値を使用）
         var parsedBusinessHours = new ParsedBusinessHours
         {

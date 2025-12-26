@@ -17,10 +17,10 @@ public class CalendarDataDto
 /// </summary>
 public class AppointmentDataDto
 {
-    public string Id { get; set; } = string.Empty;
-    public string Date { get; set; } = string.Empty;
-    public string StartTime { get; set; } = string.Empty;
-    public string EndTime { get; set; } = string.Empty;
+    public string Id { get; set; } = String.Empty;
+    public string Date { get; set; } = String.Empty;
+    public string StartTime { get; set; } = String.Empty;
+    public string EndTime { get; set; } = String.Empty;
     public string? PatientName { get; set; }
     public Guid? PatientId { get; set; }
     public string? OrganizationName { get; set; }
@@ -44,14 +44,14 @@ public class MainStatsDataDto
 /// </summary>
 public class SlotDataDto
 {
-    public string Start { get; set; } = string.Empty;
-    public string End { get; set; } = string.Empty;
+    public string Start { get; set; } = String.Empty;
+    public string End { get; set; } = String.Empty;
     public int Count { get; set; }
     public int Cap { get; set; }
     public int Available { get; set; }
     public bool IsGrayedOut { get; set; }
     public int FilteredCount { get; set; }
-    
+
     /// <summary>
     /// 時間外スロットかどうか（時間外スロットはグラフには描画されず、赤い縦ラインで存在の有無のみ表示）
     /// 

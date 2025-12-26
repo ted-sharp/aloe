@@ -14,6 +14,7 @@ import { renderYearView } from './renderers/year-view.js';
 import { renderMonthView } from './renderers/month-view.js';
 import { renderWeekView } from './renderers/week-view.js';
 import { renderDayDetailBarChart } from './renderers/bar-chart/index.js';
+import { startConnection, stopConnection } from './realtime/signalr-client.js';
 
 // Blazor DayDetailPopup用のステージを管理
 const dayDetailPopupStages = new Map();
@@ -78,6 +79,19 @@ function init(containerId, data, options, dotNetRef) {
     setState({ stage });
     createLayers();
     createTooltip();
+
+    // Initialize SignalR connection for real-time updates
+    startConnection(async (updatedDate, updatedResourceIds, diffData) => {
+        console.log('Stats updated, refreshing calendar:', { updatedDate, updatedResourceIds });
+        // データが更新されたら、カレンダーを再描画
+        // 実際の実装では、diffDataを使用して部分更新を行う
+        const state = getState();
+        if (state.mainStats) {
+            // 差分データを既存のdataにマージ
+            // ここでは簡易的に全体を再描画
+            render();
+        }
+    });
 
     // Set initial data
     if (data) {
@@ -235,6 +249,9 @@ function destroy() {
     if (state.tooltip && state.tooltip.parentNode) {
         state.tooltip.parentNode.removeChild(state.tooltip);
     }
+
+    // SignalR接続を停止
+    stopConnection();
 
     resetState();
 }

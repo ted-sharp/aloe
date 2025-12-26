@@ -114,7 +114,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         if (planIds != null && planIds.Any() || optionPlanIds != null && optionPlanIds.Any())
         {
             var resourceIdsFromPlans = new HashSet<Guid>();
-            
+
             // プランからリソースを取得
             if (planIds != null && planIds.Any())
             {
@@ -158,5 +158,22 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
 
         return await query.ToListAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateAndResourcesAsync(
+        DateOnly date,
+        List<Guid> resourceIds)
+    {
+        return await this._context.AppointmentStats
+            .AsNoTracking()
+            .Include(s => s.AppointmentResource)
+            .Include(s => s.AppointmentStatSlots)
+            .Where(s => !s.IsDeleted &&
+                        !s.AppointmentResource.IsDeleted &&
+                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                        s.ApptDate == date &&
+                        resourceIds.Contains(s.ApptResId))
+            .ToListAsync();
     }
 }

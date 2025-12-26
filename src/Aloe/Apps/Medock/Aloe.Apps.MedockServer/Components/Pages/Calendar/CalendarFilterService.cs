@@ -85,7 +85,7 @@ public class CalendarFilterService
                     var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
                     var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
                     var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
-                    
+
                     if (slotMap.ContainsKey(timeRangeKey))
                     {
                         var existing = slotMap[timeRangeKey];
