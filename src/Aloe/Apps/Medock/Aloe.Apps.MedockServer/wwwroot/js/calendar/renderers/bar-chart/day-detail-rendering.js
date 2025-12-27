@@ -3,7 +3,7 @@
  *
  * ポップアップ/モーダル用の日詳細描画
  * - 使用場面: 日詳細ポップアップ、モーダル
- * - 特徴: 背景、日付テキスト、簡易表示モード、棒グラフ（詳細版）、インタラクションエリアを含む
+ * - 特徴: 背景、日付テキスト、棒グラフ（詳細版）、インタラクションエリアを含む
  * - 関数: renderDayDetailBarChart()
  *
  * 注意: 年間/月間カレンダーでは使用しない（day-calendar-rendering.jsを使用）
@@ -12,13 +12,16 @@
 import { getState } from '../../state.js';
 import { CONFIG } from '../../config.js';
 import { isDateInRange } from '../../utils/date-utils.js';
-import { getSymbolFromVacancyRatio, renderSimpleViewSymbol } from './simple-view.js';
 import { renderDetailBarChart } from './day-detail-bar-rendering.js';
 import { createInteractionArea } from './interactions.js';
 
 /**
  * 詳細棒グラフ形式で日付セルを描画（集約しないバージョン）
  * GraphData通りのスロットを個別に描画
+ * 
+ * 注意: この関数は常に詳細表示（棒グラフ）のみを描画します。
+ * state.options.showSimpleViewの値は無視されます。
+ * 
  * @param {number} cellLeft - セルの左端X座標
  * @param {number} cellTop - セルの上端Y座標
  * @param {number} cellWidth - セル幅
@@ -130,44 +133,8 @@ export function renderDayDetailBarChart(cellLeft, cellTop, cellWidth, cellHeight
         }
     }
 
-    // 簡易表示モードの判定
-    const showSimpleView = state.options?.showSimpleView ?? false;
-
-    // 簡易表示モードの場合
-    if (!isTooSmall && showSimpleView) {
-        // 時間帯枠データから空き率、空き数、キャパシティを計算（フィルタ条件を考慮）
-        let overallVacancyRatio = 0;
-        let totalAvailable = 0; // 合計空き数
-        let totalCapacity = 0;   // 合計キャパシティ
-        
-        if (slots && slots.length > 0) {
-            // 全スロットの空き数とキャパシティを合計
-            slots.forEach(slot => {
-                // グレーアウトされたスロットは除外
-                if (slot.isGrayedOut || isDateGrayed) {
-                    return;
-                }
-                
-                const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 1;
-                const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-                
-                // 空き数とキャパシティを合計
-                totalCapacity += cap;
-                totalAvailable += (cap - count);
-            });
-            
-            // totalAvailableとtotalCapacityから空き率を計算（マイナスを許容）
-            if (totalCapacity > 0) {
-                overallVacancyRatio = totalAvailable / totalCapacity;
-            }
-        }
-        
-        // 記号を決定して描画
-        const symbolType = getSymbolFromVacancyRatio(overallVacancyRatio);
-        renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight, dateStr, symbolType, isDateGrayed, overallVacancyRatio, totalAvailable, totalCapacity);
-    }
     // 詳細表示モード（棒グラフ描画）
-    else if (!isTooSmall && slots && slots.length > 0) {
+    if (!isTooSmall && slots && slots.length > 0) {
         // 業務時間設定を取得
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
