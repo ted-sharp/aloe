@@ -156,8 +156,8 @@ export function renderBarChart({
              (slotEnd > lunchStartHour && slotEnd <= lunchEndHour) ||
              (slotStart <= lunchStartHour && slotEnd >= lunchEndHour));
 
-        if (slotEnd <= startHour) {
-            // ビジネスアワー開始時刻より前
+        if (slotEnd < startHour || slotStart < startHour) {
+            // ビジネスアワー開始時刻より前（完全に前、または開始時刻より前から始まる）
             slotsBefore.push(slot);
         } else if (slotStart >= endHour) {
             // ビジネスアワー終了時刻より後
@@ -179,17 +179,12 @@ export function renderBarChart({
     // 時間外スロットはグラフには描画しない（赤い縦ラインで存在の有無のみ表示）
     // フィルタリング処理は不要（縦ライン描画用のフラグで判定）
 
-    // 描画対象のスロットリストを構築（集約されたスロットも含む、ただし昼休みは除外）
+    // 描画対象のスロットリストを構築（ビジネスアワー前/後のスロットは棒グラフとして描画せず、縦ラインのみで表示）
     const slotsToRender = [];
-    if (aggregatedBefore) {
-        slotsToRender.push({ ...aggregatedBefore, position: 'before' });
-    }
+    // ビジネスアワー前/後のスロットは棒グラフとして描画せず、縦ラインのみで表示
     slotsInBusiness.forEach(slot => {
         slotsToRender.push({ ...slot, position: 'in' });
     });
-    if (aggregatedAfter) {
-        slotsToRender.push({ ...aggregatedAfter, position: 'after' });
-    }
     // 時間外スロットはグラフには描画しない（赤い縦ラインで存在の有無のみ表示）
     // 昼休みのスロットは集約するが、描画はしない（グラフ幅を取らない）
 
@@ -356,11 +351,12 @@ export function renderBarChart({
     });
 
     // 業務時間の開始・終了位置に縦ラインを描画（昼休みの縦ラインと同様に常に表示）
-    // 時間外スロットに件数がある場合は赤、ない場合はグレー
+    // 時間外スロットまたは通常のビジネスアワー前/後のスロットに件数がある場合は赤、ない場合はグレー
     {
         // 開始位置に縦ライン
-        const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#d1d5db'; // 赤またはグレー
-        const beforeLineWidth = hasOutsideHoursBefore ? 2 : 1;
+        const hasBeforeSlots = slotsBefore.length > 0 || (aggregatedBefore && (aggregatedBefore.count > 0 || aggregatedBefore.cap > 0));
+        const beforeLineColor = (hasOutsideHoursBefore || hasBeforeSlots) ? '#ef4444' : '#d1d5db'; // 赤またはグレー
+        const beforeLineWidth = (hasOutsideHoursBefore || hasBeforeSlots) ? 2 : 1;
         const beforeLine = new Konva.Line({
             points: [businessStartX, barAreaTop, businessStartX, barAreaTop + barAreaHeight],
             stroke: beforeLineColor,
@@ -372,8 +368,9 @@ export function renderBarChart({
 
     {
         // 終了位置に縦ライン
-        const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db'; // 赤またはグレー
-        const afterLineWidth = hasOutsideHoursAfter ? 2 : 1;
+        const hasAfterSlots = slotsAfter.length > 0 || (aggregatedAfter && (aggregatedAfter.count > 0 || aggregatedAfter.cap > 0));
+        const afterLineColor = (hasOutsideHoursAfter || hasAfterSlots) ? '#ef4444' : '#d1d5db'; // 赤またはグレー
+        const afterLineWidth = (hasOutsideHoursAfter || hasAfterSlots) ? 2 : 1;
         const afterLine = new Konva.Line({
             points: [businessEndX, barAreaTop, businessEndX, barAreaTop + barAreaHeight],
             stroke: afterLineColor,

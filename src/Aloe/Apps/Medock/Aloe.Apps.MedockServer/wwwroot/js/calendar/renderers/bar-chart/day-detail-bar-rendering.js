@@ -192,8 +192,8 @@ export function renderDetailBarChart({
              (slotEnd > lunchStartHour && slotEnd <= lunchEndHour) ||
              (slotStart <= lunchStartHour && slotEnd >= lunchEndHour));
 
-        if (slotEnd <= startHour) {
-            // ビジネスアワー開始時刻より前
+        if (slotEnd < startHour || slotStart < startHour) {
+            // ビジネスアワー開始時刻より前（完全に前、または開始時刻より前から始まる）
             slotsBefore.push(slot);
         } else if (slotStart >= endHour) {
             // ビジネスアワー終了時刻より後
@@ -207,40 +207,14 @@ export function renderDetailBarChart({
         }
     });
 
-    // 集約せず、各スロットを個別に描画対象に追加（イレギュラースロットも含む）
+    // 集約せず、各スロットを個別に描画対象に追加（ビジネスアワー前/後のスロットは棒グラフとして描画せず、縦ラインのみで表示）
     const slotsToRender = [];
-    // ビジネスアワー前のスロットを個別に追加
-    slotsBefore.forEach(slot => {
-        slotsToRender.push({ ...slot, position: 'before' });
-    });
+    // ビジネスアワー前/後のスロットは棒グラフとして描画せず、縦ラインのみで表示
     // ビジネスアワー内のスロットを個別に追加
     slotsInBusiness.forEach(slot => {
         slotsToRender.push({ ...slot, position: 'in' });
     });
-    // ビジネスアワー後のスロットを個別に追加
-    slotsAfter.forEach(slot => {
-        slotsToRender.push({ ...slot, position: 'after' });
-    });
-    // イレギュラースロット（isOutsideHours）も描画対象に追加
-    slotsOutsideHours.forEach(slot => {
-        const timeRange = parseSlotTimeRange(slot, startHour, endHour);
-        const slotStart = timeRange.start;
-        const slotEnd = timeRange.end;
-        
-        // 位置を判定
-        if (slotEnd <= startHour) {
-            slotsToRender.push({ ...slot, position: 'before' });
-        } else if (slotStart >= endHour) {
-            slotsToRender.push({ ...slot, position: 'after' });
-        } else if (lunchStartHour !== null && lunchEndHour !== null &&
-                   slotStart >= lunchStartHour && slotEnd <= lunchEndHour) {
-            // 昼休み時間帯のイレギュラースロットも描画（位置は昼休み開始位置）
-            slotsToRender.push({ ...slot, position: 'lunch' });
-        } else {
-            // ビジネスアワー内のイレギュラースロット
-            slotsToRender.push({ ...slot, position: 'in' });
-        }
-    });
+    // 時間外スロットはグラフには描画しない（赤い縦ラインで存在の有無のみ表示）
     // 昼休みの通常スロットは描画しない（グラフ幅を取らない）
 
     // 全スロットの最大値（capの最大値）を計算してスケーリングに使用
@@ -555,11 +529,16 @@ export function renderDetailBarChart({
     });
 
     // 業務時間の開始・終了位置に縦ラインを描画（昼休みの縦ラインと同様に常に表示）
-    // 時間外スロットに件数がある場合は赤、ない場合はグレー
+    // 時間外スロットまたは通常のビジネスアワー前/後のスロットに件数がある場合は赤、ない場合はグレー
     {
         // 開始位置に縦ライン
-        const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#d1d5db'; // 赤またはグレー
-        const beforeLineWidth = hasOutsideHoursBefore ? 2 : 1;
+        const hasBeforeSlots = slotsBefore.length > 0 && slotsBefore.some(slot => {
+            const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+            const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+            return count > 0 || cap > 0;
+        });
+        const beforeLineColor = (hasOutsideHoursBefore || hasBeforeSlots) ? '#ef4444' : '#d1d5db'; // 赤またはグレー
+        const beforeLineWidth = (hasOutsideHoursBefore || hasBeforeSlots) ? 2 : 1;
         const beforeLine = new Konva.Line({
             points: [businessStartX, barAreaTop, businessStartX, barAreaTop + barAreaHeight],
             stroke: beforeLineColor,
@@ -571,8 +550,13 @@ export function renderDetailBarChart({
 
     {
         // 終了位置に縦ライン
-        const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db'; // 赤またはグレー
-        const afterLineWidth = hasOutsideHoursAfter ? 2 : 1;
+        const hasAfterSlots = slotsAfter.length > 0 && slotsAfter.some(slot => {
+            const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+            const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+            return count > 0 || cap > 0;
+        });
+        const afterLineColor = (hasOutsideHoursAfter || hasAfterSlots) ? '#ef4444' : '#d1d5db'; // 赤またはグレー
+        const afterLineWidth = (hasOutsideHoursAfter || hasAfterSlots) ? 2 : 1;
         const afterLine = new Konva.Line({
             points: [businessEndX, barAreaTop, businessEndX, barAreaTop + barAreaHeight],
             stroke: afterLineColor,
