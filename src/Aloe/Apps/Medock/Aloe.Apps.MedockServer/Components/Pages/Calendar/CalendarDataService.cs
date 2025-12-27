@@ -214,6 +214,14 @@ public class CalendarDataService
         DateOnly currentDate,
         int weekDays = 7)
     {
+        // TODO: [パフォーマンス対策] ここを除外すると劇的に早くなるが、正常に描画できていない。ただし、別の年に移動したときは表示できているので、タイミングの問題で劇的に早くできると思われる。
+        //if (viewType == CalendarViewType.Year || viewType == CalendarViewType.Month)
+        //{
+        //    state.Appointments = new List<AppointmentDto>();
+        //    Console.WriteLine($"[Performance] Skipped loading appointments for {viewType} view.");
+        //    return;
+        //}
+
         var sw = Stopwatch.StartNew();
         try
         {
