@@ -66,13 +66,31 @@ export function renderSimpleViewSymbol(cellLeft, cellTop, cellWidth, cellHeight,
     
     const opacity = isDateGrayed ? 0.4 : 1;
 
+    // 完全にデータがない場合（available === 0 かつ capacity === 0、または両方が null/undefined）は「–」（enダッシュ）を表示
+    // 数値として比較するため、null/undefined を 0 に変換
+    const availableNum = available ?? 0;
+    const capacityNum = capacity ?? 0;
+    if (availableNum === 0 && capacityNum === 0) {
+        // 「–」（enダッシュ）を文字として表示（データなしを示す標準的な記号、emダッシュより短い）
+        const dashFontSize = symbolSize * 1.2;
+        const dashSymbol = new Konva.Text({
+            x: cellLeft,
+            y: symbolCenterY - dashFontSize * 0.35, // 垂直中央に配置（フォントサイズの約35%上にベースラインを配置）
+            width: cellWidth,
+            text: '–', // enダッシュ（U+2013）：データなしを示す標準的な記号（emダッシュより短い）
+            fontSize: dashFontSize,
+            fontFamily: CONFIG.font.family,
+            fill: isDateGrayed ? '#9ca3af' : '#6b7280', // グレーアウト時は薄いグレー、通常時は濃いグレー
+            align: 'center',
+            opacity: opacity
+        });
+        layers.content.add(dashSymbol);
+        return; // データがない場合はここで処理を終了
+    }
+
     switch (symbolType) {
         case 'x':
             // ×（バツ）- 赤色
-            // データがない場合（available === 0 かつ capacity === 0）は×を描画しない
-            if (available === 0 && capacity === 0) {
-                break;
-            }
             const xFontSize = symbolSize * 1.2;
             const xSymbol = new Konva.Text({
                 x: cellLeft,
