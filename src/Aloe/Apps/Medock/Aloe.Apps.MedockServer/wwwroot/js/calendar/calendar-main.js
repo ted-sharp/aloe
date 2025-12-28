@@ -10,10 +10,12 @@ import { getState, setState, resetState } from './state.js';
 import { dateToString, parseDate } from './utils/date-utils.js';
 import { createTooltip, hideTooltip } from './ui/tooltip.js';
 import { createLayers } from './ui/layers.js';
-import { renderYearView } from './renderers/year-view.js';
-import { renderMonthView } from './renderers/month-view.js';
-import { renderWeekView } from './renderers/week-view.js';
-import { renderDayDetailBarChart } from './renderers/bar-chart/index.js';
+import { createCanvasManager } from './ui/canvas-manager.js';
+import { renderCanvasMonthView } from './renderers/canvas-month-view.js';
+import { renderCanvasYearView } from './renderers/canvas-year-view.js';
+import { renderCanvasWeekView } from './renderers/canvas-week-view.js';
+import { renderCanvasDayDetail } from './renderers/canvas-day-detail.js';
+import { setupCanvasInteractions } from './renderers/canvas-interactions.js';
 import { startConnection, stopConnection } from './realtime/signalr-client.js';
 
 // Blazor DayDetailPopup用のステージを管理
@@ -33,7 +35,7 @@ function init(containerId, data, options, dotNetRef) {
     console.log('MedockCalendar: init called', { 
         containerId, 
         hasDotNetRef: !!dotNetRef,
-        hasExistingStage: !!state.stage,
+        hasExistingCanvasManager: !!state.canvasManager,
         existingContainerId: state.containerId
     });
     
@@ -44,23 +46,26 @@ function init(containerId, data, options, dotNetRef) {
     });
     
     // 既に初期化されている場合は、データとビューの更新のみ
-    if (state.stage) {
+    if (state.canvasManager) {
         console.log('MedockCalendar: Already initialized, updating data and view');
-        // 既存のstageのコンテナを更新（必要に応じて）
+        // 既存のコンテナを更新（必要に応じて）
         const container = document.getElementById(containerId);
-        if (container && state.stage.container()?.id !== containerId) {
-            // 新しいコンテナにstageを移動
-            const oldContainer = state.stage.container();
+        if (container && state.containerId !== containerId) {
+            // 新しいコンテナにcanvasを移動
+            const oldContainer = document.getElementById(state.containerId);
             if (oldContainer) {
                 oldContainer.innerHTML = '';
             }
-            state.stage.container(containerId);
+            // 新しいコンテナでCanvas Managerを再初期化
+            destroy();
+            // 次の処理で新しいCanvas Managerを作成
+        } else {
+            // データとビューを更新
+            if (data) {
+                updateData(data);
+            }
+            return;
         }
-        // データとビューを更新
-        if (data) {
-            updateData(data);
-        }
-        return;
     }
 
     const container = document.getElementById(containerId);
@@ -69,16 +74,21 @@ function init(containerId, data, options, dotNetRef) {
         return;
     }
 
-    // Create stage
-    const stage = new Konva.Stage({
-        container: containerId,
-        width: container.clientWidth,
-        height: container.clientHeight || 600
-    });
+    // Create Canvas Manager
+    const canvasManager = createCanvasManager(
+        containerId,
+        container.clientWidth,
+        container.clientHeight || 600
+    );
 
-    setState({ stage });
+    setState({ 
+        canvasManager
+    });
     createLayers();
     createTooltip();
+    
+    // インタラクションハンドラを設定
+    setupCanvasInteractions(canvasManager, getState(), setState, render);
 
     // Initialize SignalR connection for real-time updates
     startConnection(async (updatedDate, updatedResourceIds, diffData) => {
@@ -98,55 +108,18 @@ function init(containerId, data, options, dotNetRef) {
         updateData(data);
     }
 
-    // Handle resize
+    // リサイズはCanvasManagerが自動的に処理するため、renderのみ呼び出す
+    // CanvasManager内のResizeObserverがresize()を呼び出すので、ここで再描画だけ実行
+    // 注: CanvasManager内のResizeObserverとは別に、render呼び出し用のResizeObserverを設定
     const resizeObserver = new ResizeObserver(entries => {
         for (let entry of entries) {
-            const state = getState();
-            state.stage.width(entry.contentRect.width);
-            state.stage.height(entry.contentRect.height || 600);
             render();
         }
     });
     resizeObserver.observe(container);
     setState({ resizeObserver });
 
-    // ドラッグ終了イベント（mouseup）をステージに追加
-    stage.on('mouseup', function () {
-        const state = getState();
-        if (state.isDragging) {
-            if (state.selectedDateRange) {
-                const range = state.selectedDateRange;
-                // 範囲が有効な場合のみコールバックと confirmedDateRange を設定
-                if (range.start !== range.end && state.dotNetRef) {
-                    // 日付の順序を正規化
-                    const start = parseDate(range.start);
-                    const end = parseDate(range.end);
-                    const normalizedRange = start <= end
-                        ? { start: range.start, end: range.end }
-                        : { start: range.end, end: range.start };
-                    state.dotNetRef.invokeMethodAsync('OnDateRangeSelected', normalizedRange.start, normalizedRange.end);
-                    // 確定した範囲を設定（グレーアウト判定に使用）、単一選択をクリア
-                    setState({
-                        confirmedDateRange: normalizedRange,
-                        selectedDate: null,
-                        lastClickTime: 0,
-                        lastClickDate: null
-                    });
-                }
-                // range.start === range.end の場合は何もしない（単一クリックとして扱い、既存の confirmedDateRange を保持）
-            }
-            // 常に isDragging と selectedDateRange をリセット
-            setState({ isDragging: false, dragStartDate: null, selectedDateRange: null });
-        }
-    });
-
-    // コンテナ外でのmouseupも処理
-    document.addEventListener('mouseup', function () {
-        const state = getState();
-        if (state.isDragging) {
-            setState({ isDragging: false, dragStartDate: null });
-        }
-    });
+    // イベントハンドラはsetupCanvasInteractionsで設定されるため、ここでは不要
 
     // Initial render
     render();
@@ -210,28 +183,19 @@ function navigateTo(dateStr) {
  */
 function render() {
     const state = getState();
-    if (!state.stage) return;
+    if (!state.canvasManager) return;
 
-    // Ensure stage size matches container
-    const container = document.getElementById(state.containerId);
-    if (container) {
-        const width = container.clientWidth;
-        const height = container.clientHeight || 600;
-        if (state.stage.width() !== width || state.stage.height() !== height) {
-            state.stage.width(width);
-            state.stage.height(height);
-        }
-    }
-
+    // CanvasManagerがリサイズを自動処理するため、サイズ調整は不要
+    // 直接描画関数を呼び出す
     switch (state.currentView) {
         case 'year':
-            renderYearView();
+            renderCanvasYearView(state.canvasManager, state);
             break;
         case 'month':
-            renderMonthView();
+            renderCanvasMonthView(state.canvasManager, state);
             break;
         case 'week':
-            renderWeekView();
+            renderCanvasWeekView(state.canvasManager, state);
             break;
         default:
             console.error('Unknown view type:', state.currentView);
@@ -257,7 +221,7 @@ function destroy() {
 }
 
 /**
- * Blazor DayDetailPopup用: 指定コンテナにKonva.jsグラフを描画
+ * Blazor DayDetailPopup用: 指定コンテナにCanvas APIグラフを描画
  * @param {string} containerId - DOM container ID
  * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
  */
@@ -268,9 +232,12 @@ function renderDayDetailPopup(containerId, dateStr) {
         return;
     }
 
-    // 既存のステージがあれば破棄
+    // 既存のCanvas Managerがあれば破棄
     if (dayDetailPopupStages.has(containerId)) {
-        dayDetailPopupStages.get(containerId).destroy();
+        const existingManager = dayDetailPopupStages.get(containerId);
+        if (existingManager && existingManager.destroy) {
+            existingManager.destroy();
+        }
         dayDetailPopupStages.delete(containerId);
     }
 
@@ -279,121 +246,55 @@ function renderDayDetailPopup(containerId, dateStr) {
     const width = Math.max(400, rect.width);
     const height = Math.max(300, rect.height);
 
-    // Konva Stageを作成
-    const popupStage = new Konva.Stage({
-        container: containerId,
-        width: width,
-        height: height
-    });
+    // Canvas Managerを作成
+    const popupCanvasManager = createCanvasManager(containerId, width, height);
 
-    // レイヤーを作成
-    const popupLayers = {
-        background: new Konva.Layer(),
-        grid: new Konva.Layer(),
-        content: new Konva.Layer(),
-        interaction: new Konva.Layer()
-    };
-
-    popupStage.add(popupLayers.background);
-    popupStage.add(popupLayers.grid);
-    popupStage.add(popupLayers.content);
-    popupStage.add(popupLayers.interaction);
-
-    // 現在のstateを保存
+    // 現在のstateを取得
     const state = getState();
-    const originalLayers = state.layers;
-    const originalStage = state.stage;
 
-    try {
-        // 一時的にstateをポップアップ用に設定
-        setState({
-            layers: popupLayers,
-            stage: popupStage
-        });
+    // 日付から情報を取得
+    const date = new Date(dateStr);
+    const dayNumber = date.getDate();
+    const isHoliday = state.holidays.has(dateStr);
 
-        // 日付から情報を取得
-        const date = new Date(dateStr);
-        const dayNumber = date.getDate();
-        const isHoliday = state.holidays.has(dateStr);
+    // グラフを描画（日詳細ポップアップでは日付テキストを表示しない）
+    renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false);
 
-        // グラフを描画（日詳細ポップアップでは日付テキストを表示しない）
-        renderDayDetailBarChart(0, 0, width, height, dateStr, dayNumber, isHoliday, false);
+    // Canvas Managerを保存
+    dayDetailPopupStages.set(containerId, popupCanvasManager);
 
-        // レイヤーを描画
-        popupLayers.background.batchDraw();
-        popupLayers.grid.batchDraw();
-        popupLayers.content.batchDraw();
-        popupLayers.interaction.batchDraw();
+    // リサイズ対応（CanvasManagerが自動でリサイズするため、再描画のみ）
+    const resizeObserver = new ResizeObserver(entries => {
+        for (let entry of entries) {
+            const newWidth = Math.max(400, entry.contentRect.width);
+            const newHeight = Math.max(300, entry.contentRect.height);
 
-        // ステージを保存
-        dayDetailPopupStages.set(containerId, popupStage);
-
-        // リサイズ対応
-        const resizeObserver = new ResizeObserver(entries => {
-            for (let entry of entries) {
-                const newWidth = Math.max(400, entry.contentRect.width);
-                const newHeight = Math.max(300, entry.contentRect.height);
-
-                if (popupStage.width() !== newWidth || popupStage.height() !== newHeight) {
-                    popupStage.width(newWidth);
-                    popupStage.height(newHeight);
-
-                    // 現在のstateを再び保存
-                    const currentOriginalLayers = getState().layers;
-                    const currentOriginalStage = getState().stage;
-
-                    try {
-                        setState({
-                            layers: popupLayers,
-                            stage: popupStage
-                        });
-
-                        // レイヤーをクリアして再描画
-                        popupLayers.background.destroyChildren();
-                        popupLayers.grid.destroyChildren();
-                        popupLayers.content.destroyChildren();
-                        popupLayers.interaction.destroyChildren();
-
-                        renderDayDetailBarChart(0, 0, newWidth, newHeight, dateStr, dayNumber, isHoliday, false);
-
-                        popupLayers.background.batchDraw();
-                        popupLayers.grid.batchDraw();
-                        popupLayers.content.batchDraw();
-                        popupLayers.interaction.batchDraw();
-                    } finally {
-                        setState({
-                            layers: currentOriginalLayers,
-                            stage: currentOriginalStage
-                        });
-                    }
-                }
+            if (popupCanvasManager.width !== newWidth || popupCanvasManager.height !== newHeight) {
+                // Canvas Managerがリサイズを処理
+                popupCanvasManager.resize(newWidth, newHeight);
+                
+                // 再描画
+                renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false);
             }
-        });
-        resizeObserver.observe(container);
+        }
+    });
+    resizeObserver.observe(container);
 
-        // クリーンアップ用にResizeObserverを保存
-        popupStage._resizeObserver = resizeObserver;
-
-    } finally {
-        // 元のstateを復元
-        setState({
-            layers: originalLayers,
-            stage: originalStage
-        });
-    }
+    // クリーンアップ用にResizeObserverを保存
+    popupCanvasManager._resizeObserver = resizeObserver;
 }
 
 /**
- * Blazor DayDetailPopup用: 指定コンテナのKonva.jsステージを破棄
+ * Blazor DayDetailPopup用: 指定コンテナのCanvas Managerを破棄
  * @param {string} containerId - DOM container ID
  */
 function destroyDayDetailPopup(containerId) {
     if (dayDetailPopupStages.has(containerId)) {
-        const stage = dayDetailPopupStages.get(containerId);
-        if (stage._resizeObserver) {
-            stage._resizeObserver.disconnect();
+        const canvasManager = dayDetailPopupStages.get(containerId);
+        if (canvasManager._resizeObserver) {
+            canvasManager._resizeObserver.disconnect();
         }
-        stage.destroy();
+        canvasManager.destroy();
         dayDetailPopupStages.delete(containerId);
     }
 }

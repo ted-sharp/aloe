@@ -12,7 +12,7 @@ Aloe Medock is a medical reservation management system built with Blazor Server,
 - PostgreSQL 18+ with EF Core
 - Cookie authentication
 - Tailwind CSS + daisyUI (via CDN, no Node.js)
-- Canvas-based calendar rendering (D3.js + Konva.js planned)
+- Canvas API (native Canvas 2D rendering for calendar visualization)
 
 ## Architecture
 
@@ -191,11 +191,61 @@ Use `@container` queries (not `@media`) for component-based responsive behavior:
 
 ### Calendar Implementation
 
-- Main calendar area uses Canvas rendering (not HTML/CSS)
-- D3.js for calculations, Konva.js for rendering
-- SignalR Hub for real-time collaboration (show other users' cursor positions)
-- Year/Month views use pie charts (AM/PM split) for each day
+**Architecture:**
+- Canvas 2D API for high-performance calendar rendering (replaced Konva.js)
+- Layered canvas system:
+  - `background`: Static backgrounds and cell styling
+  - `grid`: Grid lines and axis labels
+  - `content`: Data visualization (bars, charts, text)
+  - `interaction`: Hit detection and hover effects
+- ES6 modules: `canvas-month-view.js`, `canvas-year-view.js`, `canvas-week-view.js`, `canvas-day-detail.js`
+- RenderState pattern: Maintains hit-test data (cells, bars, slots) for click detection
+- CanvasManager: Handles multi-layer canvas creation, resizing, and coordinate transformation
+
+**Features:**
+- Year/Month/Week views with real-time slot visualization
+- Day detail popup (separate Canvas instance) for appointment bar chart display
+- SignalR Hub for real-time collaboration (future: show other users' cursor positions)
+- Slot bar charts with:
+  - Winter color map for vacancy visualization
+  - Capacity lines and availability indicators
+  - Time slot grouping with lunch break support
+  - Responsive symbol-based simple view mode (×, △, ○, ◎)
 - Week scheduler supports 1/3/7/14/31 day ranges
+
+**File Structure:**
+```
+wwwroot/js/calendar/
+├── calendar-main.js          # Public API & initialization
+├── config.js                 # Configuration & color mappings
+├── state.js                  # Global application state
+├── renderers/
+│   ├── canvas-month-view.js      # Month grid + day charts
+│   ├── canvas-year-view.js       # 12-month grid layout
+│   ├── canvas-week-view.js       # Week scheduler view
+│   ├── canvas-day-detail.js      # Day detail popup graph
+│   ├── canvas-bar-chart.js       # Reusable bar chart component
+│   ├── canvas-month-calendar.js  # Month grid helper
+│   ├── canvas-interactions.js    # Click/hover handlers
+│   └── canvas-render-state.js    # Hit-test state management
+├── ui/
+│   ├── canvas-manager.js     # Multi-layer canvas management
+│   ├── layers.js             # Layer setup
+│   └── tooltip.js            # Hover tooltips
+├── utils/
+│   ├── canvas-utils.js       # Drawing primitives (rect, line, text, etc.)
+│   ├── date-utils.js         # Date calculations
+│   ├── winter-colormap.js    # Vacancy color mapping
+│   └── math-utils.js         # Geometric calculations
+└── realtime/
+    └── signalr-client.js     # Real-time data updates
+```
+
+**Important Notes:**
+- Do NOT use global `renderState.reset()` during popup rendering (it affects main calendar hit detection)
+- Slot data properties: `cap` (capacity), `count` (used), `start` (HH:mm), `end` (HH:mm), `isOutsideHours`, `isGrayedOut`
+- Popup dialogs use separate Canvas Manager instances and do not share render state with main calendar
+- Color system: Uses config.js for consistent styling across all views
 
 ### Google Fonts for Closed Networks
 

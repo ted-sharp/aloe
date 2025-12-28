@@ -1,7 +1,7 @@
 /**
- * Konva Layer Management
+ * Canvas Layer Management
  *
- * Konva.jsのレイヤー初期化とz-order管理
+ * Canvas APIのレイヤー初期化とz-order管理
  * レイヤー構造（下から順）：
  *   1. background - 週末背景、祝日色
  *   2. grid - グリッド線、曜日ヘッダー
@@ -12,28 +12,40 @@
 import { getState, setState } from '../state.js';
 
 /**
- * 4つのKonvaレイヤーを作成してStageに追加
+ * Canvas Managerを使用してレイヤーを初期化
+ * この関数は互換性のために残されていますが、実際にはCanvasManagerが処理します
  */
 export function createLayers() {
     const state = getState();
 
-    // Clear existing layers
-    if (state.layers.background) state.layers.background.destroy();
-    if (state.layers.grid) state.layers.grid.destroy();
-    if (state.layers.content) state.layers.content.destroy();
-    if (state.layers.interaction) state.layers.interaction.destroy();
+    // CanvasManagerが既に存在する場合は、コンテキストをlayers互換形式で提供
+    if (state.canvasManager) {
+        const contexts = state.canvasManager.getAllContexts();
+        
+        // 互換性のためのlayers形式（Konvaとは異なる構造）
+        const layers = {
+            background: {
+                destroyChildren: () => state.canvasManager.clearLayer('background'),
+                batchDraw: () => {}, // Canvas APIではbatchDrawは不要
+                add: () => {} // 互換性のためのダミー
+            },
+            grid: {
+                destroyChildren: () => state.canvasManager.clearLayer('grid'),
+                batchDraw: () => {},
+                add: () => {}
+            },
+            content: {
+                destroyChildren: () => state.canvasManager.clearLayer('content'),
+                batchDraw: () => {},
+                add: () => {}
+            },
+            interaction: {
+                destroyChildren: () => state.canvasManager.clearLayer('interaction'),
+                batchDraw: () => {},
+                add: () => {}
+            }
+        };
 
-    const layers = {
-        background: new Konva.Layer(),
-        grid: new Konva.Layer(),
-        content: new Konva.Layer(),
-        interaction: new Konva.Layer()
-    };
-
-    state.stage.add(layers.background);
-    state.stage.add(layers.grid);
-    state.stage.add(layers.content);
-    state.stage.add(layers.interaction);
-
-    setState({ layers });
+        setState({ layers });
+    }
 }
