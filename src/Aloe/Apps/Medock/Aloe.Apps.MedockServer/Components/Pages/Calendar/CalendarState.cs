@@ -44,6 +44,8 @@ public class CalendarState
     public Dictionary<string, List<AppointmentStats>> MainStats { get; set; } = new();
     public Dictionary<string, List<AppointmentStats>> OriginalMainStats { get; set; } = new();
     public Dictionary<string, bool> MainStatsGrayedOut { get; set; } = new(); // フィルター用のグレーアウト状態
+    public Dictionary<string, List<AppointmentStats>> EquipmentStats { get; set; } = new();
+    public Dictionary<string, List<AppointmentStats>> OriginalEquipmentStats { get; set; } = new();
     public List<AppointmentDto> Appointments { get; set; } = new();
     public Dictionary<string, string> Holidays { get; set; } = new();
 

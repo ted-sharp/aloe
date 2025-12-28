@@ -20,6 +20,7 @@ let state = {
     currentDate: new Date(),          // 現在表示中の日付
     appointments: [],                 // 予約データの配列
     mainStats: new Map(),              // 日付文字列 -> Mainリソース統計 { am, pm, amMax, pmMax, slots[], isGrayedOut }
+    equipmentStats: new Map(),         // 日付文字列 -> Equipmentリソース統計 { resources: { resourceId: { resourceName, totalAvailable, totalCapacity, slots[] } } }
     holidays: new Map(),              // 日付文字列 -> 祝日名
     options: {
         weekDays: 7,                  // 週表示で表示する日数: 1, 3, 7, 14, 31
@@ -84,6 +85,7 @@ export function resetState() {
         layers: {},
         appointments: [],
         mainStats: new Map(),
+        equipmentStats: new Map(),
         holidays: new Map(),
         resizeObserver: null,
         selectedDate: null,

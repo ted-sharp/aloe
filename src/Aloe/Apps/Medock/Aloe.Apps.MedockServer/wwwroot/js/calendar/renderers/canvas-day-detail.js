@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText } from '../utils/canvas-utils.js';
 import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
 import { isDateInRange } from '../utils/date-utils.js';
+import { renderCanvasLineChart } from './canvas-line-chart.js';
 
 /**
  * スロットの時間範囲を解析
@@ -39,8 +40,9 @@ function parseSlotTimeRange(slot, startHour, endHour) {
  * @param {number} dayNumber - 日にち
  * @param {boolean} isHoliday - 祝日フラグ
  * @param {boolean} showDateText - 日付テキストを表示するか
+ * @param {object} equipmentStats - Equipment統計データ（オプション）
  */
-export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true) {
+export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true, equipmentStats = null) {
     const contexts = canvasManager.getAllContexts();
     const width = canvasManager.width;
     const height = canvasManager.height;
@@ -307,6 +309,25 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             stroke: '#d1d5db',
             strokeWidth: 2,
             opacity: 0.8
+        });
+    }
+
+    // Equipment折れ線グラフを描画（棒グラフの上に重ねて表示）
+    if (equipmentStats) {
+        renderCanvasLineChart(contentCtx, {
+            cellLeft: yAxisWidth,
+            cellTop: topPadding,
+            cellWidth: graphWidth,
+            cellHeight: graphHeight,
+            dateStr,
+            barAreaTop: topPadding,
+            barAreaHeight: graphHeight,
+            equipmentStats,
+            startHour,
+            endHour,
+            lunchStartHour,
+            lunchEndHour,
+            isYearView: false
         });
     }
 }

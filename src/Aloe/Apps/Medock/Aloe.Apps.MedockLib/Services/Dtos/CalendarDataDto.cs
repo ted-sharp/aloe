@@ -9,6 +9,7 @@ public class CalendarDataDto
 {
     public List<AppointmentDataDto> Appointments { get; set; } = new();
     public Dictionary<string, MainStatsDataDto> MainStats { get; set; } = new();
+    public Dictionary<string, EquipmentStatsDataDto> EquipmentStats { get; set; } = new();
     public Dictionary<string, string> Holidays { get; set; } = new();
 }
 
@@ -37,6 +38,49 @@ public class MainStatsDataDto
 {
     public List<SlotDataDto> Slots { get; set; } = new();
     public bool IsGrayedOut { get; set; }
+}
+
+/// <summary>
+/// Equipmentリソース統計データDTO（JavaScript用）
+/// 日付ごとに複数のEquipmentリソースのデータを保持
+/// </summary>
+public class EquipmentStatsDataDto
+{
+    /// <summary>
+    /// Equipmentリソース別の統計データ（リソースID -> リソース統計データ）
+    /// </summary>
+    public Dictionary<string, EquipmentResourceStatsDto> Resources { get; set; } = new();
+}
+
+/// <summary>
+/// Equipment個別リソースの統計データDTO（JavaScript用）
+/// </summary>
+public class EquipmentResourceStatsDto
+{
+    /// <summary>
+    /// リソースID
+    /// </summary>
+    public string ResourceId { get; set; } = String.Empty;
+    
+    /// <summary>
+    /// リソース名
+    /// </summary>
+    public string ResourceName { get; set; } = String.Empty;
+    
+    /// <summary>
+    /// 空き数（Available）の合計
+    /// </summary>
+    public int TotalAvailable { get; set; }
+    
+    /// <summary>
+    /// キャパシティの合計
+    /// </summary>
+    public int TotalCapacity { get; set; }
+    
+    /// <summary>
+    /// スロット別データ（詳細が必要な場合）
+    /// </summary>
+    public List<SlotDataDto> Slots { get; set; } = new();
 }
 
 /// <summary>

@@ -128,6 +128,7 @@ public partial class Calendar : ComponentBase
     private Dictionary<string, List<AppointmentStats>> MainStats => this.State.MainStats;
     private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this.State.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this.State.MainStatsGrayedOut;
+    private Dictionary<string, List<AppointmentStats>> EquipmentStats => this.State.EquipmentStats;
     private List<AppointmentDto> Appointments => this.State.Appointments;
     private Dictionary<string, string> Holidays => this.State.Holidays;
 
@@ -185,6 +186,11 @@ public partial class Calendar : ComponentBase
 
             await this.DataService.LoadBusinessHoursAsync(this.State);
             await this.DataService.LoadMainStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
                 this.State.CurrentView,
                 this.State.CurrentDate,
@@ -308,6 +314,11 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this.State,
                 this.State.CurrentView,
@@ -345,6 +356,11 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this.State,
                 this.State.CurrentView,
@@ -372,6 +388,11 @@ public partial class Calendar : ComponentBase
         try
         {
             await this.DataService.LoadMainStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
                 this.State.CurrentView,
                 this.State.CurrentDate,
@@ -407,6 +428,11 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this.State,
                 this.State.CurrentView,
@@ -434,6 +460,11 @@ public partial class Calendar : ComponentBase
         try
         {
             await this.DataService.LoadMainStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
                 this.State.CurrentView,
                 this.State.CurrentDate,
@@ -469,6 +500,11 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this.State,
                 this.State.CurrentView,
@@ -495,6 +531,11 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentView,
                 this.State.CurrentDate,
                 this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
             await this.DataService.LoadAppointmentsAsync(
                 this.State,
                 this.State.CurrentView,
@@ -507,6 +548,11 @@ public partial class Calendar : ComponentBase
         else
         {
             await this.DataService.LoadMainStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
                 this.State.CurrentView,
                 this.State.CurrentDate,
@@ -566,6 +612,11 @@ public partial class Calendar : ComponentBase
         try
         {
             await this.DataService.LoadMainStatsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
                 this.State.CurrentView,
                 this.State.CurrentDate,
@@ -677,6 +728,11 @@ public partial class Calendar : ComponentBase
                     this.State.CurrentView,
                     this.State.CurrentDate,
                     this.State.WeekDays);
+                await this.DataService.LoadEquipmentStatsAsync(
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
                 await this.DataService.LoadAppointmentsAsync(
                     this.State,
                     this.State.CurrentView,
@@ -707,6 +763,11 @@ public partial class Calendar : ComponentBase
     {
         this.State.WeekDays = days;
         await this.DataService.LoadMainStatsAsync(
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
+        await this.DataService.LoadEquipmentStatsAsync(
             this.State,
             this.State.CurrentView,
             this.State.CurrentDate,
@@ -749,6 +810,11 @@ public partial class Calendar : ComponentBase
             this.State.CurrentView,
             this.State.CurrentDate,
             this.State.WeekDays);
+        await this.DataService.LoadEquipmentStatsAsync(
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(
             this.State,
             this.State.CurrentView,
@@ -780,6 +846,11 @@ public partial class Calendar : ComponentBase
 
                 // 予約更新後にデータを再取得
                 await this.DataService.LoadMainStatsAsync(
+                    this.State,
+                    this.State.CurrentView,
+                    this.State.CurrentDate,
+                    this.State.WeekDays);
+                await this.DataService.LoadEquipmentStatsAsync(
                     this.State,
                     this.State.CurrentView,
                     this.State.CurrentDate,
@@ -817,6 +888,13 @@ public partial class Calendar : ComponentBase
         if (!this.DayDetailDate.HasValue) return null;
         var dateStr = this.DayDetailDate.Value.ToString("yyyy-MM-dd");
         return this.MainStats.TryGetValue(dateStr, out var stats) ? stats : null;
+    }
+
+    private List<AppointmentStats>? GetDayDetailEquipmentStats()
+    {
+        if (!this.DayDetailDate.HasValue) return null;
+        var dateStr = this.DayDetailDate.Value.ToString("yyyy-MM-dd");
+        return this.EquipmentStats.TryGetValue(dateStr, out var stats) ? stats : null;
     }
 
     private async Task HandleDayDetailGoToWeekView(DateOnly date)

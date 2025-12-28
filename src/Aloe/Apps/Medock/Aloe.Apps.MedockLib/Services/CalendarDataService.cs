@@ -15,7 +15,8 @@ public class CalendarDataService : ICalendarDataService
         Dictionary<string, List<AppointmentStats>> mainStats,
         Dictionary<string, bool> mainStatsGrayedOut,
         Dictionary<string, string> holidays,
-        List<string>? filterTimeSlots = null)
+        List<string>? filterTimeSlots = null,
+        Dictionary<string, List<AppointmentStats>>? equipmentStats = null)
     {
         var appointmentArray = appointments?.Select(a => new AppointmentDataDto
         {
@@ -103,10 +104,80 @@ public class CalendarDataService : ICalendarDataService
 
         var holidaysDict = holidays ?? new Dictionary<string, string>();
 
+        // Equipment統計データを処理
+        var equipmentStatsDict = new Dictionary<string, EquipmentStatsDataDto>();
+        if (equipmentStats != null)
+        {
+            foreach (var kvp in equipmentStats)
+            {
+                var dateStr = kvp.Key;
+                var statsList = kvp.Value;
+
+                var resourcesDict = new Dictionary<string, EquipmentResourceStatsDto>();
+                
+                // Equipmentリソースごとにグループ化
+                var resourceGroups = statsList.GroupBy(s => s.ApptResId);
+                
+                foreach (var resourceGroup in resourceGroups)
+                {
+                    var firstStat = resourceGroup.First();
+                    var resourceId = firstStat.ApptResId.ToString();
+                    var resourceName = firstStat.AppointmentResource?.ApptResName ?? "";
+                    
+                    // スロットデータを作成
+                    var slots = new List<SlotDataDto>();
+                    var totalAvailable = 0;
+                    var totalCapacity = 0;
+                    
+                    foreach (var stat in resourceGroup)
+                    {
+                        if (stat.AppointmentStatSlots != null)
+                        {
+                            foreach (var statSlot in stat.AppointmentStatSlots.Where(s => !s.IsDeleted))
+                            {
+                                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                                
+                                totalAvailable += statSlot.SlotAvailable;
+                                totalCapacity += statSlot.SlotCap;
+                                
+                                slots.Add(new SlotDataDto
+                                {
+                                    Start = slotStartTime.ToString("HH:mm"),
+                                    End = slotEndTime.ToString("HH:mm"),
+                                    Count = statSlot.SlotCount,
+                                    Cap = statSlot.SlotCap,
+                                    Available = statSlot.SlotAvailable,
+                                    IsGrayedOut = false,
+                                    FilteredCount = 0,
+                                    IsOutsideHours = false
+                                });
+                            }
+                        }
+                    }
+                    
+                    resourcesDict[resourceId] = new EquipmentResourceStatsDto
+                    {
+                        ResourceId = resourceId,
+                        ResourceName = resourceName,
+                        TotalAvailable = totalAvailable,
+                        TotalCapacity = totalCapacity,
+                        Slots = slots.OrderBy(s => s.Start).ToList()
+                    };
+                }
+                
+                equipmentStatsDict[dateStr] = new EquipmentStatsDataDto
+                {
+                    Resources = resourcesDict
+                };
+            }
+        }
+
         var result = new CalendarDataDto
         {
             Appointments = appointmentArray,
             MainStats = mainStatsDict,
+            EquipmentStats = equipmentStatsDict,
             Holidays = holidaysDict
         };
 

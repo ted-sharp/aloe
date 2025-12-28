@@ -49,6 +49,30 @@ public static class CalendarCanvasInterop
                     isGrayedOut = kvp.Value.IsGrayedOut
                 }
             ),
+            equipmentStats = data.EquipmentStats.ToDictionary(
+                kvp => kvp.Key,
+                kvp => new
+                {
+                    resources = kvp.Value.Resources.ToDictionary(
+                        r => r.Key,
+                        r => new
+                        {
+                            resourceId = r.Value.ResourceId,
+                            resourceName = r.Value.ResourceName,
+                            totalAvailable = r.Value.TotalAvailable,
+                            totalCapacity = r.Value.TotalCapacity,
+                            slots = r.Value.Slots.Select(s => new
+                            {
+                                start = s.Start,
+                                end = s.End,
+                                count = s.Count,
+                                cap = s.Cap,
+                                available = s.Available
+                            }).ToArray()
+                        }
+                    )
+                }
+            ),
             holidays = data.Holidays
         };
     }

@@ -43,4 +43,12 @@ public interface IAppointmentStatsRepository
     Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateAndResourcesAsync(
         DateOnly date,
         List<Guid> resourceIds);
+
+    /// <summary>
+    /// 指定日付範囲とEquipmentリソースIDリストでEquipmentリソース（AppointmentResourceType.Equipment）のAppointmentStatsを取得します。
+    /// </summary>
+    Task<List<Data.Entities.AppointmentStats>> GetEquipmentResourceStatsByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid> equipmentResourceIds);
 }

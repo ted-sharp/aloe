@@ -176,4 +176,29 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                         resourceIds.Contains(s.ApptResId))
             .ToListAsync();
     }
+
+    /// <inheritdoc />
+    public async Task<List<Data.Entities.AppointmentStats>> GetEquipmentResourceStatsByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid> equipmentResourceIds)
+    {
+        var query = this._context.AppointmentStats
+            .AsNoTracking()
+            .Include(s => s.AppointmentResource)
+            .Include(s => s.AppointmentStatSlots)
+            .Where(s => !s.IsDeleted &&
+                        !s.AppointmentResource.IsDeleted &&
+                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
+                        s.ApptDate >= startDate &&
+                        s.ApptDate <= endDate);
+
+        // equipmentResourceIdsが指定されている場合のみフィルタリング
+        if (equipmentResourceIds != null && equipmentResourceIds.Any())
+        {
+            query = query.Where(s => equipmentResourceIds.Contains(s.AppointmentResource.ApptResId));
+        }
+
+        return await query.ToListAsync();
+    }
 }

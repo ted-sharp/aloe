@@ -127,7 +127,7 @@ function init(containerId, data, options, dotNetRef) {
 
 /**
  * Update calendar data
- * @param {object} data - { appointments: [], mainStats: {}, holidays: {} }
+ * @param {object} data - { appointments: [], mainStats: {}, equipmentStats: {}, holidays: {} }
  */
 function updateData(data) {
     if (data.appointments) {
@@ -136,6 +136,10 @@ function updateData(data) {
 
     if (data.mainStats) {
         setState({ mainStats: new Map(Object.entries(data.mainStats)) });
+    }
+
+    if (data.equipmentStats) {
+        setState({ equipmentStats: new Map(Object.entries(data.equipmentStats)) });
     }
 
     if (data.holidays) {
@@ -257,8 +261,11 @@ function renderDayDetailPopup(containerId, dateStr) {
     const dayNumber = date.getDate();
     const isHoliday = state.holidays.has(dateStr);
 
+    // Equipment統計データを取得
+    const equipmentStats = state.equipmentStats.get(dateStr) || null;
+
     // グラフを描画（日詳細ポップアップでは日付テキストを表示しない）
-    renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false);
+    renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats);
 
     // Canvas Managerを保存
     dayDetailPopupStages.set(containerId, popupCanvasManager);
@@ -273,8 +280,11 @@ function renderDayDetailPopup(containerId, dateStr) {
                 // Canvas Managerがリサイズを処理
                 popupCanvasManager.resize(newWidth, newHeight);
                 
+                // Equipment統計データを再取得
+                const equipmentStats = state.equipmentStats.get(dateStr) || null;
+                
                 // 再描画
-                renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false);
+                renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats);
             }
         }
     });

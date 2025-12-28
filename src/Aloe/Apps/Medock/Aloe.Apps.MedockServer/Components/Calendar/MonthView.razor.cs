@@ -26,6 +26,12 @@ public partial class MonthView : ComponentBase
     public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
+    /// Equipmentリソース統計データ
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, List<AppointmentStats>>? EquipmentStats { get; set; }
+
+    /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）
     /// </summary>
     [Parameter]

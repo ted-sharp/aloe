@@ -5,8 +5,10 @@
  * 12ヶ月のミニカレンダーをレスポンシブグリッドで表示
  */
 
+import { CONFIG } from '../config.js';
 import { renderCanvasMonthCalendar } from './canvas-month-calendar.js';
 import { renderCanvasDayBarChart } from './canvas-bar-chart.js';
+import { renderCanvasLineChart } from './canvas-line-chart.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
 
 /**
@@ -87,6 +89,21 @@ export function renderCanvasYearView(canvasManager, state) {
 
         const { dayGridTop, dayGridHeight, cellWidth, cellHeight, rows, startDayOfWeek, daysInMonth } = monthInfo;
 
+        // 営業時間情報を取得
+        const businessHours = state.options?.businessHours;
+        let lunchStartHour = null;
+        let lunchEndHour = null;
+        if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+            const parseTime = (timeStr) => {
+                const parts = timeStr.split(':');
+                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+            };
+            lunchStartHour = parseTime(businessHours.lunchStartTime);
+            lunchEndHour = parseTime(businessHours.lunchEndTime);
+        }
+        const startHour = state.options.startHour || 8;
+        const endHour = state.options.endHour || 18;
+
         // 各日付セルのバーチャートを描画
         let day = 1;
         for (let r = 0; r < rows; r++) {
@@ -111,6 +128,33 @@ export function renderCanvasYearView(canvasManager, state) {
                     dayNumber: day,
                     isHoliday
                 });
+
+                // Equipment折れ線グラフを描画（各セル内、時間軸に沿って）
+                const equipmentStats = state.equipmentStats.get(dateStr);
+                if (equipmentStats) {
+                    // 日付テキストの高さを計算（バーチャートと同じ）
+                    const dateFontSize = CONFIG.font.sizeDateYear;
+                    const dayTextHeight = dateFontSize + 4;
+                    const barAreaTop = cellTop + dayTextHeight;
+                    const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? 10 : 0;
+                    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight);
+
+                    renderCanvasLineChart(contexts.get('content'), {
+                        cellLeft,
+                        cellTop,
+                        cellWidth,
+                        cellHeight,
+                        dateStr,
+                        barAreaTop,
+                        barAreaHeight,
+                        equipmentStats,
+                        startHour,
+                        endHour,
+                        lunchStartHour,
+                        lunchEndHour,
+                        isYearView: true
+                    });
+                }
 
                 day++;
             }

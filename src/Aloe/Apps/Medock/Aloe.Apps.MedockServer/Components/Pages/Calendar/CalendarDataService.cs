@@ -272,20 +272,32 @@ public class CalendarDataService
 
             var querySw = Stopwatch.StartNew();
             List<AppointmentStats> mainStats;
-            if (state.CurrentFilter != null && state.CurrentFilter.IsActive)
+
+            // Mainリソースは常に表示する（Equipmentリソースのフィルター選択に関係なく）
+            // SelectedResourceIdsがEquipmentリソースのみの場合、または他のフィルター条件がない場合は
+            // フィルターを使わずに全てのMainリソースを取得
+            var hasNonResourceFilters = (state.CurrentFilter != null) && (
+                state.CurrentFilter.SelectedFloorIds.Any() ||
+                state.CurrentFilter.SelectedResourceGroupIds.Any() ||
+                state.CurrentFilter.SelectedPlanIds.Any() ||
+                state.CurrentFilter.SelectedOptionPlanIds.Any());
+
+            if (hasNonResourceFilters)
             {
-                // フィルターが有効な場合はフィルター付きメソッドを使用
+                // フロア、リソースグループ、プラン・オプションのフィルターが有効な場合のみフィルター付きメソッドを使用
+                // SelectedResourceIdsは渡さない（Mainリソースは常に表示、Equipmentリソースのみフィルタリング）
                 mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeWithFiltersAsync(
                     startDate,
                     endDate,
-                    state.CurrentFilter.SelectedFloorIds.Any() ? state.CurrentFilter.SelectedFloorIds : null,
+                    state.CurrentFilter!.SelectedFloorIds.Any() ? state.CurrentFilter.SelectedFloorIds : null,
                     state.CurrentFilter.SelectedResourceGroupIds.Any() ? state.CurrentFilter.SelectedResourceGroupIds : null,
-                    state.CurrentFilter.SelectedResourceIds.Any() ? state.CurrentFilter.SelectedResourceIds : null,
+                    null, // SelectedResourceIdsは渡さない（Mainリソースは常に表示）
                     state.CurrentFilter.SelectedPlanIds.Any() ? state.CurrentFilter.SelectedPlanIds : null,
                     state.CurrentFilter.SelectedOptionPlanIds.Any() ? state.CurrentFilter.SelectedOptionPlanIds : null);
             }
             else
             {
+                // フィルターがない、またはEquipmentリソースのみのフィルターの場合は全てのMainリソースを取得
                 mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
             }
             querySw.Stop();
@@ -363,6 +375,83 @@ public class CalendarDataService
         {
             sw.Stop();
             Console.WriteLine($"[Performance] LoadMainStatsAsync total: {sw.ElapsedMilliseconds}ms");
+        }
+    }
+
+    /// <summary>
+    /// EquipmentリソースのStatsを日付ごとにグループ化して状態に反映します。
+    /// フィルターで選択されたEquipmentリソースのみを取得します。
+    /// </summary>
+    public async Task LoadEquipmentStatsAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            // フィルターが有効でない場合、またはEquipmentリソースが選択されていない場合は空を設定
+            if (state.CurrentFilter == null || !state.CurrentFilter.SelectedResourceIds.Any())
+            {
+                state.EquipmentStats.Clear();
+                state.OriginalEquipmentStats.Clear();
+                Console.WriteLine("[Performance] LoadEquipmentStatsAsync: No equipment resources selected.");
+                return;
+            }
+
+            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+
+            var querySw = Stopwatch.StartNew();
+            var equipmentStats = await this._appointmentStatsRepository.GetEquipmentResourceStatsByDateRangeAsync(
+                startDate,
+                endDate,
+                state.CurrentFilter.SelectedResourceIds);
+            querySw.Stop();
+            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync query: {querySw.ElapsedMilliseconds}ms, Count={equipmentStats.Count}");
+
+            // 日付ごとにグループ化
+            var groupSw = Stopwatch.StartNew();
+            var statsByDate = equipmentStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
+            groupSw.Stop();
+            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync grouping: {groupSw.ElapsedMilliseconds}ms");
+
+            // 全日付を初期化
+            state.EquipmentStats.Clear();
+            state.OriginalEquipmentStats.Clear();
+
+            var initSw = Stopwatch.StartNew();
+            for (var date = startDate; date <= endDate; date = date.AddDays(1))
+            {
+                var dateStr = date.ToString("yyyy-MM-dd");
+
+                // その日のEquipmentリソースStatsがあれば設定、なければ空リスト
+                if (statsByDate.TryGetValue(date, out var equipmentStatsList))
+                {
+                    state.EquipmentStats[dateStr] = equipmentStatsList;
+                    state.OriginalEquipmentStats[dateStr] = equipmentStatsList.ToList(); // コピーを作成
+                }
+                else
+                {
+                    state.EquipmentStats[dateStr] = new List<AppointmentStats>();
+                    state.OriginalEquipmentStats[dateStr] = new List<AppointmentStats>();
+                }
+            }
+            initSw.Stop();
+            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync initialization: {initSw.ElapsedMilliseconds}ms, Days={endDate.DayNumber - startDate.DayNumber + 1}");
+        }
+        catch (Exception ex)
+        {
+            // エラー時は空のEquipmentStatsを設定
+            state.EquipmentStats.Clear();
+            state.OriginalEquipmentStats.Clear();
+            Console.WriteLine($"[Error] LoadEquipmentStatsAsync: {ex.Message}");
+        }
+        finally
+        {
+            sw.Stop();
+            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync total: {sw.ElapsedMilliseconds}ms");
         }
     }
 
