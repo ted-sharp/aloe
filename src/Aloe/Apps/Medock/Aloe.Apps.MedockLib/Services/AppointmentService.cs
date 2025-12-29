@@ -41,8 +41,24 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+
+            var querySw = System.Diagnostics.Stopwatch.StartNew();
             var appointments = await this._appointmentRepository.GetByDateRangeAsync(startDate, endDate);
+            querySw.Stop();
+            _logger.LogInformation("[PERF] AppointmentService - Repository GetByDateRangeAsync: {ElapsedMs}ms, Count={Count}",
+                querySw.ElapsedMilliseconds, appointments.Count);
+
+            var mapSw = System.Diagnostics.Stopwatch.StartNew();
             var dtos = appointments.Select(a => this.MapToDto(a)).ToList();
+            mapSw.Stop();
+            _logger.LogInformation("[PERF] AppointmentService - MapToDto: {ElapsedMs}ms",
+                mapSw.ElapsedMilliseconds);
+
+            sw.Stop();
+            _logger.LogInformation("[PERF] AppointmentService - GetAppointmentsAsync total: {ElapsedMs}ms",
+                sw.ElapsedMilliseconds);
+
             return Result<List<AppointmentDto>>.Success(dtos);
         }
         catch (DatabaseException ex)

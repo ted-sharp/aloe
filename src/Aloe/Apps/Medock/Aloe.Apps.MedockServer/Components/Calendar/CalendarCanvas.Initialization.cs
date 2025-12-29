@@ -11,6 +11,12 @@ public partial class CalendarCanvas
 {
     private async Task InitializeCalendarAsync()
     {
+        // ローディング中は初期化を延期（OnParametersSetAsync で IsLoading = false になった時に実行される）
+        if (this.IsLoading)
+        {
+            return;
+        }
+
         // ES Moduleの読み込み完了を待つ
         var maxRetries = 50;
         var retryDelay = 100; // 100ms
@@ -111,6 +117,15 @@ public partial class CalendarCanvas
             this.CurrentDate.ToString("yyyy-MM-dd"));
         jsViewSw.Stop();
         Console.WriteLine($"[Performance] CalendarCanvas.InitializeCalendarAsync JS changeView: {jsViewSw.ElapsedMilliseconds}ms");
+
+        // 初期化完了フラグを設定
+        this._isInitialized = true;
+        this._lastViewType = this.ViewType;
+        this._lastDate = this.CurrentDate;
+        this._lastWeekDays = this.WeekDays;
+        this._lastShowSlots = this.ShowSlots;
+        this._lastShowSimpleView = this.ShowSimpleView;
+        this._lastMainStatsCount = this.MainStats?.Count ?? 0;
     }
 }
 

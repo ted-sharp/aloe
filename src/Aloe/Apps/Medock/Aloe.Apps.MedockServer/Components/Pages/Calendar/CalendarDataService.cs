@@ -240,23 +240,31 @@ public class CalendarDataService
         DateOnly currentDate,
         int weekDays = 7)
     {
-        // TODO: [パフォーマンス対策] ここを除外すると劇的に早くなるが、正常に描画できていない。ただし、別の年に移動したときは表示できているので、タイミングの問題で劇的に早くできると思われる。
-        //if (viewType == CalendarViewType.Year || viewType == CalendarViewType.Month)
-        //{
-        //    state.Appointments = new List<AppointmentDto>();
-        //    Console.WriteLine($"[Performance] Skipped loading appointments for {viewType} view.");
-        //    return;
-        //}
-
         var sw = Stopwatch.StartNew();
         try
         {
+            // 【パフォーマンス対策】Month/Year viewではアポイントメント詳細は不要（mainStats/equipmentStatsで統計表示）
+            // Week viewのみアポイントメント詳細が必要（個別予約ブロック表示）
+            if (viewType == CalendarViewType.Year || viewType == CalendarViewType.Month)
+            {
+                _logger.LogInformation("[TRACE] LoadAppointmentsAsync SKIPPED: ViewType={ViewType}, CurrentDate={Date} (appointments not used - mainStats/equipmentStats only)",
+                    viewType, currentDate);
+                state.Appointments = new List<AppointmentDto>();
+                _logger.LogWarning("[TRACE] LoadAppointmentsAsync: {ViewType} ビューのため Appointments をクリアしました", viewType);
+                return;
+            }
+
+            _logger.LogInformation("[TRACE] LoadAppointmentsAsync: {ViewType} ビューなのでデータをロードします", viewType);
+
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("LoadAppointmentsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
-                viewType, startDate, endDate);
+            _logger.LogInformation("[TRACE] LoadAppointmentsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, currentDate, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
             var result = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+            querySw.Stop();
+            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Repository query: {ElapsedMs}ms",
+                querySw.ElapsedMilliseconds);
 
             if (!result.IsSuccess || result.Value == null)
             {
@@ -266,18 +274,25 @@ public class CalendarDataService
             }
 
             var appointments = result.Value;
+            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Retrieved {Count} appointments from service",
+                appointments.Count);
 
             // フロアフィルターを適用
+            var filterSw = Stopwatch.StartNew();
+            _logger.LogWarning("[TRACE] LoadAppointmentsAsync - CurrentFilter: {Filter}, SelectedFloorIds: {FloorCount}",
+                state.CurrentFilter != null ? "set" : "null",
+                state.CurrentFilter?.SelectedFloorIds.Count ?? 0);
             if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
             {
+                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用前: {Count}件", appointments.Count);
                 appointments = appointments
                     .Where(a => a.FloorId.HasValue && state.CurrentFilter.SelectedFloorIds.Contains(a.FloorId.Value))
                     .ToList();
+                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用後: {Count}件", appointments.Count);
             }
-
-            querySw.Stop();
-            _logger.LogInformation("LoadAppointmentsAsync query: {ElapsedMs}ms, Count={Count}",
-                querySw.ElapsedMilliseconds, appointments.Count);
+            filterSw.Stop();
+            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Floor filtering: {ElapsedMs}ms, Count after filter={Count}",
+                filterSw.ElapsedMilliseconds, appointments.Count);
 
             state.Appointments = appointments;
         }
@@ -289,7 +304,7 @@ public class CalendarDataService
         finally
         {
             sw.Stop();
-            _logger.LogInformation("LoadAppointmentsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -306,8 +321,8 @@ public class CalendarDataService
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("LoadMainStatsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
-                viewType, startDate, endDate);
+            _logger.LogInformation("[TRACE] LoadMainStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, currentDate, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
             List<AppointmentStats> mainStats;
@@ -441,16 +456,15 @@ public class CalendarDataService
                 state.OriginalEquipmentStats.Clear();
                 state.EquipmentStatsOptimized = null;
                 var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
-                _logger.LogDebug("LoadEquipmentStatsAsync: {Message}", msg);
+                _logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: {Message}", msg);
                 return;
             }
 
             _logger.LogDebug("LoadEquipmentStatsAsync: SelectedResourceIds count = {Count}", state.CurrentFilter.SelectedResourceIds.Count);
 
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogDebug("LoadEquipmentStatsAsync: GetDateRange returned {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
-            _logger.LogInformation("LoadEquipmentStatsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
-                viewType, startDate, endDate);
+            _logger.LogInformation("[TRACE] LoadEquipmentStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, currentDate, startDate, endDate);
 
             // 【最適化版】FromSql + array_agg で SQL側で配列化
             // 既に日付ごと・リソースごとにグループ化されて返される

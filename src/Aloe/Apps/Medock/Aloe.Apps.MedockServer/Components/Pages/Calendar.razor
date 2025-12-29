@@ -248,46 +248,54 @@
         }
         @if (CurrentView == CalendarViewType.Year)
         {
-            <YearView
-                CurrentDate="@CurrentDate"
-                MainStats="@MainStats"
-                MainStatsGrayedOut="@MainStatsGrayedOut"
-                EquipmentStats="@EquipmentStats"
-                EquipmentStatsOptimized="@EquipmentStatsOptimized"
-                Holidays="@Holidays"
-                ShowSimpleView="@ShowSimpleView"
-                BusinessHours="@BusinessHours"
-                FilterTimeSlots="@FilterTimeSlots"
-                Height="100%"
-                OnDateClick="@HandleDateClick"
-                OnMonthClick="@HandleMonthClick"
-                OnDateSelect="@HandleDateSelect"
-                OnDateDoubleClick="@HandleDateDoubleClick"
-                OnDateRangeSelect="@HandleDateRangeSelect"
-                OnYearSelected="@HandleYearSelected"
-                OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnGoToToday="@HandleGoToToday"
-                OnShowDayDetail="@HandleShowDayDetail" />
+            @if (MainStats != null && MainStats.Count > 0)
+            {
+                <YearView
+                    CurrentDate="@CurrentDate"
+                    MainStats="@MainStats"
+                    MainStatsGrayedOut="@MainStatsGrayedOut"
+                    EquipmentStats="@EquipmentStats"
+                    EquipmentStatsOptimized="@EquipmentStatsOptimized"
+                    Holidays="@Holidays"
+                    ShowSimpleView="@ShowSimpleView"
+                    BusinessHours="@BusinessHours"
+                    FilterTimeSlots="@FilterTimeSlots"
+                    IsLoading="@IsLoading"
+                    Height="100%"
+                    OnDateClick="@HandleDateClick"
+                    OnMonthClick="@HandleMonthClick"
+                    OnDateSelect="@HandleDateSelect"
+                    OnDateDoubleClick="@HandleDateDoubleClick"
+                    OnDateRangeSelect="@HandleDateRangeSelect"
+                    OnYearSelected="@HandleYearSelected"
+                    OnSimpleViewChanged="@HandleSimpleViewChanged"
+                    OnGoToToday="@HandleGoToToday"
+                    OnShowDayDetail="@HandleShowDayDetail" />
+            }
         }
         else if (CurrentView == CalendarViewType.Month)
         {
-            <MonthView
-                CurrentDate="@CurrentDate"
-                MainStats="@MainStats"
-                MainStatsGrayedOut="@MainStatsGrayedOut"
-                EquipmentStats="@EquipmentStats"
-                EquipmentStatsOptimized="@EquipmentStatsOptimized"
-                Holidays="@Holidays"
-                ShowSimpleView="@ShowSimpleView"
-                BusinessHours="@BusinessHours"
-                FilterTimeSlots="@FilterTimeSlots"
-                Height="100%"
-                OnDateClick="@HandleDateClick"
-                OnDateDoubleClick="@HandleDateDoubleClick"
-                OnMonthSelected="@HandleMonthSelected"
-                OnSimpleViewChanged="@HandleSimpleViewChanged"
-                OnGoToToday="@HandleGoToToday"
-                OnShowDayDetail="@HandleShowDayDetail" />
+            @if (MainStats != null && MainStats.Count > 0)
+            {
+                <MonthView
+                    CurrentDate="@CurrentDate"
+                    MainStats="@MainStats"
+                    MainStatsGrayedOut="@MainStatsGrayedOut"
+                    EquipmentStats="@EquipmentStats"
+                    EquipmentStatsOptimized="@EquipmentStatsOptimized"
+                    Holidays="@Holidays"
+                    ShowSimpleView="@ShowSimpleView"
+                    BusinessHours="@BusinessHours"
+                    FilterTimeSlots="@FilterTimeSlots"
+                    IsLoading="@IsLoading"
+                    Height="100%"
+                    OnDateClick="@HandleDateClick"
+                    OnDateDoubleClick="@HandleDateDoubleClick"
+                    OnMonthSelected="@HandleMonthSelected"
+                    OnSimpleViewChanged="@HandleSimpleViewChanged"
+                    OnGoToToday="@HandleGoToToday"
+                    OnShowDayDetail="@HandleShowDayDetail" />
+            }
         }
         else
         {
@@ -301,6 +309,7 @@
                 Holidays="@Holidays"
                 StartHour="@StartHour"
                 EndHour="@EndHour"
+                IsLoading="@IsLoading"
                 Height="100%"
                 OnDateSelected="@HandleDateClick"
                 OnAppointmentClicked="@HandleAppointmentClick"

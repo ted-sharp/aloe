@@ -20,6 +20,7 @@
             ShowSlots="@ShowSlots"
             StartHour="@StartHour"
             EndHour="@EndHour"
+            IsLoading="@IsLoading"
             Height="100%"
             OnDateSelected="@HandleDateSelected"
             OnAppointmentClicked="@HandleAppointmentClicked"
@@ -94,6 +95,12 @@
     /// </summary>
     [Parameter]
     public string Height { get; set; } = "600px";
+
+    /// <summary>
+    /// ローディング状態
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
 
     /// <summary>
     /// 日付選択時のコールバック

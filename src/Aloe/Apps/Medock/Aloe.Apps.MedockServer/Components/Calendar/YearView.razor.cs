@@ -69,6 +69,12 @@ public partial class YearView : ComponentBase
     public List<string>? FilterTimeSlots { get; set; }
 
     /// <summary>
+    /// ローディング状態
+    /// </summary>
+    [Parameter]
+    public bool IsLoading { get; set; }
+
+    /// <summary>
     /// カレンダーの高さ
     /// </summary>
     [Parameter]

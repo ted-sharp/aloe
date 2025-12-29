@@ -14,6 +14,7 @@ public class CalendarState
     // ビュー状態
     public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
     public CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
+    public CalendarViewType PreviousView { get; set; } = CalendarViewType.Month;
     public int WeekDays { get; set; } = 7;
     public bool ShowSlots { get; set; } = true;
     public bool ShowFilterPanel { get; set; }
@@ -174,6 +175,7 @@ public class CalendarState
     /// </summary>
     public void SetView(CalendarViewType view)
     {
+        this.PreviousView = this.CurrentView;
         this.CurrentView = view;
     }
 
