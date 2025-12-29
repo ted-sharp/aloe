@@ -7,8 +7,21 @@
 
 import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle } from '../utils/canvas-utils.js';
-import { dateToString, getStartOfWeek, isToday } from '../utils/date-utils.js';
+import { dateToString, getStartOfWeek, isToday, parseDate } from '../utils/date-utils.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
+
+/**
+ * HH:mm形式の時間文字列を時間.分の数値に変換
+ * @param {string} timeStr - "HH:mm"形式の時間文字列（例："09:30"）
+ * @returns {number} 時間.分の数値（例：9.5）
+ */
+function parseTimeToHours(timeStr) {
+    if (!timeStr) return 9.0;
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || 0, 10);
+    const minutes = parseInt(parts[1] || 0, 10);
+    return hours + (minutes / 60);
+}
 
 /**
  * ステータスコードからテキストを取得
@@ -156,12 +169,23 @@ export function renderCanvasWeekView(canvasManager, state) {
             });
         }
 
-        // 横線
+        // 横線（時間の区切り）
         drawLine(gridCtx, {
             points: [timeColumnWidth, y, width, y],
             stroke: CONFIG.colors.grid,
             strokeWidth: 1
         });
+
+        // 詳細表示モードの場合、30分スロットの区切り線も描画
+        if (!showSlots && hour < hours) {
+            const halfHourY = y + hourHeight / 2;
+            drawLine(gridCtx, {
+                points: [timeColumnWidth, halfHourY, width, halfHourY],
+                stroke: CONFIG.colors.grid,
+                strokeWidth: 0.5,
+                opacity: 0.5
+            });
+        }
 
         // 背景色（交互）
         if (hour < hours && hour % 2 === 0) {
@@ -186,72 +210,150 @@ export function renderCanvasWeekView(canvasManager, state) {
         });
     }
 
-    // 予約ブロックを描画
+    // 予約を描画
     if (state.appointments && state.appointments.length > 0) {
         const filteredAppointments = state.appointments.filter(appt => {
-            const apptDate = new Date(appt.appointmentDate);
+            const apptDate = parseDate(appt.date);
             const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
             return daysDiff >= 0 && daysDiff < weekDays;
         });
 
-        filteredAppointments.forEach((appt, index) => {
-            const apptDate = new Date(appt.appointmentDate);
-            const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
-            const startTime = parseFloat(appt.startTime || '9.0');
-            const endTime = parseFloat(appt.endTime || '10.0');
+        if (showSlots) {
+            // 簡易表示モード: ブロック表示
+            filteredAppointments.forEach((appt, index) => {
+                const apptDate = parseDate(appt.date);
+                const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
+                const startTime = parseTimeToHours(appt.startTime || '09:00');
+                const endTime = parseTimeToHours(appt.endTime || '10:00');
 
-            if (startTime < startHour || endTime > endHour) {
-                return; // 範囲外
-            }
+                if (startTime < startHour || endTime > endHour) {
+                    return; // 範囲外
+                }
 
-            const x = timeColumnWidth + daysDiff * dayWidth + 2;
-            const y = headerHeight + (startTime - startHour) * hourHeight;
-            const blockWidth = dayWidth - 4;
-            const blockHeight = (endTime - startTime) * hourHeight;
+                const x = timeColumnWidth + daysDiff * dayWidth + 2;
+                const y = headerHeight + (startTime - startHour) * hourHeight;
+                const blockWidth = dayWidth - 4;
+                const blockHeight = (endTime - startTime) * hourHeight;
 
-            const statusColor = CONFIG.colors.status[appt.status] || '#9ca3af';
+                const statusColor = CONFIG.colors.status[appt.status] || '#9ca3af';
 
-            // ブロック
-            drawRect(contentCtx, {
-                x: x,
-                y: y,
-                width: blockWidth,
-                height: blockHeight,
-                fill: statusColor,
-                cornerRadius: 4,
-                opacity: 0.9
-            });
-
-            // テキスト
-            if (blockHeight > 20) {
-                drawText(contentCtx, {
-                    text: appt.patientName || '患者',
-                    x: x + 5,
-                    y: y + 5,
-                    width: blockWidth - 10,
-                    fill: '#ffffff',
-                    fontSize: CONFIG.font.sizeSmall,
-                    fontStyle: 'bold'
+                // ブロック
+                drawRect(contentCtx, {
+                    x: x,
+                    y: y,
+                    width: blockWidth,
+                    height: blockHeight,
+                    fill: statusColor,
+                    cornerRadius: 4,
+                    opacity: 0.9
                 });
 
-                if (blockHeight > 40 && appt.organizationName) {
+                // テキスト
+                if (blockHeight > 20) {
                     drawText(contentCtx, {
-                        text: appt.organizationName,
+                        text: appt.patientName || '患者',
                         x: x + 5,
-                        y: y + 20,
+                        y: y + 5,
                         width: blockWidth - 10,
                         fill: '#ffffff',
-                        fontSize: CONFIG.font.sizeSmall - 1
+                        fontSize: CONFIG.font.sizeSmall,
+                        fontStyle: 'bold'
                     });
-                }
-            }
 
-            // Hit Test用に登録
-            renderState.addWeekSlot({
-                bounds: { x, y, width: blockWidth, height: blockHeight },
-                appointment: appt
+                    if (blockHeight > 40 && appt.organizationName) {
+                        drawText(contentCtx, {
+                            text: appt.organizationName,
+                            x: x + 5,
+                            y: y + 20,
+                            width: blockWidth - 10,
+                            fill: '#ffffff',
+                            fontSize: CONFIG.font.sizeSmall - 1
+                        });
+                    }
+                }
+
+                // Hit Test用に登録
+                renderState.addWeekSlot({
+                    bounds: { x, y, width: blockWidth, height: blockHeight },
+                    appointment: appt
+                });
             });
-        });
+        } else {
+            // 詳細表示モード: アバター表示（30分スロット単位）
+            const slotMap = new Map(); // key: "dayIndex-hour-half" -> appointments[]
+
+            filteredAppointments.forEach(appt => {
+                const apptDate = parseDate(appt.date);
+                const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
+
+                if (daysDiff < 0 || daysDiff >= weekDays) return;
+
+                const startTime = parseTimeToHours(appt.startTime || '09:00');
+                if (startTime < startHour || startTime >= endHour) return;
+
+                const hourNum = Math.floor(startTime);
+                const minNum = Math.round((startTime - hourNum) * 60);
+                const half = minNum >= 30 ? 1 : 0;
+                const slotKey = `${daysDiff}-${hourNum}-${half}`;
+
+                if (!slotMap.has(slotKey)) {
+                    slotMap.set(slotKey, []);
+                }
+                slotMap.get(slotKey).push(appt);
+            });
+
+            // 各スロットにアバターを描画
+            slotMap.forEach((slotAppts, slotKey) => {
+                const [dayIndex, hourNum, half] = slotKey.split('-').map(Number);
+                const slotHeight = hourHeight / 2;
+                const maxAvatars = 4; // 1スロット最大4人まで表示
+                const avatarSize = Math.min(28, slotHeight - 4, (dayWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
+
+                const baseX = timeColumnWidth + dayIndex * dayWidth + 4;
+                const baseY = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight + (slotHeight - avatarSize) / 2;
+
+                slotAppts.slice(0, maxAvatars).forEach((appt, idx) => {
+                    const avatarX = baseX + idx * (avatarSize + 4);
+                    const avatarY = baseY;
+                    const initial = getInitial(appt.patientName);
+                    const colorIdx = appt.patientName ? appt.patientName.charCodeAt(0) % avatarColors.length : 0;
+                    const avatarColor = avatarColors[colorIdx];
+
+                    // アバター円
+                    drawCircle(contentCtx, {
+                        x: avatarX + avatarSize / 2,
+                        y: avatarY + avatarSize / 2,
+                        radius: avatarSize / 2,
+                        fill: avatarColor,
+                        stroke: '#ffffff',
+                        strokeWidth: 2
+                    });
+
+                    // イニシャル文字
+                    drawText(contentCtx, {
+                        text: initial,
+                        x: avatarX,
+                        y: avatarY + avatarSize / 2 - 7,
+                        width: avatarSize,
+                        fill: '#ffffff',
+                        fontSize: 14,
+                        fontStyle: 'bold',
+                        align: 'center'
+                    });
+
+                    // Hit Test用に登録
+                    renderState.addWeekSlot({
+                        bounds: {
+                            x: avatarX,
+                            y: avatarY,
+                            width: avatarSize,
+                            height: avatarSize
+                        },
+                        appointment: appt
+                    });
+                });
+            });
+        }
     }
 }
 
