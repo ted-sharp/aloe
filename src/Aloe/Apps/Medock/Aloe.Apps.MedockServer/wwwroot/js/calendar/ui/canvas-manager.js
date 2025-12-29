@@ -29,7 +29,7 @@ export class CanvasManager {
     constructor(containerId, width, height) {
         this.containerId = containerId;
         this.container = document.getElementById(containerId);
-        
+
         if (!this.container) {
             throw new Error(`Container not found: ${containerId}`);
         }
@@ -38,9 +38,12 @@ export class CanvasManager {
         this.height = height;
         this.canvases = new Map();
         this.contexts = new Map();
+        this.offscreenCanvases = new Map();
+        this.offscreenContexts = new Map();
         this.resizeObserver = null;
 
         this._createCanvasLayers();
+        this._createOffscreenBuffers();
         this._setupResize();
     }
 
@@ -84,6 +87,29 @@ export class CanvasManager {
             const context = canvas.getContext('2d');
             this.canvases.set(layerName, canvas);
             this.contexts.set(layerName, context);
+        });
+    }
+
+    /**
+     * オフスクリーンバッファを作成（ダブルバッファリング用）
+     * @private
+     */
+    _createOffscreenBuffers() {
+        const layers = [
+            LAYER_NAMES.BACKGROUND,
+            LAYER_NAMES.GRID,
+            LAYER_NAMES.CONTENT,
+            LAYER_NAMES.INTERACTION
+        ];
+
+        layers.forEach((layerName) => {
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = this.width;
+            offscreenCanvas.height = this.height;
+
+            const offscreenContext = offscreenCanvas.getContext('2d');
+            this.offscreenCanvases.set(layerName, offscreenCanvas);
+            this.offscreenContexts.set(layerName, offscreenContext);
         });
     }
 
@@ -133,6 +159,23 @@ export class CanvasManager {
     }
 
     /**
+     * オフスクリーン描画コンテキストを取得
+     * @param {string} layerName - レイヤー名
+     * @returns {CanvasRenderingContext2D} オフスクリーン描画コンテキスト
+     */
+    getOffscreenContext(layerName) {
+        return this.offscreenContexts.get(layerName);
+    }
+
+    /**
+     * すべてのオフスクリーンCanvasコンテキストを取得
+     * @returns {Map<string, CanvasRenderingContext2D>} レイヤー名 -> オフスクリーンコンテキストのマップ
+     */
+    getAllOffscreenContexts() {
+        return this.offscreenContexts;
+    }
+
+    /**
      * Canvasサイズを変更
      * @param {number} width - 新しい幅
      * @param {number} height - 新しい高さ
@@ -142,6 +185,11 @@ export class CanvasManager {
         this.height = height;
 
         this.canvases.forEach((canvas) => {
+            canvas.width = width;
+            canvas.height = height;
+        });
+
+        this.offscreenCanvases.forEach((canvas) => {
             canvas.width = width;
             canvas.height = height;
         });
@@ -171,6 +219,52 @@ export class CanvasManager {
     }
 
     /**
+     * 指定オフスクリーンレイヤーをクリア
+     * @param {string} layerName - レイヤー名
+     */
+    clearOffscreenLayer(layerName) {
+        const ctx = this.offscreenContexts.get(layerName);
+        if (ctx) {
+            ctx.clearRect(0, 0, this.width, this.height);
+        }
+    }
+
+    /**
+     * すべてのオフスクリーンレイヤーをクリア
+     */
+    clearAllOffscreen() {
+        this.offscreenContexts.forEach((ctx) => {
+            ctx.clearRect(0, 0, this.width, this.height);
+        });
+    }
+
+    /**
+     * オフスクリーンレイヤーをメインCanvasに転送
+     * @param {string} layerName - レイヤー名
+     */
+    commitLayer(layerName) {
+        const offscreenCanvas = this.offscreenCanvases.get(layerName);
+        const ctx = this.contexts.get(layerName);
+        if (offscreenCanvas && ctx) {
+            ctx.clearRect(0, 0, this.width, this.height);
+            ctx.drawImage(offscreenCanvas, 0, 0);
+        }
+    }
+
+    /**
+     * すべてのオフスクリーンレイヤーをメインCanvasに転送（一括コミット）
+     */
+    commitAll() {
+        this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+            const ctx = this.contexts.get(layerName);
+            if (ctx) {
+                ctx.clearRect(0, 0, this.width, this.height);
+                ctx.drawImage(offscreenCanvas, 0, 0);
+            }
+        });
+    }
+
+    /**
      * Canvas Managerを破棄
      */
     destroy() {
@@ -189,6 +283,8 @@ export class CanvasManager {
 
         this.canvases.clear();
         this.contexts.clear();
+        this.offscreenCanvases.clear();
+        this.offscreenContexts.clear();
     }
 
     /**

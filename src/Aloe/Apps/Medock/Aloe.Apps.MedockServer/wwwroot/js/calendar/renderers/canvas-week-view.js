@@ -59,12 +59,13 @@ const avatarColors = [
  * @param {object} state - アプリケーション状態
  */
 export function renderCanvasWeekView(canvasManager, state) {
-    const contexts = canvasManager.getAllContexts();
+    // オフスクリーンバッファに描画（ダブルバッファリング）
+    const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
     const height = canvasManager.height;
 
-    // レイヤーをクリア
-    canvasManager.clearAll();
+    // オフスクリーンレイヤーをクリア
+    canvasManager.clearAllOffscreen();
 
     // Render Stateをリセット
     resetRenderState();
@@ -355,6 +356,9 @@ export function renderCanvasWeekView(canvasManager, state) {
             });
         }
     }
+
+    // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
+    canvasManager.commitAll();
 }
 
 

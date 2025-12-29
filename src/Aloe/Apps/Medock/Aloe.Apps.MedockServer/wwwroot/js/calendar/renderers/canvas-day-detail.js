@@ -43,12 +43,13 @@ function parseSlotTimeRange(slot, startHour, endHour) {
  * @param {object} equipmentStats - Equipment統計データ（オプション）
  */
 export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true, equipmentStats = null) {
-    const contexts = canvasManager.getAllContexts();
+    // オフスクリーンバッファに描画（ダブルバッファリング）
+    const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
     const height = canvasManager.height;
 
-    // レイヤーをクリア
-    canvasManager.clearAll();
+    // オフスクリーンレイヤーをクリア
+    canvasManager.clearAllOffscreen();
 
     const backgroundCtx = contexts.get('background');
     const gridCtx = contexts.get('grid');
@@ -330,6 +331,9 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             isYearView: false
         });
     }
+
+    // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
+    canvasManager.commitAll();
 }
 
 
