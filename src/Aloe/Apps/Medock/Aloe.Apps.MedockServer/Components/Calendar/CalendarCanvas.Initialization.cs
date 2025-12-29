@@ -11,12 +11,6 @@ public partial class CalendarCanvas
 {
     private async Task InitializeCalendarAsync()
     {
-        // ローディング中は初期化を延期（OnParametersSetAsync で IsLoading = false になった時に実行される）
-        if (this.IsLoading)
-        {
-            return;
-        }
-
         // ES Moduleの読み込み完了を待つ
         var maxRetries = 50;
         var retryDelay = 100; // 100ms

@@ -121,12 +121,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public string? CssClass { get; set; }
 
     /// <summary>
-    /// Loading state - skip data updates when true
-    /// </summary>
-    [Parameter]
-    public bool IsLoading { get; set; }
-
-    /// <summary>
     /// Callback when a date is clicked
     /// </summary>
     [Parameter]
@@ -190,7 +184,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     private bool _lastShowSimpleView;
     // _lastShowEquipmentGraphは削除されました（EquipmentはAppointmentResourceに統合）
     private int _lastMainStatsCount = 0;  // MainStats の変更検出用
-    private bool _lastIsLoading = false;  // IsLoading の変更検出用
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -217,41 +210,6 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        // IsLoading の状態変化を検出
-        var isLoadingChanged = this._lastIsLoading != this.IsLoading;
-        var justFinishedLoading = this._lastIsLoading && !this.IsLoading;
-        this._lastIsLoading = this.IsLoading;
-
-        // ローディング中はデータ更新をスキップ（データロード完了後に再度呼ばれる）
-        if (this.IsLoading)
-        {
-            return;
-        }
-
-        // ローディングが完了した直後の処理
-        if (justFinishedLoading)
-        {
-            if (!this._isInitialized)
-            {
-                // 初期化が延期されていた場合は初期化を実行
-                await this.InitializeCalendarAsync();
-            }
-            else
-            {
-                // 初期化済みならデータ更新
-                try
-                {
-                    await this.UpdateDataAsync();
-                }
-                catch (TaskCanceledException)
-                {
-                    // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
-                    // これは正常な動作なので無視する
-                }
-            }
-            return;
-        }
-
         // MainStats が更新されたかチェック（初期化後の更新を検出するため）
         var currentMainStatsCount = this.MainStats?.Count ?? 0;
         var mainStatsChanged = this._isInitialized && (currentMainStatsCount != this._lastMainStatsCount);
