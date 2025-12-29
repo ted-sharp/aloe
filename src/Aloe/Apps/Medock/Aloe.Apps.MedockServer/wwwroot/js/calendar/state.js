@@ -17,6 +17,7 @@ let state = {
     dotNetRef: null,                  // .NET オブジェクト参照（コールバック用）
     containerId: null,                // コンテナ要素のID
     currentView: 'month',             // 現在のビュー: 'year', 'month', 'week'
+    previousView: null,               // 前回のビュー（トランジション判定用）
     currentDate: new Date(),          // 現在表示中の日付
     appointments: [],                 // 予約データの配列
     mainStats: new Map(),              // 日付文字列 -> Mainリソース統計 { am, pm, amMax, pmMax, slots[], isGrayedOut }

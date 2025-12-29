@@ -332,8 +332,8 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         });
     }
 
-    // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
-    canvasManager.commitAll();
+    // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送（フェード有効）
+    canvasManager.commitAll(true, 150);
 }
 
 

@@ -189,17 +189,25 @@ function render() {
     const state = getState();
     if (!state.canvasManager) return;
 
+    // ビュータイプが変わったかどうかを判定
+    const viewChanged = state.previousView && state.previousView !== state.currentView;
+    const fadeMode = viewChanged ? 'scalefade' : 'crossfade'; // slidefade, scalefade, fadethrough から選択可能
+    const fadeDuration = viewChanged ? 350 : 200; // ビュー変更時は長め、同一ビュー内は短め
+
+    // 前回のビューを記憶
+    setState({ previousView: state.currentView });
+
     // CanvasManagerがリサイズを自動処理するため、サイズ調整は不要
-    // 直接描画関数を呼び出す
+    // 直接描画関数を呼び出す（フェードモードと時間を渡す）
     switch (state.currentView) {
         case 'year':
-            renderCanvasYearView(state.canvasManager, state);
+            renderCanvasYearView(state.canvasManager, state, fadeMode, fadeDuration);
             break;
         case 'month':
-            renderCanvasMonthView(state.canvasManager, state);
+            renderCanvasMonthView(state.canvasManager, state, fadeMode, fadeDuration);
             break;
         case 'week':
-            renderCanvasWeekView(state.canvasManager, state);
+            renderCanvasWeekView(state.canvasManager, state, fadeMode, fadeDuration);
             break;
         default:
             console.error('Unknown view type:', state.currentView);

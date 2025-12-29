@@ -40,10 +40,12 @@ export class CanvasManager {
         this.contexts = new Map();
         this.offscreenCanvases = new Map();
         this.offscreenContexts = new Map();
+        this.snapshotCanvases = new Map(); // クロスフェード用スナップショット
         this.resizeObserver = null;
 
         this._createCanvasLayers();
         this._createOffscreenBuffers();
+        this._createSnapshotBuffers();
         this._setupResize();
     }
 
@@ -110,6 +112,26 @@ export class CanvasManager {
             const offscreenContext = offscreenCanvas.getContext('2d');
             this.offscreenCanvases.set(layerName, offscreenCanvas);
             this.offscreenContexts.set(layerName, offscreenContext);
+        });
+    }
+
+    /**
+     * スナップショットバッファを作成（クロスフェード用）
+     * @private
+     */
+    _createSnapshotBuffers() {
+        const layers = [
+            LAYER_NAMES.BACKGROUND,
+            LAYER_NAMES.GRID,
+            LAYER_NAMES.CONTENT,
+            LAYER_NAMES.INTERACTION
+        ];
+
+        layers.forEach((layerName) => {
+            const snapshotCanvas = document.createElement('canvas');
+            snapshotCanvas.width = this.width;
+            snapshotCanvas.height = this.height;
+            this.snapshotCanvases.set(layerName, snapshotCanvas);
         });
     }
 
@@ -194,6 +216,11 @@ export class CanvasManager {
             canvas.height = height;
         });
 
+        this.snapshotCanvases.forEach((canvas) => {
+            canvas.width = width;
+            canvas.height = height;
+        });
+
         // リサイズ後は再描画が必要
         // （呼び出し側でrenderを呼ぶ必要がある）
     }
@@ -253,15 +280,234 @@ export class CanvasManager {
 
     /**
      * すべてのオフスクリーンレイヤーをメインCanvasに転送（一括コミット）
+     * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'slidefade', 'scalefade'（デフォルト: 'instant'）
+     * @param {number} fadeDuration - フェード時間（ミリ秒、デフォルト: 150）
      */
-    commitAll() {
-        this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
-            const ctx = this.contexts.get(layerName);
-            if (ctx) {
-                ctx.clearRect(0, 0, this.width, this.height);
-                ctx.drawImage(offscreenCanvas, 0, 0);
-            }
-        });
+    commitAll(fadeMode = 'instant', fadeDuration = 150) {
+        // 下位互換性のため、古いAPI（boolean）もサポート
+        if (typeof fadeMode === 'boolean') {
+            fadeMode = fadeMode ? 'crossfade' : 'instant';
+        }
+
+        if (fadeMode === 'instant') {
+            // 通常の一括転送（瞬時に切り替え）
+            this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                const ctx = this.contexts.get(layerName);
+                if (ctx) {
+                    ctx.clearRect(0, 0, this.width, this.height);
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+            });
+
+        } else if (fadeMode === 'crossfade') {
+            // クロスフェードトランジション（古い画面と新しい画面をブレンド）
+
+            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            this.canvases.forEach((canvas, layerName) => {
+                const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                if (snapshotCanvas) {
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    snapshotCtx.clearRect(0, 0, this.width, this.height);
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                }
+            });
+
+            // 2. アニメーションループでクロスフェード
+            const startTime = performance.now();
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / fadeDuration, 1);
+
+                this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                    const ctx = this.contexts.get(layerName);
+                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+
+                    if (ctx && snapshotCanvas) {
+                        ctx.clearRect(0, 0, this.width, this.height);
+
+                        // 古い画面をフェードアウト（アルファ: 1 → 0）
+                        ctx.globalAlpha = 1 - progress;
+                        ctx.drawImage(snapshotCanvas, 0, 0);
+
+                        // 新しい画面をフェードイン（アルファ: 0 → 1）
+                        ctx.globalAlpha = progress;
+                        ctx.drawImage(offscreenCanvas, 0, 0);
+
+                        ctx.globalAlpha = 1.0; // 元に戻す
+                    }
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            requestAnimationFrame(animate);
+
+        } else if (fadeMode === 'fadethrough') {
+            // フェードスルートランジション（フェードアウト → フェードイン）
+
+            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            this.canvases.forEach((canvas, layerName) => {
+                const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                if (snapshotCanvas) {
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    snapshotCtx.clearRect(0, 0, this.width, this.height);
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                }
+            });
+
+            // 2. アニメーションループでフェードスルー
+            const halfDuration = fadeDuration / 2;
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const totalProgress = Math.min(elapsed / fadeDuration, 1);
+
+                this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                    const ctx = this.contexts.get(layerName);
+                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+
+                    if (ctx && snapshotCanvas) {
+                        ctx.clearRect(0, 0, this.width, this.height);
+
+                        if (elapsed < halfDuration) {
+                            // 前半: 古い画面をフェードアウト（アルファ: 1 → 0）
+                            const fadeOutProgress = elapsed / halfDuration;
+                            ctx.globalAlpha = 1 - fadeOutProgress;
+                            ctx.drawImage(snapshotCanvas, 0, 0);
+                            ctx.globalAlpha = 1.0;
+                        } else {
+                            // 後半: 新しい画面をフェードイン（アルファ: 0 → 1）
+                            const fadeInProgress = (elapsed - halfDuration) / halfDuration;
+                            ctx.globalAlpha = fadeInProgress;
+                            ctx.drawImage(offscreenCanvas, 0, 0);
+                            ctx.globalAlpha = 1.0;
+                        }
+                    }
+                });
+
+                if (totalProgress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            requestAnimationFrame(animate);
+
+        } else if (fadeMode === 'slidefade') {
+            // スライドフェードトランジション（弱ディゾルブ＋微小スライド）
+
+            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            this.canvases.forEach((canvas, layerName) => {
+                const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                if (snapshotCanvas) {
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    snapshotCtx.clearRect(0, 0, this.width, this.height);
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                }
+            });
+
+            // 2. アニメーションループでスライドフェード
+            const slideDistance = 30; // スライド距離（ピクセル）
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / fadeDuration, 1);
+
+                // イージング関数（ease-out）
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                    const ctx = this.contexts.get(layerName);
+                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+
+                    if (ctx && snapshotCanvas) {
+                        ctx.clearRect(0, 0, this.width, this.height);
+
+                        // 古い画面: フェードアウト＋微小左スライド（アルファ: 1 → 0、X: 0 → -15px）
+                        ctx.save();
+                        ctx.globalAlpha = 1 - progress; // 完全に消える
+                        ctx.translate(-slideDistance * 0.5 * easeOut, 0);
+                        ctx.drawImage(snapshotCanvas, 0, 0);
+                        ctx.restore();
+
+                        // 新しい画面: フェードイン＋右からスライド（アルファ: 0 → 1、X: 30px → 0）
+                        ctx.save();
+                        ctx.globalAlpha = progress;
+                        ctx.translate(slideDistance * (1 - easeOut), 0);
+                        ctx.drawImage(offscreenCanvas, 0, 0);
+                        ctx.restore();
+                    }
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            requestAnimationFrame(animate);
+
+        } else if (fadeMode === 'scalefade') {
+            // スケールフェードトランジション（弱ディゾルブ＋微小スケール）
+
+            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            this.canvases.forEach((canvas, layerName) => {
+                const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                if (snapshotCanvas) {
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    snapshotCtx.clearRect(0, 0, this.width, this.height);
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                }
+            });
+
+            // 2. アニメーションループでスケールフェード
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / fadeDuration, 1);
+
+                // イージング関数（ease-out）
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+
+                this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                    const ctx = this.contexts.get(layerName);
+                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+
+                    if (ctx && snapshotCanvas) {
+                        ctx.clearRect(0, 0, this.width, this.height);
+
+                        // 古い画面: フェードアウト＋微小縮小（アルファ: 1 → 0、スケール: 1.0 → 0.95）
+                        const oldScale = 1.0 - easeOut * 0.05;
+                        const oldOffsetX = (this.width - this.width * oldScale) / 2;
+                        const oldOffsetY = (this.height - this.height * oldScale) / 2;
+
+                        ctx.save();
+                        ctx.globalAlpha = 1 - progress; // 完全に消える
+                        ctx.translate(oldOffsetX, oldOffsetY);
+                        ctx.scale(oldScale, oldScale);
+                        ctx.drawImage(snapshotCanvas, 0, 0);
+                        ctx.restore();
+
+                        // 新しい画面: フェードイン＋拡大（アルファ: 0 → 1、スケール: 0.95 → 1.0）
+                        const newScale = 0.95 + easeOut * 0.05;
+                        const newOffsetX = (this.width - this.width * newScale) / 2;
+                        const newOffsetY = (this.height - this.height * newScale) / 2;
+
+                        ctx.save();
+                        ctx.globalAlpha = progress;
+                        ctx.translate(newOffsetX, newOffsetY);
+                        ctx.scale(newScale, newScale);
+                        ctx.drawImage(offscreenCanvas, 0, 0);
+                        ctx.restore();
+                    }
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            };
+            requestAnimationFrame(animate);
+        }
     }
 
     /**
@@ -285,6 +531,7 @@ export class CanvasManager {
         this.contexts.clear();
         this.offscreenCanvases.clear();
         this.offscreenContexts.clear();
+        this.snapshotCanvases.clear();
     }
 
     /**

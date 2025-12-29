@@ -57,8 +57,10 @@ const avatarColors = [
  * 週スケジューラーを描画（Canvas API版）
  * @param {object} canvasManager - CanvasManagerインスタンス
  * @param {object} state - アプリケーション状態
+ * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough'
+ * @param {number} fadeDuration - フェード時間（ミリ秒）
  */
-export function renderCanvasWeekView(canvasManager, state) {
+export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200) {
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -358,7 +360,7 @@ export function renderCanvasWeekView(canvasManager, state) {
     }
 
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
-    canvasManager.commitAll();
+    canvasManager.commitAll(fadeMode, fadeDuration);
 }
 
 
