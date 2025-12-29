@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Common;
 using Aloe.Apps.MedockLib.Services.Dtos;
 
 namespace Aloe.Apps.MedockLib.Services;
@@ -12,7 +13,7 @@ public interface IFacilityService
     /// </summary>
     /// <param name="facilityId">施設ID</param>
     /// <param name="targetDate">対象日付（nullの場合は今日）</param>
-    /// <returns>営業時間DTO。取得できない場合はデフォルト値（9:00-18:00、昼休み12:00-13:00）を返します</returns>
-    Task<BusinessHoursDto> GetBusinessHoursAsync(Guid facilityId, DateOnly? targetDate = null);
+    /// <returns>操作結果（成功時は営業時間DTO）</returns>
+    Task<Result<BusinessHoursDto>> GetBusinessHoursAsync(Guid facilityId, DateOnly? targetDate = null);
 }
 

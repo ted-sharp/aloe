@@ -6,6 +6,7 @@ using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
@@ -39,6 +40,9 @@ public partial class Calendar : ComponentBase
     // 状態管理（Scoped Service として DI 注入）
     [Inject]
     private CalendarState State { get; set; } = default!;
+
+    [Inject]
+    private ILogger<Calendar> Logger { get; set; } = default!;
 
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
@@ -150,7 +154,7 @@ public partial class Calendar : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         var sw = Stopwatch.StartNew();
-        Console.WriteLine($"[Performance] Calendar.OnInitializedAsync start: ViewType={this.State.CurrentView}");
+        Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
         this.State.IsLoading = true;
         this.StateHasChanged();
         try
@@ -177,12 +181,12 @@ public partial class Calendar : ComponentBase
                 }
                 else
                 {
-                    Console.WriteLine("[WARNING] Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
+                    Logger.LogWarning("Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
                 }
             }
             else
             {
-                Console.WriteLine("[WARNING] Calendar.OnInitializedAsync: User is not authenticated");
+                Logger.LogWarning("Calendar.OnInitializedAsync: User is not authenticated");
             }
 
             await this.DataService.LoadBusinessHoursAsync(this.State);
@@ -212,7 +216,7 @@ public partial class Calendar : ComponentBase
         {
             this.State.IsLoading = false;
             sw.Stop();
-            Console.WriteLine($"[Performance] Calendar.OnInitializedAsync total: {sw.ElapsedMilliseconds}ms");
+            Logger.LogInformation("Calendar.OnInitializedAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
             this.StateHasChanged();
         }
     }
@@ -304,7 +308,7 @@ public partial class Calendar : ComponentBase
     private async Task SetView(CalendarViewType view)
     {
         var sw = Stopwatch.StartNew();
-        Console.WriteLine($"[Performance] Calendar.SetView start: ViewType={view}");
+        Logger.LogInformation("Calendar.SetView start: ViewType={ViewType}", view);
         this.State.SetView(view);
         this.State.IsLoading = true;
         this.StateHasChanged();
@@ -338,7 +342,7 @@ public partial class Calendar : ComponentBase
         {
             this.State.IsLoading = false;
             sw.Stop();
-            Console.WriteLine($"[Performance] Calendar.SetView total: {sw.ElapsedMilliseconds}ms");
+            Logger.LogInformation("Calendar.SetView total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
             this.StateHasChanged();
         }
     }
@@ -836,7 +840,7 @@ public partial class Calendar : ComponentBase
                     : TimeSpan.FromHours(1);
                 var newEndTime = moveInfo.NewTime.Add(duration);
 
-                await this.AppointmentService.UpdateAppointmentAsync(
+                var result = await this.AppointmentService.UpdateAppointmentAsync(
                     moveInfo.ApptId,
                     new UpdateAppointmentDto
                     {
@@ -844,6 +848,13 @@ public partial class Calendar : ComponentBase
                         StartTime = moveInfo.NewTime,
                         EndTime = newEndTime
                     });
+
+                if (!result.IsSuccess)
+                {
+                    Logger.LogWarning("Failed to move appointment {ApptId}: {ErrorMessage}", moveInfo.ApptId, result.ErrorMessage);
+                    // TODO: ユーザーにエラー表示（ToastやSnackbar等）
+                    return;
+                }
 
                 // 予約更新後にデータを再取得
                 await this.DataService.LoadMainStatsAsync(
@@ -866,7 +877,7 @@ public partial class Calendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"予約移動エラー: {ex.Message}");
+            Logger.LogError(ex, "Error moving appointment");
         }
     }
 

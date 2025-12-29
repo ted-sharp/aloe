@@ -1,7 +1,11 @@
+using Aloe.Apps.MedockLib.Common.Exceptions;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Constants;
+using Aloe.Apps.MedockLib.Logging;
+using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
 
@@ -13,10 +17,17 @@ namespace Aloe.Apps.MedockLib.Repositories;
 public class AppointmentStatsRepository : IAppointmentStatsRepository
 {
     private readonly MedockDbContext _context;
+    private readonly ILogger<AppointmentStatsRepository> _logger;
+    private readonly IUserContextService _userContextService;
 
-    public AppointmentStatsRepository(MedockDbContext context)
+    public AppointmentStatsRepository(
+        MedockDbContext context,
+        ILogger<AppointmentStatsRepository> logger,
+        IUserContextService userContextService)
     {
         this._context = context;
+        this._logger = logger;
+        this._userContextService = userContextService;
     }
 
     /// <inheritdoc />
@@ -214,11 +225,12 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         // equipmentResourceIds が null または空の場合は空の辞書を返す
         if (equipmentResourceIds == null || !equipmentResourceIds.Any())
         {
-            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
+            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
             return new Dictionary<string, List<EquipmentResourceStatsDto>>();
         }
 
-        Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}, IDs count={equipmentResourceIds.Count}");
+        _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
+            startDate, endDate, equipmentResourceIds.Count);
 
         // PostgreSQL の array_agg で SQL側で配列化
         // 注意: SqlQueryRaw では複雑な投影ができないため、raw queryで取得後にクライアント側で処理
@@ -260,7 +272,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
                 .ToListAsync();
 
-            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {results.Count} rows");
+            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
 
             // 日付ごとにグループ化
             var groupedByDate = new Dictionary<string, List<EquipmentResourceStatsDto>>();
@@ -287,13 +299,9 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[Error] GetEquipmentResourceSlotsAsArraysByDateAsync: {ex.Message}");
-            Console.WriteLine($"[Error] Stack Trace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"[Error] Inner Exception: {ex.InnerException.Message}");
-            }
-            throw;
+            var (tenantId, facilityId, userId) = _userContextService.GetTenantContext();
+            LogMessages.DiffDataRetrievalError(_logger, tenantId, facilityId, userId, ex);
+            throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
     }
 

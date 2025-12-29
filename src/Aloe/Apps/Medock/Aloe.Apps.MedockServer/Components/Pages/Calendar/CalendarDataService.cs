@@ -8,6 +8,7 @@ using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
@@ -22,19 +23,22 @@ public class CalendarDataService
     private readonly IAppointmentStatsRepository _appointmentStatsRepository;
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
+    private readonly ILogger<CalendarDataService> _logger;
 
     public CalendarDataService(
         IAppointmentService appointmentService,
         IFacilityService facilityService,
         IAppointmentStatsRepository appointmentStatsRepository,
         AuthenticationStateProvider authStateProvider,
-        IDbContextFactory<MedockDbContext> contextFactory)
+        IDbContextFactory<MedockDbContext> contextFactory,
+        ILogger<CalendarDataService> logger)
     {
         this._appointmentService = appointmentService;
         this._facilityService = facilityService;
         this._appointmentStatsRepository = appointmentStatsRepository;
         this._authStateProvider = authStateProvider;
         this._contextFactory = contextFactory;
+        this._logger = logger;
     }
 
     /// <summary>
@@ -46,20 +50,31 @@ public class CalendarDataService
         {
             if (state.CurrentFacilityId.HasValue)
             {
-                state.BusinessHours = await this._facilityService.GetBusinessHoursAsync(
+                var result = await this._facilityService.GetBusinessHoursAsync(
                     state.CurrentFacilityId.Value,
                     state.CurrentDate);
 
-                state.StartHour = state.BusinessHours.StartHour;
-                state.EndHour = state.BusinessHours.EndHour;
+                if (result.IsSuccess && result.Value != null)
+                {
+                    state.BusinessHours = result.Value;
+                    state.StartHour = state.BusinessHours.StartHour;
+                    state.EndHour = state.BusinessHours.EndHour;
+                }
+                else
+                {
+                    _logger.LogWarning("Failed to load business hours: {ErrorMessage}", result.ErrorMessage);
+                    state.BusinessHours = new BusinessHoursDto();
+                }
             }
             else
             {
                 state.BusinessHours = new BusinessHoursDto();
             }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error loading business hours for facility {FacilityId} on date {Date}",
+                state.CurrentFacilityId, state.CurrentDate);
             state.BusinessHours = new BusinessHoursDto();
         }
     }
@@ -77,17 +92,28 @@ public class CalendarDataService
         {
             // 表示範囲に基づいて祝日を取得
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            var holidays = await this._appointmentService.GetHolidaysAsync(startDate, endDate);
+            var result = await this._appointmentService.GetHolidaysAsync(startDate, endDate);
 
             // 既存の祝日をクリアしてから新しいデータを設定
             state.Holidays.Clear();
-            state.Holidays = holidays.ToDictionary(
-                h => h.Date.ToString("yyyy-MM-dd"),
-                h => h.Name
-            );
+
+            if (result.IsSuccess && result.Value != null)
+            {
+                state.Holidays = result.Value.ToDictionary(
+                    h => h.Date.ToString("yyyy-MM-dd"),
+                    h => h.Name
+                );
+            }
+            else
+            {
+                _logger.LogWarning("Failed to load holidays: {ErrorMessage}", result.ErrorMessage);
+                state.Holidays.Clear();
+            }
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error loading holidays for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}",
+                currentDate, currentDate.AddDays(weekDays));
             state.Holidays.Clear();
         }
     }
@@ -196,7 +222,7 @@ public class CalendarDataService
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"フィルターオプションのロードエラー: {ex.Message}");
+            _logger.LogError(ex, "Error loading filter options");
             state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
@@ -226,10 +252,20 @@ public class CalendarDataService
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            Console.WriteLine($"[Performance] LoadAppointmentsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+            _logger.LogInformation("LoadAppointmentsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
-            var appointments = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+            var result = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
+
+            if (!result.IsSuccess || result.Value == null)
+            {
+                _logger.LogWarning("Failed to load appointments: {ErrorMessage}", result.ErrorMessage);
+                state.Appointments = [];
+                return;
+            }
+
+            var appointments = result.Value;
 
             // フロアフィルターを適用
             if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
@@ -240,18 +276,20 @@ public class CalendarDataService
             }
 
             querySw.Stop();
-            Console.WriteLine($"[Performance] LoadAppointmentsAsync query: {querySw.ElapsedMilliseconds}ms, Count={appointments.Count}");
+            _logger.LogInformation("LoadAppointmentsAsync query: {ElapsedMs}ms, Count={Count}",
+                querySw.ElapsedMilliseconds, appointments.Count);
 
             state.Appointments = appointments;
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "Error loading appointments");
             state.Appointments = [];
         }
         finally
         {
             sw.Stop();
-            Console.WriteLine($"[Performance] LoadAppointmentsAsync total: {sw.ElapsedMilliseconds}ms");
+            _logger.LogInformation("LoadAppointmentsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -268,7 +306,8 @@ public class CalendarDataService
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            Console.WriteLine($"[Performance] LoadMainStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+            _logger.LogInformation("LoadMainStatsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
             List<AppointmentStats> mainStats;
@@ -301,7 +340,8 @@ public class CalendarDataService
                 mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
             }
             querySw.Stop();
-            Console.WriteLine($"[Performance] LoadMainStatsAsync query: {querySw.ElapsedMilliseconds}ms, Count={mainStats.Count}");
+            _logger.LogInformation("LoadMainStatsAsync query: {ElapsedMs}ms, Count={Count}",
+                querySw.ElapsedMilliseconds, mainStats.Count);
 
             // AppointmentSlotOverrideを取得
             var overrideSw = Stopwatch.StartNew();
@@ -317,13 +357,14 @@ public class CalendarDataService
                 .GroupBy(o => (o.ApptDate, o.ApptResId))
                 .ToDictionary(g => g.Key, g => g.First());
             overrideSw.Stop();
-            Console.WriteLine($"[Performance] LoadMainStatsAsync slotOverrides: {overrideSw.ElapsedMilliseconds}ms, Count={slotOverrides.Count}");
+            _logger.LogInformation("LoadMainStatsAsync slotOverrides: {ElapsedMs}ms, Count={Count}",
+                overrideSw.ElapsedMilliseconds, slotOverrides.Count);
 
             // 日付ごとにグループ化
             var groupSw = Stopwatch.StartNew();
             var statsByDate = mainStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
             groupSw.Stop();
-            Console.WriteLine($"[Performance] LoadMainStatsAsync grouping: {groupSw.ElapsedMilliseconds}ms");
+            _logger.LogInformation("LoadMainStatsAsync grouping: {ElapsedMs}ms", groupSw.ElapsedMilliseconds);
 
             // 全日付を初期化
             state.MainStats.Clear();
@@ -362,11 +403,13 @@ public class CalendarDataService
                 state.MainStatsGrayedOut[dateStr] = false;
             }
             initSw.Stop();
-            Console.WriteLine($"[Performance] LoadMainStatsAsync initialization: {initSw.ElapsedMilliseconds}ms, Days={endDate.DayNumber - startDate.DayNumber + 1}");
+            _logger.LogInformation("LoadMainStatsAsync initialization: {ElapsedMs}ms, Days={DayCount}",
+                initSw.ElapsedMilliseconds, endDate.DayNumber - startDate.DayNumber + 1);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
             // エラー時は空のMainStatsを設定
+            _logger.LogError(ex, "Error loading main stats");
             state.MainStats.Clear();
             state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
@@ -374,7 +417,7 @@ public class CalendarDataService
         finally
         {
             sw.Stop();
-            Console.WriteLine($"[Performance] LoadMainStatsAsync total: {sw.ElapsedMilliseconds}ms");
+            _logger.LogInformation("LoadMainStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -398,46 +441,43 @@ public class CalendarDataService
                 state.OriginalEquipmentStats.Clear();
                 state.EquipmentStatsOptimized = null;
                 var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
-                Console.WriteLine($"[Debug] LoadEquipmentStatsAsync: {msg}");
-                System.Diagnostics.Debug.WriteLine($"[Debug] LoadEquipmentStatsAsync: {msg}");
+                _logger.LogDebug("LoadEquipmentStatsAsync: {Message}", msg);
                 return;
             }
 
-            Console.WriteLine($"[Debug] LoadEquipmentStatsAsync: SelectedResourceIds count = {state.CurrentFilter.SelectedResourceIds.Count}");
-            System.Diagnostics.Debug.WriteLine($"[Equipment Filter Debug] SelectedResourceIds: {string.Join(",", state.CurrentFilter.SelectedResourceIds.Select(id => id.ToString().Substring(0, 8)))}");
+            _logger.LogDebug("LoadEquipmentStatsAsync: SelectedResourceIds count = {Count}", state.CurrentFilter.SelectedResourceIds.Count);
 
-            Console.WriteLine($"[Debug] About to call GetDateRange with viewType={viewType}, currentDate={currentDate:yyyy-MM-dd}");
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            Console.WriteLine($"[Debug] GetDateRange returned: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
-            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
+            _logger.LogDebug("LoadEquipmentStatsAsync: GetDateRange returned {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
+            _logger.LogInformation("LoadEquipmentStatsAsync start: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, startDate, endDate);
 
             // 【最適化版】FromSql + array_agg で SQL側で配列化
             // 既に日付ごと・リソースごとにグループ化されて返される
             var querySw = Stopwatch.StartNew();
-            Console.WriteLine($"[Debug] About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {state.CurrentFilter.SelectedResourceIds.Count} resource IDs");
+            _logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
             var equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
                 startDate,
                 endDate,
                 state.CurrentFilter.SelectedResourceIds);
             querySw.Stop();
-            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {equipmentStatsOptimized.Count} dates");
+            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {DateCount} dates", equipmentStatsOptimized.Count);
 
             var totalResources = equipmentStatsOptimized.Sum(kvp => kvp.Value.Count);
-            var message = $"[Performance] LoadEquipmentStatsAsync query (optimized): {querySw.ElapsedMilliseconds}ms, Dates={equipmentStatsOptimized.Count}, TotalResources={totalResources}";
-            Console.WriteLine(message);
-            System.Diagnostics.Debug.WriteLine(message);
+            _logger.LogInformation("LoadEquipmentStatsAsync query (optimized): {ElapsedMs}ms, Dates={DateCount}, TotalResources={TotalResources}",
+                querySw.ElapsedMilliseconds, equipmentStatsOptimized.Count, totalResources);
 
             // 最適化版データを状態に保存（CalendarCanvasで使用）
-            Console.WriteLine($"[Debug] Setting state.EquipmentStatsOptimized with {equipmentStatsOptimized.Count} dates");
+            _logger.LogDebug("Setting state.EquipmentStatsOptimized with {DateCount} dates", equipmentStatsOptimized.Count);
             state.EquipmentStatsOptimized = equipmentStatsOptimized;
 
             // 従来互換性のため空リストを設定
-            Console.WriteLine($"[Debug] Clearing EquipmentStats dictionaries");
+            _logger.LogDebug("Clearing EquipmentStats dictionaries");
             state.EquipmentStats.Clear();
             state.OriginalEquipmentStats.Clear();
 
             var initSw = Stopwatch.StartNew();
-            Console.WriteLine($"[Debug] Starting to populate EquipmentStats for dates {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
+            _logger.LogDebug("Starting to populate EquipmentStats for dates {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
                 var dateStr = date.ToString("yyyy-MM-dd");
@@ -446,26 +486,22 @@ public class CalendarDataService
                 state.OriginalEquipmentStats[dateStr] = new List<AppointmentStats>();
             }
             initSw.Stop();
-            Console.WriteLine($"[Debug] Finished populating EquipmentStats");
-            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync initialization: {initSw.ElapsedMilliseconds}ms, Days={endDate.DayNumber - startDate.DayNumber + 1}");
+            _logger.LogDebug("Finished populating EquipmentStats");
+            _logger.LogInformation("LoadEquipmentStatsAsync initialization: {ElapsedMs}ms, Days={DayCount}",
+                initSw.ElapsedMilliseconds, endDate.DayNumber - startDate.DayNumber + 1);
         }
         catch (Exception ex)
         {
             // エラー時は空のEquipmentStatsを設定
             state.EquipmentStats.Clear();
             state.OriginalEquipmentStats.Clear();
-            Console.WriteLine($"[Error] LoadEquipmentStatsAsync: {ex.Message}");
-            Console.WriteLine($"[Error] Stack Trace: {ex.StackTrace}");
-            if (ex.InnerException != null)
-            {
-                Console.WriteLine($"[Error] Inner Exception: {ex.InnerException.Message}");
-                Console.WriteLine($"[Error] Inner Stack Trace: {ex.InnerException.StackTrace}");
-            }
+            _logger.LogError(ex, "Error in LoadEquipmentStatsAsync: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, currentDate, currentDate);
         }
         finally
         {
             sw.Stop();
-            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync total: {sw.ElapsedMilliseconds}ms");
+            _logger.LogInformation("LoadEquipmentStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -564,9 +600,8 @@ public class CalendarDataService
                 UpdatedSessionId = stat.UpdatedSessionId
             };
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            Console.WriteLine($"AppointmentSlotOverride適用エラー: {ex.Message}");
             // エラー時は元の統計をそのまま返す
             return stat;
         }

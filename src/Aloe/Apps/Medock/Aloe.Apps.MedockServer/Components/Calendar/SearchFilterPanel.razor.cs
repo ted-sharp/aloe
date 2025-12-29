@@ -3,6 +3,7 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -16,6 +17,9 @@ public partial class SearchFilterPanel : ComponentBase
 
     [Inject]
     private IDbContextFactory<MedockDbContext> DbContextFactory { get; set; } = default!;
+
+    [Inject]
+    private ILogger<SearchFilterPanel> Logger { get; set; } = default!;
 
     /// <summary>
     /// フィルター変更時のコールバック
@@ -211,7 +215,7 @@ public partial class SearchFilterPanel : ComponentBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"自動リソースID取得エラー: {ex.Message}");
+            Logger.LogError(ex, "Error getting automatic resource IDs");
         }
 
         return autoResourceIds.ToList();

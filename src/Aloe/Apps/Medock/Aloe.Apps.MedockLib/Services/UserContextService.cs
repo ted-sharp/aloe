@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.Extensions.Logging;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -12,10 +13,12 @@ namespace Aloe.Apps.MedockLib.Services;
 public class UserContextService : IUserContextService
 {
     private readonly IAuthService _authService;
+    private readonly ILogger<UserContextService> _logger;
 
-    public UserContextService(IAuthService authService)
+    public UserContextService(IAuthService authService, ILogger<UserContextService> logger)
     {
         this._authService = authService;
+        this._logger = logger;
     }
 
     /// <inheritdoc />
@@ -73,12 +76,13 @@ public class UserContextService : IUserContextService
         // FacilityIdがない場合のフォールバック処理（ログインスキップ時にも対応）
         if (this.CurrentUser != null && !this.CurrentUser.FacilityId.HasValue && this.CurrentUser.UserId != Guid.Empty)
         {
-            Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: FacilityId not found in claims, attempting fallback for UserId={this.CurrentUser.UserId}");
+            _logger.LogInformation("FacilityId not found in claims, attempting fallback for UserId={UserId}", this.CurrentUser.UserId);
             var facilities = await this._authService.GetAccessibleFacilitiesAsync(this.CurrentUser.UserId);
             if (facilities.Any())
             {
                 var defaultFacility = facilities.First();
-                Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: Fallback facility found: FacilityId={defaultFacility.FacilityId}, FacilityName={defaultFacility.FacilityName}");
+                _logger.LogInformation("Fallback facility found: FacilityId={FacilityId}, FacilityName={FacilityName}",
+                    defaultFacility.FacilityId, defaultFacility.FacilityName);
                 this.CurrentUser = this.CurrentUser with
                 {
                     FacilityId = defaultFacility.FacilityId,
@@ -89,12 +93,12 @@ public class UserContextService : IUserContextService
             }
             else
             {
-                Console.WriteLine($"[WARNING] UserContextService.InitializeFromClaimsAsync: No accessible facilities found for UserId={this.CurrentUser.UserId}");
+                _logger.LogWarning("No accessible facilities found for UserId={UserId}", this.CurrentUser.UserId);
             }
         }
         else if (this.CurrentUser != null && this.CurrentUser.FacilityId.HasValue)
         {
-            Console.WriteLine($"[INFO] UserContextService.InitializeFromClaimsAsync: FacilityId found in claims: FacilityId={this.CurrentUser.FacilityId}");
+            _logger.LogInformation("FacilityId found in claims: FacilityId={FacilityId}", this.CurrentUser.FacilityId);
         }
     }
 
