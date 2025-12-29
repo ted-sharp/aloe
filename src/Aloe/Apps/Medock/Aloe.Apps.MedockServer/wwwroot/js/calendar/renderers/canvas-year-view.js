@@ -30,10 +30,11 @@ function getGridLayout(width) {
  * 年間カレンダーを描画（Canvas API版）
  * @param {object} canvasManager - CanvasManagerインスタンス
  * @param {object} state - アプリケーション状態
- * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough'
+ * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'sharedelement'
  * @param {number} fadeDuration - フェード時間（ミリ秒）
+ * @param {object} transitionInfo - トランジション情報 { sourceBounds, targetDateStr }
  */
-export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200) {
+export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200, transitionInfo = null) {
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -165,7 +166,42 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
     }
 
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
-    canvasManager.commitAll(fadeMode, fadeDuration);
+    let commitOptions = {};
+
+    if (fadeMode === 'sharedelement' && transitionInfo) {
+        const targetMonth = transitionInfo.targetMonth;
+
+        // 年 → 月: 年間ビューの月bounds → 月間ビュー全体
+        if (transitionInfo.transitionType === 'year-to-month') {
+            // 遷移元: calendar-main.jsで保存された年間ビューの月bounds
+            if (transitionInfo.sourceBounds) {
+                commitOptions = {
+                    sourceBounds: transitionInfo.sourceBounds
+                };
+                console.log('Year View: Year-to-Month transition', commitOptions);
+            } else {
+                console.warn('Year View: sourceBounds not found in transitionInfo, falling back to scalefade');
+                fadeMode = 'scalefade';
+            }
+        }
+        // 月 → 年: 月間ビュー全体 → 年間ビューの月bounds
+        else if (transitionInfo.transitionType === 'month-to-year') {
+            // 遷移先: 今描画された年間ビューの指定月のbounds
+            const monthInfo = renderState.months[targetMonth];
+            if (monthInfo && monthInfo.bounds) {
+                commitOptions = {
+                    sourceBounds: transitionInfo.sourceBounds,  // 月間ビュー全体（calendar-main.jsで保存）
+                    targetBounds: monthInfo.bounds              // 年間ビューの月bounds（今描画された）
+                };
+                console.log('Year View: Month-to-Year transition', commitOptions);
+            } else {
+                console.warn('Year View: month bounds not found in renderState, falling back to scalefade');
+                fadeMode = 'scalefade';
+            }
+        }
+    }
+
+    canvasManager.commitAll(fadeMode, fadeDuration, commitOptions);
 }
 
 

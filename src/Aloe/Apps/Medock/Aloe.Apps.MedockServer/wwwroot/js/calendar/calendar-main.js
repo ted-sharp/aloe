@@ -16,6 +16,7 @@ import { renderCanvasYearView } from './renderers/canvas-year-view.js';
 import { renderCanvasWeekView } from './renderers/canvas-week-view.js';
 import { renderCanvasDayDetail } from './renderers/canvas-day-detail.js';
 import { setupCanvasInteractions } from './renderers/canvas-interactions.js';
+import { getRenderState } from './renderers/canvas-render-state.js';
 import { startConnection, stopConnection } from './realtime/signalr-client.js';
 
 // Blazor DayDetailPopup用のステージを管理
@@ -39,10 +40,16 @@ function init(containerId, data, options, dotNetRef) {
         existingContainerId: state.containerId
     });
     
+    // 初期日付を今日に設定
+    const today = new Date();
+    const todayStr = dateToString(today);
+
     setState({
         containerId,
         dotNetRef,  // 常に最新のdotNetRefを設定
-        options: { ...state.options, ...options }
+        options: { ...state.options, ...options },
+        currentDate: today,
+        selectedDate: todayStr  // 今日を選択状態にする
     });
     
     // 既に初期化されている場合は、データとビューの更新のみ
@@ -189,25 +196,78 @@ function render() {
     const state = getState();
     if (!state.canvasManager) return;
 
+    const currentRenderState = getRenderState();
+
     // ビュータイプが変わったかどうかを判定
     const viewChanged = state.previousView && state.previousView !== state.currentView;
-    const fadeMode = viewChanged ? 'scalefade' : 'crossfade'; // slidefade, scalefade, fadethrough から選択可能
-    const fadeDuration = viewChanged ? 350 : 200; // ビュー変更時は長め、同一ビュー内は短め
+    let fadeMode = viewChanged ? 'scalefade' : 'crossfade';
+    const fadeDuration = viewChanged ? 350 : 200;
+
+    // 共有要素トランジションの判定（currentDate から自動計算）
+    let transitionInfo = null;
+    if (viewChanged) {
+        const currentDateStr = dateToString(state.currentDate);
+        const currentYear = state.currentDate.getFullYear();
+        const currentMonth = state.currentDate.getMonth();
+
+        console.log('SharedElement Debug:', {
+            viewChanged,
+            currentDateStr,
+            currentView: state.currentView,
+            previousView: state.previousView,
+            currentYear,
+            currentMonth
+        });
+
+        // 年 ↔ 月 のトランジション
+        if ((state.previousView === 'year' && state.currentView === 'month') ||
+            (state.previousView === 'month' && state.currentView === 'year')) {
+
+            fadeMode = 'sharedelement';
+            transitionInfo = {
+                targetYear: currentYear,
+                targetMonth: currentMonth,
+                transitionType: `${state.previousView}-to-${state.currentView}`
+            };
+
+            // 遷移前のビューからsourceBoundsを取得
+            if (state.previousView === 'year' && currentRenderState.months[currentMonth]) {
+                // 年 → 月: 年間ビューの月boundsを保存
+                transitionInfo.sourceBounds = currentRenderState.months[currentMonth].bounds;
+                console.log('Captured Year month bounds:', transitionInfo.sourceBounds);
+            } else if (state.previousView === 'month') {
+                // 月 → 年: 月間ビュー全体のboundsを保存
+                transitionInfo.sourceBounds = {
+                    x: 0,
+                    y: 0,
+                    width: state.canvasManager.width,
+                    height: state.canvasManager.height
+                };
+                console.log('Captured Month full bounds:', transitionInfo.sourceBounds);
+            }
+
+            console.log('SharedElement Transition ENABLED (Year-Month)', transitionInfo);
+        } else {
+            console.log('SharedElement Transition SKIPPED - not Year-Month transition');
+        }
+    } else {
+        console.log('SharedElement Transition SKIPPED - no view change');
+    }
 
     // 前回のビューを記憶
     setState({ previousView: state.currentView });
 
     // CanvasManagerがリサイズを自動処理するため、サイズ調整は不要
-    // 直接描画関数を呼び出す（フェードモードと時間を渡す）
+    // 直接描画関数を呼び出す（フェードモード、時間、トランジション情報を渡す）
     switch (state.currentView) {
         case 'year':
-            renderCanvasYearView(state.canvasManager, state, fadeMode, fadeDuration);
+            renderCanvasYearView(state.canvasManager, state, fadeMode, fadeDuration, transitionInfo);
             break;
         case 'month':
-            renderCanvasMonthView(state.canvasManager, state, fadeMode, fadeDuration);
+            renderCanvasMonthView(state.canvasManager, state, fadeMode, fadeDuration, transitionInfo);
             break;
         case 'week':
-            renderCanvasWeekView(state.canvasManager, state, fadeMode, fadeDuration);
+            renderCanvasWeekView(state.canvasManager, state, fadeMode, fadeDuration, transitionInfo);
             break;
         default:
             console.error('Unknown view type:', state.currentView);

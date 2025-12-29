@@ -280,10 +280,11 @@ export class CanvasManager {
 
     /**
      * すべてのオフスクリーンレイヤーをメインCanvasに転送（一括コミット）
-     * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'slidefade', 'scalefade'（デフォルト: 'instant'）
+     * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'slidefade', 'scalefade', 'sharedelement'（デフォルト: 'instant'）
      * @param {number} fadeDuration - フェード時間（ミリ秒、デフォルト: 150）
+     * @param {object} options - 追加オプション { sourceBounds, targetBounds }
      */
-    commitAll(fadeMode = 'instant', fadeDuration = 150) {
+    commitAll(fadeMode = 'instant', fadeDuration = 150, options = {}) {
         // 下位互換性のため、古いAPI（boolean）もサポート
         if (typeof fadeMode === 'boolean') {
             fadeMode = fadeMode ? 'crossfade' : 'instant';
@@ -504,6 +505,104 @@ export class CanvasManager {
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
+                }
+            };
+            requestAnimationFrame(animate);
+
+        } else if (fadeMode === 'sharedelement') {
+            // 共有要素トランジション（位置・サイズを主に補間）
+
+            const sourceBounds = options.sourceBounds;
+            const targetBounds = options.targetBounds;
+
+            if (!sourceBounds || !targetBounds) {
+                // bounds情報がない場合は通常のスケールフェードにフォールバック
+                this.commitAll('scalefade', fadeDuration);
+                return;
+            }
+
+            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            this.canvases.forEach((canvas, layerName) => {
+                const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                if (snapshotCanvas) {
+                    const snapshotCtx = snapshotCanvas.getContext('2d');
+                    snapshotCtx.clearRect(0, 0, this.width, this.height);
+                    snapshotCtx.drawImage(canvas, 0, 0);
+                }
+            });
+
+            // 2. アニメーションループ
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / fadeDuration, 1);
+
+                // 減速系イージング（ease-out）で滑らかに収束
+                const easeOut = 1 - Math.pow(1 - progress, 2.5);
+
+                this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                    const ctx = this.contexts.get(layerName);
+                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+
+                    if (ctx && snapshotCanvas) {
+                        ctx.clearRect(0, 0, this.width, this.height);
+
+                        // 共有要素の位置・サイズを補間（主要な変化）
+                        const currentX = sourceBounds.x + (targetBounds.x - sourceBounds.x) * easeOut;
+                        const currentY = sourceBounds.y + (targetBounds.y - sourceBounds.y) * easeOut;
+                        const currentWidth = sourceBounds.width + (targetBounds.width - sourceBounds.width) * easeOut;
+                        const currentHeight = sourceBounds.height + (targetBounds.height - sourceBounds.height) * easeOut;
+
+                        // 古い画面: ゆるやかにフェードアウト（急峻な変化を避ける）
+                        ctx.save();
+                        ctx.globalAlpha = Math.max(0, 1 - progress * 1.2);
+                        ctx.drawImage(snapshotCanvas, 0, 0);
+                        ctx.restore();
+
+                        // 共有要素: 位置・サイズのみ補間（影・角丸は最小限）
+                        ctx.save();
+
+                        // クリップマスク：共有要素の領域だけ描画
+                        ctx.beginPath();
+                        ctx.rect(currentX, currentY, currentWidth, currentHeight);
+                        ctx.clip();
+
+                        // 新しい画面の全体を描画（クリップ内のみ表示される）
+                        const scaleX = currentWidth / targetBounds.width;
+                        const scaleY = currentHeight / targetBounds.height;
+                        const offsetX = currentX - targetBounds.x * scaleX;
+                        const offsetY = currentY - targetBounds.y * scaleY;
+
+                        ctx.translate(offsetX, offsetY);
+                        ctx.scale(scaleX, scaleY);
+                        ctx.drawImage(offscreenCanvas, 0, 0);
+                        ctx.restore();
+
+                        // 周辺コンテンツ: 共有要素到達後にわずかな遅延でフェードイン
+                        // 共有要素が70%到達してから、残り30%で周辺をフェードイン
+                        if (progress > 0.7) {
+                            const delayedProgress = (progress - 0.7) / 0.3; // 0.7-1.0 を 0-1.0 にマップ
+                            const contentAlpha = delayedProgress * 0.6; // 最大60%の透明度で表示
+                            ctx.save();
+                            ctx.globalAlpha = contentAlpha;
+                            ctx.drawImage(offscreenCanvas, 0, 0);
+                            ctx.restore();
+                        }
+                    }
+                });
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // アニメーション完了後、新しい画面を完全に表示
+                    this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                        const ctx = this.contexts.get(layerName);
+                        if (ctx) {
+                            ctx.clearRect(0, 0, this.width, this.height);
+                            ctx.drawImage(offscreenCanvas, 0, 0);
+                        }
+                    });
                 }
             };
             requestAnimationFrame(animate);

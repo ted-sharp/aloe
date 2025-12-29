@@ -57,10 +57,11 @@ const avatarColors = [
  * 週スケジューラーを描画（Canvas API版）
  * @param {object} canvasManager - CanvasManagerインスタンス
  * @param {object} state - アプリケーション状態
- * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough'
+ * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'sharedelement'
  * @param {number} fadeDuration - フェード時間（ミリ秒）
+ * @param {object} transitionInfo - トランジション情報 { sourceBounds, targetDateStr }
  */
-export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200) {
+export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200, transitionInfo = null) {
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -360,6 +361,11 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     }
 
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
+    // 週間ビューは日付セルの概念がないため、共有要素トランジションは通常のフェードにフォールバック
+    if (fadeMode === 'sharedelement') {
+        fadeMode = 'scalefade';
+    }
+
     canvasManager.commitAll(fadeMode, fadeDuration);
 }
 

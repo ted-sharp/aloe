@@ -15,10 +15,11 @@ import { getRenderState, resetRenderState } from './canvas-render-state.js';
  * 月間カレンダーを描画（Canvas API版）
  * @param {object} canvasManager - CanvasManagerインスタンス
  * @param {object} state - アプリケーション状態
- * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough'
+ * @param {string} fadeMode - フェードモード: 'instant', 'crossfade', 'fadethrough', 'sharedelement'
  * @param {number} fadeDuration - フェード時間（ミリ秒）
+ * @param {object} transitionInfo - トランジション情報 { sourceBounds, targetDateStr }
  */
-export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200) {
+export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200, transitionInfo = null) {
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -122,7 +123,32 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
     }
 
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
-    canvasManager.commitAll(fadeMode, fadeDuration);
+    let commitOptions = {};
+
+    if (fadeMode === 'sharedelement' && transitionInfo) {
+        // 年 → 月: 年間ビューの月bounds → 月間ビュー全体
+        if (transitionInfo.transitionType === 'year-to-month') {
+            // 遷移元: calendar-main.jsで保存された年間ビューの月bounds
+            // 遷移先: 月間ビュー全体（canvas全体）
+            if (transitionInfo.sourceBounds) {
+                commitOptions = {
+                    sourceBounds: transitionInfo.sourceBounds,
+                    targetBounds: { x: 0, y: 0, width, height }
+                };
+                console.log('Month View: Year-to-Month transition', commitOptions);
+            } else {
+                console.warn('Month View: sourceBounds not found in transitionInfo, falling back to scalefade');
+                fadeMode = 'scalefade';
+            }
+        }
+        // 月 → 年: この遷移は年ビューで処理されるため、ここには来ない
+        else if (transitionInfo.transitionType === 'month-to-year') {
+            console.warn('Month View: Unexpected month-to-year transition (should be handled by year view)');
+            fadeMode = 'scalefade';
+        }
+    }
+
+    canvasManager.commitAll(fadeMode, fadeDuration, commitOptions);
 }
 
 

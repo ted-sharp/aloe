@@ -178,6 +178,9 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             const isShiftClick = e.shiftKey;
             const isYearView = state.currentView === 'year';
 
+            // クリック時に日付を選択（共有要素トランジションは currentDate から自動計算）
+            // 位置情報の保存は不要
+
             // 年間カレンダーの場合は日付選択と範囲選択をスキップし、ダブルクリックのみ処理
             if (isYearView) {
                 if (isDoubleClick) {
