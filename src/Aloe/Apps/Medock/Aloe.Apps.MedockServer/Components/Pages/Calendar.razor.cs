@@ -129,6 +129,7 @@ public partial class Calendar : ComponentBase
     private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this.State.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this.State.MainStatsGrayedOut;
     private Dictionary<string, List<AppointmentStats>> EquipmentStats => this.State.EquipmentStats;
+    private Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized => this.State.EquipmentStatsOptimized;
     private List<AppointmentDto> Appointments => this.State.Appointments;
     private Dictionary<string, string> Holidays => this.State.Holidays;
 

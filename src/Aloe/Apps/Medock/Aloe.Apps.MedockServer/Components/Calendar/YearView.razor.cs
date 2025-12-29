@@ -32,6 +32,12 @@ public partial class YearView : ComponentBase
     public Dictionary<string, List<AppointmentStats>>? EquipmentStats { get; set; }
 
     /// <summary>
+    /// Equipmentリソース統計データ最適化版（FromSql + array_agg）
+    /// </summary>
+    [Parameter]
+    public Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized { get; set; }
+
+    /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）
     /// </summary>
     [Parameter]

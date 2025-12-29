@@ -1,6 +1,9 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Constants;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace Aloe.Apps.MedockLib.Repositories;
 
@@ -200,5 +203,110 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
 
         return await query.ToListAsync();
+    }
+
+    /// <inheritdoc />
+    public async Task<Dictionary<string, List<EquipmentResourceStatsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? equipmentResourceIds)
+    {
+        // equipmentResourceIds が null または空の場合は空の辞書を返す
+        if (equipmentResourceIds == null || !equipmentResourceIds.Any())
+        {
+            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
+            return new Dictionary<string, List<EquipmentResourceStatsDto>>();
+        }
+
+        Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}, IDs count={equipmentResourceIds.Count}");
+
+        // PostgreSQL の array_agg で SQL側で配列化
+        // 注意: SqlQueryRaw では複雑な投影ができないため、raw queryで取得後にクライアント側で処理
+        var sql = @"
+            SELECT
+                s.appt_date::text as ""ApptDate"",
+                s.appt_res_id::text as ""ResourceId"",
+                ar.appt_res_name as ""ResourceName"",
+                COALESCE(SUM(s.appt_cap), 0)::int as ""TotalCapacity"",
+                COALESCE(SUM(s.appt_available), 0)::int as ""TotalAvailable"",
+                array_agg(ss.slot_start ORDER BY ss.slot_start)::int[] as ""SlotStartMinutes"",
+                array_agg(ss.slot_end ORDER BY ss.slot_start)::int[] as ""SlotEndMinutes"",
+                array_agg(ss.slot_available ORDER BY ss.slot_start)::int[] as ""SlotAvailables""
+            FROM appointment_stats s
+            INNER JOIN appointment_resources ar ON s.appt_res_id = ar.appt_res_id
+            INNER JOIN appointment_stat_slots ss ON s.appt_stat_id = ss.appt_stat_id
+            WHERE s.is_deleted = false
+                AND ar.is_deleted = false
+                AND ss.is_deleted = false
+                AND ar.appt_res_type_code = @equipmentTypeCode
+                AND s.appt_date >= @startDate
+                AND s.appt_date <= @endDate
+                AND s.appt_res_id = ANY(@equipmentIds::uuid[])
+            GROUP BY s.appt_date, s.appt_res_id, ar.appt_res_name
+            ORDER BY s.appt_date, ar.appt_res_name";
+
+        var equipmentTypeCode = new NpgsqlParameter("@equipmentTypeCode", (int)AppointmentResourceType.Equipment);
+        var startDateParam = new NpgsqlParameter("@startDate", startDate);
+        var endDateParam = new NpgsqlParameter("@endDate", endDate);
+        var equipmentIdsParam = new NpgsqlParameter("@equipmentIds", NpgsqlDbType.Array | NpgsqlDbType.Uuid) { Value = equipmentResourceIds.ToArray() };
+
+        var parameters = new object[] { equipmentTypeCode, startDateParam, endDateParam, equipmentIdsParam };
+
+        // 中間DTO で日付を含める
+        try
+        {
+            var results = await this._context
+                .Database
+                .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
+                .ToListAsync();
+
+            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {results.Count} rows");
+
+            // 日付ごとにグループ化
+            var groupedByDate = new Dictionary<string, List<EquipmentResourceStatsDto>>();
+            foreach (var item in results)
+            {
+                if (!groupedByDate.ContainsKey(item.ApptDate))
+                {
+                    groupedByDate[item.ApptDate] = new List<EquipmentResourceStatsDto>();
+                }
+                groupedByDate[item.ApptDate].Add(new EquipmentResourceStatsDto
+                {
+                    ResourceId = item.ResourceId ?? string.Empty,
+                    ResourceName = item.ResourceName ?? string.Empty,
+                    TotalCapacity = item.TotalCapacity,
+                    TotalAvailable = item.TotalAvailable,
+                    SlotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>(),
+                    SlotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>(),
+                    SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
+                    SlotFlags = null
+                });
+            }
+
+            return groupedByDate;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[Error] GetEquipmentResourceSlotsAsArraysByDateAsync: {ex.Message}");
+            Console.WriteLine($"[Error] Stack Trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[Error] Inner Exception: {ex.InnerException.Message}");
+            }
+            throw;
+        }
+    }
+
+    // FromSql用の中間DTO
+    private class EquipmentStatsWithDateDto
+    {
+        public string ApptDate { get; set; } = string.Empty;
+        public string ResourceId { get; set; } = string.Empty;
+        public string ResourceName { get; set; } = string.Empty;
+        public int TotalCapacity { get; set; }
+        public int TotalAvailable { get; set; }
+        public int[]? SlotStartMinutes { get; set; }
+        public int[]? SlotEndMinutes { get; set; }
+        public int[]? SlotAvailables { get; set; }
     }
 }

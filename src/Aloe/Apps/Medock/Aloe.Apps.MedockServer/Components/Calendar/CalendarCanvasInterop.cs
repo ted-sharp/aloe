@@ -61,14 +61,10 @@ public static class CalendarCanvasInterop
                             resourceName = r.Value.ResourceName,
                             totalAvailable = r.Value.TotalAvailable,
                             totalCapacity = r.Value.TotalCapacity,
-                            slots = r.Value.Slots.Select(s => new
-                            {
-                                start = s.Start,
-                                end = s.End,
-                                count = s.Count,
-                                cap = s.Cap,
-                                available = s.Available
-                            }).ToArray()
+                            slotStartMinutes = r.Value.SlotStartMinutes,
+                            slotEndMinutes = r.Value.SlotEndMinutes,
+                            slotAvailables = r.Value.SlotAvailables,
+                            slotFlags = r.Value.SlotFlags
                         }
                     )
                 }

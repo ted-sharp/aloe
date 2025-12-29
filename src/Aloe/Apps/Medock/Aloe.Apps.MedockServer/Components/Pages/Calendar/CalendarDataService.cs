@@ -396,49 +396,57 @@ public class CalendarDataService
             {
                 state.EquipmentStats.Clear();
                 state.OriginalEquipmentStats.Clear();
-                Console.WriteLine("[Performance] LoadEquipmentStatsAsync: No equipment resources selected.");
+                state.EquipmentStatsOptimized = null;
+                var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
+                Console.WriteLine($"[Debug] LoadEquipmentStatsAsync: {msg}");
+                System.Diagnostics.Debug.WriteLine($"[Debug] LoadEquipmentStatsAsync: {msg}");
                 return;
             }
 
+            Console.WriteLine($"[Debug] LoadEquipmentStatsAsync: SelectedResourceIds count = {state.CurrentFilter.SelectedResourceIds.Count}");
+            System.Diagnostics.Debug.WriteLine($"[Equipment Filter Debug] SelectedResourceIds: {string.Join(",", state.CurrentFilter.SelectedResourceIds.Select(id => id.ToString().Substring(0, 8)))}");
+
+            Console.WriteLine($"[Debug] About to call GetDateRange with viewType={viewType}, currentDate={currentDate:yyyy-MM-dd}");
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            Console.WriteLine($"[Debug] GetDateRange returned: {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
             Console.WriteLine($"[Performance] LoadEquipmentStatsAsync start: ViewType={viewType}, DateRange={startDate:yyyy-MM-dd}~{endDate:yyyy-MM-dd}");
 
+            // 【最適化版】FromSql + array_agg で SQL側で配列化
+            // 既に日付ごと・リソースごとにグループ化されて返される
             var querySw = Stopwatch.StartNew();
-            var equipmentStats = await this._appointmentStatsRepository.GetEquipmentResourceStatsByDateRangeAsync(
+            Console.WriteLine($"[Debug] About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {state.CurrentFilter.SelectedResourceIds.Count} resource IDs");
+            var equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
                 startDate,
                 endDate,
                 state.CurrentFilter.SelectedResourceIds);
             querySw.Stop();
-            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync query: {querySw.ElapsedMilliseconds}ms, Count={equipmentStats.Count}");
+            Console.WriteLine($"[Debug] GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {equipmentStatsOptimized.Count} dates");
 
-            // 日付ごとにグループ化
-            var groupSw = Stopwatch.StartNew();
-            var statsByDate = equipmentStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
-            groupSw.Stop();
-            Console.WriteLine($"[Performance] LoadEquipmentStatsAsync grouping: {groupSw.ElapsedMilliseconds}ms");
+            var totalResources = equipmentStatsOptimized.Sum(kvp => kvp.Value.Count);
+            var message = $"[Performance] LoadEquipmentStatsAsync query (optimized): {querySw.ElapsedMilliseconds}ms, Dates={equipmentStatsOptimized.Count}, TotalResources={totalResources}";
+            Console.WriteLine(message);
+            System.Diagnostics.Debug.WriteLine(message);
 
-            // 全日付を初期化
+            // 最適化版データを状態に保存（CalendarCanvasで使用）
+            Console.WriteLine($"[Debug] Setting state.EquipmentStatsOptimized with {equipmentStatsOptimized.Count} dates");
+            state.EquipmentStatsOptimized = equipmentStatsOptimized;
+
+            // 従来互換性のため空リストを設定
+            Console.WriteLine($"[Debug] Clearing EquipmentStats dictionaries");
             state.EquipmentStats.Clear();
             state.OriginalEquipmentStats.Clear();
 
             var initSw = Stopwatch.StartNew();
+            Console.WriteLine($"[Debug] Starting to populate EquipmentStats for dates {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}");
             for (var date = startDate; date <= endDate; date = date.AddDays(1))
             {
                 var dateStr = date.ToString("yyyy-MM-dd");
-
-                // その日のEquipmentリソースStatsがあれば設定、なければ空リスト
-                if (statsByDate.TryGetValue(date, out var equipmentStatsList))
-                {
-                    state.EquipmentStats[dateStr] = equipmentStatsList;
-                    state.OriginalEquipmentStats[dateStr] = equipmentStatsList.ToList(); // コピーを作成
-                }
-                else
-                {
-                    state.EquipmentStats[dateStr] = new List<AppointmentStats>();
-                    state.OriginalEquipmentStats[dateStr] = new List<AppointmentStats>();
-                }
+                // 従来型は空リストを設定（データは EquipmentStatsOptimized に格納済み）
+                state.EquipmentStats[dateStr] = new List<AppointmentStats>();
+                state.OriginalEquipmentStats[dateStr] = new List<AppointmentStats>();
             }
             initSw.Stop();
+            Console.WriteLine($"[Debug] Finished populating EquipmentStats");
             Console.WriteLine($"[Performance] LoadEquipmentStatsAsync initialization: {initSw.ElapsedMilliseconds}ms, Days={endDate.DayNumber - startDate.DayNumber + 1}");
         }
         catch (Exception ex)
@@ -447,6 +455,12 @@ public class CalendarDataService
             state.EquipmentStats.Clear();
             state.OriginalEquipmentStats.Clear();
             Console.WriteLine($"[Error] LoadEquipmentStatsAsync: {ex.Message}");
+            Console.WriteLine($"[Error] Stack Trace: {ex.StackTrace}");
+            if (ex.InnerException != null)
+            {
+                Console.WriteLine($"[Error] Inner Exception: {ex.InnerException.Message}");
+                Console.WriteLine($"[Error] Inner Stack Trace: {ex.InnerException.StackTrace}");
+            }
         }
         finally
         {

@@ -51,4 +51,15 @@ public interface IAppointmentStatsRepository
         DateOnly startDate,
         DateOnly endDate,
         List<Guid> equipmentResourceIds);
+
+    /// <summary>
+    /// 指定日付範囲のEquipmentリソースのスロット情報を配列として最適化されたSQLで取得します。
+    /// パフォーマンス最適化用：array_agg() で SQL側で配列化。
+    /// 日付ごとにグループ化された辞書形式で返します。
+    /// equipmentResourceIds が null または空の場合は全 Equipment リソースを取得します。
+    /// </summary>
+    Task<Dictionary<string, List<Services.Dtos.EquipmentResourceStatsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? equipmentResourceIds);
 }

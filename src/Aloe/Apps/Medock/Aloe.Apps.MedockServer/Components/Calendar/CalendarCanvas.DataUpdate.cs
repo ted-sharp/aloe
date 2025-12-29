@@ -3,6 +3,7 @@ using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.JSInterop;
 using System.Diagnostics;
+using System.Text.Json;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -16,25 +17,54 @@ public partial class CalendarCanvas
         try
         {
             var buildSw = Stopwatch.StartNew();
-            var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
-                this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-                this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-                this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-                this.Holidays ?? new Dictionary<string, string>(),
-                this.FilterTimeSlots,
-                this.EquipmentStats);
+
+            // 【最適化版】EquipmentStatsOptimized がある場合はそれを使用
+            CalendarDataDto calendarData;
+            if (this.EquipmentStatsOptimized != null && this.EquipmentStatsOptimized.Count > 0)
+            {
+                calendarData = await this.CalendarDataService.BuildCalendarDataFromOptimizedAsync(
+                    this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+                    this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+                    this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+                    this.Holidays ?? new Dictionary<string, string>(),
+                    this.FilterTimeSlots,
+                    this.EquipmentStatsOptimized);
+            }
+            else
+            {
+                calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+                    this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+                    this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+                    this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+                    this.Holidays ?? new Dictionary<string, string>(),
+                    this.FilterTimeSlots,
+                    this.EquipmentStats);
+            }
+
             buildSw.Stop();
-            Console.WriteLine($"[Performance] CalendarCanvas.UpdateDataAsync BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
+            Console.WriteLine($"  - Appointments: {calendarData.Appointments.Count}");
+            Console.WriteLine($"  - MainStats dates: {calendarData.MainStats.Count}");
+            Console.WriteLine($"  - EquipmentStats dates: {calendarData.EquipmentStats.Count}");
+            var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Resources.Count);
+            Console.WriteLine($"  - Total Equipment Resources: {totalEquipmentResources}");
 
             var interopSw = Stopwatch.StartNew();
             var data = CalendarCanvasInterop.BuildDataObject(calendarData);
             interopSw.Stop();
-            Console.WriteLine($"[Performance] CalendarCanvas.UpdateDataAsync BuildDataObject: {interopSw.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[Performance] BuildDataObject: {interopSw.ElapsedMilliseconds}ms");
+
+            // JSON シリアライゼーションのサイズを計測
+            var serializeSw = Stopwatch.StartNew();
+            var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(data);
+            serializeSw.Stop();
+            var sizeKb = jsonBytes.Length / 1024.0;
+            Console.WriteLine($"[Performance] JSON serialization: {serializeSw.ElapsedMilliseconds}ms (size: {sizeKb:F2} KB)");
 
             var jsSw = Stopwatch.StartNew();
             await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);
             jsSw.Stop();
-            Console.WriteLine($"[Performance] CalendarCanvas.UpdateDataAsync JS updateData: {jsSw.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[Performance] JS updateData: {jsSw.ElapsedMilliseconds}ms");
         }
         catch (TaskCanceledException)
         {
@@ -44,7 +74,8 @@ public partial class CalendarCanvas
         finally
         {
             sw.Stop();
-            Console.WriteLine($"[Performance] CalendarCanvas.UpdateDataAsync total: {sw.ElapsedMilliseconds}ms");
+            Console.WriteLine($"[Performance] UpdateDataAsync total: {sw.ElapsedMilliseconds}ms");
+            Console.WriteLine("---");
         }
     }
 

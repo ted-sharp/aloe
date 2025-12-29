@@ -84,20 +84,10 @@ export function renderCanvasLineChart(contentCtx, params) {
     const baselineY = barAreaTop + barAreaHeight;
 
     // 各Equipmentリソースのスロットデータから最大available値を計算
-    let maxAvailable = 0;
-    resources.forEach(resource => {
-        if (resource.slots && resource.slots.length > 0) {
-            resource.slots.forEach(slot => {
-                const available = slot.available || 0;
-                if (available > maxAvailable) {
-                    maxAvailable = available;
-                }
-            });
-        }
-    });
+    let maxAvailable = Math.max(...resources.flatMap(r => r.slotAvailables || []));
 
-    if (maxAvailable <= 0) {
-        return false;
+    if (!isFinite(maxAvailable) || maxAvailable <= 0) {
+        maxAvailable = 1;
     }
 
     // 各Equipmentリソースの折れ線グラフを描画
@@ -112,37 +102,49 @@ export function renderCanvasLineChart(contentCtx, params) {
     resources.forEach((resource, index) => {
         const color = colors[index % colors.length];
 
-        if (!resource.slots || resource.slots.length === 0) {
+        // 新形式: 配列から直接アクセス
+        const { slotStartMinutes, slotEndMinutes, slotAvailables, slotFlags } = resource;
+
+        // 配列が空の場合は早期リターン
+        if (!slotStartMinutes || slotStartMinutes.length === 0) {
             return;
         }
 
-        // スロットデータを時間順にソート
-        const sortedSlots = resource.slots
-            .filter(slot => slot.start && slot.end)
-            .map(slot => ({
-                start: parseTime(slot.start),
-                end: parseTime(slot.end),
-                available: slot.available || 0
-            }))
-            .sort((a, b) => a.start - b.start);
-
-        if (sortedSlots.length === 0) {
-            return;
-        }
-
-        // データポイントを生成（各スロットの開始時刻と終了時刻）
         const dataPoints = [];
-        sortedSlots.forEach(slot => {
-            const startX = timeToX(slot.start, startHour, endHour, lunchStartHour, lunchEndHour, businessStartX, barAreaWidth);
-            const endX = timeToX(slot.end, startHour, endHour, lunchStartHour, lunchEndHour, businessStartX, barAreaWidth);
-            const y = baselineY - (slot.available / maxAvailable) * barAreaHeight;
 
-            // スロットの開始点と終了点を追加
-            dataPoints.push({ x: startX, y: y, available: slot.available });
-            dataPoints.push({ x: endX, y: y, available: slot.available });
-        });
+        // 配列を反復処理（サーバー側で既にソート済み）
+        for (let i = 0; i < slotStartMinutes.length; i++) {
+            // フラグチェック（将来の実装用、現時点ではslotFlagsはnull）
+            // if (slotFlags && (slotFlags[i] & 2)) {
+            //     continue; // 時間外スロットをスキップ
+            // }
 
-        // データポイントを折れ線で接続
+            // 分を時間に変換（例: 540 → 9.0, 570 → 9.5）
+            const startHours = slotStartMinutes[i] / 60;
+            const endHours = slotEndMinutes[i] / 60;
+            const available = slotAvailables[i];
+
+            // X座標を計算（既存のtimeToX関数を使用）
+            const startX = timeToX(
+                startHours, startHour, endHour,
+                lunchStartHour, lunchEndHour,
+                businessStartX, barAreaWidth
+            );
+            const endX = timeToX(
+                endHours, startHour, endHour,
+                lunchStartHour, lunchEndHour,
+                businessStartX, barAreaWidth
+            );
+
+            // Y座標を計算
+            const y = baselineY - (available / maxAvailable) * barAreaHeight;
+
+            // スロットの開始点と終了点を追加（プラトー形状）
+            dataPoints.push({ x: startX, y: y });
+            dataPoints.push({ x: endX, y: y });
+        }
+
+        // 折れ線を描画
         if (dataPoints.length > 1) {
             for (let i = 0; i < dataPoints.length - 1; i++) {
                 const p1 = dataPoints[i];
@@ -157,7 +159,7 @@ export function renderCanvasLineChart(contentCtx, params) {
             }
         }
 
-        // データポイントを描画（小さい円）
+        // データポイントを描画
         dataPoints.forEach(point => {
             drawCircle(contentCtx, {
                 x: point.x,

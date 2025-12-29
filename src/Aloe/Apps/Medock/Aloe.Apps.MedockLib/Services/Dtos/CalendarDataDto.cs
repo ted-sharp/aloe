@@ -54,6 +54,7 @@ public class EquipmentStatsDataDto
 
 /// <summary>
 /// Equipment個別リソースの統計データDTO（JavaScript用）
+/// 折れ線グラフ描画用に最適化された配列ベース構造
 /// </summary>
 public class EquipmentResourceStatsDto
 {
@@ -61,26 +62,45 @@ public class EquipmentResourceStatsDto
     /// リソースID
     /// </summary>
     public string ResourceId { get; set; } = String.Empty;
-    
+
     /// <summary>
     /// リソース名
     /// </summary>
     public string ResourceName { get; set; } = String.Empty;
-    
+
     /// <summary>
     /// 空き数（Available）の合計
     /// </summary>
     public int TotalAvailable { get; set; }
-    
+
     /// <summary>
     /// キャパシティの合計
     /// </summary>
     public int TotalCapacity { get; set; }
-    
+
     /// <summary>
-    /// スロット別データ（詳細が必要な場合）
+    /// スロット開始時刻（0時からの分数の配列）
+    /// 例: [540, 570, 600, ...] = [09:00, 09:30, 10:00, ...]
     /// </summary>
-    public List<SlotDataDto> Slots { get; set; } = new();
+    public int[] SlotStartMinutes { get; set; } = Array.Empty<int>();
+
+    /// <summary>
+    /// スロット終了時刻（0時からの分数の配列）
+    /// 例: [570, 600, 630, ...] = [09:30, 10:00, 10:30, ...]
+    /// </summary>
+    public int[] SlotEndMinutes { get; set; } = Array.Empty<int>();
+
+    /// <summary>
+    /// スロット空き数の配列（折れ線グラフのY軸値）
+    /// </summary>
+    public int[] SlotAvailables { get; set; } = Array.Empty<int>();
+
+    /// <summary>
+    /// スロットフラグ配列（オプション）
+    /// ビット0: IsGrayedOut, ビット1: IsOutsideHours
+    /// 将来のフィルタ機能用。フラグが全て0の場合はnull
+    /// </summary>
+    public byte[]? SlotFlags { get; set; }
 }
 
 /// <summary>

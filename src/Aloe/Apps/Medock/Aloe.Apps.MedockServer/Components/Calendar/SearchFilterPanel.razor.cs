@@ -134,6 +134,24 @@ public partial class SearchFilterPanel : ComponentBase
         {
             await using var context = await this.DbContextFactory.CreateDbContextAsync();
 
+            // 選択されているフロアに属するリソース
+            if (this.SelectedFloorIds.Any())
+            {
+                var floorResourceIds = await context.AppointmentResources
+                    .AsNoTracking()
+                    .Where(r => !r.IsDeleted &&
+                               this.SelectedFloorIds.Contains(r.FloorId) &&
+                               r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
+                    .Select(r => r.ApptResId)
+                    .Distinct()
+                    .ToListAsync();
+
+                foreach (var resourceId in floorResourceIds)
+                {
+                    autoResourceIds.Add(resourceId);
+                }
+            }
+
             // 選択されているリソースグループに関連するリソース
             if (this.SelectedResourceGroupIds.Any())
             {
