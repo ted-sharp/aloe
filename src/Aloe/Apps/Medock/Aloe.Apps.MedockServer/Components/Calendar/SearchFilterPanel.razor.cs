@@ -1,9 +1,7 @@
 using Aloe.Apps.MedockLib.Constants;
-using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -16,10 +14,7 @@ public partial class SearchFilterPanel : ComponentBase
     private CalendarState CalendarState { get; set; } = default!;
 
     [Inject]
-    private IDbContextFactory<MedockDbContext> DbContextFactory { get; set; } = default!;
-
-    [Inject]
-    private ILogger<SearchFilterPanel> Logger { get; set; } = default!;
+    private ICalendarResourceFilterService CalendarResourceFilterService { get; set; } = default!;
 
     /// <summary>
     /// フィルター変更時のコールバック
@@ -132,93 +127,11 @@ public partial class SearchFilterPanel : ComponentBase
     /// </summary>
     private async Task<List<Guid>> GetAutoResourceIdsAsync()
     {
-        var autoResourceIds = new HashSet<Guid>();
-
-        try
-        {
-            await using var context = await this.DbContextFactory.CreateDbContextAsync();
-
-            // 選択されているフロアに属するリソース
-            if (this.SelectedFloorIds.Any())
-            {
-                var floorResourceIds = await context.AppointmentResources
-                    .AsNoTracking()
-                    .Where(r => !r.IsDeleted &&
-                               this.SelectedFloorIds.Contains(r.FloorId) &&
-                               r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
-                    .Select(r => r.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in floorResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-
-            // 選択されているリソースグループに関連するリソース
-            if (this.SelectedResourceGroupIds.Any())
-            {
-                var groupResourceIds = await context.AppointmentResourceGroupMembers
-                    .AsNoTracking()
-                    .Where(m => !m.IsDeleted &&
-                               this.SelectedResourceGroupIds.Contains(m.ApptResGroupId) &&
-                               m.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                               !m.AppointmentResource.IsDeleted)
-                    .Select(m => m.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in groupResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-
-            // 選択されているプランに関連するリソース
-            if (this.SelectedPlanIds.Any())
-            {
-                var planResourceIds = await context.PlanResourceRequirements
-                    .AsNoTracking()
-                    .Where(prr => !prr.IsDeleted &&
-                                 this.SelectedPlanIds.Contains(prr.PlanId) &&
-                                 prr.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                                 !prr.AppointmentResource.IsDeleted)
-                    .Select(prr => prr.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in planResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-
-            // 選択されているオプションに関連するリソース
-            if (this.SelectedOptionPlanIds.Any())
-            {
-                var optionResourceIds = await context.PlanResourceRequirements
-                    .AsNoTracking()
-                    .Where(prr => !prr.IsDeleted &&
-                                 this.SelectedOptionPlanIds.Contains(prr.PlanId) &&
-                                 prr.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                                 !prr.AppointmentResource.IsDeleted)
-                    .Select(prr => prr.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in optionResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error getting automatic resource IDs");
-        }
-
-        return autoResourceIds.ToList();
+        return await CalendarResourceFilterService.GetRelatedResourceIdsAsync(
+            this.SelectedFloorIds,
+            this.SelectedResourceGroupIds,
+            this.SelectedPlanIds,
+            this.SelectedOptionPlanIds);
     }
 
     // SelectAllEquipments/ClearAllEquipmentsメソッドは削除されました（EquipmentはAppointmentResourceに統合）

@@ -119,7 +119,8 @@ public static class ServiceCollectionExtensions
     {
         // Calendar State & Filter
         services.AddScoped<CalendarState>();
-        services.AddScoped<CalendarFilterService>();
+        services.AddScoped<ICalendarResourceFilterService, CalendarResourceFilterService>();
+        services.AddScoped<Components.Pages.CalendarFilterService>();
 
         // Calendar Application Services (Loaders + Facade)
         services.AddScoped<ApplicationServices.Calendar.DataLoaders.IStatsLoader,
