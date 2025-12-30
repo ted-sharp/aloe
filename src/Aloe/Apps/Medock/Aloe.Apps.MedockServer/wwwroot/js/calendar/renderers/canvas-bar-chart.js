@@ -389,24 +389,34 @@ export function renderCanvasBarChart(contentCtx, params) {
 
         // ラベル
         if (labelAreaHeight > 0) {
-            const hourValue = Math.floor(timeRange.start);
-            const labelFontSize = isYearView ? 6 : 7;
-            const canShowTwoDigits = barWidth >= 15;
-            const labelText = canShowTwoDigits ? String(hourValue) : String(hourValue % 10);
-            const labelY = baselineY + 2;
-            const labelColor = isSlotGrayed ? '#d1d5db' : '#9ca3af';
+            // 最初と最後のスロットを判定
+            const isFirstSlot = idx === slotsInBusiness[0];
+            const isLastSlot = idx === slotsInBusiness[slotsInBusiness.length - 1];
 
-            drawText(contentCtx, {
-                text: labelText,
-                x: barX,
-                y: labelY,
-                width: barWidth,
-                fill: labelColor,
-                fontSize: labelFontSize,
-                fontFamily: CONFIG.font.numberFamily,
-                align: 'center',
-                opacity: isSlotGrayed ? 0.6 : 1
-            });
+            // barWidthが狭い場合は最初と最後のみ表示
+            const shouldShowLabel = barWidth >= 10 || isFirstSlot || isLastSlot;
+
+            if (shouldShowLabel) {
+                const hourValue = Math.floor(timeRange.start);
+                const labelFontSize = isYearView ? 6 : 7;
+                // barWidthが10px以上の場合は2桁/1桁を判定、10px未満は必ず2桁表示
+                const canShowTwoDigits = barWidth >= 15 || (barWidth < 10 && (isFirstSlot || isLastSlot));
+                const labelText = canShowTwoDigits ? String(hourValue) : String(hourValue % 10);
+                const labelY = baselineY + 2;
+                const labelColor = isSlotGrayed ? '#d1d5db' : '#9ca3af';
+
+                drawText(contentCtx, {
+                    text: labelText,
+                    x: barX,
+                    y: labelY,
+                    width: barWidth,
+                    fill: labelColor,
+                    fontSize: labelFontSize,
+                    fontFamily: CONFIG.font.numberFamily,
+                    align: 'center',
+                    opacity: isSlotGrayed ? 0.6 : 1
+                });
+            }
         }
     }
 
