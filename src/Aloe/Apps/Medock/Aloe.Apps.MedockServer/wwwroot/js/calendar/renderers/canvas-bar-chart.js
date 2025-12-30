@@ -161,7 +161,7 @@ export function renderCanvasSimpleViewSymbol(contentCtx, params) {
 }
 
 /**
- * 詳細表示モードでバーチャートを描画（Canvas版）
+ * 詳細表示モードでバーチャートを描画（Canvas版 - 並列配列対応）
  * @param {CanvasRenderingContext2D} contentCtx - コンテンツレイヤーコンテキスト
  * @param {object} params - パラメータ
  */
@@ -169,20 +169,25 @@ export function renderCanvasBarChart(contentCtx, params) {
     const {
         cellLeft, cellTop, cellWidth, cellHeight,
         dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
-        isDateGrayed, slots, startHour, endHour,
+        isDateGrayed, slotStarts, slotEnds, slotCounts, slotCaps, slotAvailables, slotFlags,
+        startHour, endHour,
         lunchStartHour, lunchEndHour, isYearView
     } = params;
 
     const renderState = getRenderState();
+    const slotCount = slotStarts.length;
 
     // データがない場合は描画しない
-    const validSlots = slots.filter(slot => {
-        const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-        return cap > 0 || count > 0;
-    });
+    const validIndices = [];
+    for (let i = 0; i < slotCount; i++) {
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
+        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+        if (cap > 0 || count > 0) {
+            validIndices.push(i);
+        }
+    }
 
-    if (validSlots.length === 0) {
+    if (validIndices.length === 0) {
         return false;
     }
 
@@ -227,51 +232,56 @@ export function renderCanvasBarChart(contentCtx, params) {
     let hasOutsideHoursAfter = false;
     let hasOutsideHoursLunch = false;
 
-    validSlots.forEach(slot => {
+    for (const idx of validIndices) {
+        const slotStart = slotStarts[idx];
+        const slotEnd = slotEnds[idx];
+        const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
+
+        // フラグからisOutsideHoursを取得（ビット1）
+        const isOutsideHours = slotFlags ? (slotFlags[idx] & 0b010) !== 0 : false;
+
         // 時間範囲を解析
-        const timeRange = parseSlotTimeRange(slot, startHour, endHour);
-        const slotStart = timeRange.start;
-        const slotEnd = timeRange.end;
-        const isOutsideHours = slot.isOutsideHours || false;
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+        const timeRange = parseSlotTimeRangeFromStrings(slotStart, slotEnd, startHour, endHour);
+        const slotStartHour = timeRange.start;
+        const slotEndHour = timeRange.end;
 
         if (isOutsideHours) {
             if (count > 0) {
-                if (slotEnd <= startHour) {
+                if (slotEndHour <= startHour) {
                     hasOutsideHoursBefore = true;
-                } else if (slotStart >= endHour) {
+                } else if (slotStartHour >= endHour) {
                     hasOutsideHoursAfter = true;
                 } else if (lunchStartHour !== null && lunchEndHour !== null &&
-                    slotStart >= lunchStartHour && slotEnd <= lunchEndHour) {
+                    slotStartHour >= lunchStartHour && slotEndHour <= lunchEndHour) {
                     hasOutsideHoursLunch = true;
                 }
             }
-            return;
+            continue;
         }
 
         // 昼休み時間帯かどうかを判定
         const isInLunchTime = lunchStartHour !== null && lunchEndHour !== null &&
-            ((slotStart >= lunchStartHour && slotStart < lunchEndHour) ||
-                (slotEnd > lunchStartHour && slotEnd <= lunchEndHour) ||
-                (slotStart <= lunchStartHour && slotEnd >= lunchEndHour));
+            ((slotStartHour >= lunchStartHour && slotStartHour < lunchEndHour) ||
+                (slotEndHour > lunchStartHour && slotEndHour <= lunchEndHour) ||
+                (slotStartHour <= lunchStartHour && slotEndHour >= lunchEndHour));
 
-        if (slotEnd < startHour || slotStart < startHour) {
+        if (slotEndHour < startHour || slotStartHour < startHour) {
             // ビジネスアワー前
-        } else if (slotStart >= endHour) {
+        } else if (slotStartHour >= endHour) {
             // ビジネスアワー後
         } else if (isInLunchTime) {
             // 昼休み時間帯
         } else {
-            slotsInBusiness.push(slot);
+            slotsInBusiness.push(idx);
         }
-    });
+    }
 
     // 最大値を計算
     let maxValue = 0;
-    slotsInBusiness.forEach(slot => {
-        const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+    for (const idx of slotsInBusiness) {
+        const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
         maxValue = Math.max(maxValue, cap);
-    });
+    }
 
     if (maxValue <= 0) {
         return false;
@@ -280,13 +290,17 @@ export function renderCanvasBarChart(contentCtx, params) {
     const baselineY = barAreaTop + barAreaHeight;
 
     // スロットを描画
-    slotsInBusiness.forEach((slot) => {
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-        const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+    for (const idx of slotsInBusiness) {
+        const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
+        const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
         const available = cap - count;
-        const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
 
-        const timeRange = parseSlotTimeRange(slot, startHour, endHour);
+        // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
+        const isSlotGrayed = (slotFlags && (slotFlags[idx] & 0b001) !== 0) || isDateGrayed;
+
+        const slotStartStr = slotStarts[idx];
+        const slotEndStr = slotEnds[idx];
+        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
         let slotStart = Math.max(startHour, timeRange.start);
         let slotEnd = Math.min(endHour, timeRange.end);
 
@@ -335,13 +349,14 @@ export function renderCanvasBarChart(contentCtx, params) {
                 opacity: isSlotGrayed ? 0.4 : 1
             });
 
-            // Hit Test用にバー情報を登録
+            // Hit Test用にバー情報を登録（並列配列インデックスを含める）
             renderState.addBar(dateStr, {
                 x: barX,
                 y: barY,
                 width: barWidth,
                 height: barHeight,
-                slot: slot,
+                slotIndex: idx,
+                slot: { start: slotStartStr, end: slotEndStr, count, cap, available },
                 color: slotColor
             });
         } else if (available < 0) {
@@ -365,7 +380,8 @@ export function renderCanvasBarChart(contentCtx, params) {
                 y: barY,
                 width: barWidth,
                 height: barHeight,
-                slot: slot,
+                slotIndex: idx,
+                slot: { start: slotStartStr, end: slotEndStr, count, cap, available },
                 color: '#ef4444',
                 isOverflow: true
             });
@@ -392,7 +408,7 @@ export function renderCanvasBarChart(contentCtx, params) {
                 opacity: isSlotGrayed ? 0.6 : 1
             });
         }
-    });
+    }
 
     // 業務時間の縦ライン
     const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#d1d5db';
@@ -431,7 +447,34 @@ export function renderCanvasBarChart(contentCtx, params) {
 }
 
 /**
- * スロットの時間範囲を解析
+ * スロットの時間範囲を解析（並列配列用）
+ * @param {string} startStr - 開始時刻文字列（"HH:mm"形式）
+ * @param {string} endStr - 終了時刻文字列（"HH:mm"形式）
+ * @param {number} startHour - デフォルト開始時刻
+ * @param {number} endHour - デフォルト終了時刻
+ * @returns {{start: number, end: number}}
+ */
+function parseSlotTimeRangeFromStrings(startStr, endStr, startHour, endHour) {
+    if (startStr && endStr) {
+        const parseTime = (timeStr) => {
+            const parts = timeStr.split(':');
+            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+        };
+        return {
+            start: parseTime(startStr),
+            end: parseTime(endStr)
+        };
+    }
+
+    // デフォルト: 業務時間全体
+    return {
+        start: startHour,
+        end: endHour
+    };
+}
+
+/**
+ * スロットの時間範囲を解析（旧形式・互換性用）
  * @param {object} slot - スロット
  * @param {number} startHour - 開始時刻
  * @param {number} endHour - 終了時刻
@@ -440,15 +483,7 @@ export function renderCanvasBarChart(contentCtx, params) {
 function parseSlotTimeRange(slot, startHour, endHour) {
     // slotに時刻情報がある場合はそれを使用
     if (slot.start !== undefined && slot.end !== undefined) {
-        // slot.start/slot.end は "HH:mm" 形式の文字列
-        const parseTime = (timeStr) => {
-            const parts = timeStr.split(':');
-            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-        };
-        return {
-            start: parseTime(slot.start),
-            end: parseTime(slot.end)
-        };
+        return parseSlotTimeRangeFromStrings(slot.start, slot.end, startHour, endHour);
     }
 
     // デフォルト: 業務時間全体
@@ -479,9 +514,15 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         return;
     }
 
-    // 時間帯枠データを取得
+    // 時間帯枠データを取得（並列配列形式）
     const stats = state.mainStats.get(dateStr);
-    const slots = stats?.slots || null;
+    const slotStarts = stats?.slotStarts || [];
+    const slotEnds = stats?.slotEnds || [];
+    const slotCounts = stats?.slotCounts || [];
+    const slotCaps = stats?.slotCaps || [];
+    const slotAvailables = stats?.slotAvailables || [];
+    const slotFlags = stats?.slotFlags || null;
+    const slotCount = slotStarts.length;
 
     // 営業時間情報を取得
     const businessHours = state.options?.businessHours;
@@ -502,7 +543,7 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     if (state.confirmedDateRange) {
         isDateGrayed = !isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end);
     } else {
-        isDateGrayed = stats?.isGrayedOut || false;
+        isDateGrayed = stats?.isDayGrayedOut || false;
     }
 
     // ラベル表示用のスペースを確保
@@ -568,18 +609,20 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         let totalAvailable = 0;
         let totalCapacity = 0;
 
-        if (slots && slots.length > 0) {
-            slots.forEach(slot => {
-                if (slot.isGrayedOut || isDateGrayed) {
-                    return;
+        if (slotCount > 0) {
+            for (let i = 0; i < slotCount; i++) {
+                // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
+                const isSlotGrayed = slotFlags ? (slotFlags[i] & 0b001) !== 0 : false;
+                if (isSlotGrayed || isDateGrayed) {
+                    continue;
                 }
 
-                const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 1;
-                const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
+                const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 1;
+                const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
 
                 totalCapacity += cap;
                 totalAvailable += (cap - count);
-            });
+            }
 
             if (totalCapacity > 0) {
                 overallVacancyRatio = totalAvailable / totalCapacity;
@@ -595,7 +638,7 @@ export function renderCanvasDayBarChart(contexts, state, params) {
             capacity: totalCapacity,
             isYearView
         });
-    } else if (slots && slots.length > 0) {
+    } else if (slotCount > 0) {
         // 詳細表示モード
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
@@ -603,7 +646,9 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         renderCanvasBarChart(contentCtx, {
             cellLeft, cellTop, cellWidth, cellHeight,
             dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
-            isDateGrayed, slots, startHour, endHour,
+            isDateGrayed,
+            slotStarts, slotEnds, slotCounts, slotCaps, slotAvailables, slotFlags,
+            startHour, endHour,
             lunchStartHour, lunchEndHour, isYearView
         });
     }

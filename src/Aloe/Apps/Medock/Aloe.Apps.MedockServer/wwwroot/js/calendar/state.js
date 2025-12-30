@@ -20,7 +20,7 @@ let state = {
     previousView: null,               // 前回のビュー（トランジション判定用）
     currentDate: new Date(),          // 現在表示中の日付
     appointments: [],                 // 予約データの配列
-    mainStats: new Map(),              // 日付文字列 -> Mainリソース統計 { am, pm, amMax, pmMax, slots[], isGrayedOut }
+    mainStats: new Map(),              // 日付文字列 -> Mainリソース統計 { am, pm, amMax, pmMax, slots[], isDayGrayedOut }
     equipmentStats: new Map(),         // 日付文字列 -> Equipmentリソース統計 { resources: { resourceId: { resourceName, totalAvailable, totalCapacity, slots[] } } }
     holidays: new Map(),              // 日付文字列 -> 祝日名
     options: {

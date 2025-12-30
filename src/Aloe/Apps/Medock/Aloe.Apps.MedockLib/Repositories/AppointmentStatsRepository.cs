@@ -217,7 +217,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     }
 
     /// <inheritdoc />
-    public async Task<Dictionary<string, List<EquipmentResourceStatsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
+    public async Task<Dictionary<string, List<ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
         DateOnly startDate,
         DateOnly endDate,
         List<Guid>? equipmentResourceIds)
@@ -226,7 +226,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         if (equipmentResourceIds == null || !equipmentResourceIds.Any())
         {
             this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
-            return new Dictionary<string, List<EquipmentResourceStatsDto>>();
+            return new Dictionary<string, List<ResourceStatSlotsDto>>();
         }
 
         this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
@@ -275,23 +275,34 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
 
             // 日付ごとにグループ化
-            var groupedByDate = new Dictionary<string, List<EquipmentResourceStatsDto>>();
+            var groupedByDate = new Dictionary<string, List<ResourceStatSlotsDto>>();
             foreach (var item in results)
             {
                 if (!groupedByDate.ContainsKey(item.ApptDate))
                 {
-                    groupedByDate[item.ApptDate] = new List<EquipmentResourceStatsDto>();
+                    groupedByDate[item.ApptDate] = new List<ResourceStatSlotsDto>();
                 }
-                groupedByDate[item.ApptDate].Add(new EquipmentResourceStatsDto
+
+                // 分数を"HH:mm"形式の文字列に変換
+                var slotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>();
+                var slotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>();
+                var slotStarts = slotStartMinutes.Select(m => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(m)).ToString("HH:mm")).ToArray();
+                var slotEnds = slotEndMinutes.Select(m => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(m)).ToString("HH:mm")).ToArray();
+
+                groupedByDate[item.ApptDate].Add(new ResourceStatSlotsDto
                 {
                     ResourceId = item.ResourceId ?? String.Empty,
                     ResourceName = item.ResourceName ?? String.Empty,
                     TotalCapacity = item.TotalCapacity,
                     TotalAvailable = item.TotalAvailable,
-                    SlotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>(),
-                    SlotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>(),
+                    SlotStarts = slotStarts,
+                    SlotEnds = slotEnds,
+                    SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
+                    SlotCaps = Array.Empty<int>(), // Equipmentでは使用しない
                     SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
-                    SlotFlags = null
+                    SlotFlags = null, // 将来的にIsOutsideHoursなどを設定
+                    SlotFilteredCounts = null, // 現時点では使用しない
+                    IsDayGrayedOut = false // Equipmentでは使用しない
                 });
             }
 

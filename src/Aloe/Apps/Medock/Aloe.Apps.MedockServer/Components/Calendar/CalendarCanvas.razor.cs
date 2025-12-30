@@ -49,7 +49,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     /// Equipmentリソース統計データ（FromSql + array_agg 最適化版、日付ごと）
     /// </summary>
     [Parameter]
-    public Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized { get; set; }
+    public Dictionary<string, List<ResourceStatSlotsDto>>? EquipmentStatsOptimized { get; set; }
 
     /// <summary>
     /// Holidays (date string -> holiday name)

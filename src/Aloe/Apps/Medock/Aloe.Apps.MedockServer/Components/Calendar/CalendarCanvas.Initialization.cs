@@ -49,14 +49,15 @@ public partial class CalendarCanvas
             this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
             this.Holidays ?? new Dictionary<string, string>(),
             this.FilterTimeSlots,
-            this.EquipmentStatsOptimized);
+            this.EquipmentStatsOptimized,
+            this.BusinessHours);
 
         buildSw.Stop();
         Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
         Console.WriteLine($"  - Appointments: {calendarData.Appointments.Count}");
         Console.WriteLine($"  - MainStats dates: {calendarData.MainStats.Count}");
         Console.WriteLine($"  - EquipmentStats dates: {calendarData.EquipmentStats.Count}");
-        var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Resources.Count);
+        var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Count);
         Console.WriteLine($"  - Total Equipment Resources: {totalEquipmentResources}");
 
         var interopSw = Stopwatch.StartNew();

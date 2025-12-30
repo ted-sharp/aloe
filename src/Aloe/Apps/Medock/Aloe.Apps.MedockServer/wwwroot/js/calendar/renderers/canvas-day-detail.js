@@ -12,19 +12,38 @@ import { isDateInRange } from '../utils/date-utils.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
 
 /**
- * スロットの時間範囲を解析
+ * スロットの時間範囲を解析（並列配列用）
+ * @param {string} startStr - 開始時刻文字列（"HH:mm"形式）
+ * @param {string} endStr - 終了時刻文字列（"HH:mm"形式）
+ * @param {number} startHour - デフォルト開始時刻
+ * @param {number} endHour - デフォルト終了時刻
+ * @returns {{start: number, end: number}}
  */
-function parseSlotTimeRange(slot, startHour, endHour) {
-    if (slot.start !== undefined && slot.end !== undefined) {
-        // slot.start/slot.end は "HH:mm" 形式の文字列
+function parseSlotTimeRangeFromStrings(startStr, endStr, startHour, endHour) {
+    if (startStr && endStr) {
         const parseTime = (timeStr) => {
             const parts = timeStr.split(':');
             return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
         };
         return {
-            start: parseTime(slot.start),
-            end: parseTime(slot.end)
+            start: parseTime(startStr),
+            end: parseTime(endStr)
         };
+    }
+
+    // デフォルト: 業務時間全体
+    return {
+        start: startHour,
+        end: endHour
+    };
+}
+
+/**
+ * スロットの時間範囲を解析（旧形式・互換性用）
+ */
+function parseSlotTimeRange(slot, startHour, endHour) {
+    if (slot.start !== undefined && slot.end !== undefined) {
+        return parseSlotTimeRangeFromStrings(slot.start, slot.end, startHour, endHour);
     }
     return {
         start: startHour,
@@ -55,9 +74,15 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const gridCtx = contexts.get('grid');
     const contentCtx = contexts.get('content');
 
-    // 時間帯枠データを取得
+    // 時間帯枠データを取得（並列配列形式）
     const stats = state.mainStats.get(dateStr);
-    const slots = stats?.slots || [];
+    const slotStarts = stats?.slotStarts || [];
+    const slotEnds = stats?.slotEnds || [];
+    const slotCounts = stats?.slotCounts || [];
+    const slotCaps = stats?.slotCaps || [];
+    const slotAvailables = stats?.slotAvailables || [];
+    const slotFlags = stats?.slotFlags || null;
+    const slotCount = slotStarts.length;
 
     // 営業時間情報を取得
     const businessHours = state.options?.businessHours;
@@ -78,7 +103,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     if (state.confirmedDateRange) {
         isDateGrayed = !isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end);
     } else {
-        isDateGrayed = stats?.isGrayedOut || false;
+        isDateGrayed = stats?.isDayGrayedOut || false;
     }
 
     const startHour = state.options.startHour || 8;
@@ -129,7 +154,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     }
 
     // データがない場合
-    if (slots.length === 0) {
+    if (slotCount === 0) {
         drawText(contentCtx, {
             text: 'データなし',
             x: yAxisWidth,
@@ -144,10 +169,10 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
 
     // 最大値を計算
     let maxValue = 0;
-    slots.forEach(slot => {
-        const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+    for (let i = 0; i < slotCount; i++) {
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         maxValue = Math.max(maxValue, cap);
-    });
+    }
 
     if (maxValue <= 0) {
         maxValue = 10; // デフォルト
@@ -215,16 +240,20 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         return yAxisWidth + relativePosition * graphWidth;
     };
 
-    // スロットを描画
-    slots.forEach(slot => {
-        const count = (slot.count !== undefined && slot.count !== null) ? slot.count : 0;
-        const cap = (slot.cap !== undefined && slot.cap !== null && slot.cap > 0) ? slot.cap : 0;
+    // スロットを描画（並列配列対応）
+    for (let i = 0; i < slotCount; i++) {
+        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         const available = cap - count;
-        const isSlotGrayed = slot.isGrayedOut || isDateGrayed;
 
-        if (cap <= 0) return;
+        // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
+        const isSlotGrayed = (slotFlags && (slotFlags[i] & 0b001) !== 0) || isDateGrayed;
 
-        const timeRange = parseSlotTimeRange(slot, startHour, endHour);
+        if (cap <= 0) continue;
+
+        const slotStartStr = slotStarts[i];
+        const slotEndStr = slotEnds[i];
+        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
         const slotStart = Math.max(startHour, timeRange.start);
         const slotEnd = Math.min(endHour, timeRange.end);
 
@@ -300,7 +329,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
                 align: 'center'
             });
         }
-    });
+    }
 
     // 昼休みライン
     if (lunchStartHour !== null && lunchEndHour !== null) {

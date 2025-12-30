@@ -58,7 +58,7 @@ public interface IAppointmentStatsRepository
     /// 日付ごとにグループ化された辞書形式で返します。
     /// equipmentResourceIds が null または空の場合は全 Equipment リソースを取得します。
     /// </summary>
-    Task<Dictionary<string, List<Services.Dtos.EquipmentResourceStatsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
+    Task<Dictionary<string, List<Services.Dtos.ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
         DateOnly startDate,
         DateOnly endDate,
         List<Guid>? equipmentResourceIds);

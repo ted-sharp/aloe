@@ -29,7 +29,7 @@ public partial class YearView : ComponentBase
     /// Equipmentリソース統計データ（FromSql + array_agg 最適化版）
     /// </summary>
     [Parameter]
-    public Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized { get; set; }
+    public Dictionary<string, List<ResourceStatSlotsDto>>? EquipmentStatsOptimized { get; set; }
 
     /// <summary>
     /// 祝日データ（日付文字列 -> 祝日名）

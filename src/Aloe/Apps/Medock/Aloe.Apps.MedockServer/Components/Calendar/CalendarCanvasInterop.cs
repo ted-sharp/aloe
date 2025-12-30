@@ -36,38 +36,40 @@ public static class CalendarCanvasInterop
                 kvp => kvp.Key,
                 kvp => new
                 {
-                    slots = kvp.Value.Slots.Select(s => new
-                    {
-                        start = s.Start,
-                        end = s.End,
-                        count = s.Count,
-                        cap = s.Cap,
-                        available = s.Available,
-                        isGrayedOut = s.IsGrayedOut,
-                        filteredCount = s.FilteredCount
-                    }).ToArray(),
-                    isGrayedOut = kvp.Value.IsGrayedOut
+                    resourceId = kvp.Value.ResourceId,
+                    resourceName = kvp.Value.ResourceName,
+                    totalAvailable = kvp.Value.TotalAvailable,
+                    totalCapacity = kvp.Value.TotalCapacity,
+                    slotStarts = kvp.Value.SlotStarts,
+                    slotEnds = kvp.Value.SlotEnds,
+                    slotCounts = kvp.Value.SlotCounts,
+                    slotCaps = kvp.Value.SlotCaps,
+                    slotAvailables = kvp.Value.SlotAvailables,
+                    slotFlags = kvp.Value.SlotFlags,
+                    slotFilteredCounts = kvp.Value.SlotFilteredCounts,
+                    isDayGrayedOut = kvp.Value.IsDayGrayedOut
                 }
             ),
             equipmentStats = data.EquipmentStats.ToDictionary(
                 kvp => kvp.Key,
-                kvp => new
-                {
-                    resources = kvp.Value.Resources.ToDictionary(
-                        r => r.Key,
-                        r => new
-                        {
-                            resourceId = r.Value.ResourceId,
-                            resourceName = r.Value.ResourceName,
-                            totalAvailable = r.Value.TotalAvailable,
-                            totalCapacity = r.Value.TotalCapacity,
-                            slotStartMinutes = r.Value.SlotStartMinutes,
-                            slotEndMinutes = r.Value.SlotEndMinutes,
-                            slotAvailables = r.Value.SlotAvailables,
-                            slotFlags = r.Value.SlotFlags
-                        }
-                    )
-                }
+                kvp => kvp.Value.ToDictionary(
+                    r => r.Key,
+                    r => new
+                    {
+                        resourceId = r.Value.ResourceId,
+                        resourceName = r.Value.ResourceName,
+                        totalAvailable = r.Value.TotalAvailable,
+                        totalCapacity = r.Value.TotalCapacity,
+                        slotStarts = r.Value.SlotStarts,
+                        slotEnds = r.Value.SlotEnds,
+                        slotCounts = r.Value.SlotCounts,
+                        slotCaps = r.Value.SlotCaps,
+                        slotAvailables = r.Value.SlotAvailables,
+                        slotFlags = r.Value.SlotFlags,
+                        slotFilteredCounts = r.Value.SlotFilteredCounts,
+                        isDayGrayedOut = r.Value.IsDayGrayedOut
+                    }
+                )
             ),
             holidays = data.Holidays
         };

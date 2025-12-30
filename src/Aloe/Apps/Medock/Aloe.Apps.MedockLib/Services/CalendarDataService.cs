@@ -16,7 +16,8 @@ public class CalendarDataService : ICalendarDataService
         Dictionary<string, bool> mainStatsGrayedOut,
         Dictionary<string, string> holidays,
         List<string>? filterTimeSlots = null,
-        Dictionary<string, List<EquipmentResourceStatsDto>>? equipmentStats = null)
+        Dictionary<string, List<ResourceStatSlotsDto>>? equipmentStats = null,
+        BusinessHoursDto? businessHours = null)
     {
         var appointmentArray = appointments?.Select(a => new AppointmentDataDto
         {
@@ -47,7 +48,7 @@ public class CalendarDataService : ICalendarDataService
             }
         }
 
-        var mainStatsDict = new Dictionary<string, MainStatsDataDto>();
+        var mainStatsDict = new Dictionary<string, ResourceStatSlotsDto>();
         if (mainStats != null)
         {
             foreach (var kvp in mainStats)
@@ -56,41 +57,106 @@ public class CalendarDataService : ICalendarDataService
                 var statsList = kvp.Value;
 
                 var stat = statsList.FirstOrDefault();
-                List<SlotDataDto> slots = new();
+
+                // 並列配列を初期化
+                string[] slotStarts = Array.Empty<string>();
+                string[] slotEnds = Array.Empty<string>();
+                int[] slotCounts = Array.Empty<int>();
+                int[] slotCaps = Array.Empty<int>();
+                int[] slotAvailables = Array.Empty<int>();
+                byte[]? slotFlags = null;
+                int[]? slotFilteredCounts = null;
 
                 if (stat != null && stat.AppointmentStatSlots != null)
                 {
-                    slots = stat.AppointmentStatSlots
+                    var validSlots = stat.AppointmentStatSlots
                         .Where(s => !s.IsDeleted)
-                        .Select(statSlot =>
+                        .OrderBy(s => s.SlotStart)
+                        .ToList();
+
+                    var count = validSlots.Count;
+                    if (count > 0)
+                    {
+                        slotStarts = new string[count];
+                        slotEnds = new string[count];
+                        slotCounts = new int[count];
+                        slotCaps = new int[count];
+                        slotAvailables = new int[count];
+                        slotFlags = new byte[count];
+                        slotFilteredCounts = new int[count];
+
+                        for (int i = 0; i < count; i++)
                         {
+                            var statSlot = validSlots[i];
                             var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                            var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
                             var isSlotGrayed = false;
                             if (filterHours != null && filterHours.Count > 0)
                             {
                                 isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
                             }
 
-                            return new SlotDataDto
+                            slotStarts[i] = slotStartTime.ToString("HH:mm");
+                            slotEnds[i] = slotEndTime.ToString("HH:mm");
+                            slotCounts[i] = statSlot.SlotCount;
+                            slotCaps[i] = statSlot.SlotCap;
+                            slotAvailables[i] = statSlot.SlotAvailable;
+
+                            // 業務時間外スロットかどうかを判定
+                            var isOutsideHours = false;
+                            if (businessHours != null)
                             {
-                                Start = slotStartTime.ToString("HH:mm"),
-                                End = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd)).ToString("HH:mm"),
-                                Count = statSlot.SlotCount,
-                                Cap = statSlot.SlotCap,
-                                Available = statSlot.SlotAvailable,
-                                IsGrayedOut = isSlotGrayed,
-                                FilteredCount = 0,
-                                IsOutsideHours = false
-                            };
-                        }).OrderBy(s => s.Start).ToList();
+                                var businessStart = TimeOnly.Parse(businessHours.StartTime);
+                                var businessEnd = TimeOnly.Parse(businessHours.EndTime);
+
+                                // スロットが業務時間外にある場合
+                                if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
+                                {
+                                    isOutsideHours = true;
+                                }
+                                // 昼休み時間帯にある場合
+                                else if (!String.IsNullOrEmpty(businessHours.LunchStartTime) &&
+                                         !String.IsNullOrEmpty(businessHours.LunchEndTime))
+                                {
+                                    var lunchStart = TimeOnly.Parse(businessHours.LunchStartTime);
+                                    var lunchEnd = TimeOnly.Parse(businessHours.LunchEndTime);
+
+                                    if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
+                                    {
+                                        isOutsideHours = true;
+                                    }
+                                }
+                            }
+
+                            // フラグをビット単位で設定
+                            byte flags = 0;
+                            if (isSlotGrayed) flags |= 0b001; // ビット0: IsGrayedOut
+                            if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
+
+                            // ビット2: FilteredCount > 0 は現時点では常にfalse
+                            slotFlags[i] = flags;
+
+                            slotFilteredCounts[i] = 0; // 現時点では常に0
+                        }
+                    }
                 }
 
-                var isGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;
+                var isDayGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;
 
-                mainStatsDict[dateStr] = new MainStatsDataDto
+                mainStatsDict[dateStr] = new ResourceStatSlotsDto
                 {
-                    Slots = slots,
-                    IsGrayedOut = isGrayedOut
+                    ResourceId = null, // Mainでは使用しない
+                    ResourceName = null, // Mainでは使用しない
+                    TotalAvailable = 0, // Mainでは使用しない
+                    TotalCapacity = 0, // Mainでは使用しない
+                    SlotStarts = slotStarts,
+                    SlotEnds = slotEnds,
+                    SlotCounts = slotCounts,
+                    SlotCaps = slotCaps,
+                    SlotAvailables = slotAvailables,
+                    SlotFlags = slotFlags,
+                    SlotFilteredCounts = slotFilteredCounts,
+                    IsDayGrayedOut = isDayGrayedOut
                 };
             }
         }
@@ -98,7 +164,7 @@ public class CalendarDataService : ICalendarDataService
         var holidaysDict = holidays ?? new Dictionary<string, string>();
 
         // Equipment統計データを処理（最適化版：既に配列化済み）
-        var equipmentStatsDict = new Dictionary<string, EquipmentStatsDataDto>();
+        var equipmentStatsDict = new Dictionary<string, Dictionary<string, ResourceStatSlotsDto>>();
         if (equipmentStats != null)
         {
             foreach (var kvp in equipmentStats)
@@ -106,18 +172,15 @@ public class CalendarDataService : ICalendarDataService
                 var dateStr = kvp.Key;
                 var statsList = kvp.Value;
 
-                var resourcesDict = new Dictionary<string, EquipmentResourceStatsDto>();
+                var resourcesDict = new Dictionary<string, ResourceStatSlotsDto>();
 
                 // 既に配列化済みなのでそのまま使用
                 foreach (var stat in statsList)
                 {
-                    resourcesDict[stat.ResourceId] = stat;
+                    resourcesDict[stat.ResourceId ?? String.Empty] = stat;
                 }
 
-                equipmentStatsDict[dateStr] = new EquipmentStatsDataDto
-                {
-                    Resources = resourcesDict
-                };
+                equipmentStatsDict[dateStr] = resourcesDict;
             }
         }
 

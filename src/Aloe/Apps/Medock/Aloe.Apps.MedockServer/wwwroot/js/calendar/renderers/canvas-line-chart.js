@@ -70,11 +70,11 @@ export function renderCanvasLineChart(contentCtx, params) {
     } = params;
 
     // Equipment統計データがない場合は描画しない
-    if (!equipmentStats || !equipmentStats.resources) {
+    if (!equipmentStats) {
         return false;
     }
 
-    const resources = Object.values(equipmentStats.resources);
+    const resources = Object.values(equipmentStats);
     if (resources.length === 0) {
         return false;
     }
@@ -103,25 +103,29 @@ export function renderCanvasLineChart(contentCtx, params) {
         const color = colors[index % colors.length];
 
         // 新形式: 配列から直接アクセス
-        const { slotStartMinutes, slotEndMinutes, slotAvailables, slotFlags } = resource;
+        const { slotStarts, slotEnds, slotAvailables, slotFlags } = resource;
 
         // 配列が空の場合は早期リターン
-        if (!slotStartMinutes || slotStartMinutes.length === 0) {
+        if (!slotStarts || slotStarts.length === 0) {
             return;
         }
 
         const dataPoints = [];
 
         // 配列を反復処理（サーバー側で既にソート済み）
-        for (let i = 0; i < slotStartMinutes.length; i++) {
+        for (let i = 0; i < slotStarts.length; i++) {
             // フラグチェック（将来の実装用、現時点ではslotFlagsはnull）
             // if (slotFlags && (slotFlags[i] & 2)) {
             //     continue; // 時間外スロットをスキップ
             // }
 
+            // "HH:mm"形式を分数に変換（例: "09:00" → 540, "09:30" → 570）
+            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+
             // 分を時間に変換（例: 540 → 9.0, 570 → 9.5）
-            const startHours = slotStartMinutes[i] / 60;
-            const endHours = slotEndMinutes[i] / 60;
+            const startHours = startMinutes / 60;
+            const endHours = endMinutes / 60;
             const available = slotAvailables[i];
 
             // X座標を計算（既存のtimeToX関数を使用）
