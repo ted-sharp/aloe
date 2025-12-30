@@ -107,7 +107,10 @@
             </div>
 
             <!-- 3行目: ビュー別ボタン群 -->
-            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm flex-nowrap min-w-fit">
+            <!-- 外枠: 透明で最小幅を確保（ビュー切り替え時に幅が変わると他に影響がでるため） -->
+            <div class="flex items-center md:min-w-[420px]">
+                <!-- 内側: 内容に応じた幅のカード（年/月/週ビューで幅が変わる） -->
+                <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm flex-nowrap min-w-fit">
                 @if (CurrentView == CalendarViewType.Year)
                 {
                     <!-- 年間カレンダー: 今日ボタン + 年選択 -->
@@ -194,6 +197,7 @@
                         }
                     </div>
                 }
+                </div>
             </div>
         </div>
 
