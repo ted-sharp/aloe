@@ -201,7 +201,7 @@ function render() {
     // ビュータイプが変わったかどうかを判定
     const viewChanged = state.previousView && state.previousView !== state.currentView;
     let fadeMode = viewChanged ? 'scalefade' : 'crossfade';
-    const fadeDuration = viewChanged ? 350 : 200;
+    const fadeDuration = viewChanged ? 500 : 200;
 
     // 共有要素トランジションの判定（currentDate から自動計算）
     let transitionInfo = null;
@@ -247,8 +247,61 @@ function render() {
             }
 
             console.log('SharedElement Transition ENABLED (Year-Month)', transitionInfo);
+        }
+        // 月 ↔ 週 のトランジション
+        else if ((state.previousView === 'month' && state.currentView === 'week') ||
+                 (state.previousView === 'week' && state.currentView === 'month')) {
+
+            fadeMode = 'sharedelement';
+            transitionInfo = {
+                transitionType: `${state.previousView}-to-${state.currentView}`
+            };
+
+            // 月 → 週: 月間ビューの週行bounds → 週ビュー全体
+            if (state.previousView === 'month') {
+                // currentDate が属する週行を検索
+                const currentDateStr = dateToString(state.currentDate);
+                const weekRow = currentRenderState.weekRows.find(wr => {
+                    // currentDate がこの週行の範囲内にあるかチェック
+                    return currentDateStr >= wr.weekStartDate && currentDateStr <= wr.weekEndDate;
+                });
+
+                if (weekRow) {
+                    transitionInfo.sourceBounds = weekRow.bounds;
+                    console.log('Captured Month week row bounds:', transitionInfo.sourceBounds);
+                } else {
+                    console.warn('Week row not found for currentDate, falling back to scalefade');
+                    fadeMode = 'scalefade';
+                    transitionInfo = null;
+                }
+            }
+            // 週 → 月: 週ビュー全体 → 月間ビューの対応する週行
+            else if (state.previousView === 'week') {
+                // 週ビュー全体のboundsを保存
+                transitionInfo.sourceBounds = {
+                    x: 0,
+                    y: 0,
+                    width: state.canvasManager.width,
+                    height: state.canvasManager.height
+                };
+
+                // currentDate が属する週の開始日を計算し、月ビューの週行インデックスを推定
+                // 月ビューの描画後に正確な週行を特定する必要があるため、ここでは簡易的に計算
+                const year = state.currentDate.getFullYear();
+                const month = state.currentDate.getMonth();
+                const firstDayOfMonth = new Date(year, month, 1);
+                const startDayOfWeek = firstDayOfMonth.getDay();
+                const currentDay = state.currentDate.getDate();
+                const currentDayIndex = startDayOfWeek + currentDay - 1;
+                const targetWeekRowIndex = Math.floor(currentDayIndex / 7);
+
+                transitionInfo.targetWeekRowIndex = targetWeekRowIndex;
+                console.log('Captured Week full bounds and targetWeekRowIndex:', transitionInfo);
+            }
+
+            console.log('SharedElement Transition ENABLED (Month-Week)', transitionInfo);
         } else {
-            console.log('SharedElement Transition SKIPPED - not Year-Month transition');
+            console.log('SharedElement Transition SKIPPED - not Year-Month or Month-Week transition');
         }
     } else {
         console.log('SharedElement Transition SKIPPED - no view change');

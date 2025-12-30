@@ -361,12 +361,33 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     }
 
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
-    // 週間ビューは日付セルの概念がないため、共有要素トランジションは通常のフェードにフォールバック
-    if (fadeMode === 'sharedelement') {
-        fadeMode = 'scalefade';
+    let commitOptions = {};
+
+    if (fadeMode === 'sharedelement' && transitionInfo) {
+        // 月 → 週: 月間ビューの週行bounds → 週ビュー全体
+        if (transitionInfo.transitionType === 'month-to-week') {
+            // 遷移元: calendar-main.jsで保存された月間ビューの週行bounds
+            // 遷移先: 週ビュー全体（canvas全体）
+            if (transitionInfo.sourceBounds) {
+                commitOptions = {
+                    sourceBounds: transitionInfo.sourceBounds,
+                    targetBounds: { x: 0, y: 0, width, height },
+                    transitionType: transitionInfo.transitionType
+                };
+                console.log('Week View: Month-to-Week transition', commitOptions);
+            } else {
+                console.warn('Week View: sourceBounds not found in transitionInfo, falling back to scalefade');
+                fadeMode = 'scalefade';
+            }
+        }
+        // 週 → 月: この遷移は月ビューで処理されるため、ここには来ない
+        else if (transitionInfo.transitionType === 'week-to-month') {
+            console.warn('Week View: Unexpected week-to-month transition (should be handled by month view)');
+            fadeMode = 'scalefade';
+        }
     }
 
-    canvasManager.commitAll(fadeMode, fadeDuration);
+    canvasManager.commitAll(fadeMode, fadeDuration, commitOptions);
 }
 
 

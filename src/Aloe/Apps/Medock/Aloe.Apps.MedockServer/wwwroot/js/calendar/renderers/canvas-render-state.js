@@ -20,19 +20,22 @@ export class RenderState {
     reset() {
         // 空間インデックス: 日付文字列 -> セル情報
         this.cells = new Map();
-        
+
         // バーインデックス: バーID -> バー情報
         this.bars = new Map();
-        
+
         // 月間/年間ビュー用: 月情報の配列
         this.months = [];
-        
+
         // 週間ビュー用: スロット情報の配列
         this.weekSlots = [];
-        
+
+        // 月間ビュー用: 週行情報の配列（月↔週のトランジション用）
+        this.weekRows = [];
+
         // 現在のビュータイプ
         this.viewType = null;
-        
+
         // バーIDカウンター
         this._barIdCounter = 0;
     }
@@ -81,6 +84,14 @@ export class RenderState {
      */
     addMonth(monthInfo) {
         this.months.push(monthInfo);
+    }
+
+    /**
+     * 週行情報を追加（月間ビュー用、月↔週トランジション用）
+     * @param {object} weekRowInfo - 週行情報 { rowIndex, weekStartDate, weekEndDate, bounds: { x, y, width, height } }
+     */
+    addWeekRow(weekRowInfo) {
+        this.weekRows.push(weekRowInfo);
     }
 
     /**
@@ -258,6 +269,7 @@ export class RenderState {
             cellsCount: this.cells.size,
             barsCount: this.bars.size,
             monthsCount: this.months.length,
+            weekRowsCount: this.weekRows.length,
             weekSlotsCount: this.weekSlots.length
         });
     }

@@ -66,6 +66,9 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
     const startHour = state.options.startHour || 8;
     const endHour = state.options.endHour || 18;
 
+    // 週行の bounds 情報を保存する配列（月↔週トランジション用）
+    const weekRowBoundsMap = new Map(); // key: rowIndex, value: { rowIndex, dates: [], bounds }
+
     // 各日付セルのバーチャートを描画
     let day = 1;
     for (let row = 0; row < rows; row++) {
@@ -79,6 +82,16 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
             const cellTop = dayGridTop + row * cellHeight;
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
             const isHoliday = state.holidays.has(dateStr);
+
+            // 週行の bounds 情報を記録
+            if (!weekRowBoundsMap.has(row)) {
+                weekRowBoundsMap.set(row, {
+                    rowIndex: row,
+                    dates: [],
+                    bounds: { x: 0, y: cellTop, width, height: cellHeight }
+                });
+            }
+            weekRowBoundsMap.get(row).dates.push(dateStr);
 
             // バーチャートを描画
             renderCanvasDayBarChart(contexts, state, {
@@ -122,6 +135,19 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
         }
     }
 
+    // 週行の bounds 情報を RenderState に保存
+    weekRowBoundsMap.forEach((weekRowInfo) => {
+        const dates = weekRowInfo.dates;
+        if (dates.length > 0) {
+            renderState.addWeekRow({
+                rowIndex: weekRowInfo.rowIndex,
+                weekStartDate: dates[0],
+                weekEndDate: dates[dates.length - 1],
+                bounds: weekRowInfo.bounds
+            });
+        }
+    });
+
     // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送
     let commitOptions = {};
 
@@ -133,11 +159,34 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
             if (transitionInfo.sourceBounds) {
                 commitOptions = {
                     sourceBounds: transitionInfo.sourceBounds,
-                    targetBounds: { x: 0, y: 0, width, height }
+                    targetBounds: { x: 0, y: 0, width, height },
+                    transitionType: transitionInfo.transitionType
                 };
                 console.log('Month View: Year-to-Month transition', commitOptions);
             } else {
                 console.warn('Month View: sourceBounds not found in transitionInfo, falling back to scalefade');
+                fadeMode = 'scalefade';
+            }
+        }
+        // 週 → 月: 週ビュー全体 → 月間ビューの対応する週行
+        else if (transitionInfo.transitionType === 'week-to-month') {
+            // 遷移元: 週ビュー全体
+            // 遷移先: 月間ビューの対応する週行
+            if (transitionInfo.sourceBounds && transitionInfo.targetWeekRowIndex !== undefined) {
+                const targetWeekRow = renderState.weekRows.find(wr => wr.rowIndex === transitionInfo.targetWeekRowIndex);
+                if (targetWeekRow) {
+                    commitOptions = {
+                        sourceBounds: transitionInfo.sourceBounds,
+                        targetBounds: targetWeekRow.bounds,
+                        transitionType: transitionInfo.transitionType
+                    };
+                    console.log('Month View: Week-to-Month transition', commitOptions);
+                } else {
+                    console.warn('Month View: targetWeekRow not found, falling back to scalefade');
+                    fadeMode = 'scalefade';
+                }
+            } else {
+                console.warn('Month View: sourceBounds or targetWeekRowIndex not found in transitionInfo, falling back to scalefade');
                 fadeMode = 'scalefade';
             }
         }

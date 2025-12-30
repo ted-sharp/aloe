@@ -521,14 +521,20 @@ export class CanvasManager {
                 return;
             }
 
-            // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+            // 1. すべてのレイヤーを合成したスナップショットを作成（古い画面）
+            // 各レイヤーごとにスナップショットを取るのではなく、すべてのレイヤーを1つに合成
+            const compositeSnapshot = document.createElement('canvas');
+            compositeSnapshot.width = this.width;
+            compositeSnapshot.height = this.height;
+            const compositeCtx = compositeSnapshot.getContext('2d');
+
+            // すべてのメインCanvasレイヤーを順番に合成
             this.canvases.forEach((canvas, layerName) => {
-                const snapshotCanvas = this.snapshotCanvases.get(layerName);
-                if (snapshotCanvas) {
-                    const snapshotCtx = snapshotCanvas.getContext('2d');
-                    snapshotCtx.clearRect(0, 0, this.width, this.height);
-                    snapshotCtx.drawImage(canvas, 0, 0);
-                }
+                compositeCtx.drawImage(canvas, 0, 0);
+            });
+
+            console.log('Composite snapshot created:', {
+                size: `${compositeSnapshot.width}x${compositeSnapshot.height}`
             });
 
             // 2. アニメーションループ
@@ -538,56 +544,106 @@ export class CanvasManager {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / fadeDuration, 1);
 
-                // 減速系イージング（ease-out）で滑らかに収束
-                const easeOut = 1 - Math.pow(1 - progress, 2.5);
+                // ease-in-out-cubic イージングで開始と終了を滑らかに
+                const easeInOutCubic = progress < 0.5
+                    ? 4 * progress * progress * progress
+                    : 1 - Math.pow(-2 * progress + 2, 3) / 2;
 
                 this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
                     const ctx = this.contexts.get(layerName);
-                    const snapshotCanvas = this.snapshotCanvases.get(layerName);
+                    // 合成スナップショットを使用（各レイヤーの個別スナップショットは使わない）
+                    const snapshotCanvas = compositeSnapshot;
 
                     if (ctx && snapshotCanvas) {
                         ctx.clearRect(0, 0, this.width, this.height);
 
-                        // 共有要素の位置・サイズを補間（主要な変化）
-                        const currentX = sourceBounds.x + (targetBounds.x - sourceBounds.x) * easeOut;
-                        const currentY = sourceBounds.y + (targetBounds.y - sourceBounds.y) * easeOut;
-                        const currentWidth = sourceBounds.width + (targetBounds.width - sourceBounds.width) * easeOut;
-                        const currentHeight = sourceBounds.height + (targetBounds.height - sourceBounds.height) * easeOut;
+                        // 遷移方向を判定
+                        const transitionType = options.transitionType || '';
+                        const isExpandingTransition = transitionType.endsWith('-to-year') || transitionType.endsWith('-to-week');
 
-                        // 古い画面: ゆるやかにフェードアウト（急峻な変化を避ける）
-                        ctx.save();
-                        ctx.globalAlpha = Math.max(0, 1 - progress * 1.2);
-                        ctx.drawImage(snapshotCanvas, 0, 0);
-                        ctx.restore();
+                        // 月→年/週の場合: 年/週ビューをすっぱり表示、その上に月ビューを縮小
+                        if (isExpandingTransition) {
+                            // 新しい画面（年/週ビュー）を最初から完全表示
+                            ctx.drawImage(offscreenCanvas, 0, 0);
 
-                        // 共有要素: 位置・サイズのみ補間（影・角丸は最小限）
-                        ctx.save();
+                            // progress が 0.95 未満の場合のみ月ビューを描画（最後は完全に消す）
+                            if (progress < 0.95) {
+                                // 共有要素の位置・サイズを補間
+                                const currentX = sourceBounds.x + (targetBounds.x - sourceBounds.x) * easeInOutCubic;
+                                const currentY = sourceBounds.y + (targetBounds.y - sourceBounds.y) * easeInOutCubic;
+                                const currentWidth = sourceBounds.width + (targetBounds.width - sourceBounds.width) * easeInOutCubic;
+                                const currentHeight = sourceBounds.height + (targetBounds.height - sourceBounds.height) * easeInOutCubic;
 
-                        // クリップマスク：共有要素の領域だけ描画
-                        ctx.beginPath();
-                        ctx.rect(currentX, currentY, currentWidth, currentHeight);
-                        ctx.clip();
+                                // 古い画面（月ビュー）を不透明のまま縮小（オーバーレイ）
+                                // 縮小比率を計算
+                                const scaleX = currentWidth / sourceBounds.width;
+                                const scaleY = currentHeight / sourceBounds.height;
+                                const offsetX = currentX - sourceBounds.x * scaleX;
+                                const offsetY = currentY - sourceBounds.y * scaleY;
 
-                        // 新しい画面の全体を描画（クリップ内のみ表示される）
-                        const scaleX = currentWidth / targetBounds.width;
-                        const scaleY = currentHeight / targetBounds.height;
-                        const offsetX = currentX - targetBounds.x * scaleX;
-                        const offsetY = currentY - targetBounds.y * scaleY;
+                                ctx.save();
 
-                        ctx.translate(offsetX, offsetY);
-                        ctx.scale(scaleX, scaleY);
-                        ctx.drawImage(offscreenCanvas, 0, 0);
-                        ctx.restore();
+                                // クリップマスク：縮小する領域だけ描画
+                                ctx.beginPath();
+                                ctx.rect(currentX, currentY, currentWidth, currentHeight);
+                                ctx.clip();
 
-                        // 周辺コンテンツ: 共有要素到達後にわずかな遅延でフェードイン
-                        // 共有要素が70%到達してから、残り30%で周辺をフェードイン
-                        if (progress > 0.7) {
-                            const delayedProgress = (progress - 0.7) / 0.3; // 0.7-1.0 を 0-1.0 にマップ
-                            const contentAlpha = delayedProgress * 0.6; // 最大60%の透明度で表示
+                                // 変換を適用して月ビューを縮小描画
+                                ctx.translate(offsetX, offsetY);
+                                ctx.scale(scaleX, scaleY);
+
+                                // まず背景を白で塗りつぶす（変換後の座標系、元のキャンバスサイズ）
+                                ctx.fillStyle = '#ffffff';
+                                ctx.fillRect(0, 0, sourceBounds.width, sourceBounds.height);
+
+                                // 月ビューを描画
+                                ctx.drawImage(snapshotCanvas, 0, 0);
+                                ctx.restore();
+                            }
+
+                        } else {
+                            // 年/週→月の場合: 従来の動作を維持
+                            // 共有要素の位置・サイズを補間
+                            const currentX = sourceBounds.x + (targetBounds.x - sourceBounds.x) * easeInOutCubic;
+                            const currentY = sourceBounds.y + (targetBounds.y - sourceBounds.y) * easeInOutCubic;
+                            const currentWidth = sourceBounds.width + (targetBounds.width - sourceBounds.width) * easeInOutCubic;
+                            const currentHeight = sourceBounds.height + (targetBounds.height - sourceBounds.height) * easeInOutCubic;
+
+                            // 古い画面のフェードアウト
+                            const fadeOutSpeed = 1.2;
                             ctx.save();
-                            ctx.globalAlpha = contentAlpha;
+                            ctx.globalAlpha = Math.max(0, 1 - progress * fadeOutSpeed);
+                            ctx.drawImage(snapshotCanvas, 0, 0);
+                            ctx.restore();
+
+                            // 共有要素: 位置・サイズのみ補間
+                            ctx.save();
+
+                            // クリップマスク：共有要素の領域だけ描画
+                            ctx.beginPath();
+                            ctx.rect(currentX, currentY, currentWidth, currentHeight);
+                            ctx.clip();
+
+                            // 新しい画面の全体を描画（クリップ内のみ表示される）
+                            const scaleX = currentWidth / targetBounds.width;
+                            const scaleY = currentHeight / targetBounds.height;
+                            const offsetX = currentX - targetBounds.x * scaleX;
+                            const offsetY = currentY - targetBounds.y * scaleY;
+
+                            ctx.translate(offsetX, offsetY);
+                            ctx.scale(scaleX, scaleY);
                             ctx.drawImage(offscreenCanvas, 0, 0);
                             ctx.restore();
+
+                            // 周辺コンテンツ: progress > 0.7 からフェードイン
+                            if (progress > 0.7) {
+                                const delayedProgress = (progress - 0.7) / 0.3;
+                                const contentAlpha = delayedProgress * 0.6;
+                                ctx.save();
+                                ctx.globalAlpha = contentAlpha;
+                                ctx.drawImage(offscreenCanvas, 0, 0);
+                                ctx.restore();
+                            }
                         }
                     }
                 });
@@ -595,14 +651,21 @@ export class CanvasManager {
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // アニメーション完了後、新しい画面を完全に表示
-                    this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
-                        const ctx = this.contexts.get(layerName);
-                        if (ctx) {
-                            ctx.clearRect(0, 0, this.width, this.height);
-                            ctx.drawImage(offscreenCanvas, 0, 0);
-                        }
-                    });
+                    // アニメーション完了後の処理
+                    const transitionType = options.transitionType || '';
+                    const isExpandingTransition = transitionType.endsWith('-to-year') || transitionType.endsWith('-to-week');
+
+                    // 月→年/週の場合、年/週ビューはすでに完全表示されているので何もしない
+                    // 年/週→月の場合は、月ビューを即座に完全表示
+                    if (!isExpandingTransition) {
+                        this.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                            const ctx = this.contexts.get(layerName);
+                            if (ctx) {
+                                ctx.clearRect(0, 0, this.width, this.height);
+                                ctx.drawImage(offscreenCanvas, 0, 0);
+                            }
+                        });
+                    }
                 }
             };
             requestAnimationFrame(animate);

@@ -176,7 +176,8 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
             // 遷移元: calendar-main.jsで保存された年間ビューの月bounds
             if (transitionInfo.sourceBounds) {
                 commitOptions = {
-                    sourceBounds: transitionInfo.sourceBounds
+                    sourceBounds: transitionInfo.sourceBounds,
+                    transitionType: transitionInfo.transitionType
                 };
                 console.log('Year View: Year-to-Month transition', commitOptions);
             } else {
@@ -191,7 +192,8 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
             if (monthInfo && monthInfo.bounds) {
                 commitOptions = {
                     sourceBounds: transitionInfo.sourceBounds,  // 月間ビュー全体（calendar-main.jsで保存）
-                    targetBounds: monthInfo.bounds              // 年間ビューの月bounds（今描画された）
+                    targetBounds: monthInfo.bounds,             // 年間ビューの月bounds（今描画された）
+                    transitionType: transitionInfo.transitionType
                 };
                 console.log('Year View: Month-to-Year transition', commitOptions);
             } else {
