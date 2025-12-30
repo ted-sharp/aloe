@@ -129,6 +129,12 @@ public partial class YearView : ComponentBase
     [Parameter]
     public EventCallback<DateOnly> OnShowDayDetail { get; set; }
 
+    /// <summary>
+    /// 日付が単一選択された時のコールバック（JavaScript から呼ばれる、CurrentDate更新用）
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelectedSingle { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await this.OnDateClick.InvokeAsync(date);
@@ -142,6 +148,7 @@ public partial class YearView : ComponentBase
     private async Task HandleDateSelectedSingle(DateOnly date)
     {
         await this.OnDateSelect.InvokeAsync(date);
+        await this.OnDateSelectedSingle.InvokeAsync(date);  // CurrentDate更新用
     }
 
     private async Task HandleDateDoubleClicked(DateOnly date)

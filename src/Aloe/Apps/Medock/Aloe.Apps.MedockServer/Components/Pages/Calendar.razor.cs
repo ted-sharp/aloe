@@ -430,6 +430,15 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
+    private async Task HandleDateSelectedSingle(DateOnly date)
+    {
+        // JavaScript側で日付がクリックされた時にCurrentDateを更新
+        // ビュー切り替えはせず、選択状態のみ更新
+        this.State.CurrentDate = date;
+        await this.RefreshCalendarDataAsync();
+        this.StateHasChanged();
+    }
+
     private async Task HandleMonthClick((int Year, int Month) yearMonth)
     {
         this.State.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);

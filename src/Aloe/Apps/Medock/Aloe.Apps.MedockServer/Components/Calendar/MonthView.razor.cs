@@ -111,6 +111,12 @@ public partial class MonthView : ComponentBase
     [Parameter]
     public EventCallback<DateOnly> OnShowDayDetail { get; set; }
 
+    /// <summary>
+    /// 日付が単一選択された時のコールバック（JavaScript から呼ばれる）
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelectedSingle { get; set; }
+
     private async Task HandleDateSelected(DateOnly date)
     {
         await this.OnDateClick.InvokeAsync(date);
@@ -142,6 +148,11 @@ public partial class MonthView : ComponentBase
     private async Task HandleShowDayDetail(DateOnly date)
     {
         await this.OnShowDayDetail.InvokeAsync(date);
+    }
+
+    private async Task HandleDateSelectedSingle(DateOnly date)
+    {
+        await this.OnDateSelectedSingle.InvokeAsync(date);
     }
 }
 

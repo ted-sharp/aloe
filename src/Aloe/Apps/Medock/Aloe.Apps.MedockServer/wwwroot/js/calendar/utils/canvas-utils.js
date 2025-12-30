@@ -18,6 +18,7 @@ import { CONFIG } from '../config.js';
  * @param {string} params.fill - 塗りつぶし色
  * @param {string} [params.stroke] - 枠線色
  * @param {number} [params.strokeWidth] - 枠線幅
+ * @param {number[]} [params.strokeDashArray] - 破線パターン (例: [4, 4])
  * @param {number} [params.cornerRadius] - 角丸半径
  * @param {number} [params.opacity] - 不透明度 (0-1)
  */
@@ -26,12 +27,18 @@ export function drawRect(ctx, params) {
         x, y, width, height, fill,
         stroke = null,
         strokeWidth = 1,
+        strokeDashArray = null,
         cornerRadius = 0,
         opacity = 1
     } = params;
 
     ctx.save();
     ctx.globalAlpha = opacity;
+
+    // 破線パターンを設定
+    if (strokeDashArray) {
+        ctx.setLineDash(strokeDashArray);
+    }
 
     if (cornerRadius > 0) {
         // 角丸矩形

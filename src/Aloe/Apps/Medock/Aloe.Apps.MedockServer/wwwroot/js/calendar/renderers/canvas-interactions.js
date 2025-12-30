@@ -11,6 +11,59 @@ import { CONFIG } from '../config.js';
 import { drawRect } from '../utils/canvas-utils.js';
 
 /**
+ * 選択中のセルの枠線を描画（外部から呼び出し可能）
+ * @param {object} canvasManager - CanvasManagerインスタンス
+ * @param {object} state - アプリケーション状態
+ */
+export function drawSelectionBorder(canvasManager, state) {
+    // canvasManagerが利用可能かチェック
+    if (!canvasManager) {
+        return;
+    }
+
+    const interactionCtx = canvasManager.getContext('interaction');
+    if (!interactionCtx) {
+        // トランジション中はコンテキストが取得できないことがあるのでスキップ
+        return;
+    }
+
+    const renderState = getRenderState();
+    const currentDateStr = `${state.currentDate.getFullYear()}-${String(state.currentDate.getMonth() + 1).padStart(2, '0')}-${String(state.currentDate.getDate()).padStart(2, '0')}`;
+
+    if (state.currentView === 'year') {
+        // 年間ビュー: 選択中の月の日付グリッド部分の枠線
+        const currentMonth = state.currentDate.getMonth();
+        const monthInfo = renderState.months ? renderState.months[currentMonth] : null;
+
+        if (monthInfo && monthInfo.dayGridBounds) {
+            drawRect(interactionCtx, {
+                x: monthInfo.dayGridBounds.x,
+                y: monthInfo.dayGridBounds.y,
+                width: monthInfo.dayGridBounds.width,
+                height: monthInfo.dayGridBounds.height,
+                stroke: CONFIG.colors.today,
+                strokeWidth: 2,
+                cornerRadius: Math.min(2, monthInfo.dayGridBounds.width / 20, monthInfo.dayGridBounds.height / 20)
+            });
+        }
+    } else {
+        // 月間・週間ビュー: 選択中の日の枠線
+        const cell = renderState.getCell(currentDateStr);
+
+        if (cell) {
+            drawRect(interactionCtx, {
+                x: cell.x,
+                y: cell.y,
+                width: cell.width,
+                height: cell.height,
+                stroke: CONFIG.colors.today,
+                strokeWidth: 2
+            });
+        }
+    }
+}
+
+/**
  * インタラクションハンドラーを設定
  * @param {object} canvasManager - CanvasManagerインスタンス
  * @param {object} state - アプリケーション状態
@@ -42,15 +95,61 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
         const interactionCtx = canvasManager.getContext('interaction');
         canvasManager.clearLayer('interaction');
 
-        drawRect(interactionCtx, {
-            x: cell.x,
-            y: cell.y,
-            width: cell.width,
-            height: cell.height,
-            stroke: CONFIG.colors.today,
-            strokeWidth: 2,
-            fill: 'transparent'
-        });
+        // 選択中のセルの枠線を再描画
+        drawSelectedBorder(interactionCtx);
+
+        // ホバー中のセルが選択中でない場合のみホバーハイライトを表示
+        const currentDateStr = `${state.currentDate.getFullYear()}-${String(state.currentDate.getMonth() + 1).padStart(2, '0')}-${String(state.currentDate.getDate()).padStart(2, '0')}`;
+        if (cell.dateStr !== currentDateStr) {
+            drawRect(interactionCtx, {
+                x: cell.x,
+                y: cell.y,
+                width: cell.width,
+                height: cell.height,
+                stroke: CONFIG.colors.today,
+                strokeWidth: 1,
+                strokeDashArray: [4, 4],
+                fill: 'transparent'
+            });
+        }
+    }
+
+    /**
+     * 選択中のセルの枠線を描画（内部関数）
+     */
+    function drawSelectedBorder(ctx) {
+        const renderState = getRenderState();
+        const currentDateStr = `${state.currentDate.getFullYear()}-${String(state.currentDate.getMonth() + 1).padStart(2, '0')}-${String(state.currentDate.getDate()).padStart(2, '0')}`;
+
+        if (state.currentView === 'year') {
+            // 年間ビュー: 選択中の月の日付グリッド部分の枠線
+            const currentMonth = state.currentDate.getMonth();
+            const monthInfo = renderState.months ? renderState.months[currentMonth] : null;
+            if (monthInfo && monthInfo.dayGridBounds) {
+                drawRect(ctx, {
+                    x: monthInfo.dayGridBounds.x,
+                    y: monthInfo.dayGridBounds.y,
+                    width: monthInfo.dayGridBounds.width,
+                    height: monthInfo.dayGridBounds.height,
+                    stroke: CONFIG.colors.today,
+                    strokeWidth: 2,
+                    cornerRadius: Math.min(2, monthInfo.dayGridBounds.width / 20, monthInfo.dayGridBounds.height / 20)
+                });
+            }
+        } else {
+            // 月間・週間ビュー: 選択中の日の枠線
+            const cell = renderState.getCell(currentDateStr);
+            if (cell) {
+                drawRect(ctx, {
+                    x: cell.x,
+                    y: cell.y,
+                    width: cell.width,
+                    height: cell.height,
+                    stroke: CONFIG.colors.today,
+                    strokeWidth: 2
+                });
+            }
+        }
     }
 
     /**
@@ -82,7 +181,10 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             // 何もない場所
             if (hoveredCell) {
                 hoveredCell = null;
+                const interactionCtx = canvasManager.getContext('interaction');
                 canvasManager.clearLayer('interaction');
+                // 選択中の枠線を再描画
+                drawSelectedBorder(interactionCtx);
                 interactionCanvas.style.cursor = 'default';
             }
         }
@@ -94,7 +196,10 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
     interactionCanvas.addEventListener('mouseleave', () => {
         if (hoveredCell) {
             hoveredCell = null;
+            const interactionCtx = canvasManager.getContext('interaction');
             canvasManager.clearLayer('interaction');
+            // 選択中の枠線を再描画
+            drawSelectedBorder(interactionCtx);
             interactionCanvas.style.cursor = 'default';
         }
     });
@@ -181,7 +286,7 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             // クリック時に日付を選択（共有要素トランジションは currentDate から自動計算）
             // 位置情報の保存は不要
 
-            // 年間カレンダーの場合は日付選択と範囲選択をスキップし、ダブルクリックのみ処理
+            // 年間カレンダーの場合
             if (isYearView) {
                 if (isDoubleClick) {
                     console.log('MedockCalendar: Double click detected', { dateStr, hasDotNetRef: !!state.dotNetRef });
@@ -191,11 +296,14 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
                         state.dotNetRef.invokeMethodAsync('ShowDayDetail', dateStr);
                     }
                 } else {
-                    // ダブルクリック判定用に時刻と日付を記録
+                    // ワンクリックで日付を選択（月の枠線を更新）
+                    const clickedDate = parseDate(dateStr);
                     setState({
                         lastClickTime: now,
-                        lastClickDate: dateStr
+                        lastClickDate: dateStr,
+                        currentDate: clickedDate
                     });
+                    render();
                 }
                 return;
             }
@@ -225,10 +333,12 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             } else if (state.confirmedDateRange &&
                 isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end)) {
                 // 範囲選択内の日付をクリックした場合は範囲選択を解除し、その日付を選択
+                const clickedDate = parseDate(dateStr);
                 setState({
                     lastClickTime: now,
                     lastClickDate: dateStr,
                     selectedDate: dateStr,
+                    currentDate: clickedDate,
                     selectedDateRange: null,
                     confirmedDateRange: null
                 });
@@ -237,30 +347,20 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
                 }
                 render();
             } else {
-                // 同じ日付をクリックした場合は選択解除
-                if (state.selectedDate === dateStr) {
-                    setState({
-                        lastClickTime: now,
-                        lastClickDate: dateStr,
-                        selectedDate: null,
-                        selectedDateRange: null,
-                        confirmedDateRange: null
-                    });
-                    if (state.dotNetRef) {
-                        state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', null);
-                    }
-                } else {
-                    setState({
-                        lastClickTime: now,
-                        lastClickDate: dateStr,
-                        selectedDate: dateStr,
-                        selectedDateRange: null,
-                        confirmedDateRange: null
-                    });
-                    if (state.dotNetRef) {
-                        state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
-                    }
+                // 日付をクリックして選択
+                const clickedDate = parseDate(dateStr);
+                setState({
+                    lastClickTime: now,
+                    lastClickDate: dateStr,
+                    selectedDate: dateStr,
+                    currentDate: clickedDate,
+                    selectedDateRange: null,
+                    confirmedDateRange: null
+                });
+                if (state.dotNetRef) {
+                    state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
                 }
+                render();
             }
         } else if (hitResult.type === 'month') {
             // 月ヘッダーがクリックされた（年間ビュー用）

@@ -83,15 +83,16 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
             continue;
         }
 
+        const { dayGridTop, dayGridHeight, cellWidth, cellHeight, rows, startDayOfWeek, daysInMonth } = monthInfo;
+
         // 月情報をRenderStateに追加（階層的Hit Test用）
         renderState.addMonth({
             index: month,
             bounds: { x, y, width: w, height: h },
+            dayGridBounds: { x, y: dayGridTop, width: w, height: dayGridHeight },
             monthHeaderBounds: monthInfo.monthHeaderBounds,
             onMonthHeaderClick: monthInfo.onMonthHeaderClick
         });
-
-        const { dayGridTop, dayGridHeight, cellWidth, cellHeight, rows, startDayOfWeek, daysInMonth } = monthInfo;
 
         // 営業時間情報を取得
         const businessHours = state.options?.businessHours;

@@ -124,6 +124,12 @@ public partial class WeekScheduler : ComponentBase
     [Parameter]
     public EventCallback<DateOnly> OnShowDayDetail { get; set; }
 
+    /// <summary>
+    /// 日付が単一選択された時のコールバック（JavaScript から呼ばれる）
+    /// </summary>
+    [Parameter]
+    public EventCallback<DateOnly> OnDateSelectedSingle { get; set; }
+
     private async Task SetWeekDays(int days)
     {
         this.WeekDays = days;
@@ -164,5 +170,10 @@ public partial class WeekScheduler : ComponentBase
     private async Task HandleShowDayDetail(DateOnly date)
     {
         await this.OnShowDayDetail.InvokeAsync(date);
+    }
+
+    private async Task HandleDateSelectedSingle(DateOnly date)
+    {
+        await this.OnDateSelectedSingle.InvokeAsync(date);
     }
 }

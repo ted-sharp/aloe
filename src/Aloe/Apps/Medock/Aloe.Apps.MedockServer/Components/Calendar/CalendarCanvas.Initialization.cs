@@ -85,7 +85,8 @@ public partial class CalendarCanvas
             this.ContainerId,
             data,
             options,
-            this._dotNetRef);
+            this._dotNetRef,
+            this.CurrentDate.ToString("yyyy-MM-dd"));  // Blazor側の日付を渡す
         jsInitSw.Stop();
         Console.WriteLine($"[Performance] JS init: {jsInitSw.ElapsedMilliseconds}ms");
 

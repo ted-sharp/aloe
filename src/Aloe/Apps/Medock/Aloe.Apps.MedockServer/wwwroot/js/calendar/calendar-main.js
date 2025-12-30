@@ -15,7 +15,7 @@ import { renderCanvasMonthView } from './renderers/canvas-month-view.js';
 import { renderCanvasYearView } from './renderers/canvas-year-view.js';
 import { renderCanvasWeekView } from './renderers/canvas-week-view.js';
 import { renderCanvasDayDetail } from './renderers/canvas-day-detail.js';
-import { setupCanvasInteractions } from './renderers/canvas-interactions.js';
+import { setupCanvasInteractions, drawSelectionBorder } from './renderers/canvas-interactions.js';
 import { getRenderState } from './renderers/canvas-render-state.js';
 import { startConnection, stopConnection } from './realtime/signalr-client.js';
 
@@ -28,28 +28,30 @@ const dayDetailPopupStages = new Map();
  * @param {object} data - Initial data { appointments, mainStats, holidays }
  * @param {object} options - Configuration options
  * @param {object} dotNetRef - .NET object reference for callbacks
+ * @param {string} currentDateStr - Initial date string 'YYYY-MM-DD' (from Blazor)
  */
-function init(containerId, data, options, dotNetRef) {
+function init(containerId, data, options, dotNetRef, currentDateStr) {
     const state = getState();
-    
+
     // dotNetRefは常に最新のものを保持（複数のCalendarCanvasインスタンスが存在する場合に対応）
-    console.log('MedockCalendar: init called', { 
-        containerId, 
+    console.log('MedockCalendar: init called', {
+        containerId,
         hasDotNetRef: !!dotNetRef,
         hasExistingCanvasManager: !!state.canvasManager,
-        existingContainerId: state.containerId
+        existingContainerId: state.containerId,
+        currentDateStr
     });
-    
-    // 初期日付を今日に設定
-    const today = new Date();
-    const todayStr = dateToString(today);
+
+    // Blazor側から渡された日付を使用（渡されなければ今日）
+    const initialDate = currentDateStr ? parseDate(currentDateStr) : new Date();
+    const initialDateStr = currentDateStr || dateToString(new Date());
 
     setState({
         containerId,
         dotNetRef,  // 常に最新のdotNetRefを設定
         options: { ...state.options, ...options },
-        currentDate: today,
-        selectedDate: todayStr  // 今日を選択状態にする
+        currentDate: initialDate,
+        selectedDate: initialDateStr
     });
     
     // 既に初期化されている場合は、データとビューの更新のみ
@@ -290,6 +292,13 @@ function render() {
         default:
             console.error('Unknown view type:', state.currentView);
     }
+
+    // トランジション完了後に選択中の枠線を描画
+    // fadeDuration + バッファで確実に完了後に描画
+    // 長めの待ち時間を設定してトランジションの完全終了を待つ
+    setTimeout(() => {
+        drawSelectionBorder(state.canvasManager, state);
+    }, fadeDuration + 100);
 }
 
 /**
