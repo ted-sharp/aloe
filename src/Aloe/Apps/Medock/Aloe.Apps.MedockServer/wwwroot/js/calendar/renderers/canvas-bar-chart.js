@@ -532,7 +532,14 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     const dayOfWeek = new Date(dateStr).getDay();
     let textColor;
     if (isDateGrayed) {
-        textColor = '#9ca3af';
+        // グレーアウト時でも土日を区別
+        if (isHoliday || dayOfWeek === 0) {
+            textColor = '#d1a3a3';  // 赤みがかったグレー（日曜日）
+        } else if (dayOfWeek === 6) {
+            textColor = '#a3b3d1';  // 青みがかったグレー（土曜日）
+        } else {
+            textColor = '#9ca3af';  // 通常のグレー（平日）
+        }
     } else if (isHoliday || dayOfWeek === 0) {
         textColor = CONFIG.colors.weekend.sun;
     } else if (dayOfWeek === 6) {
