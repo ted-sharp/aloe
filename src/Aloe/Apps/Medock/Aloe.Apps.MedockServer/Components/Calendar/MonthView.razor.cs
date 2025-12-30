@@ -26,13 +26,7 @@ public partial class MonthView : ComponentBase
     public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
-    /// Equipmentリソース統計データ
-    /// </summary>
-    [Parameter]
-    public Dictionary<string, List<AppointmentStats>>? EquipmentStats { get; set; }
-
-    /// <summary>
-    /// Equipmentリソース統計データ最適化版（FromSql + array_agg）
+    /// Equipmentリソース統計データ（FromSql + array_agg 最適化版）
     /// </summary>
     [Parameter]
     public Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized { get; set; }

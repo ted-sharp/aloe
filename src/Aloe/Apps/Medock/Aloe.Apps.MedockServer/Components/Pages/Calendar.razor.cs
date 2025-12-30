@@ -133,7 +133,6 @@ public partial class Calendar : ComponentBase
     private Dictionary<string, List<AppointmentStats>> MainStats => this.State.MainStats;
     private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this.State.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this.State.MainStatsGrayedOut;
-    private Dictionary<string, List<AppointmentStats>> EquipmentStats => this.State.EquipmentStats;
     private Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized => this.State.EquipmentStatsOptimized;
     private List<AppointmentDto> Appointments => this.State.Appointments;
     private Dictionary<string, string> Holidays => this.State.Holidays;
@@ -641,13 +640,6 @@ public partial class Calendar : ComponentBase
         if (!this.DayDetailDate.HasValue) return null;
         var dateStr = this.DayDetailDate.Value.ToString("yyyy-MM-dd");
         return this.MainStats.TryGetValue(dateStr, out var stats) ? stats : null;
-    }
-
-    private List<AppointmentStats>? GetDayDetailEquipmentStats()
-    {
-        if (!this.DayDetailDate.HasValue) return null;
-        var dateStr = this.DayDetailDate.Value.ToString("yyyy-MM-dd");
-        return this.EquipmentStats.TryGetValue(dateStr, out var stats) ? stats : null;
     }
 
     private async Task HandleDayDetailGoToWeekView(DateOnly date)

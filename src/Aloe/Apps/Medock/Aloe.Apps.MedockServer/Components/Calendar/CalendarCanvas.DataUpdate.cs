@@ -18,28 +18,13 @@ public partial class CalendarCanvas
         {
             var buildSw = Stopwatch.StartNew();
 
-            // 【最適化版】EquipmentStatsOptimized がある場合はそれを使用
-            CalendarDataDto calendarData;
-            if (this.EquipmentStatsOptimized != null && this.EquipmentStatsOptimized.Count > 0)
-            {
-                calendarData = await this.CalendarDataService.BuildCalendarDataFromOptimizedAsync(
-                    this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-                    this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-                    this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-                    this.Holidays ?? new Dictionary<string, string>(),
-                    this.FilterTimeSlots,
-                    this.EquipmentStatsOptimized);
-            }
-            else
-            {
-                calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
-                    this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-                    this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-                    this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-                    this.Holidays ?? new Dictionary<string, string>(),
-                    this.FilterTimeSlots,
-                    this.EquipmentStats);
-            }
+            var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+                this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+                this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+                this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+                this.Holidays ?? new Dictionary<string, string>(),
+                this.FilterTimeSlots,
+                this.EquipmentStatsOptimized);
 
             buildSw.Stop();
             Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");

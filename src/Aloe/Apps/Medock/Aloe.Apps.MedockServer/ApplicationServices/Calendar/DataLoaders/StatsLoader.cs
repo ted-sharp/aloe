@@ -166,8 +166,6 @@ public class StatsLoader : IStatsLoader
             // フィルターが有効でない場合、またはEquipmentリソースが選択されていない場合は空を設定
             if (state.CurrentFilter == null || !state.CurrentFilter.SelectedResourceIds.Any())
             {
-                state.EquipmentStats.Clear();
-                state.OriginalEquipmentStats.Clear();
                 state.EquipmentStatsOptimized = null;
                 var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
                 _logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: {Message}", msg);
@@ -195,34 +193,14 @@ public class StatsLoader : IStatsLoader
             _logger.LogInformation("LoadEquipmentStatsAsync query (optimized): {ElapsedMs}ms, Dates={DateCount}, TotalResources={TotalResources}",
                 querySw.ElapsedMilliseconds, equipmentStatsOptimized.Count, totalResources);
 
-            // 最適化版データを状態に保存（CalendarCanvasで使用）
+            // 最適化版データを状態に保存
             _logger.LogDebug("Setting state.EquipmentStatsOptimized with {DateCount} dates", equipmentStatsOptimized.Count);
             state.EquipmentStatsOptimized = equipmentStatsOptimized;
-
-            // 従来互換性のため空リストを設定
-            _logger.LogDebug("Clearing EquipmentStats dictionaries");
-            state.EquipmentStats.Clear();
-            state.OriginalEquipmentStats.Clear();
-
-            var initSw = Stopwatch.StartNew();
-            _logger.LogDebug("Starting to populate EquipmentStats for dates {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}", startDate, endDate);
-            for (var date = startDate; date <= endDate; date = date.AddDays(1))
-            {
-                var dateStr = date.ToString("yyyy-MM-dd");
-                // 従来型は空リストを設定（データは EquipmentStatsOptimized に格納済み）
-                state.EquipmentStats[dateStr] = new List<AppointmentStats>();
-                state.OriginalEquipmentStats[dateStr] = new List<AppointmentStats>();
-            }
-            initSw.Stop();
-            _logger.LogDebug("Finished populating EquipmentStats");
-            _logger.LogInformation("LoadEquipmentStatsAsync initialization: {ElapsedMs}ms, Days={DayCount}",
-                initSw.ElapsedMilliseconds, endDate.DayNumber - startDate.DayNumber + 1);
         }
         catch (Exception ex)
         {
-            // エラー時は空のEquipmentStatsを設定
-            state.EquipmentStats.Clear();
-            state.OriginalEquipmentStats.Clear();
+            // エラー時は null を設定
+            state.EquipmentStatsOptimized = null;
             _logger.LogError(ex, "Error in LoadEquipmentStatsAsync: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, currentDate);
         }

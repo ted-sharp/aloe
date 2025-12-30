@@ -46,13 +46,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public Dictionary<string, bool>? MainStatsGrayedOut { get; set; }
 
     /// <summary>
-    /// Equipmentリソース統計データ（日付ごと）
-    /// </summary>
-    [Parameter]
-    public Dictionary<string, List<AppointmentStats>>? EquipmentStats { get; set; }
-
-    /// <summary>
-    /// Equipmentリソース統計データ最適化版（FromSql + array_agg、日付ごと）
+    /// Equipmentリソース統計データ（FromSql + array_agg 最適化版、日付ごと）
     /// </summary>
     [Parameter]
     public Dictionary<string, List<EquipmentResourceStatsDto>>? EquipmentStatsOptimized { get; set; }
