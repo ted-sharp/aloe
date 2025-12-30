@@ -120,7 +120,12 @@ builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
 // Add Calendar Services
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarState>();
 builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarFilterService>();
-builder.Services.AddScoped<Aloe.Apps.MedockServer.Components.Pages.CalendarDataService>();
+
+// Add Calendar Application Services (Loaders + Facade)
+builder.Services.AddScoped<Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.IStatsLoader, Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.StatsLoader>();
+builder.Services.AddScoped<Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.IAppointmentLoader, Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.AppointmentLoader>();
+builder.Services.AddScoped<Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.IMetadataLoader, Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders.MetadataLoader>();
+builder.Services.AddScoped<Aloe.Apps.MedockServer.ApplicationServices.Calendar.CalendarApplicationService>();
 
 // Add SignalR
 builder.Services.AddSignalR();

@@ -4,6 +4,7 @@ using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Layout;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Aloe.Apps.MedockServer.Components.Calendar;
+using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.Extensions.Logging;
@@ -35,7 +36,7 @@ public partial class Calendar : ComponentBase
     private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
-    private CalendarDataService DataService { get; set; } = default!;
+    private CalendarApplicationService DataService { get; set; } = default!;
 
     // 状態管理（Scoped Service として DI 注入）
     [Inject]

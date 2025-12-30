@@ -1,316 +1,33 @@
-using Aloe.Apps.MedockLib.Services;
-using Aloe.Apps.MedockLib.Services.Dtos;
-using Aloe.Apps.MedockLib.Repositories;
-using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Data;
-using Aloe.Apps.MedockServer.Components.Calendar;
-using Aloe.Apps.MedockServer.Components.FAB;
+using Aloe.Apps.MedockLib.Data.Entities;
+using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockServer.Components.Pages;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
-namespace Aloe.Apps.MedockServer.Components.Pages;
+namespace Aloe.Apps.MedockServer.ApplicationServices.Calendar.DataLoaders;
 
 /// <summary>
-/// カレンダーページのデータロード処理サービス
+/// 統計データ（MainStats, EquipmentStats）のロード処理を担当するサービス
 /// </summary>
-public class CalendarDataService
+public class StatsLoader : IStatsLoader
 {
-    private readonly IAppointmentService _appointmentService;
-    private readonly IFacilityService _facilityService;
     private readonly IAppointmentStatsRepository _appointmentStatsRepository;
-    private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
-    private readonly ILogger<CalendarDataService> _logger;
+    private readonly ILogger<StatsLoader> _logger;
 
-    public CalendarDataService(
-        IAppointmentService appointmentService,
-        IFacilityService facilityService,
+    public StatsLoader(
         IAppointmentStatsRepository appointmentStatsRepository,
-        AuthenticationStateProvider authStateProvider,
         IDbContextFactory<MedockDbContext> contextFactory,
-        ILogger<CalendarDataService> logger)
+        ILogger<StatsLoader> logger)
     {
-        this._appointmentService = appointmentService;
-        this._facilityService = facilityService;
         this._appointmentStatsRepository = appointmentStatsRepository;
-        this._authStateProvider = authStateProvider;
         this._contextFactory = contextFactory;
         this._logger = logger;
     }
 
-    /// <summary>
-    /// 営業時間をロードして状態に反映します。
-    /// </summary>
-    public async Task LoadBusinessHoursAsync(CalendarState state)
-    {
-        try
-        {
-            if (state.CurrentFacilityId.HasValue)
-            {
-                var result = await this._facilityService.GetBusinessHoursAsync(
-                    state.CurrentFacilityId.Value,
-                    state.CurrentDate);
-
-                if (result.IsSuccess && result.Value != null)
-                {
-                    state.BusinessHours = result.Value;
-                    state.StartHour = state.BusinessHours.StartHour;
-                    state.EndHour = state.BusinessHours.EndHour;
-                }
-                else
-                {
-                    _logger.LogWarning("Failed to load business hours: {ErrorMessage}", result.ErrorMessage);
-                    state.BusinessHours = new BusinessHoursDto();
-                }
-            }
-            else
-            {
-                state.BusinessHours = new BusinessHoursDto();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading business hours for facility {FacilityId} on date {Date}",
-                state.CurrentFacilityId, state.CurrentDate);
-            state.BusinessHours = new BusinessHoursDto();
-        }
-    }
-
-    /// <summary>
-    /// 休日情報をロードして状態に反映します。
-    /// </summary>
-    public async Task LoadHolidaysAsync(
-        CalendarState state,
-        CalendarViewType viewType,
-        DateOnly currentDate,
-        int weekDays = 7)
-    {
-        try
-        {
-            // 表示範囲に基づいて祝日を取得
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            var result = await this._appointmentService.GetHolidaysAsync(startDate, endDate);
-
-            // 既存の祝日をクリアしてから新しいデータを設定
-            state.Holidays.Clear();
-
-            if (result.IsSuccess && result.Value != null)
-            {
-                state.Holidays = result.Value.ToDictionary(
-                    h => h.Date.ToString("yyyy-MM-dd"),
-                    h => h.Name
-                );
-            }
-            else
-            {
-                _logger.LogWarning("Failed to load holidays: {ErrorMessage}", result.ErrorMessage);
-                state.Holidays.Clear();
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading holidays for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}",
-                currentDate, currentDate.AddDays(weekDays));
-            state.Holidays.Clear();
-        }
-    }
-
-    /// <summary>
-    /// フィルター用のオプション（フロア、リソースグループ、プラン、オプション）をロードして状態に反映します。
-    /// </summary>
-    public async Task LoadFilterOptionsAsync(CalendarState state)
-    {
-        try
-        {
-            if (!state.CurrentFacilityId.HasValue)
-            {
-                return;
-            }
-
-            using var context = this._contextFactory.CreateDbContext();
-            var facilityId = state.CurrentFacilityId.Value;
-
-            // フロアをロード
-            var floors = await context.Floors
-                .AsNoTracking()
-                .Where(f => f.FacilityId == facilityId && !f.IsDeleted)
-                .OrderBy(f => f.FloorSeq)
-                .ThenBy(f => f.FloorCode)
-                .Select(f => new SearchFilterPanel.FilterItem
-                {
-                    Id = f.FloorId,
-                    Name = f.FloorName
-                })
-                .ToListAsync();
-            state.AvailableFloors = floors;
-
-            // リソースグループをロード
-            var resourceGroups = await context.AppointmentResourceGroups
-                .AsNoTracking()
-                .Where(rg => rg.FacilityId == facilityId && !rg.IsDeleted)
-                .OrderBy(rg => rg.ResGroupSeq)
-                .ThenBy(rg => rg.ResGroupCode)
-                .Select(rg => new SearchFilterPanel.FilterItem
-                {
-                    Id = rg.ApptResGroupId,
-                    Name = rg.ResGroupName
-                })
-                .ToListAsync();
-            state.AvailableResourceGroups = resourceGroups;
-
-            // リソースをロード（Equipmentリソースのみ）
-            var resources = await context.AppointmentResources
-                .AsNoTracking()
-                .Where(r => r.Floor.FacilityId == facilityId &&
-                           !r.IsDeleted &&
-                           r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Equipment)
-                .OrderBy(r => r.ApptResSeq)
-                .ThenBy(r => r.ApptResName)
-                .Select(r => new SearchFilterPanel.FilterItem
-                {
-                    Id = r.ApptResId,
-                    Name = r.ApptResName
-                })
-                .ToListAsync();
-            state.AvailableResources = resources;
-
-            // プランをロード（有効なもののみ）
-            var today = DateOnly.FromDateTime(DateTime.Today);
-            var plans = await context.Plans
-                .AsNoTracking()
-                .Where(p => p.FacilityId == facilityId &&
-                           !p.IsDeleted &&
-                           p.IsActive &&
-                           p.ActiveFrom <= today &&
-                           p.ActiveTo >= today)
-                .OrderBy(p => p.PlanCode)
-                .Select(p => new SearchFilterPanel.FilterItem
-                {
-                    Id = p.PlanId,
-                    Name = p.PlanName
-                })
-                .ToListAsync();
-            state.AvailablePlans = plans;
-
-            // オプション（PlanOptionのOptionPlanIdに基づくプラン）をロード
-            var optionPlanIds = await context.PlanOptions
-                .AsNoTracking()
-                .Where(po => !po.IsDeleted)
-                .Select(po => po.OptionPlanId)
-                .Distinct()
-                .ToListAsync();
-
-            var options = await context.Plans
-                .AsNoTracking()
-                .Where(p => optionPlanIds.Contains(p.PlanId) &&
-                           p.FacilityId == facilityId &&
-                           !p.IsDeleted &&
-                           p.IsActive &&
-                           p.ActiveFrom <= today &&
-                           p.ActiveTo >= today)
-                .OrderBy(p => p.PlanCode)
-                .Select(p => new SearchFilterPanel.FilterItem
-                {
-                    Id = p.PlanId,
-                    Name = p.PlanName
-                })
-                .ToListAsync();
-            state.AvailableOptions = options;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading filter options");
-            state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
-            state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
-            state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
-            state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
-            state.AvailableOptions = new List<SearchFilterPanel.FilterItem>();
-        }
-    }
-
-    /// <summary>
-    /// 期間に応じた予約データを取得して状態に反映します。
-    /// </summary>
-    public async Task LoadAppointmentsAsync(
-        CalendarState state,
-        CalendarViewType viewType,
-        DateOnly currentDate,
-        int weekDays = 7)
-    {
-        var sw = Stopwatch.StartNew();
-        try
-        {
-            // 【パフォーマンス対策】Month/Year viewではアポイントメント詳細は不要（mainStats/equipmentStatsで統計表示）
-            // Week viewのみアポイントメント詳細が必要（個別予約ブロック表示）
-            if (viewType == CalendarViewType.Year || viewType == CalendarViewType.Month)
-            {
-                _logger.LogInformation("[TRACE] LoadAppointmentsAsync SKIPPED: ViewType={ViewType}, CurrentDate={Date} (appointments not used - mainStats/equipmentStats only)",
-                    viewType, currentDate);
-                state.Appointments = new List<AppointmentDto>();
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync: {ViewType} ビューのため Appointments をクリアしました", viewType);
-                return;
-            }
-
-            _logger.LogInformation("[TRACE] LoadAppointmentsAsync: {ViewType} ビューなのでデータをロードします", viewType);
-
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("[TRACE] LoadAppointmentsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
-                viewType, currentDate, startDate, endDate);
-
-            var querySw = Stopwatch.StartNew();
-            var result = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
-            querySw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Repository query: {ElapsedMs}ms",
-                querySw.ElapsedMilliseconds);
-
-            if (!result.IsSuccess || result.Value == null)
-            {
-                _logger.LogWarning("Failed to load appointments: {ErrorMessage}", result.ErrorMessage);
-                state.Appointments = [];
-                return;
-            }
-
-            var appointments = result.Value;
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Retrieved {Count} appointments from service",
-                appointments.Count);
-
-            // フロアフィルターを適用
-            var filterSw = Stopwatch.StartNew();
-            _logger.LogWarning("[TRACE] LoadAppointmentsAsync - CurrentFilter: {Filter}, SelectedFloorIds: {FloorCount}",
-                state.CurrentFilter != null ? "set" : "null",
-                state.CurrentFilter?.SelectedFloorIds.Count ?? 0);
-            if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
-            {
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用前: {Count}件", appointments.Count);
-                appointments = appointments
-                    .Where(a => a.FloorId.HasValue && state.CurrentFilter.SelectedFloorIds.Contains(a.FloorId.Value))
-                    .ToList();
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用後: {Count}件", appointments.Count);
-            }
-            filterSw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Floor filtering: {ElapsedMs}ms, Count after filter={Count}",
-                filterSw.ElapsedMilliseconds, appointments.Count);
-
-            state.Appointments = appointments;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading appointments");
-            state.Appointments = [];
-        }
-        finally
-        {
-            sw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
-        }
-    }
-
-    /// <summary>
-    /// MainリソースのStatsを日付ごとにグループ化して状態に反映します。
-    /// </summary>
+    /// <inheritdoc />
     public async Task LoadMainStatsAsync(
         CalendarState state,
         CalendarViewType viewType,
@@ -436,10 +153,7 @@ public class CalendarDataService
         }
     }
 
-    /// <summary>
-    /// EquipmentリソースのStatsを日付ごとにグループ化して状態に反映します。
-    /// フィルターで選択されたEquipmentリソースのみを取得します。
-    /// </summary>
+    /// <inheritdoc />
     public async Task LoadEquipmentStatsAsync(
         CalendarState state,
         CalendarViewType viewType,
