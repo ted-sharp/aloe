@@ -93,7 +93,13 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
-                <span class="font-bold text-base-content text-sm text-center min-w-[120px]">@GetCurrentPeriodTitle()</span>
+                <div class="flex flex-row items-center gap-0">
+                    <span class="font-bold text-base-content text-sm text-center w-[120px]">@GetCurrentPeriodTitle()</span>
+                    @if (State.CurrentView == CalendarViewType.Year || State.CurrentView == CalendarViewType.Month)
+                    {
+                        <span class="text-gray-500 hidden md:inline text-[0.5rem]">@State.GetCurrentDateFormatted()</span>
+                    }
+                </div>
                 <button class="btn btn-xs btn-ghost btn-square" @onclick="NextPeriod" title="次へ">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />

@@ -303,6 +303,9 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
                         lastClickDate: dateStr,
                         currentDate: clickedDate
                     });
+                    if (state.dotNetRef) {
+                        state.dotNetRef.invokeMethodAsync('OnDateSelectedSingle', dateStr);
+                    }
                     render();
                 }
                 return;

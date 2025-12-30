@@ -169,6 +169,15 @@ public class CalendarState
     }
 
     /// <summary>
+    /// 現在の日付をMM/dd(曜日)形式で取得
+    /// </summary>
+    public string GetCurrentDateFormatted()
+    {
+        var dayOfWeek = new[] { "日", "月", "火", "水", "木", "金", "土" }[(int)this.CurrentDate.DayOfWeek];
+        return this.CurrentDate.ToString($"MM/dd({dayOfWeek})");
+    }
+
+    /// <summary>
     /// ビュー切り替え
     /// </summary>
     public void SetView(CalendarViewType view)
