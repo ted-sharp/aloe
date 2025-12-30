@@ -17,8 +17,8 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
         IDbContextFactory<MedockDbContext> dbContextFactory,
         ILogger<CalendarResourceFilterService> logger)
     {
-        _dbContextFactory = dbContextFactory;
-        _logger = logger;
+        this._dbContextFactory = dbContextFactory;
+        this._logger = logger;
     }
 
     /// <inheritdoc />
@@ -32,7 +32,7 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
 
         try
         {
-            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             var floorIdList = floorIds.ToList();
             var resourceGroupIdList = resourceGroupIds.ToList();
@@ -116,7 +116,7 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting related resource IDs for calendar filtering");
+            this._logger.LogError(ex, "Error getting related resource IDs for calendar filtering");
         }
 
         return autoResourceIds.ToList();

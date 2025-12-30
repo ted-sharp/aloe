@@ -225,11 +225,11 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         // equipmentResourceIds が null または空の場合は空の辞書を返す
         if (equipmentResourceIds == null || !equipmentResourceIds.Any())
         {
-            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
+            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
             return new Dictionary<string, List<EquipmentResourceStatsDto>>();
         }
 
-        _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
+        this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
             startDate, endDate, equipmentResourceIds.Count);
 
         // PostgreSQL の array_agg で SQL側で配列化
@@ -272,7 +272,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
                 .ToListAsync();
 
-            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
+            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
 
             // 日付ごとにグループ化
             var groupedByDate = new Dictionary<string, List<EquipmentResourceStatsDto>>();
@@ -284,8 +284,8 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 }
                 groupedByDate[item.ApptDate].Add(new EquipmentResourceStatsDto
                 {
-                    ResourceId = item.ResourceId ?? string.Empty,
-                    ResourceName = item.ResourceName ?? string.Empty,
+                    ResourceId = item.ResourceId ?? String.Empty,
+                    ResourceName = item.ResourceName ?? String.Empty,
                     TotalCapacity = item.TotalCapacity,
                     TotalAvailable = item.TotalAvailable,
                     SlotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>(),
@@ -299,8 +299,8 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = _userContextService.GetTenantContext();
-            LogMessages.DiffDataRetrievalError(_logger, tenantId, facilityId, userId, ex);
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+            LogMessages.DiffDataRetrievalError(this._logger, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
     }
@@ -308,9 +308,9 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     // FromSql用の中間DTO
     private class EquipmentStatsWithDateDto
     {
-        public string ApptDate { get; set; } = string.Empty;
-        public string ResourceId { get; set; } = string.Empty;
-        public string ResourceName { get; set; } = string.Empty;
+        public string ApptDate { get; set; } = String.Empty;
+        public string ResourceId { get; set; } = String.Empty;
+        public string ResourceName { get; set; } = String.Empty;
         public int TotalCapacity { get; set; }
         public int TotalAvailable { get; set; }
         public int[]? SlotStartMinutes { get; set; }

@@ -76,12 +76,12 @@ public class UserContextService : IUserContextService
         // FacilityIdがない場合のフォールバック処理（ログインスキップ時にも対応）
         if (this.CurrentUser != null && !this.CurrentUser.FacilityId.HasValue && this.CurrentUser.UserId != Guid.Empty)
         {
-            _logger.LogInformation("FacilityId not found in claims, attempting fallback for UserId={UserId}", this.CurrentUser.UserId);
+            this._logger.LogInformation("FacilityId not found in claims, attempting fallback for UserId={UserId}", this.CurrentUser.UserId);
             var facilities = await this._authService.GetAccessibleFacilitiesAsync(this.CurrentUser.UserId);
             if (facilities.Any())
             {
                 var defaultFacility = facilities.First();
-                _logger.LogInformation("Fallback facility found: FacilityId={FacilityId}, FacilityName={FacilityName}",
+                this._logger.LogInformation("Fallback facility found: FacilityId={FacilityId}, FacilityName={FacilityName}",
                     defaultFacility.FacilityId, defaultFacility.FacilityName);
                 this.CurrentUser = this.CurrentUser with
                 {
@@ -93,12 +93,12 @@ public class UserContextService : IUserContextService
             }
             else
             {
-                _logger.LogWarning("No accessible facilities found for UserId={UserId}", this.CurrentUser.UserId);
+                this._logger.LogWarning("No accessible facilities found for UserId={UserId}", this.CurrentUser.UserId);
             }
         }
         else if (this.CurrentUser != null && this.CurrentUser.FacilityId.HasValue)
         {
-            _logger.LogInformation("FacilityId found in claims: FacilityId={FacilityId}", this.CurrentUser.FacilityId);
+            this._logger.LogInformation("FacilityId found in claims: FacilityId={FacilityId}", this.CurrentUser.FacilityId);
         }
     }
 

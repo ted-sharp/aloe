@@ -49,7 +49,7 @@ public class FacilityService : IFacilityService
             if (businessHours == null || businessHours.BusinessHoursData == null)
             {
                 // No business hours found, return default values - this is a normal condition, not an error
-                _logger.LogDebug("No business hours found for facility {FacilityId} on date {Date:yyyy-MM-dd}, using defaults",
+                this._logger.LogDebug("No business hours found for facility {FacilityId} on date {Date:yyyy-MM-dd}, using defaults",
                     facilityId, date);
                 return Result<BusinessHoursDto>.Success(GetDefaultBusinessHoursDto());
             }
@@ -66,8 +66,8 @@ public class FacilityService : IFacilityService
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId_ctx, userId) = _userContextService.GetTenantContext();
-            LogMessages.BusinessHoursRetrievalError(_logger, facilityId, targetDate ?? DateOnly.FromDateTime(DateTime.Today), tenantId, userId, ex);
+            var (tenantId, facilityId_ctx, userId) = this._userContextService.GetTenantContext();
+            LogMessages.BusinessHoursRetrievalError(this._logger, facilityId, targetDate ?? DateOnly.FromDateTime(DateTime.Today), tenantId, userId, ex);
             // Return default hours on error to prevent system failure
             return Result<BusinessHoursDto>.Success(GetDefaultBusinessHoursDto());
         }

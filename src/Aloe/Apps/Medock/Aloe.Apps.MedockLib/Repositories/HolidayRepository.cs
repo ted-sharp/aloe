@@ -42,8 +42,8 @@ public class HolidayRepository : IHolidayRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = _userContextService.GetTenantContext();
-            LogMessages.AppointmentsRetrievalError(_logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+            LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve holidays for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
     }

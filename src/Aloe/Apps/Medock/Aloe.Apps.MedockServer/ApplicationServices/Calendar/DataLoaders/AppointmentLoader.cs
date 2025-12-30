@@ -44,7 +44,7 @@ public class AppointmentLoader : IAppointmentLoader
                 }
                 else
                 {
-                    _logger.LogWarning("Failed to load business hours: {ErrorMessage}", result.ErrorMessage);
+                    this._logger.LogWarning("Failed to load business hours: {ErrorMessage}", result.ErrorMessage);
                     state.BusinessHours = new BusinessHoursDto();
                 }
             }
@@ -55,7 +55,7 @@ public class AppointmentLoader : IAppointmentLoader
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading business hours for facility {FacilityId} on date {Date}",
+            this._logger.LogError(ex, "Error loading business hours for facility {FacilityId} on date {Date}",
                 state.CurrentFacilityId, state.CurrentDate);
             state.BusinessHours = new BusinessHoursDto();
         }
@@ -75,64 +75,64 @@ public class AppointmentLoader : IAppointmentLoader
             // Week viewのみアポイントメント詳細が必要（個別予約ブロック表示）
             if (viewType == CalendarViewType.Year || viewType == CalendarViewType.Month)
             {
-                _logger.LogInformation("[TRACE] LoadAppointmentsAsync SKIPPED: ViewType={ViewType}, CurrentDate={Date} (appointments not used - mainStats/equipmentStats only)",
+                this._logger.LogInformation("[TRACE] LoadAppointmentsAsync SKIPPED: ViewType={ViewType}, CurrentDate={Date} (appointments not used - mainStats/equipmentStats only)",
                     viewType, currentDate);
                 state.Appointments = new List<AppointmentDto>();
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync: {ViewType} ビューのため Appointments をクリアしました", viewType);
+                this._logger.LogWarning("[TRACE] LoadAppointmentsAsync: {ViewType} ビューのため Appointments をクリアしました", viewType);
                 return;
             }
 
-            _logger.LogInformation("[TRACE] LoadAppointmentsAsync: {ViewType} ビューなのでデータをロードします", viewType);
+            this._logger.LogInformation("[TRACE] LoadAppointmentsAsync: {ViewType} ビューなのでデータをロードします", viewType);
 
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("[TRACE] LoadAppointmentsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+            this._logger.LogInformation("[TRACE] LoadAppointmentsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
             var result = await this._appointmentService.GetAppointmentsAsync(startDate, endDate);
             querySw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Repository query: {ElapsedMs}ms",
+            this._logger.LogInformation("[PERF] LoadAppointmentsAsync - Repository query: {ElapsedMs}ms",
                 querySw.ElapsedMilliseconds);
 
             if (!result.IsSuccess || result.Value == null)
             {
-                _logger.LogWarning("Failed to load appointments: {ErrorMessage}", result.ErrorMessage);
+                this._logger.LogWarning("Failed to load appointments: {ErrorMessage}", result.ErrorMessage);
                 state.Appointments = [];
                 return;
             }
 
             var appointments = result.Value;
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Retrieved {Count} appointments from service",
+            this._logger.LogInformation("[PERF] LoadAppointmentsAsync - Retrieved {Count} appointments from service",
                 appointments.Count);
 
             // フロアフィルターを適用
             var filterSw = Stopwatch.StartNew();
-            _logger.LogWarning("[TRACE] LoadAppointmentsAsync - CurrentFilter: {Filter}, SelectedFloorIds: {FloorCount}",
+            this._logger.LogWarning("[TRACE] LoadAppointmentsAsync - CurrentFilter: {Filter}, SelectedFloorIds: {FloorCount}",
                 state.CurrentFilter != null ? "set" : "null",
                 state.CurrentFilter?.SelectedFloorIds.Count ?? 0);
             if (state.CurrentFilter != null && state.CurrentFilter.SelectedFloorIds.Any())
             {
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用前: {Count}件", appointments.Count);
+                this._logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用前: {Count}件", appointments.Count);
                 appointments = appointments
                     .Where(a => a.FloorId.HasValue && state.CurrentFilter.SelectedFloorIds.Contains(a.FloorId.Value))
                     .ToList();
-                _logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用後: {Count}件", appointments.Count);
+                this._logger.LogWarning("[TRACE] LoadAppointmentsAsync - フロアフィルター適用後: {Count}件", appointments.Count);
             }
             filterSw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Floor filtering: {ElapsedMs}ms, Count after filter={Count}",
+            this._logger.LogInformation("[PERF] LoadAppointmentsAsync - Floor filtering: {ElapsedMs}ms, Count after filter={Count}",
                 filterSw.ElapsedMilliseconds, appointments.Count);
 
             state.Appointments = appointments;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading appointments");
+            this._logger.LogError(ex, "Error loading appointments");
             state.Appointments = [];
         }
         finally
         {
             sw.Stop();
-            _logger.LogInformation("[PERF] LoadAppointmentsAsync - Total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            this._logger.LogInformation("[PERF] LoadAppointmentsAsync - Total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 

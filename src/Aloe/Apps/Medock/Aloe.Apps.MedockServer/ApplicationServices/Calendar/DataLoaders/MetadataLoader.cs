@@ -52,13 +52,13 @@ public class MetadataLoader : IMetadataLoader
             }
             else
             {
-                _logger.LogWarning("Failed to load holidays: {ErrorMessage}", result.ErrorMessage);
+                this._logger.LogWarning("Failed to load holidays: {ErrorMessage}", result.ErrorMessage);
                 state.Holidays.Clear();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading holidays for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}",
+            this._logger.LogError(ex, "Error loading holidays for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd}",
                 currentDate, currentDate.AddDays(weekDays));
             state.Holidays.Clear();
         }
@@ -166,7 +166,7 @@ public class MetadataLoader : IMetadataLoader
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading filter options");
+            this._logger.LogError(ex, "Error loading filter options");
             state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResources = new List<SearchFilterPanel.FilterItem>();

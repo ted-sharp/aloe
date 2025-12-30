@@ -30,40 +30,40 @@ public partial class DayDetailPopup : ComponentBase
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // モーダルが開いた時にグラフを描画
-        if (IsOpen && !_wasOpen && SelectedDate.HasValue)
+        if (this.IsOpen && !this._wasOpen && this.SelectedDate.HasValue)
         {
-            _wasOpen = true;
-            await RenderChartAsync();
+            this._wasOpen = true;
+            await this.RenderChartAsync();
         }
-        else if (!IsOpen && _wasOpen)
+        else if (!this.IsOpen && this._wasOpen)
         {
-            _wasOpen = false;
-            _isChartRendered = false;
-            await DestroyChartAsync();
+            this._wasOpen = false;
+            this._isChartRendered = false;
+            await this.DestroyChartAsync();
         }
     }
 
     private async Task RenderChartAsync()
     {
-        if (!SelectedDate.HasValue || _isChartRendered)
+        if (!this.SelectedDate.HasValue || this._isChartRendered)
             return;
 
         try
         {
             // MedockCalendarが読み込まれるまで待機
-            var isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.renderDayDetailPopup !== 'undefined'");
+            var isReady = await this.JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.renderDayDetailPopup !== 'undefined'");
             if (!isReady)
             {
                 // フォールバック: 少し待機して再試行
                 await Task.Delay(100);
-                isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined'");
+                isReady = await this.JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined'");
             }
 
             if (isReady)
             {
-                var dateStr = SelectedDate.Value.ToString("yyyy-MM-dd");
-                await JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", ChartContainerId, dateStr);
-                _isChartRendered = true;
+                var dateStr = this.SelectedDate.Value.ToString("yyyy-MM-dd");
+                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", this.ChartContainerId, dateStr);
+                this._isChartRendered = true;
             }
         }
         catch (Exception ex)
@@ -76,10 +76,10 @@ public partial class DayDetailPopup : ComponentBase
     {
         try
         {
-            var isReady = await JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.destroyDayDetailPopup !== 'undefined'");
+            var isReady = await this.JSRuntime.InvokeAsync<bool>("eval", "typeof window.MedockCalendar !== 'undefined' && typeof window.MedockCalendar.destroyDayDetailPopup !== 'undefined'");
             if (isReady)
             {
-                await JSRuntime.InvokeVoidAsync("MedockCalendar.destroyDayDetailPopup", ChartContainerId);
+                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.destroyDayDetailPopup", this.ChartContainerId);
             }
         }
         catch
@@ -90,12 +90,12 @@ public partial class DayDetailPopup : ComponentBase
 
     private List<TimeSlotStats> GetSlotsFromStats()
     {
-        if (MainStats == null || !MainStats.Any())
+        if (this.MainStats == null || !this.MainStats.Any())
             return new List<TimeSlotStats>();
 
         var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
 
-        foreach (var stat in MainStats)
+        foreach (var stat in this.MainStats)
         {
             if (stat.AppointmentStatSlots != null)
             {
@@ -137,13 +137,13 @@ public partial class DayDetailPopup : ComponentBase
 
     private int GetTotalCount()
     {
-        var slots = GetSlotsFromStats();
+        var slots = this.GetSlotsFromStats();
         return slots.Sum(s => s.Count);
     }
 
     private double GetOverallVacancyRatio()
     {
-        var slots = GetSlotsFromStats();
+        var slots = this.GetSlotsFromStats();
         var totalCount = slots.Sum(s => s.Count);
         var totalCap = slots.Sum(s => s.Cap);
         if (totalCap == 0) return 0;
@@ -152,7 +152,7 @@ public partial class DayDetailPopup : ComponentBase
 
     private string GetSymbol()
     {
-        var vacancyRatio = GetOverallVacancyRatio();
+        var vacancyRatio = this.GetOverallVacancyRatio();
         return vacancyRatio switch
         {
             <= 0 => "×",
@@ -164,7 +164,7 @@ public partial class DayDetailPopup : ComponentBase
 
     private string GetSymbolColorClass()
     {
-        var vacancyRatio = GetOverallVacancyRatio();
+        var vacancyRatio = this.GetOverallVacancyRatio();
         return vacancyRatio switch
         {
             <= 0 => "text-red-500",
@@ -175,15 +175,15 @@ public partial class DayDetailPopup : ComponentBase
 
     private async Task HandleClose()
     {
-        await OnClose.InvokeAsync();
+        await this.OnClose.InvokeAsync();
     }
 
     private async Task HandleGoToWeekView()
     {
-        if (SelectedDate.HasValue)
+        if (this.SelectedDate.HasValue)
         {
-            await OnGoToWeekView.InvokeAsync(SelectedDate.Value);
+            await this.OnGoToWeekView.InvokeAsync(this.SelectedDate.Value);
         }
-        await HandleClose();
+        await this.HandleClose();
     }
 }

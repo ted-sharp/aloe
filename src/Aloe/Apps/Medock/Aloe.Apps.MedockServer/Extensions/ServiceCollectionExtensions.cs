@@ -163,7 +163,7 @@ public static class ServiceCollectionExtensions
 
         // 環境変数で上書き可能（例: Features__ShowSqlLogs=true）
         var envValue = Environment.GetEnvironmentVariable("Features__ShowSqlLogs");
-        if (!string.IsNullOrEmpty(envValue) && bool.TryParse(envValue, out var parsedValue))
+        if (!String.IsNullOrEmpty(envValue) && Boolean.TryParse(envValue, out var parsedValue))
         {
             showSqlLogs = parsedValue;
         }

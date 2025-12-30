@@ -46,7 +46,7 @@ public class AuthController : ControllerBase
 
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("Login failed for user code {UserCode}: {ErrorMessage}", request.UserCode, result.ErrorMessage);
+                this._logger.LogWarning("Login failed for user code {UserCode}: {ErrorMessage}", request.UserCode, result.ErrorMessage);
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
@@ -104,7 +104,7 @@ public class AuthController : ControllerBase
 
             await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
 
-            _logger.LogInformation("User logged in successfully: UserId={UserId}, UserCode={UserCode}", result.UserId, result.UserCode);
+            this._logger.LogInformation("User logged in successfully: UserId={UserId}, UserCode={UserCode}", result.UserId, result.UserCode);
 
             return this.Ok(new LoginResponse
             {
@@ -123,12 +123,12 @@ public class AuthController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid argument in Login: {Message}", ex.Message);
+            this._logger.LogWarning(ex, "Invalid argument in Login: {Message}", ex.Message);
             return this.BadRequest(new { message = "Invalid credentials provided" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during login");
+            this._logger.LogError(ex, "Error during login");
             return this.StatusCode(500, new { message = "An error occurred during login" });
         }
     }
@@ -146,7 +146,7 @@ public class AuthController : ControllerBase
 
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("Token refresh failed for user {UserId}: {ErrorMessage}", request.UserId, result.ErrorMessage);
+                this._logger.LogWarning("Token refresh failed for user {UserId}: {ErrorMessage}", request.UserId, result.ErrorMessage);
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
@@ -201,7 +201,7 @@ public class AuthController : ControllerBase
 
             await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
 
-            _logger.LogInformation("Token refreshed successfully for user {UserId}", request.UserId);
+            this._logger.LogInformation("Token refreshed successfully for user {UserId}", request.UserId);
 
             return this.Ok(new RefreshResponse
             {
@@ -210,12 +210,12 @@ public class AuthController : ControllerBase
         }
         catch (ArgumentException ex)
         {
-            _logger.LogWarning(ex, "Invalid argument in Refresh: {Message}", ex.Message);
+            this._logger.LogWarning(ex, "Invalid argument in Refresh: {Message}", ex.Message);
             return this.BadRequest(new { message = "Invalid user ID provided" });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during token refresh");
+            this._logger.LogError(ex, "Error during token refresh");
             return this.StatusCode(500, new { message = "An error occurred during token refresh" });
         }
     }
@@ -232,7 +232,7 @@ public class AuthController : ControllerBase
             var userIdClaim = this.User.FindFirst("sub")?.Value;
             if (String.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("Switch facility failed: invalid user in claims");
+                this._logger.LogWarning("Switch facility failed: invalid user in claims");
                 return this.Unauthorized(new { message = "Invalid user" });
             }
 
@@ -240,7 +240,7 @@ public class AuthController : ControllerBase
 
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("Facility switch failed for user {UserId} to facility {FacilityId}: {ErrorMessage}",
+                this._logger.LogWarning("Facility switch failed for user {UserId} to facility {FacilityId}: {ErrorMessage}",
                     userId, request.FacilityId, result.ErrorMessage);
                 return this.BadRequest(new { message = result.ErrorMessage });
             }
@@ -283,7 +283,7 @@ public class AuthController : ControllerBase
 
             await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
 
-            _logger.LogInformation("Facility switched successfully for user {UserId} to facility {FacilityId}",
+            this._logger.LogInformation("Facility switched successfully for user {UserId} to facility {FacilityId}",
                 userId, request.FacilityId);
 
             return this.Ok(new SwitchFacilityResponse
@@ -297,7 +297,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during facility switch");
+            this._logger.LogError(ex, "Error during facility switch");
             return this.StatusCode(500, new { message = "An error occurred during facility switch" });
         }
     }
@@ -314,13 +314,13 @@ public class AuthController : ControllerBase
             var userIdClaim = this.User.FindFirst("sub")?.Value;
             if (String.IsNullOrEmpty(userIdClaim) || !Guid.TryParse(userIdClaim, out var userId))
             {
-                _logger.LogWarning("Get accessible facilities failed: invalid user in claims");
+                this._logger.LogWarning("Get accessible facilities failed: invalid user in claims");
                 return this.Unauthorized(new { message = "Invalid user" });
             }
 
             var facilities = await this._authService.GetAccessibleFacilitiesAsync(userId);
 
-            _logger.LogInformation("Retrieved {FacilityCount} accessible facilities for user {UserId}",
+            this._logger.LogInformation("Retrieved {FacilityCount} accessible facilities for user {UserId}",
                 facilities.Count, userId);
 
             return this.Ok(new AccessibleFacilitiesResponse
@@ -337,7 +337,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving accessible facilities");
+            this._logger.LogError(ex, "Error retrieving accessible facilities");
             return this.StatusCode(500, new { message = "An error occurred while retrieving accessible facilities" });
         }
     }
@@ -357,17 +357,17 @@ public class AuthController : ControllerBase
             if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
             {
                 await this._authService.LogoutAsync(sessionId);
-                _logger.LogInformation("User logged out successfully: SessionId={SessionId}", sessionId);
+                this._logger.LogInformation("User logged out successfully: SessionId={SessionId}", sessionId);
             }
             else if (request != null)
             {
                 // リクエストボディからセッションIDを取得（フォールバック）
                 await this._authService.LogoutAsync(request.SessionId);
-                _logger.LogInformation("User logged out successfully: SessionId={SessionId}", request.SessionId);
+                this._logger.LogInformation("User logged out successfully: SessionId={SessionId}", request.SessionId);
             }
             else
             {
-                _logger.LogWarning("Logout attempted without session ID");
+                this._logger.LogWarning("Logout attempted without session ID");
             }
 
             // クッキーを削除
@@ -383,7 +383,7 @@ public class AuthController : ControllerBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error during logout");
+            this._logger.LogError(ex, "Error during logout");
             return this.StatusCode(500, new { message = "An error occurred during logout" });
         }
     }

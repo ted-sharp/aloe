@@ -48,7 +48,7 @@ static void ConfigureLogging(WebApplicationBuilder builder)
     // SQL ログのフィルタリング（ShowSqlLogs が false の場合）
     var showSqlLogs = builder.Configuration.GetValue<bool>("Features:ShowSqlLogs", false);
     var envValue = Environment.GetEnvironmentVariable("Features__ShowSqlLogs");
-    if (!string.IsNullOrEmpty(envValue) && bool.TryParse(envValue, out var parsedValue))
+    if (!String.IsNullOrEmpty(envValue) && Boolean.TryParse(envValue, out var parsedValue))
     {
         showSqlLogs = parsedValue;
     }

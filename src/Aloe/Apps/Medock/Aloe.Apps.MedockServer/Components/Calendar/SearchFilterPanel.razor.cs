@@ -127,7 +127,7 @@ public partial class SearchFilterPanel : ComponentBase
     /// </summary>
     private async Task<List<Guid>> GetAutoResourceIdsAsync()
     {
-        return await CalendarResourceFilterService.GetRelatedResourceIdsAsync(
+        return await this.CalendarResourceFilterService.GetRelatedResourceIdsAsync(
             this.SelectedFloorIds,
             this.SelectedResourceGroupIds,
             this.SelectedPlanIds,

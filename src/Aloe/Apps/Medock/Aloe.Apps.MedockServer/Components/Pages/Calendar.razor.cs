@@ -154,7 +154,7 @@ public partial class Calendar : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         var sw = Stopwatch.StartNew();
-        Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
+        this.Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
         this.State.IsLoading = true;
         this.StateHasChanged();
         try
@@ -181,18 +181,18 @@ public partial class Calendar : ComponentBase
                 }
                 else
                 {
-                    Logger.LogWarning("Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
+                    this.Logger.LogWarning("Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
                 }
             }
             else
             {
-                Logger.LogWarning("Calendar.OnInitializedAsync: User is not authenticated");
+                this.Logger.LogWarning("Calendar.OnInitializedAsync: User is not authenticated");
             }
 
             var businessHoursSw = Stopwatch.StartNew();
             await this.DataService.LoadBusinessHoursAsync(this.State);
             businessHoursSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadBusinessHours: {ElapsedMs}ms", businessHoursSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadBusinessHours: {ElapsedMs}ms", businessHoursSw.ElapsedMilliseconds);
 
             var mainStatsSw = Stopwatch.StartNew();
             await this.DataService.LoadMainStatsAsync(
@@ -201,7 +201,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentDate,
                 this.State.WeekDays);
             mainStatsSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStats: {ElapsedMs}ms", mainStatsSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStats: {ElapsedMs}ms", mainStatsSw.ElapsedMilliseconds);
 
             var equipmentStatsSw = Stopwatch.StartNew();
             await this.DataService.LoadEquipmentStatsAsync(
@@ -210,7 +210,7 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentDate,
                 this.State.WeekDays);
             equipmentStatsSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadEquipmentStats: {ElapsedMs}ms", equipmentStatsSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadEquipmentStats: {ElapsedMs}ms", equipmentStatsSw.ElapsedMilliseconds);
 
             var appointmentsSw = Stopwatch.StartNew();
             await this.DataService.LoadAppointmentsAsync(
@@ -219,12 +219,12 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentDate,
                 this.State.WeekDays);
             appointmentsSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadAppointments: {ElapsedMs}ms", appointmentsSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadAppointments: {ElapsedMs}ms", appointmentsSw.ElapsedMilliseconds);
 
             var filterOptionsSw = Stopwatch.StartNew();
             await this.DataService.LoadFilterOptionsAsync(this.State);
             filterOptionsSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadFilterOptions: {ElapsedMs}ms", filterOptionsSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadFilterOptions: {ElapsedMs}ms", filterOptionsSw.ElapsedMilliseconds);
 
             var holidaysSw = Stopwatch.StartNew();
             await this.DataService.LoadHolidaysAsync(
@@ -233,13 +233,13 @@ public partial class Calendar : ComponentBase
                 this.State.CurrentDate,
                 this.State.WeekDays);
             holidaysSw.Stop();
-            Logger.LogInformation("[TRACE] OnInitializedAsync - LoadHolidays: {ElapsedMs}ms", holidaysSw.ElapsedMilliseconds);
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadHolidays: {ElapsedMs}ms", holidaysSw.ElapsedMilliseconds);
         }
         finally
         {
             this.State.IsLoading = false;
             sw.Stop();
-            Logger.LogInformation("Calendar.OnInitializedAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            this.Logger.LogInformation("Calendar.OnInitializedAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
             this.StateHasChanged();
         }
     }
@@ -331,7 +331,7 @@ public partial class Calendar : ComponentBase
     private async Task SetView(CalendarViewType view)
     {
         var sw = Stopwatch.StartNew();
-        Logger.LogInformation("Calendar.SetView start: CurrentView={CurrentView}, TargetView={TargetView}", this.State.CurrentView, view);
+        this.Logger.LogInformation("Calendar.SetView start: CurrentView={CurrentView}, TargetView={TargetView}", this.State.CurrentView, view);
 
         // 先にターゲットビュー用のデータをロード（CurrentView はまだ変更しない）
         await this.DataService.LoadMainStatsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
@@ -347,7 +347,7 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
 
         sw.Stop();
-        Logger.LogInformation("Calendar.SetView total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        this.Logger.LogInformation("Calendar.SetView total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 
     private string GetCurrentPeriodTitle() => this.State.GetCurrentPeriodTitle();
@@ -470,7 +470,7 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleDateDoubleClick(DateOnly date)
     {
-        Logger.LogInformation("[TRACE] HandleDateDoubleClick: 日付={Date} へ Week 切り替え", date);
+        this.Logger.LogInformation("[TRACE] HandleDateDoubleClick: 日付={Date} へ Week 切り替え", date);
         this.State.CurrentDate = date;
         this.State.CurrentView = CalendarViewType.Week;
         this.State.WeekDays = 1;
@@ -478,7 +478,7 @@ public partial class Calendar : ComponentBase
         this.RegisterLayoutActions();
         await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
-        Logger.LogInformation("[TRACE] HandleDateDoubleClick: Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
+        this.Logger.LogInformation("[TRACE] HandleDateDoubleClick: Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
     }
 
     private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
@@ -605,7 +605,7 @@ public partial class Calendar : ComponentBase
 
                 if (!result.IsSuccess)
                 {
-                    Logger.LogWarning("Failed to move appointment {ApptId}: {ErrorMessage}", moveInfo.ApptId, result.ErrorMessage);
+                    this.Logger.LogWarning("Failed to move appointment {ApptId}: {ErrorMessage}", moveInfo.ApptId, result.ErrorMessage);
                     // TODO: ユーザーにエラー表示（ToastやSnackbar等）
                     return;
                 }
@@ -617,7 +617,7 @@ public partial class Calendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error moving appointment");
+            this.Logger.LogError(ex, "Error moving appointment");
         }
     }
 
@@ -644,7 +644,7 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleDayDetailGoToWeekView(DateOnly date)
     {
-        Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: 日詳細ポップアップから Week へ切り替え、日付={Date}", date);
+        this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: 日詳細ポップアップから Week へ切り替え、日付={Date}", date);
         this.CloseDayDetail();
         this.State.CurrentDate = date;
         this.State.CurrentView = CalendarViewType.Week;
@@ -653,6 +653,6 @@ public partial class Calendar : ComponentBase
         this.RegisterLayoutActions();
         await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
-        Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: LoadMainStatsAsync 完了, Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
+        this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: LoadMainStatsAsync 完了, Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
     }
 }

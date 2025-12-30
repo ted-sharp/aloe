@@ -126,43 +126,43 @@ public partial class WeekScheduler : ComponentBase
 
     private async Task SetWeekDays(int days)
     {
-        WeekDays = days;
-        await OnWeekDaysChanged.InvokeAsync(days);
+        this.WeekDays = days;
+        await this.OnWeekDaysChanged.InvokeAsync(days);
     }
 
     private async Task SetShowSlots(bool showSlots)
     {
-        ShowSlots = showSlots;
-        await OnShowSlotsChanged.InvokeAsync(showSlots);
+        this.ShowSlots = showSlots;
+        await this.OnShowSlotsChanged.InvokeAsync(showSlots);
     }
 
     private async Task HandleDateSelected(DateOnly date)
     {
-        await OnDateSelected.InvokeAsync(date);
+        await this.OnDateSelected.InvokeAsync(date);
     }
 
     private async Task HandleAppointmentClicked(Guid apptId)
     {
-        await OnAppointmentClicked.InvokeAsync(apptId);
+        await this.OnAppointmentClicked.InvokeAsync(apptId);
     }
 
     private async Task HandleCreateRequested((DateOnly Date, TimeOnly Time) request)
     {
-        await OnCreateRequested.InvokeAsync(request);
+        await this.OnCreateRequested.InvokeAsync(request);
     }
 
     private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
     {
-        await OnAppointmentMoved.InvokeAsync(moveInfo);
+        await this.OnAppointmentMoved.InvokeAsync(moveInfo);
     }
 
     private async Task HandleGoToToday()
     {
-        await OnGoToToday.InvokeAsync();
+        await this.OnGoToToday.InvokeAsync();
     }
 
     private async Task HandleShowDayDetail(DateOnly date)
     {
-        await OnShowDayDetail.InvokeAsync(date);
+        await this.OnShowDayDetail.InvokeAsync(date);
     }
 }

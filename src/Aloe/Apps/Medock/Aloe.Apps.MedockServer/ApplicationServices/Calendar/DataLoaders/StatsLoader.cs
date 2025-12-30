@@ -38,7 +38,7 @@ public class StatsLoader : IStatsLoader
         try
         {
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("[TRACE] LoadMainStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+            this._logger.LogInformation("[TRACE] LoadMainStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
             var querySw = Stopwatch.StartNew();
@@ -72,7 +72,7 @@ public class StatsLoader : IStatsLoader
                 mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeAsync(startDate, endDate);
             }
             querySw.Stop();
-            _logger.LogInformation("LoadMainStatsAsync query: {ElapsedMs}ms, Count={Count}",
+            this._logger.LogInformation("LoadMainStatsAsync query: {ElapsedMs}ms, Count={Count}",
                 querySw.ElapsedMilliseconds, mainStats.Count);
 
             // AppointmentSlotOverrideを取得
@@ -89,14 +89,14 @@ public class StatsLoader : IStatsLoader
                 .GroupBy(o => (o.ApptDate, o.ApptResId))
                 .ToDictionary(g => g.Key, g => g.First());
             overrideSw.Stop();
-            _logger.LogInformation("LoadMainStatsAsync slotOverrides: {ElapsedMs}ms, Count={Count}",
+            this._logger.LogInformation("LoadMainStatsAsync slotOverrides: {ElapsedMs}ms, Count={Count}",
                 overrideSw.ElapsedMilliseconds, slotOverrides.Count);
 
             // 日付ごとにグループ化
             var groupSw = Stopwatch.StartNew();
             var statsByDate = mainStats.GroupBy(s => s.ApptDate).ToDictionary(g => g.Key, g => g.ToList());
             groupSw.Stop();
-            _logger.LogInformation("LoadMainStatsAsync grouping: {ElapsedMs}ms", groupSw.ElapsedMilliseconds);
+            this._logger.LogInformation("LoadMainStatsAsync grouping: {ElapsedMs}ms", groupSw.ElapsedMilliseconds);
 
             // 全日付を初期化
             state.MainStats.Clear();
@@ -135,13 +135,13 @@ public class StatsLoader : IStatsLoader
                 state.MainStatsGrayedOut[dateStr] = false;
             }
             initSw.Stop();
-            _logger.LogInformation("LoadMainStatsAsync initialization: {ElapsedMs}ms, Days={DayCount}",
+            this._logger.LogInformation("LoadMainStatsAsync initialization: {ElapsedMs}ms, Days={DayCount}",
                 initSw.ElapsedMilliseconds, endDate.DayNumber - startDate.DayNumber + 1);
         }
         catch (Exception ex)
         {
             // エラー時は空のMainStatsを設定
-            _logger.LogError(ex, "Error loading main stats");
+            this._logger.LogError(ex, "Error loading main stats");
             state.MainStats.Clear();
             state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
@@ -149,7 +149,7 @@ public class StatsLoader : IStatsLoader
         finally
         {
             sw.Stop();
-            _logger.LogInformation("LoadMainStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            this._logger.LogInformation("LoadMainStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
@@ -168,46 +168,46 @@ public class StatsLoader : IStatsLoader
             {
                 state.EquipmentStatsOptimized = null;
                 var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
-                _logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: {Message}", msg);
+                this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: {Message}", msg);
                 return;
             }
 
-            _logger.LogDebug("LoadEquipmentStatsAsync: SelectedResourceIds count = {Count}", state.CurrentFilter.SelectedResourceIds.Count);
+            this._logger.LogDebug("LoadEquipmentStatsAsync: SelectedResourceIds count = {Count}", state.CurrentFilter.SelectedResourceIds.Count);
 
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
-            _logger.LogInformation("[TRACE] LoadEquipmentStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+            this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
             // 【最適化版】FromSql + array_agg で SQL側で配列化
             // 既に日付ごと・リソースごとにグループ化されて返される
             var querySw = Stopwatch.StartNew();
-            _logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
+            this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
             var equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
                 startDate,
                 endDate,
                 state.CurrentFilter.SelectedResourceIds);
             querySw.Stop();
-            _logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {DateCount} dates", equipmentStatsOptimized.Count);
+            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {DateCount} dates", equipmentStatsOptimized.Count);
 
             var totalResources = equipmentStatsOptimized.Sum(kvp => kvp.Value.Count);
-            _logger.LogInformation("LoadEquipmentStatsAsync query (optimized): {ElapsedMs}ms, Dates={DateCount}, TotalResources={TotalResources}",
+            this._logger.LogInformation("LoadEquipmentStatsAsync query (optimized): {ElapsedMs}ms, Dates={DateCount}, TotalResources={TotalResources}",
                 querySw.ElapsedMilliseconds, equipmentStatsOptimized.Count, totalResources);
 
             // 最適化版データを状態に保存
-            _logger.LogDebug("Setting state.EquipmentStatsOptimized with {DateCount} dates", equipmentStatsOptimized.Count);
+            this._logger.LogDebug("Setting state.EquipmentStatsOptimized with {DateCount} dates", equipmentStatsOptimized.Count);
             state.EquipmentStatsOptimized = equipmentStatsOptimized;
         }
         catch (Exception ex)
         {
             // エラー時は null を設定
             state.EquipmentStatsOptimized = null;
-            _logger.LogError(ex, "Error in LoadEquipmentStatsAsync: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+            this._logger.LogError(ex, "Error in LoadEquipmentStatsAsync: ViewType={ViewType}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, currentDate);
         }
         finally
         {
             sw.Stop();
-            _logger.LogInformation("LoadEquipmentStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            this._logger.LogInformation("LoadEquipmentStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
 
