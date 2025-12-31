@@ -40,6 +40,7 @@ public class MedockDbContext : DbContext
     public DbSet<FacilityBusinessHours> FacilityBusinessHours => this.Set<FacilityBusinessHours>();
     public DbSet<FacilityAddress> FacilityAddresses => this.Set<FacilityAddress>();
     public DbSet<FacilityPolicy> FacilityPolicies => this.Set<FacilityPolicy>();
+    public DbSet<FacilityHoliday> FacilityHolidays => this.Set<FacilityHoliday>();
     public DbSet<FacilityUserPermissionsCache> FacilityUserPermissionsCaches => this.Set<FacilityUserPermissionsCache>();
     public DbSet<Floor> Floors => this.Set<Floor>();
 

@@ -97,7 +97,7 @@ try
 
     var totalStopwatch = Stopwatch.StartNew();
     var seederCount = 0;
-    var totalSeeders = 20; // 概算値（実際のSeeder数に合わせて調整）
+    var totalSeeders = 21; // 概算値（実際のSeeder数に合わせて調整）
 
     // ヘルパー関数：Seeder実行と時間計測
     async Task<T> RunSeederWithResultAsync<T>(string seederName, Func<Task<T>> seederAction)
@@ -144,6 +144,7 @@ try
     var (facilityId, floorId) = await RunSeederWithResultAsync<(Guid, Guid)>("FacilitySeeder", () => FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider));
     await RunSeederAsync("FacilityBusinessHoursSeeder", () => FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider));
     await RunSeederAsync("FacilityAddressSeeder", () => FacilityAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
+    await RunSeederAsync("FacilityHolidaySeeder", () => FacilityHolidaySeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // ユーザー関連（施設が存在する状態で実行）
     var needsUserSeed = await RunSeederWithResultAsync<bool>("UserSeeder", () => UserSeeder.SeedAsync(context, passwordHasher, dateTimeProvider, facilityId, floorId));

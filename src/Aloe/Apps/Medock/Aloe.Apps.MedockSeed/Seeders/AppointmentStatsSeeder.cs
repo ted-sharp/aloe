@@ -47,8 +47,19 @@ internal static class AppointmentStatsSeeder
             .Where(ara => !ara.IsDeleted)
             .ToListAsync();
 
-        // 祝日データを読み込み（予約生成と統計計算の両方で使用）
-        var holidays = await SeederHelper.LoadHolidaySetAsync(context);
+        // 祝日データを読み込み
+        var nationalHolidays = await SeederHelper.LoadHolidaySetAsync(context);
+
+        // 施設の休業日（FacilityHoliday + グローバル祝日）を統合して施設ごとに構築
+        var holidaysByFacility = await context.FacilityHolidays
+            .AsNoTracking()
+            .Where(fh => !fh.IsDeleted)
+            .GroupBy(fh => fh.FacilityId)
+            .ToDictionaryAsync(
+                g => g.Key,
+                g => new HashSet<DateOnly>(g.Select(fh => fh.HolidayDate).Union(nationalHolidays)));
+
+        // 以降 nationalHolidays は不要（holidaysByFacility に統合済み）
 
         // mainリソースの場合、既存の予約データがない場合に予約データを生成
         // AppointmentResourceTypeは[NotMapped]のため、ApptResTypeCodeを使用
@@ -120,7 +131,7 @@ internal static class AppointmentStatsSeeder
                             allOrganizations,
                             allSlots,
                             businessHoursDictForGen,
-                            holidays,
+                            holidaysByFacility,
                             startDate,
                             endDate,
                             dateTimeProvider);
@@ -144,7 +155,7 @@ internal static class AppointmentStatsSeeder
                             allOrganizations,
                             allSlots,
                             businessHoursDictForGen,
-                            holidays,
+                            holidaysByFacility,
                             startDate,
                             endDate,
                             dateTimeProvider);
@@ -315,11 +326,16 @@ internal static class AppointmentStatsSeeder
             var lunchStartTime = parsedBusinessHours.LunchStartTime;
             var lunchEndTime = parsedBusinessHours.LunchEndTime;
 
+            // このリソースの施設に対応する休業日を取得
+            var holidays = holidaysByFacility.ContainsKey(resource.Floor.FacilityId)
+                ? holidaysByFacility[resource.Floor.FacilityId]
+                : new HashSet<DateOnly>();
+
             var currentDate = startDate;
             while (currentDate <= endDate)
             {
-                // 休診日（日曜・祝日）はスキップ
-                if (!SeederHelper.IsBusinessDay(currentDate, holidays))
+                // 日曜日または祝日（グローバル+施設固有）はスキップ
+                if (currentDate.DayOfWeek == DayOfWeek.Sunday || holidays.Contains(currentDate))
                 {
                     currentDate = currentDate.AddDays(1);
                     continue;
@@ -577,7 +593,7 @@ internal static class AppointmentStatsSeeder
         List<Organization> allOrganizations,
         List<AppointmentSlot> allSlots,
         Dictionary<Guid, FacilityBusinessHoursRoot?> businessHoursDictForGen,
-        HashSet<DateOnly> holidays,
+        Dictionary<Guid, HashSet<DateOnly>> holidaysByFacility,
         DateOnly startDate,
         DateOnly endDate,
         IDateTimeProvider dateTimeProvider)
@@ -588,6 +604,11 @@ internal static class AppointmentStatsSeeder
             Console.WriteLine($"  [!] Floor not found for resource: {mainResource.ApptResName}");
             return;
         }
+
+        // この施設の休業日を取得（存在しない場合は空のセット）
+        var holidays = holidaysByFacility.ContainsKey(floor.FacilityId)
+            ? holidaysByFacility[floor.FacilityId]
+            : new HashSet<DateOnly>();
 
         // メモリ内でフィルタリング
         var patients = allPatients.Where(p => p.FacilityId == floor.FacilityId).ToList();
@@ -730,10 +751,10 @@ internal static class AppointmentStatsSeeder
                 continue;
             }
 
-            // 営業日判定（日曜・祝日は休診）
-            var isBusinessDay = SeederHelper.IsBusinessDay(currentDate, holidays);
-            var isHoliday = holidays.Contains(currentDate);
+            // 営業日判定（日曜・祝日・施設固有の休業日は休診）
             var isSunday = currentDate.DayOfWeek == DayOfWeek.Sunday;
+            var isHoliday = holidays.Contains(currentDate);
+            var isBusinessDay = !isSunday && !isHoliday;
 
             // 休診日の場合は緊急予約をチェックしてからスキップ
             if (!isBusinessDay)
