@@ -9,7 +9,7 @@
 
 <PageTitle>カレンダー - Aloe Medock</PageTitle>
 
-<div class="flex flex-col year-grid-container calendar-full-height">
+<div class="flex flex-col year-grid-container calendar-full-height" @onkeydown="HandleKeyDown" tabindex="0">
     <!-- ヘッダー行: 左FAB + ナビバー + 右FAB -->
     <div class="calendar-header flex items-center justify-between px-2 py-1">
         <!-- 左側: HamburgerFab領域 -->

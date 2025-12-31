@@ -7,6 +7,7 @@ using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 
@@ -663,5 +664,92 @@ public partial class Calendar : ComponentBase
         await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
         this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: LoadMainStatsAsync 完了, Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
+    }
+
+    /// <summary>
+    /// キーボード入力ハンドラー
+    /// </summary>
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        switch (e.Key)
+        {
+            case "ArrowLeft":
+                await this.PreviousPeriod();
+                break;
+            case "ArrowRight":
+                await this.NextPeriod();
+                break;
+            case "ArrowUp":
+                // ビュー切り替え: 週 → 月 → 年
+                await this.SetPreviousView();
+                break;
+            case "ArrowDown":
+                // ビュー切り替え: 年 → 月 → 週
+                await this.SetNextView();
+                break;
+            case "Home":
+                await this.GoToToday();
+                break;
+            case "PageUp":
+                await this.NextBigPeriod();
+                break;
+            case "PageDown":
+                await this.PreviousBigPeriod();
+                break;
+            case "t":
+            case "T":
+                this.ToggleSimpleView();
+                break;
+            case "f":
+            case "F":
+                this.ToggleFilterPanel();
+                break;
+        }
+    }
+
+    /// <summary>
+    /// ビュー切り替え（逆順: 週 → 月 → 年）
+    /// </summary>
+    private async Task SetPreviousView()
+    {
+        var nextView = this.CurrentView switch
+        {
+            CalendarViewType.Week => CalendarViewType.Month,
+            CalendarViewType.Month => CalendarViewType.Year,
+            CalendarViewType.Year => CalendarViewType.Week,
+            _ => CalendarViewType.Month
+        };
+        await this.SetView(nextView);
+    }
+
+    /// <summary>
+    /// ビュー切り替え（順序: 年 → 月 → 週）
+    /// </summary>
+    private async Task SetNextView()
+    {
+        var nextView = this.CurrentView switch
+        {
+            CalendarViewType.Year => CalendarViewType.Month,
+            CalendarViewType.Month => CalendarViewType.Week,
+            CalendarViewType.Week => CalendarViewType.Year,
+            _ => CalendarViewType.Month
+        };
+        await this.SetView(nextView);
+    }
+
+    /// <summary>
+    /// 簡易/詳細表示の切り替え
+    /// </summary>
+    private void ToggleSimpleView()
+    {
+        if (this.CurrentView == CalendarViewType.Week)
+        {
+            this.ShowSlots = !this.ShowSlots;
+        }
+        else
+        {
+            this.ShowSimpleView = !this.ShowSimpleView;
+        }
+        this.StateHasChanged();
     }
 }
