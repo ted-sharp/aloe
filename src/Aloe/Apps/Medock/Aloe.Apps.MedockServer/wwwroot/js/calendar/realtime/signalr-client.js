@@ -43,8 +43,8 @@ export async function startConnection(onStatsUpdated) {
 
         // 統計更新通知を受信
         connection.on('OnStatsUpdated', async (updatedDate, updatedResourceIds) => {
-            console.log('AppointmentStats updated:', { updatedDate, updatedResourceIds });
-            
+            // console.log('AppointmentStats updated:', { updatedDate, updatedResourceIds });
+
             try {
                 // 差分更新を適用
                 const diffData = await applyDiffUpdate(updatedDate, updatedResourceIds);
@@ -61,26 +61,26 @@ export async function startConnection(onStatsUpdated) {
         // 接続状態の監視
         connection.onclose(() => {
             isConnected = false;
-            console.log('SignalR connection closed');
+            // console.log('SignalR connection closed');
         });
 
         connection.onreconnecting(() => {
             isConnected = false;
             reconnectAttempts++;
-            console.log(`SignalR reconnecting... (attempt ${reconnectAttempts})`);
+            // console.log(`SignalR reconnecting... (attempt ${reconnectAttempts})`);
         });
 
         connection.onreconnected(() => {
             isConnected = true;
             reconnectAttempts = 0;
-            console.log('SignalR reconnected');
+            // console.log('SignalR reconnected');
         });
 
         // 接続開始
         await connection.start();
         isConnected = true;
         reconnectAttempts = 0;
-        console.log('SignalR connection started');
+        // console.log('SignalR connection started');
 
         // カレンダーグループに参加（必要に応じて）
         // await connection.invoke('JoinCalendarGroup', 'default');
@@ -98,7 +98,7 @@ export async function stopConnection() {
         try {
             await connection.stop();
             isConnected = false;
-            console.log('SignalR connection stopped');
+            // console.log('SignalR connection stopped');
         } catch (error) {
             console.error('Failed to stop SignalR connection:', error);
         }
@@ -113,7 +113,7 @@ export async function joinCalendarGroup(calendarId) {
     if (connection && isConnected) {
         try {
             await connection.invoke('JoinCalendarGroup', calendarId);
-            console.log(`Joined calendar group: ${calendarId}`);
+            // console.log(`Joined calendar group: ${calendarId}`);
         } catch (error) {
             console.error('Failed to join calendar group:', error);
         }
@@ -128,7 +128,7 @@ export async function leaveCalendarGroup(calendarId) {
     if (connection && isConnected) {
         try {
             await connection.invoke('LeaveCalendarGroup', calendarId);
-            console.log(`Left calendar group: ${calendarId}`);
+            // console.log(`Left calendar group: ${calendarId}`);
         } catch (error) {
             console.error('Failed to leave calendar group:', error);
         }

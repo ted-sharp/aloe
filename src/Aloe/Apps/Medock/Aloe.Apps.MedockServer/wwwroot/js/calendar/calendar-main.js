@@ -34,13 +34,13 @@ function init(containerId, data, options, dotNetRef, currentDateStr) {
     const state = getState();
 
     // dotNetRefは常に最新のものを保持（複数のCalendarCanvasインスタンスが存在する場合に対応）
-    console.log('MedockCalendar: init called', {
-        containerId,
-        hasDotNetRef: !!dotNetRef,
-        hasExistingCanvasManager: !!state.canvasManager,
-        existingContainerId: state.containerId,
-        currentDateStr
-    });
+    // console.log('MedockCalendar: init called', {
+    //     containerId,
+    //     hasDotNetRef: !!dotNetRef,
+    //     hasExistingCanvasManager: !!state.canvasManager,
+    //     existingContainerId: state.containerId,
+    //     currentDateStr
+    // });
 
     // Blazor側から渡された日付を使用（渡されなければ今日）
     const initialDate = currentDateStr ? parseDate(currentDateStr) : new Date();
@@ -56,7 +56,7 @@ function init(containerId, data, options, dotNetRef, currentDateStr) {
     
     // 既に初期化されている場合は、データとビューの更新のみ
     if (state.canvasManager) {
-        console.log('MedockCalendar: Already initialized, updating data and view');
+        // console.log('MedockCalendar: Already initialized, updating data and view');
         // 既存のコンテナを更新（必要に応じて）
         const container = document.getElementById(containerId);
         if (container && state.containerId !== containerId) {
@@ -101,7 +101,7 @@ function init(containerId, data, options, dotNetRef, currentDateStr) {
 
     // Initialize SignalR connection for real-time updates
     startConnection(async (updatedDate, updatedResourceIds, diffData) => {
-        console.log('Stats updated, refreshing calendar:', { updatedDate, updatedResourceIds });
+        // console.log('Stats updated, refreshing calendar:', { updatedDate, updatedResourceIds });
         // データが更新されたら、カレンダーを再描画
         // 実際の実装では、diffDataを使用して部分更新を行う
         const state = getState();
@@ -212,14 +212,14 @@ function render() {
         const currentYear = state.currentDate.getFullYear();
         const currentMonth = state.currentDate.getMonth();
 
-        console.log('SharedElement Debug:', {
-            viewChanged,
-            currentDateStr,
-            currentView: state.currentView,
-            previousView: state.previousView,
-            currentYear,
-            currentMonth
-        });
+        // console.log('SharedElement Debug:', {
+        //     viewChanged,
+        //     currentDateStr,
+        //     currentView: state.currentView,
+        //     previousView: state.previousView,
+        //     currentYear,
+        //     currentMonth
+        // });
 
         // 年 ↔ 月 のトランジション
         if ((state.previousView === 'year' && state.currentView === 'month') ||
@@ -236,7 +236,7 @@ function render() {
             if (state.previousView === 'year' && currentRenderState.months[currentMonth]) {
                 // 年 → 月: 年間ビューの月boundsを保存
                 transitionInfo.sourceBounds = currentRenderState.months[currentMonth].bounds;
-                console.log('Captured Year month bounds:', transitionInfo.sourceBounds);
+                // console.log('Captured Year month bounds:', transitionInfo.sourceBounds);
             } else if (state.previousView === 'month') {
                 // 月 → 年: 月間ビュー全体のboundsを保存
                 transitionInfo.sourceBounds = {
@@ -245,10 +245,10 @@ function render() {
                     width: state.canvasManager.width,
                     height: state.canvasManager.height
                 };
-                console.log('Captured Month full bounds:', transitionInfo.sourceBounds);
+                // console.log('Captured Month full bounds:', transitionInfo.sourceBounds);
             }
 
-            console.log('SharedElement Transition ENABLED (Year-Month)', transitionInfo);
+            // console.log('SharedElement Transition ENABLED (Year-Month)', transitionInfo);
         }
         // 月 ↔ 週 のトランジション（フェードスルー）
         else if ((state.previousView === 'month' && state.currentView === 'week') ||
@@ -257,7 +257,7 @@ function render() {
             // 週表示はゆっくりめのフェードスルー
             fadeMode = 'fadethrough';
             fadeDuration = 400;
-            console.log('Fadethrough Transition ENABLED (Month-Week)');
+            // console.log('Fadethrough Transition ENABLED (Month-Week)');
         }
         // 年 ↔ 週 のトランジション（フェードスルー）
         else if ((state.previousView === 'year' && state.currentView === 'week') ||
@@ -266,12 +266,12 @@ function render() {
             // 週表示はゆっくりめのフェードスルー
             fadeMode = 'fadethrough';
             fadeDuration = 400;
-            console.log('Fadethrough Transition ENABLED (Year-Week)');
+            // console.log('Fadethrough Transition ENABLED (Year-Week)');
         } else {
-            console.log('SharedElement Transition SKIPPED - not Year-Month or Month-Week transition');
+            // console.log('SharedElement Transition SKIPPED - not Year-Month or Month-Week transition');
         }
     } else {
-        console.log('SharedElement Transition SKIPPED - no view change');
+        // console.log('SharedElement Transition SKIPPED - no view change');
     }
 
     // 前回のビューを記憶
