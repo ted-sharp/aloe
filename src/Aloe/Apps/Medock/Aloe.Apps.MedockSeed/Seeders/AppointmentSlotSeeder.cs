@@ -70,7 +70,7 @@ internal static class AppointmentSlotSeeder
                 // エコー：15分に1スロット（1時間に4スロット）
                 slot = CreateTimeSlotResource(resource.ApptResId, slotStartDate, slotEndDate, intervalMinutes: 15, businessHours);
             }
-            else if (resource.AppointmentResourceType == Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main) // ロッカー（Mainタイプ）
+            else if (resource.AppointmentResourceType == Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main)
             {
                 // 30分区切りで業務時間を分割、1時間当たり40人（1スロット20人）
                 slot = CreateMainSlotResource(resource.ApptResId, slotStartDate, slotEndDate, maxPerSlot: 20, businessHours);
@@ -206,7 +206,7 @@ internal static class AppointmentSlotSeeder
     }
 
     /// <summary>
-    /// Mainタイプのリソース（ロッカーなど）を作成
+    /// Mainタイプのリソースを作成
     /// 30分区切りで業務時間を分割
     /// </summary>
     private static AppointmentSlot CreateMainSlotResource(

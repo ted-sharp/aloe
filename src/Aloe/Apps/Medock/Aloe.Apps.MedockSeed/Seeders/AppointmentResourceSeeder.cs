@@ -39,9 +39,9 @@ internal static class AppointmentResourceSeeder
             {
                 ApptResId = Guid.CreateVersion7(),
                 FloorId = floorId,
-                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main, // ロッカー → Main
-                ApptResName = "ロッカー",
-                ApptResDesc = "ロッカー（AM/PM各80個制限、30分区切りで業務時間を分割）",
+                AppointmentResourceType = Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main,
+                ApptResName = "メイン",
+                ApptResDesc = "メイン（AM/PM各80人制限、30分区切りで業務時間を分割）",
                 ApptResSeq = 1,
                 IsDeleted = false
             },

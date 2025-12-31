@@ -20,10 +20,12 @@ internal static class AppointmentSlotOverrideSeeder
             return;
         }
 
-        // リソースを取得（Mainリソースとその他のリソース）
+        // リソースを取得（Main と Equipment のみ）
         var resources = await context.AppointmentResources
             .Where(r => !r.IsDeleted)
             .Include(r => r.Floor)
+            .Where(r => r.ApptResTypeCode == (int)AppointmentResourceType.Main ||
+                        r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
             .ToListAsync();
 
         if (!resources.Any())
@@ -38,108 +40,94 @@ internal static class AppointmentSlotOverrideSeeder
             .Where(fbh => facilityIds.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
             .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
+        // 祝日を取得
+        var holidays = await SeederHelper.LoadHolidaySetAsync(context);
+        var holidaysByFacility = await context.FacilityHolidays
+            .AsNoTracking()
+            .Where(fh => !fh.IsDeleted)
+            .GroupBy(fh => fh.FacilityId)
+            .ToDictionaryAsync(
+                g => g.Key,
+                g => new HashSet<DateOnly>(g.Select(fh => fh.HolidayDate).Union(holidays)));
+
         Console.WriteLine("[INFO] Creating appointment slot override seed data...");
 
         var overrides = new List<AppointmentSlotOverride>();
-        var today = dateTimeProvider.TodayDateOnly;
+        var (startDate, endDate) = SeederHelper.GetDefaultDateRange(dateTimeProvider);
+        var mainResources = resources.Where(r => r.ApptResTypeCode == (int)AppointmentResourceType.Main).ToList();
+        var equipmentResources = resources.Where(r => r.ApptResTypeCode == (int)AppointmentResourceType.Equipment).ToList();
 
-        // パターン1: 特定日の営業時間短縮（Mainリソース）
-        var mainResources = resources.Where(r => r.ApptResTypeCode == (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main).ToList();
-        if (mainResources.Any())
+        // 月単位で処理
+        var currentMonth = new DateOnly(startDate.Year, startDate.Month, 1);
+        while (currentMonth <= endDate)
         {
-            var mainResource = mainResources.First();
-            var facilityId = mainResource.Floor.FacilityId;
-            var businessHours = businessHoursDict.GetValueOrDefault(facilityId) ?? new FacilityBusinessHoursRoot();
+            // 月の末日
+            var lastDay = new DateOnly(currentMonth.Year, currentMonth.Month,
+                DateTime.DaysInMonth(currentMonth.Year, currentMonth.Month));
+            var monthEndDate = lastDay < endDate ? lastDay : endDate;
 
-            // 来週の月曜日を短縮営業（午前のみ）
-            var daysUntilMonday = ((int)DayOfWeek.Monday - (int)today.DayOfWeek + 7) % 7;
-            if (daysUntilMonday == 0) daysUntilMonday = 7; // 今日が月曜日の場合は来週の月曜日
-            var nextMonday = today.AddDays(daysUntilMonday);
-
-            var shortSlots = CreateShortenedDaySlots(businessHours, morningOnly: true);
-            overrides.Add(CreateOverride(mainResource.ApptResId, nextMonday, shortSlots, dateTimeProvider));
-
-            // 今月末の最終営業日を午後のみ
-            var lastDayOfMonth = new DateOnly(today.Year, today.Month, DateTime.DaysInMonth(today.Year, today.Month));
-            if (lastDayOfMonth >= today)
+            // 月内の営業日をすべて取得
+            var businessDaysInMonth = GetBusinessDaysInMonth(currentMonth, monthEndDate, holidaysByFacility);
+            if (!businessDaysInMonth.Any())
             {
-                var afternoonOnlySlots = CreateShortenedDaySlots(businessHours, morningOnly: false);
-                overrides.Add(CreateOverride(mainResource.ApptResId, lastDayOfMonth, afternoonOnlySlots, dateTimeProvider));
-            }
-        }
-
-        // パターン2: 臨時休診（リソースを無効化）
-        var medicalResources = resources.Where(r => r.ApptResTypeCode != (int)Aloe.Apps.MedockLib.Constants.AppointmentResourceType.Main).ToList();
-        if (medicalResources.Any())
-        {
-            var resource = medicalResources[_random.Next(medicalResources.Count)];
-            // 2週間後の火曜日を臨時休診
-            var futureTuesday = today.AddDays((int)DayOfWeek.Tuesday - (int)today.DayOfWeek + 14);
-            if (futureTuesday.DayOfWeek != DayOfWeek.Tuesday)
-            {
-                futureTuesday = futureTuesday.AddDays((int)DayOfWeek.Tuesday - (int)futureTuesday.DayOfWeek);
+                currentMonth = currentMonth.AddMonths(1);
+                continue;
             }
 
-            var emptySlots = new AppointmentSlotRoot { Slots = new List<AppointmentSlotItem>() };
-            overrides.Add(CreateOverride(resource.ApptResId, futureTuesday, emptySlots, dateTimeProvider));
-        }
+            // 閑散期か繁忙期か判定
+            // 時間外データと同程度の頻度（約4%）: 月20営業日×4% ≒ 0.8件/月
+            var isOffSeason = IsOffSeasonMonth(currentMonth.Month);
+            var overrideCountRange = isOffSeason ? (0, 1) : (0, 2);
+            var overrideCount = Math.Min(_random.Next(overrideCountRange.Item1, overrideCountRange.Item2 + 1), businessDaysInMonth.Count);
 
-        // パターン3: キャパシティ増加（Mainリソースの特定日）
-        if (mainResources.Any())
-        {
-            var mainResource = mainResources[_random.Next(mainResources.Count)];
-            var facilityId = mainResource.Floor.FacilityId;
-            var businessHours = businessHoursDict.GetValueOrDefault(facilityId) ?? new FacilityBusinessHoursRoot();
+            // この月のランダムな営業日をシャッフル
+            var selectedDates = businessDaysInMonth.OrderBy(_ => _random.Next()).Take(overrideCount).ToList();
 
-            // 3週間後の金曜日をキャパシティ増加
-            var futureFriday = today.AddDays((int)DayOfWeek.Friday - (int)today.DayOfWeek + 21);
-            if (futureFriday.DayOfWeek != DayOfWeek.Friday)
+            // 選択された日付ごとに、ランダムなオーバーライドを生成
+            foreach (var selectedDate in selectedDates)
             {
-                futureFriday = futureFriday.AddDays((int)DayOfWeek.Friday - (int)futureFriday.DayOfWeek);
+                // Main リソースと Equipment リソースをランダムに選択
+                var isMainResource = mainResources.Any() && (_random.Next(100) < 50 || !equipmentResources.Any());
+                var selectedResource = isMainResource
+                    ? mainResources[_random.Next(mainResources.Count)]
+                    : equipmentResources[_random.Next(equipmentResources.Count)];
+
+                var facilityId = selectedResource.Floor.FacilityId;
+                var businessHours = businessHoursDict.GetValueOrDefault(facilityId) ?? new FacilityBusinessHoursRoot();
+
+                // リソースタイプに応じたランダムパターンを選択
+                AppointmentSlotRoot? slotDef = null;
+                if (isMainResource)
+                {
+                    var mainPattern = _random.Next(4);
+                    slotDef = mainPattern switch
+                    {
+                        0 => CreateShortenedDaySlots(businessHours, morningOnly: true),
+                        1 => CreateShortenedDaySlots(businessHours, morningOnly: false),
+                        2 => CreateIncreasedCapacitySlots(businessHours, multiplier: 1.3 + _random.NextDouble() * 0.4),
+                        _ => CreateSpecialDaySlots(businessHours)
+                    };
+                }
+                else
+                {
+                    var equipmentPattern = _random.Next(4);
+                    slotDef = equipmentPattern switch
+                    {
+                        0 => new AppointmentSlotRoot { Slots = new List<AppointmentSlotItem>() }, // 臨時休診
+                        1 => CreateIncreasedCapacitySlots(businessHours, multiplier: 1.2 + _random.NextDouble() * 0.3),
+                        2 => CreateExtendedHoursSlots(businessHours),
+                        _ => new AppointmentSlotRoot { Slots = new List<AppointmentSlotItem>() } // 点検日
+                    };
+                }
+
+                if (slotDef != null)
+                {
+                    overrides.Add(CreateOverride(selectedResource.ApptResId, selectedDate, slotDef, dateTimeProvider));
+                }
             }
 
-            var increasedCapSlots = CreateIncreasedCapacitySlots(businessHours, multiplier: 1.5);
-            overrides.Add(CreateOverride(mainResource.ApptResId, futureFriday, increasedCapSlots, dateTimeProvider));
-        }
-
-        // パターン4: 時間外スロット追加（早朝・夕方）
-        if (medicalResources.Any())
-        {
-            var resource = medicalResources[_random.Next(medicalResources.Count)];
-            var facilityId = resource.Floor.FacilityId;
-            var businessHours = businessHoursDict.GetValueOrDefault(facilityId) ?? new FacilityBusinessHoursRoot();
-
-            // 1ヶ月後の水曜日に時間外スロット追加
-            var futureWednesday = today.AddDays((int)DayOfWeek.Wednesday - (int)today.DayOfWeek + 28);
-            if (futureWednesday.DayOfWeek != DayOfWeek.Wednesday)
-            {
-                futureWednesday = futureWednesday.AddDays((int)DayOfWeek.Wednesday - (int)futureWednesday.DayOfWeek);
-            }
-
-            var extendedSlots = CreateExtendedHoursSlots(businessHours);
-            overrides.Add(CreateOverride(resource.ApptResId, futureWednesday, extendedSlots, dateTimeProvider));
-        }
-
-        // パターン5: 複数リソースの同日上書き（Mainリソース）
-        if (mainResources.Count > 1)
-        {
-            var facilityId = mainResources.First().Floor.FacilityId;
-            var businessHours = businessHoursDict.GetValueOrDefault(facilityId) ?? new FacilityBusinessHoursRoot();
-
-            // 2ヶ月後の第1月曜日を特別営業日として上書き
-            var targetMonth = today.AddMonths(2);
-            var firstMonday = new DateOnly(targetMonth.Year, targetMonth.Month, 1);
-            while (firstMonday.DayOfWeek != DayOfWeek.Monday)
-            {
-                firstMonday = firstMonday.AddDays(1);
-            }
-
-            var specialDaySlots = CreateSpecialDaySlots(businessHours);
-            // 最初の2つのMainリソースに適用
-            foreach (var resource in mainResources.Take(2))
-            {
-                overrides.Add(CreateOverride(resource.ApptResId, firstMonday, specialDaySlots, dateTimeProvider));
-            }
+            // 次の月へ
+            currentMonth = currentMonth.AddMonths(1);
         }
 
         context.AppointmentSlotOverrides.AddRange(overrides);
@@ -367,6 +355,75 @@ internal static class AppointmentSlotOverrideSeeder
         }
 
         return new AppointmentSlotRoot { Slots = slots };
+    }
+
+    /// <summary>
+    /// 閑散期（1-3月、7-8月）かどうかを判定
+    /// </summary>
+    private static bool IsOffSeasonMonth(int month)
+    {
+        return month is >= 1 and <= 3 or >= 7 and <= 8;
+    }
+
+    /// <summary>
+    /// 指定範囲内の営業日をすべて取得
+    /// </summary>
+    private static List<DateOnly> GetBusinessDaysInMonth(
+        DateOnly startDate,
+        DateOnly endDate,
+        Dictionary<Guid, HashSet<DateOnly>> holidaysByFacility)
+    {
+        var businessDays = new List<DateOnly>();
+        var allHolidays = new HashSet<DateOnly>(holidaysByFacility.Values.SelectMany(h => h));
+
+        var currentDate = startDate;
+        while (currentDate <= endDate)
+        {
+            // 営業日判定（日曜・祝日以外）
+            if (currentDate.DayOfWeek != DayOfWeek.Sunday && !allHolidays.Contains(currentDate))
+            {
+                businessDays.Add(currentDate);
+            }
+            currentDate = currentDate.AddDays(1);
+        }
+
+        return businessDays;
+    }
+
+    /// <summary>
+    /// 指定範囲内のランダムな営業日を取得
+    /// </summary>
+    private static DateOnly GetRandomBusinessDay(
+        DateOnly startDate,
+        DateOnly endDate,
+        Dictionary<Guid, HashSet<DateOnly>> holidaysByFacility)
+    {
+        var attempts = 0;
+        var maxAttempts = 30;
+        var allHolidays = new HashSet<DateOnly>(holidaysByFacility.Values.SelectMany(h => h));
+
+        while (attempts < maxAttempts)
+        {
+            // DateTime を使って日数差を計算
+            var startDateTime = startDate.ToDateTime(TimeOnly.MinValue);
+            var endDateTime = endDate.ToDateTime(TimeOnly.MinValue);
+            var daysRange = (int)(endDateTime - startDateTime).TotalDays + 1;
+
+            if (daysRange <= 0) return default;
+
+            var randomDays = _random.Next(0, daysRange);
+            var randomDate = startDate.AddDays(randomDays);
+
+            // 営業日判定（日曜・祝日以外）
+            if (randomDate.DayOfWeek != DayOfWeek.Sunday && !allHolidays.Contains(randomDate))
+            {
+                return randomDate;
+            }
+
+            attempts++;
+        }
+
+        return default;
     }
 
     /// <summary>

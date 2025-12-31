@@ -45,7 +45,7 @@ internal static class PlanResourceRequirementSeeder
         var echo = resources.FirstOrDefault(r => r.ApptResName == "エコー");
         var ct = resources.FirstOrDefault(r => r.ApptResName == "CT");
         var mr = resources.FirstOrDefault(r => r.ApptResName == "MR");
-        var locker = resources.FirstOrDefault(r => r.ApptResName == "ロッカー");
+        var mainResource = resources.FirstOrDefault(r => r.ApptResName == "メイン");
 
         foreach (var plan in plans)
         {
@@ -53,18 +53,18 @@ internal static class PlanResourceRequirementSeeder
             switch (plan.PlanCode)
             {
                 case "BASIC":
-                    // 基本健診：ロッカーのみ
-                    if (locker != null)
+                    // 基本健診：メインのみ
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
 
                 case "DOCK":
-                    // 人間ドック：ロッカー、エコー
-                    if (locker != null)
+                    // 人間ドック：メイン、エコー
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     if (echo != null)
                     {
@@ -73,50 +73,50 @@ internal static class PlanResourceRequirementSeeder
                     break;
 
                 case "OPT_CT":
-                    // CTオプション：CT、ロッカー
+                    // CTオプション：CT、メイン
                     if (ct != null)
                     {
                         requirements.Add(CreateRequirement(plan.PlanId, ct.ApptResId, dateTimeProvider));
                     }
-                    if (locker != null)
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
 
                 case "OPT_MR":
-                    // MRオプション：MR、ロッカー
+                    // MRオプション：MR、メイン
                     if (mr != null)
                     {
                         requirements.Add(CreateRequirement(plan.PlanId, mr.ApptResId, dateTimeProvider));
                     }
-                    if (locker != null)
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
 
                 case "OPT_ENDOSCOPE":
-                    // 内視鏡オプション：内視鏡、ロッカー
+                    // 内視鏡オプション：内視鏡、メイン
                     if (endoscope != null)
                     {
                         requirements.Add(CreateRequirement(plan.PlanId, endoscope.ApptResId, dateTimeProvider));
                     }
-                    if (locker != null)
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
 
                 case "OPT_ECHO":
-                    // エコーオプション：エコー、ロッカー
+                    // エコーオプション：エコー、メイン
                     if (echo != null)
                     {
                         requirements.Add(CreateRequirement(plan.PlanId, echo.ApptResId, dateTimeProvider));
                     }
-                    if (locker != null)
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
 
@@ -129,10 +129,10 @@ internal static class PlanResourceRequirementSeeder
                     break;
 
                 default:
-                    // その他のプラン：ロッカーのみ
-                    if (locker != null)
+                    // その他のプラン：メインのみ
+                    if (mainResource != null)
                     {
-                        requirements.Add(CreateRequirement(plan.PlanId, locker.ApptResId, dateTimeProvider));
+                        requirements.Add(CreateRequirement(plan.PlanId, mainResource.ApptResId, dateTimeProvider));
                     }
                     break;
             }

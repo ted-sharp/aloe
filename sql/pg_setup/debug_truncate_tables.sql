@@ -17,6 +17,7 @@ TRUNCATE TABLE organization_members CASCADE;
 TRUNCATE TABLE appointment_slot_overrides CASCADE;
 TRUNCATE TABLE appointment_slots CASCADE;
 TRUNCATE TABLE appointment_stats CASCADE;
+TRUNCATE TABLE appointment_stat_slots CASCADE;
 TRUNCATE TABLE facility_addresses CASCADE;
 TRUNCATE TABLE facility_business_hours CASCADE;
 TRUNCATE TABLE facility_user_permissions_cache CASCADE;
@@ -37,6 +38,7 @@ TRUNCATE TABLE plan_conditions CASCADE;
 
 -- さらに上位: 基本的なエンティティテーブル
 TRUNCATE TABLE facilities CASCADE;
+TRUNCATE TABLE facility_holidays CASCADE;
 TRUNCATE TABLE floors CASCADE;
 TRUNCATE TABLE permissions CASCADE;
 
@@ -54,7 +56,7 @@ TRUNCATE TABLE user_sessions CASCADE;
 TRUNCATE TABLE user_tokens CASCADE;
 
 -- 監査ログテーブル
-TRUNCATE TABLE usr_sessions CASCADE;
+TRUNCATE TABLE user_sessions CASCADE;
 --TRUNCATE TABLE change_logs CASCADE;
 --TRUNCATE TABLE cache_updates CASCADE;
 --TRUNCATE TABLE slow_operation_logs CASCADE;

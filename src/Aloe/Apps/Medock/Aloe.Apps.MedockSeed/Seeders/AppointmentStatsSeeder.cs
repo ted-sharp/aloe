@@ -61,19 +61,24 @@ internal static class AppointmentStatsSeeder
 
         // 以降 nationalHolidays は不要（holidaysByFacility に統合済み）
 
-        // mainリソースの場合、既存の予約データがない場合に予約データを生成
+        // Main リソースと Equipment リソースの場合、既存の予約データがない場合に予約データを生成
         // AppointmentResourceTypeは[NotMapped]のため、ApptResTypeCodeを使用
         var mainResources = await context.AppointmentResources
             .AsNoTracking()
             .Where(r => !r.IsDeleted && r.ApptResTypeCode == (int)AppointmentResourceType.Main)
             .ToListAsync();
 
+        var equipmentResources = await context.AppointmentResources
+            .AsNoTracking()
+            .Where(r => !r.IsDeleted && r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
+            .ToListAsync();
+
         dataLoadStopwatch.Stop();
         Console.WriteLine($"  [+] Initial data loaded - took {dataLoadStopwatch.Elapsed.TotalSeconds:F2}s");
 
-        if (mainResources.Any() && (!appointments.Any() || !resourceAssignments.Any()))
+        if ((mainResources.Any() || equipmentResources.Any()) && (!appointments.Any() || !resourceAssignments.Any()))
         {
-            Console.WriteLine("[INFO] Generating appointment data for main resources...");
+            Console.WriteLine("[INFO] Generating appointment data for Main and Equipment resources...");
             var generationStopwatch = Stopwatch.StartNew();
 
             // 必要なデータを事前に一括取得（ループ内でのawaitを避ける、AsNoTrackingでパフォーマンス向上）
@@ -101,23 +106,24 @@ internal static class AppointmentStatsSeeder
             preloadStopwatch.Stop();
             Console.WriteLine($"  [+] Preloaded {floors.Count} floors, {allPatients.Count} patients, {allOrganizations.Count} organizations, {allSlots.Count} slots - took {preloadStopwatch.Elapsed.TotalSeconds:F2}s");
 
+            // ビジネスアワーを事前に取得（AsNoTrackingでパフォーマンス向上）
+            var facilityIdsForGen = floors.Select(f => f.FacilityId).Distinct().ToList();
+            var businessHoursDictForGen = await context.FacilityBusinessHours
+                .AsNoTracking()
+                .Where(fbh => facilityIdsForGen.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
+                .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
+
             if (!floors.Any())
             {
                 Console.WriteLine("[SKIP] AppointmentStats: No floors found for generating appointments.");
             }
             else
             {
-                // ビジネスアワーを事前に取得（AsNoTrackingでパフォーマンス向上）
-                var facilityIdsForGen = floors.Select(f => f.FacilityId).Distinct().ToList();
-                var businessHoursDictForGen = await context.FacilityBusinessHours
-                    .AsNoTracking()
-                    .Where(fbh => facilityIdsForGen.Contains(fbh.FacilityId) && fbh.IsActive && !fbh.IsDeleted)
-                    .ToDictionaryAsync(fbh => fbh.FacilityId, fbh => fbh.BusinessHoursData);
 
-                // 並列処理：Mainリソースが複数の場合、各リソースごとに独立したDbContextを使用して並列処理
+                // 並列処理：Main リソースが複数の場合、各リソースごとに独立したDbContextを使用して並列処理
                 if (mainResources.Count > 1)
                 {
-                    Console.WriteLine($"  [INFO] Processing {mainResources.Count} resources in parallel...");
+                    Console.WriteLine($"  [INFO] Processing {mainResources.Count} Main resources in parallel...");
                     var parallelTasks = mainResources.Select(async (mainResource, index) =>
                     {
                         await using var resourceContext = await contextFactory.CreateDbContextAsync();
@@ -140,7 +146,7 @@ internal static class AppointmentStatsSeeder
                 }
                 else
                 {
-                    // リソースが1つの場合は並列化しない（オーバーヘッドを避ける）
+                    // Main リソースが1つの場合は並列化しない（オーバーヘッドを避ける）
                     var resourceIndex = 0;
                     foreach (var mainResource in mainResources)
                     {
@@ -178,6 +184,78 @@ internal static class AppointmentStatsSeeder
                     .ToListAsync();
                 reloadStopwatch.Stop();
                 Console.WriteLine($"  [+] Reloaded {appointments.Count} appointments and {resourceAssignments.Count} assignments - took {reloadStopwatch.Elapsed.TotalSeconds:F2}s");
+            }
+
+            // Equipment リソースの予約データ生成
+            if (equipmentResources.Any())
+            {
+                Console.WriteLine("[INFO] Generating appointment data for equipment resources...");
+                var equipmentGenerationStopwatch = Stopwatch.StartNew();
+
+                // 並列処理：Equipment リソースが複数の場合、各リソースごとに独立したDbContextを使用して並列処理
+                if (equipmentResources.Count > 1)
+                {
+                    Console.WriteLine($"  [INFO] Processing {equipmentResources.Count} Equipment resources in parallel...");
+                    var equipmentParallelTasks = equipmentResources.Select(async (equipmentResource, index) =>
+                    {
+                        await using var resourceContext = await contextFactory.CreateDbContextAsync();
+                        await ProcessResourceAsync(
+                            resourceContext,
+                            equipmentResource,
+                            index + 1,
+                            equipmentResources.Count,
+                            floors,
+                            allPatients,
+                            allOrganizations,
+                            allSlots,
+                            businessHoursDictForGen,
+                            holidaysByFacility,
+                            startDate,
+                            endDate,
+                            dateTimeProvider);
+                    }).ToArray();
+                    await Task.WhenAll(equipmentParallelTasks);
+                }
+                else
+                {
+                    // Equipment リソースが1つの場合は並列化しない
+                    var resourceIndex = 0;
+                    foreach (var equipmentResource in equipmentResources)
+                    {
+                        resourceIndex++;
+                        await ProcessResourceAsync(
+                            context,
+                            equipmentResource,
+                            resourceIndex,
+                            equipmentResources.Count,
+                            floors,
+                            allPatients,
+                            allOrganizations,
+                            allSlots,
+                            businessHoursDictForGen,
+                            holidaysByFacility,
+                            startDate,
+                            endDate,
+                            dateTimeProvider);
+                    }
+                }
+
+                equipmentGenerationStopwatch.Stop();
+                Console.WriteLine($"  [+] Equipment appointment generation completed - took {equipmentGenerationStopwatch.Elapsed.TotalSeconds:F2}s");
+
+                // 予約データを再取得
+                var equipmentReloadStopwatch = Stopwatch.StartNew();
+                appointments = await context.Appointments
+                    .AsNoTracking()
+                    .Where(a => !a.IsDeleted && a.ApptDate.HasValue)
+                    .ToListAsync();
+
+                resourceAssignments = await context.AppointmentResourceAssignments
+                    .AsNoTracking()
+                    .Where(ara => !ara.IsDeleted)
+                    .ToListAsync();
+                equipmentReloadStopwatch.Stop();
+                Console.WriteLine($"  [+] Reloaded {appointments.Count} appointments and {resourceAssignments.Count} assignments - took {equipmentReloadStopwatch.Elapsed.TotalSeconds:F2}s");
             }
         }
 
@@ -581,11 +659,11 @@ internal static class AppointmentStatsSeeder
     }
 
     /// <summary>
-    /// リソースごとの予約データ生成処理（並列処理対応）
+    /// リソース（Main または Equipment）の予約データ生成処理（並列処理対応）
     /// </summary>
     private static async Task ProcessResourceAsync(
         MedockDbContext resourceContext,
-        AppointmentResource mainResource,
+        AppointmentResource resource,
         int resourceIndex,
         int totalResources,
         List<Floor> floors,
@@ -598,10 +676,10 @@ internal static class AppointmentStatsSeeder
         DateOnly endDate,
         IDateTimeProvider dateTimeProvider)
     {
-        var floor = floors.FirstOrDefault(f => f.FloorId == mainResource.FloorId);
+        var floor = floors.FirstOrDefault(f => f.FloorId == resource.FloorId);
         if (floor == null)
         {
-            Console.WriteLine($"  [!] Floor not found for resource: {mainResource.ApptResName}");
+            Console.WriteLine($"  [!] Floor not found for resource: {resource.ApptResName}");
             return;
         }
 
@@ -616,16 +694,16 @@ internal static class AppointmentStatsSeeder
 
         if (!patients.Any() || !organizations.Any())
         {
-            Console.WriteLine($"  [!] Patients or Organizations not found for resource: {mainResource.ApptResName}");
+            Console.WriteLine($"  [!] Patients or Organizations not found for resource: {resource.ApptResName}");
             return;
         }
 
         // メモリ内でスロット定義を取得
-        var slot = allSlots.FirstOrDefault(s => s.ApptResId == mainResource.ApptResId);
+        var slot = allSlots.FirstOrDefault(s => s.ApptResId == resource.ApptResId);
 
         if (slot?.ApptSlotsData == null || !slot.ApptSlotsData.Slots.Any())
         {
-            Console.WriteLine($"  [!] Slot definition not found for resource: {mainResource.ApptResName}");
+            Console.WriteLine($"  [!] Slot definition not found for resource: {resource.ApptResName}");
             return;
         }
 
@@ -670,7 +748,7 @@ internal static class AppointmentStatsSeeder
             {
                 // 予約データを生成（パース済みのbusinessHoursを渡す）
                 var (generatedAppointments, generatedAssignments) = GenerateAppointmentsForMainResource(
-                    mainResource,
+                    resource,
                     effectiveBatchStart,
                     effectiveBatchEnd,
                     slot.ApptSlotsData,
@@ -700,7 +778,7 @@ internal static class AppointmentStatsSeeder
                     totalAppointments += generatedAppointments.Count;
                     batchStopwatch.Stop();
                     var progressPercent = (int)((double)currentBatch / totalBatches * 100);
-                    Console.WriteLine($"  [BATCH] Resource {resourceIndex}/{totalResources} - Batch {currentBatch}/{totalBatches} ({progressPercent}%) - Committed {generatedAppointments.Count} appointments for {mainResource.ApptResName} ({effectiveBatchStart:yyyy-MM-dd} to {effectiveBatchEnd:yyyy-MM-dd}) - took {batchStopwatch.Elapsed.TotalSeconds:F2}s (insert: {insertStopwatch.Elapsed.TotalSeconds:F2}s)");
+                    Console.WriteLine($"  [BATCH] Resource {resourceIndex}/{totalResources} - Batch {currentBatch}/{totalBatches} ({progressPercent}%) - Committed {generatedAppointments.Count} appointments for {resource.ApptResName} ({effectiveBatchStart:yyyy-MM-dd} to {effectiveBatchEnd:yyyy-MM-dd}) - took {batchStopwatch.Elapsed.TotalSeconds:F2}s (insert: {insertStopwatch.Elapsed.TotalSeconds:F2}s)");
                 }
             }
 
@@ -712,7 +790,7 @@ internal static class AppointmentStatsSeeder
 
         if (totalAppointments > 0)
         {
-            Console.WriteLine($"  [+] Generated {totalAppointments} appointments total for {mainResource.ApptResName}");
+            Console.WriteLine($"  [+] Generated {totalAppointments} appointments total for {resource.ApptResName}");
         }
     }
 
@@ -851,6 +929,9 @@ internal static class AppointmentStatsSeeder
             // 日ごとの変動率を取得（±20-30%の変動）
             var dailyVariationRate = GetDailyVariationRate();
 
+            // 閑散期の日に対して、ごく稀に（3%）この日全スロット0件の日を生成
+            var isZeroDay = IsOffSeasonMonth(currentDate.Month) && _random.Next(100) < 3; // 3%の確率
+
             foreach (var slotItem in slotDef.Slots)
             {
                 // 半日営業の場合、午後のスロット（12:00以降）はスキップ
@@ -866,19 +947,30 @@ internal static class AppointmentStatsSeeder
 
                 // 埋まり具合を決定（季節 + 日ごとの変動 + 時間帯の偏り + スロットごとの変動）
                 var effectiveRate = seasonalRate * dailyVariationRate * timeSlotRate * slotVariationRate;
-                // 最低でもキャパシティの30%は埋まるようにする（極端に少なくならないように）
-                effectiveRate = Math.Max(effectiveRate, 0.3);
+
+                // この日全体が0件の日の場合
+                if (isZeroDay)
+                {
+                    effectiveRate = 0;
+                }
+                else
+                {
+                    // 最低でもキャパシティの30%は埋まるようにする（極端に少なくならないように）
+                    effectiveRate = Math.Max(effectiveRate, 0.3);
+                }
+
                 var appointmentCount = (int)Math.Ceiling(slotItem.Cap * effectiveRate);
 
-                // キャパオーバー：基本的に1件、ごくまれに2件（2%の確率で1件、0.5%の確率で2件）
-                var overCapacityChance = _random.Next(1000);
-                if (overCapacityChance < 5) // 0.5%の確率で2件
+                // キャパオーバー：Mainリソースのみ、キャパシティに達している場合、稀に+1（available_count = -1）
+                // Equipmentリソースは物理的にオーバー不可
+                var isMainResource = resource.AppointmentResourceType == AppointmentResourceType.Main;
+                if (isMainResource && !isZeroDay && appointmentCount >= (int)(slotItem.Cap * 0.9))
                 {
-                    appointmentCount += 2;
-                }
-                else if (overCapacityChance < 25) // 2%の確率で1件
-                {
-                    appointmentCount += 1;
+                    var overCapacityChance = _random.Next(100);
+                    if (overCapacityChance < 2) // 2%の確率
+                    {
+                        appointmentCount = slotItem.Cap + 1; // available_count = -1
+                    }
                 }
 
                 // 予約を生成
@@ -989,6 +1081,14 @@ internal static class AppointmentStatsSeeder
         }
 
         return (appointments, assignments);
+    }
+
+    /// <summary>
+    /// 閑散期（1-3月、7-8月）かどうかを判定
+    /// </summary>
+    private static bool IsOffSeasonMonth(int month)
+    {
+        return month is >= 1 and <= 3 or >= 7 and <= 8;
     }
 
     /// <summary>
