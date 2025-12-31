@@ -9,6 +9,12 @@ import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle } from '../utils/canvas-utils.js';
 import { dateToString, getStartOfWeek, isToday, parseDate } from '../utils/date-utils.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
+import {
+    getSymbolFromVacancyRatio,
+    calculateVacancyRatio,
+    drawSymbol,
+    drawSlotInfoText
+} from '../utils/slot-display-utils.js';
 
 /**
  * HH:mm形式の時間文字列を時間.分の数値に変換
@@ -86,7 +92,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     const dayWidth = (width - timeColumnWidth) / weekDays;
     const hourHeight = (height - headerHeight) / hours;
 
-    // startDateを日付のみに正規化（時刻を00:00:00に）
+    // startDate: currentDate から始まる週表示
     const startDate = new Date(state.currentDate);
     startDate.setHours(0, 0, 0);
 
@@ -225,7 +231,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         });
 
         if (showSlots) {
-            // 簡易表示モード: ブロック表示
+            // 簡易表示モード: 記号表示（●▼×）
             filteredAppointments.forEach((appt, index) => {
                 const apptDate = parseDate(appt.date);
                 const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
@@ -243,8 +249,6 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 const statusColor = CONFIG.colors.status[appt.status] || '#9ca3af';
 
-                // console.log(`[WeekView] Block ${index}: blockHeight=${blockHeight.toFixed(2)}, dayWidth=${dayWidth.toFixed(2)}, hourHeight=${hourHeight.toFixed(2)}, patient=${appt.patientName}`);
-
                 // ブロック
                 drawRect(contentCtx, {
                     x: x,
@@ -253,34 +257,73 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     height: blockHeight,
                     fill: statusColor,
                     cornerRadius: 4,
-                    opacity: 0.9
+                    opacity: 0.9,
+                    stroke: 'rgba(0, 0, 0, 0.2)',
+                    strokeWidth: 1
                 });
 
-                // テキスト
-                if (blockHeight > 20) {
-                    // console.log(`[WeekView] Block ${index}: Drawing text (blockHeight=${blockHeight.toFixed(2)} > 20)`);
-                    drawText(contentCtx, {
-                        text: appt.patientName || '患者',
-                        x: x + 5,
-                        y: y + 5,
-                        width: blockWidth - 10,
-                        fill: '#ffffff',
-                        fontSize: CONFIG.font.sizeSmall,
-                        fontStyle: 'bold'
-                    });
+                // スロット情報を取得して統一ロジックで記号を描画
+                const dateStr = appt.date;
+                let symbolType = 'x'; // デフォルト
+                let slotAvailable = 0;
+                let slotCapacity = 0;
 
-                    if (blockHeight > 40 && appt.organizationName) {
-                        drawText(contentCtx, {
-                            text: appt.organizationName,
-                            x: x + 5,
-                            y: y + 20,
-                            width: blockWidth - 10,
-                            fill: '#ffffff',
-                            fontSize: CONFIG.font.sizeSmall - 1
-                        });
+                if (state.mainStats && state.mainStats.has(dateStr)) {
+                    const statData = state.mainStats.get(dateStr);
+
+                    // slotStarts, slotEnds, slotCaps, slotCountsが並列配列として存在
+                    if (statData.slotStarts && statData.slotCaps && statData.slotCounts) {
+                        // 予約の開始時刻（小数点形式 9.5 = 09:30）をスロット時刻（HH:mm）に変換
+                        const hours = Math.floor(startTime);
+                        const minutes = Math.round((startTime - hours) * 60);
+                        const slotStartStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+                        // ブロック期間内のすべてのスロット情報を集計
+                        const slotCapsForBlock = [];
+                        const slotCountsForBlock = [];
+
+                        for (let i = 0; i < statData.slotStarts.length; i++) {
+                            const slotStart = parseTimeToHours(statData.slotStarts[i]);
+                            const slotEnd = parseTimeToHours(statData.slotEnds ? statData.slotEnds[i] : statData.slotStarts[i]);
+
+                            // ブロック時間範囲と重なるスロットを含める
+                            if (slotStart < endTime && slotEnd > startTime) {
+                                const cap = statData.slotCaps[i];
+                                if (cap > 0) {
+                                    slotCapsForBlock.push(cap);
+                                    slotCountsForBlock.push(statData.slotCounts[i] || 0);
+                                }
+                            }
+                        }
+
+                        // ブロック内のすべてのスロットから空き率を計算
+                        if (slotCapsForBlock.length > 0) {
+                            const slotFlags = statData.slotFlags || null;
+                            const { vacancyRatio, available, capacity } = calculateVacancyRatio(
+                                slotCapsForBlock,
+                                slotCountsForBlock,
+                                slotFlags,
+                                false
+                            );
+
+                            symbolType = getSymbolFromVacancyRatio(vacancyRatio);
+                            slotAvailable = available;
+                            slotCapacity = capacity;
+                        }
                     }
-                } else {
-                    // console.log(`[WeekView] Block ${index}: Skipping text (blockHeight=${blockHeight.toFixed(2)} <= 20)`);
+                }
+
+                // 記号と情報を描画
+                const symbolCenterX = x + blockWidth / 2;
+                const symbolCenterY = y + blockHeight / 2;
+                const symbolSize = Math.min(blockWidth * 0.5, blockHeight * 0.5, 24);
+
+                drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, 0.9);
+
+                // ブロック高さが十分な場合は n/m テキストも表示
+                if (blockHeight >= 60 && slotCapacity > 0) {
+                    const textY = symbolCenterY + symbolSize / 2 + 8;
+                    drawSlotInfoText(contentCtx, x + 5, textY, blockWidth - 10, slotAvailable, slotCapacity, false, 0.9);
                 }
 
                 // Hit Test用に登録

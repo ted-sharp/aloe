@@ -10,23 +10,13 @@ import { drawRect, drawLine, drawText, drawCircle, drawPolygon } from '../utils/
 import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
 import { getRenderState } from './canvas-render-state.js';
 import { isDateInRange } from '../utils/date-utils.js';
-
-/**
- * 空き率から記号を決定
- * @param {number} vacancyRatio - 空き率（マイナス値も許容）
- * @returns {string} 記号の種類: 'x', 'triangle', 'circle', 'double-circle'
- */
-export function getSymbolFromVacancyRatio(vacancyRatio) {
-    if (vacancyRatio <= 0) {
-        return 'x'; // ×（バツ）
-    } else if (vacancyRatio < 0.3) {
-        return 'triangle'; // △（三角）
-    } else if (vacancyRatio < 0.6) {
-        return 'circle'; // ○（丸）
-    } else {
-        return 'double-circle'; // ◎（二重丸）
-    }
-}
+import {
+    getSymbolFromVacancyRatio,
+    calculateVacancyRatio,
+    drawSymbol,
+    drawSlotInfoText,
+    drawNoDataDash
+} from '../utils/slot-display-utils.js';
 
 /**
  * 簡易表示モードで記号を描画（Canvas版）
@@ -67,96 +57,17 @@ export function renderCanvasSimpleViewSymbol(contentCtx, params) {
     const availableNum = available ?? 0;
     const capacityNum = capacity ?? 0;
     if (availableNum === 0 && capacityNum === 0) {
-        const dashFontSize = symbolSize * 1.2;
-        drawText(contentCtx, {
-            text: '–',
-            x: cellLeft,
-            y: symbolCenterY - dashFontSize * 0.35,
-            width: cellWidth,
-            fill: isDateGrayed ? '#9ca3af' : '#6b7280',
-            fontSize: dashFontSize,
-            align: 'center',
-            opacity: opacity
-        });
+        drawNoDataDash(contentCtx, cellLeft, symbolCenterY, cellWidth, isDateGrayed, opacity);
         return;
     }
 
-    // 記号を描画
-    switch (symbolType) {
-        case 'x':
-            // ×（バツ）- 赤色
-            const xFontSize = symbolSize * 1.2;
-            drawText(contentCtx, {
-                text: '×',
-                x: cellLeft,
-                y: symbolCenterY - xFontSize * 0.35,
-                width: cellWidth,
-                fill: '#ef4444',
-                fontSize: xFontSize,
-                align: 'center',
-                opacity: opacity
-            });
-            break;
-
-        case 'triangle':
-            // △（三角）- 黄色
-            drawPolygon(contentCtx, {
-                x: symbolCenterX,
-                y: symbolCenterY,
-                sides: 3,
-                radius: symbolSize / 2,
-                rotation: 90,
-                fill: '#fbbf24',
-                opacity: opacity
-            });
-            break;
-
-        case 'circle':
-            // ○（丸）- 緑色
-            drawCircle(contentCtx, {
-                x: symbolCenterX,
-                y: symbolCenterY,
-                radius: symbolSize / 2,
-                fill: '#10b981',
-                opacity: opacity
-            });
-            break;
-
-        case 'double-circle':
-            // ◎（二重丸）- 緑色
-            drawCircle(contentCtx, {
-                x: symbolCenterX,
-                y: symbolCenterY,
-                radius: symbolSize / 2,
-                fill: '#10b981',
-                opacity: opacity
-            });
-            drawCircle(contentCtx, {
-                x: symbolCenterX,
-                y: symbolCenterY,
-                radius: symbolSize / 3,
-                fill: '#10b981',
-                opacity: opacity
-            });
-            break;
-    }
+    // 記号を描画（統一されたロジックを使用）
+    drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, opacity);
 
     // 「n/m」テキストを表示
     if (shouldShowAvailableText && capacity > 0) {
-        const textFontSize = Math.max(8, Math.min(cellWidth * 0.12, 12));
         const textY = symbolCenterY + symbolSize / 2 + 4;
-
-        drawText(contentCtx, {
-            text: `${Math.round(available)}/${Math.round(capacity)}`,
-            x: cellLeft,
-            y: textY,
-            width: cellWidth,
-            fill: isDateGrayed ? '#9ca3af' : '#6b7280',
-            fontSize: textFontSize,
-            fontFamily: CONFIG.font.numberFamily,
-            align: 'center',
-            opacity: opacity
-        });
+        drawSlotInfoText(contentCtx, cellLeft, textY, cellWidth, available, capacity, isDateGrayed, opacity);
     }
 }
 
@@ -614,30 +525,9 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     const showSimpleView = state.options?.showSimpleView ?? false;
 
     if (showSimpleView) {
-        // 簡易表示モード
-        let overallVacancyRatio = 0;
-        let totalAvailable = 0;
-        let totalCapacity = 0;
-
-        if (slotCount > 0) {
-            for (let i = 0; i < slotCount; i++) {
-                // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
-                const isSlotGrayed = slotFlags ? (slotFlags[i] & 0b001) !== 0 : false;
-                if (isSlotGrayed || isDateGrayed) {
-                    continue;
-                }
-
-                const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 1;
-                const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
-
-                totalCapacity += cap;
-                totalAvailable += (cap - count);
-            }
-
-            if (totalCapacity > 0) {
-                overallVacancyRatio = totalAvailable / totalCapacity;
-            }
-        }
+        // 簡易表示モード - 統一されたロジックで空き率を計算
+        const { vacancyRatio: overallVacancyRatio, available: totalAvailable, capacity: totalCapacity } =
+            calculateVacancyRatio(slotCaps, slotCounts, slotFlags, isDateGrayed);
 
         const symbolType = getSymbolFromVacancyRatio(overallVacancyRatio);
         renderCanvasSimpleViewSymbol(contentCtx, {

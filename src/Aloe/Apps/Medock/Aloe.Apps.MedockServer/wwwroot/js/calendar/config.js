@@ -16,7 +16,7 @@ export const CONFIG = {
             background: '#e5e7eb'  // 背景（グレー）
         },
         status: {
-            0: '#fbbf24', // Reserved (warning)
+            0: '#9ca3af', // Reserved (gray)
             1: '#60a5fa', // Waiting (info)
             2: '#34d399', // Visited (success)
             3: '#f87171'  // Cancelled (error)
