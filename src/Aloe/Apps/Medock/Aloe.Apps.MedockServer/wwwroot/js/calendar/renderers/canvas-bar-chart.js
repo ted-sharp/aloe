@@ -105,7 +105,7 @@ export function renderCanvasSimpleViewSymbol(contentCtx, params) {
                 y: symbolCenterY,
                 sides: 3,
                 radius: symbolSize / 2,
-                rotation: 180,
+                rotation: 90,
                 fill: '#fbbf24',
                 opacity: opacity
             });
