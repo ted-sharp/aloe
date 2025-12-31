@@ -155,8 +155,8 @@ public class AppointmentLoader : IAppointmentLoader
                 new DateOnly(currentDate.Year, currentDate.Month, DateTime.DaysInMonth(currentDate.Year, currentDate.Month))
             ),
             CalendarViewType.Week => (
-                currentDate.AddDays(-((int)currentDate.DayOfWeek)),
-                currentDate.AddDays(-((int)currentDate.DayOfWeek) + weekDays - 1)
+                currentDate,
+                currentDate.AddDays(weekDays - 1)
             ),
             _ => (currentDate, currentDate)
         };

@@ -86,7 +86,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     const dayWidth = (width - timeColumnWidth) / weekDays;
     const hourHeight = (height - headerHeight) / hours;
 
-    const startDate = getStartOfWeek(state.currentDate);
+    // startDateを日付のみに正規化（時刻を00:00:00に）
+    const startDate = new Date(state.currentDate);
+    startDate.setHours(0, 0, 0);
 
     // ヘッダー背景
     drawRect(gridCtx, {
@@ -241,6 +243,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 const statusColor = CONFIG.colors.status[appt.status] || '#9ca3af';
 
+                // console.log(`[WeekView] Block ${index}: blockHeight=${blockHeight.toFixed(2)}, dayWidth=${dayWidth.toFixed(2)}, hourHeight=${hourHeight.toFixed(2)}, patient=${appt.patientName}`);
+
                 // ブロック
                 drawRect(contentCtx, {
                     x: x,
@@ -254,6 +258,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 // テキスト
                 if (blockHeight > 20) {
+                    // console.log(`[WeekView] Block ${index}: Drawing text (blockHeight=${blockHeight.toFixed(2)} > 20)`);
                     drawText(contentCtx, {
                         text: appt.patientName || '患者',
                         x: x + 5,
@@ -274,6 +279,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                             fontSize: CONFIG.font.sizeSmall - 1
                         });
                     }
+                } else {
+                    // console.log(`[WeekView] Block ${index}: Skipping text (blockHeight=${blockHeight.toFixed(2)} <= 20)`);
                 }
 
                 // Hit Test用に登録
@@ -374,15 +381,15 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     targetBounds: { x: 0, y: 0, width, height },
                     transitionType: transitionInfo.transitionType
                 };
-                console.log('Week View: Month-to-Week transition', commitOptions);
+                // console.log('Week View: Month-to-Week transition', commitOptions);
             } else {
-                console.warn('Week View: sourceBounds not found in transitionInfo, falling back to scalefade');
+                // console.warn('Week View: sourceBounds not found in transitionInfo, falling back to scalefade');
                 fadeMode = 'scalefade';
             }
         }
         // 週 → 月: この遷移は月ビューで処理されるため、ここには来ない
         else if (transitionInfo.transitionType === 'week-to-month') {
-            console.warn('Week View: Unexpected week-to-month transition (should be handled by month view)');
+            // console.warn('Week View: Unexpected week-to-month transition (should be handled by month view)');
             fadeMode = 'scalefade';
         }
     }
