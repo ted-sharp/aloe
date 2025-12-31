@@ -23,9 +23,16 @@ public partial class DayDetailPopup : ComponentBase
     [Parameter]
     public EventCallback<DateOnly> OnGoToWeekView { get; set; }
 
+    [Parameter]
+    public EventCallback<DateOnly> OnNavigateToPreviousDay { get; set; }
+
+    [Parameter]
+    public EventCallback<DateOnly> OnNavigateToNextDay { get; set; }
+
     private string ChartContainerId { get; } = $"day-detail-chart-{Guid.CreateVersion7():N}";
     private bool _isChartRendered;
     private bool _wasOpen;
+    private DateOnly? _previousSelectedDate;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -33,13 +40,23 @@ public partial class DayDetailPopup : ComponentBase
         if (this.IsOpen && !this._wasOpen && this.SelectedDate.HasValue)
         {
             this._wasOpen = true;
+            this._previousSelectedDate = this.SelectedDate;
             await this.RenderChartAsync();
         }
         else if (!this.IsOpen && this._wasOpen)
         {
             this._wasOpen = false;
             this._isChartRendered = false;
+            this._previousSelectedDate = null;
             await this.DestroyChartAsync();
+        }
+        // SelectedDateが変更された場合、グラフを再描画
+        else if (this.IsOpen && this._wasOpen && this.SelectedDate != this._previousSelectedDate)
+        {
+            this._previousSelectedDate = this.SelectedDate;
+            this._isChartRendered = false;
+            await this.DestroyChartAsync();
+            await this.RenderChartAsync();
         }
     }
 
@@ -185,5 +202,21 @@ public partial class DayDetailPopup : ComponentBase
             await this.OnGoToWeekView.InvokeAsync(this.SelectedDate.Value);
         }
         await this.HandleClose();
+    }
+
+    private async Task HandleNavigateToPreviousDay()
+    {
+        if (this.SelectedDate.HasValue)
+        {
+            await this.OnNavigateToPreviousDay.InvokeAsync(this.SelectedDate.Value.AddDays(-1));
+        }
+    }
+
+    private async Task HandleNavigateToNextDay()
+    {
+        if (this.SelectedDate.HasValue)
+        {
+            await this.OnNavigateToNextDay.InvokeAsync(this.SelectedDate.Value.AddDays(1));
+        }
     }
 }

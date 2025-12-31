@@ -658,7 +658,6 @@ public partial class Calendar : ComponentBase
         this.CloseDayDetail();
         this.State.CurrentDate = date;
         this.State.CurrentView = CalendarViewType.Week;
-        this.State.WeekDays = 1;
         this.Layout?.UpdateCurrentView("week");
         this.RegisterLayoutActions();
         await this.RefreshCalendarDataAsync();
@@ -666,13 +665,54 @@ public partial class Calendar : ComponentBase
         this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: LoadMainStatsAsync 完了, Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
     }
 
+    private async Task HandleDayDetailNavigateToPreviousDay(DateOnly date)
+    {
+        this.DayDetailDate = date;
+        this.State.CurrentDate = date;
+        await this.RefreshCalendarDataAsync();
+        this.StateHasChanged();
+    }
+
+    private async Task HandleDayDetailNavigateToNextDay(DateOnly date)
+    {
+        this.DayDetailDate = date;
+        this.State.CurrentDate = date;
+        await this.RefreshCalendarDataAsync();
+        this.StateHasChanged();
+    }
+
     /// <summary>
     /// キーボード入力ハンドラー
     /// </summary>
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
+        // 日詳細ダイアログが開いている場合の処理
+        if (this.IsDayDetailOpen && this.DayDetailDate.HasValue)
+        {
+            switch (e.Key)
+            {
+                case "ArrowLeft":
+                    await this.HandleDayDetailNavigateToPreviousDay(this.DayDetailDate.Value.AddDays(-1));
+                    return;
+                case "ArrowRight":
+                    await this.HandleDayDetailNavigateToNextDay(this.DayDetailDate.Value.AddDays(1));
+                    return;
+                case "Escape":
+                    this.CloseDayDetail();
+                    return;
+                default:
+                    // その他のすべてのキーを吸収（応答しない）
+                    return;
+            }
+        }
+
         switch (e.Key)
         {
+            case "Enter":
+            case " ":
+                // CurrentDateの日詳細を開く
+                this.HandleShowDayDetail(this.State.CurrentDate);
+                break;
             case "ArrowLeft":
                 await this.PreviousPeriod();
                 break;
