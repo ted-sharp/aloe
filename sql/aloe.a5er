@@ -1533,8 +1533,8 @@ FontColor=$000000
 LineColor=$000000
 BkColor=$FFFFFF
 Page=appt
-Left=320
-Top=1791
+Left=1500
+Top=1600
 ZOrder=363
 Width=828
 Height=1008
@@ -2130,7 +2130,7 @@ LName=appointment_stat_slots
 Comment=
 TableInnerOption=
 TableOption=
-Page=appt
+Page=APPT
 Left=3000
 Top=1900
 Field="appt_stat_slot_id","appt_stat_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
@@ -2148,7 +2148,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251226223538
-Position="appt",3000,1900
+Position="APPT",3000,1900
 ZOrder=393
 
 [Relation]
@@ -2171,3 +2171,47 @@ Bar3=155
 TermPos1=R
 TermPos2=R
 ZOrder=394
+
+[Entity]
+PName=facility_holidays
+LName=facility_holidays
+Comment=
+TableInnerOption=
+TableOption=
+Page=appt
+Left=300
+Top=1700
+Field="holiday_id","holiday_id","UUID","NOT NULL",0,"","",$000028FF,""
+Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
+Field="holiday_date","holiday_date","@DATE","NOT NULL",,"CURRENT_DATE","",$000000FF,""
+Field="holiday_name","holiday_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="holiday_desc","holiday_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Index==1,facility_id,holiday_date
+IndexOption=WHERE is_deleted = FALSE
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20251231154927
+Position="appt",300,1700
+ZOrder=395
+
+[Relation]
+Entity1=facilities
+Entity2=facility_holidays
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,1661,8339,1946,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=166
+Bar2=834
+Bar3=195
+TermPos1=R
+TermPos2=L
+ZOrder=396

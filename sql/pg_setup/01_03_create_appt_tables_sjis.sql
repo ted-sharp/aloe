@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/26 22:36:10
+-- Date/Time    : 2025/12/31 15:58:12
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -345,6 +345,35 @@ CREATE UNIQUE INDEX "facility_business_hours_PKI"
 
 ALTER TABLE "facility_business_hours"
   ADD CONSTRAINT "facility_business_hours_PKC" PRIMARY KEY ("facility_business_hours_id");
+
+-- facility_holidays
+-- * BackupToTempTable
+DROP TABLE if exists "facility_holidays" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "facility_holidays" (
+  "holiday_id" UUID NOT NULL
+  , "facility_id" UUID NOT NULL
+  , "holiday_date" date DEFAULT CURRENT_DATE NOT NULL
+  , "holiday_name" character varying(100) DEFAULT '' NOT NULL
+  , "holiday_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "facility_holidays_IX1"
+  ON "facility_holidays"("facility_id","holiday_date") WHERE is_deleted = FALSE;
+
+CREATE UNIQUE INDEX "facility_holidays_PKI"
+  ON "facility_holidays"("holiday_id");
+
+ALTER TABLE "facility_holidays"
+  ADD CONSTRAINT "facility_holidays_PKC" PRIMARY KEY ("holiday_id");
 
 -- facility_policies
 -- * BackupToTempTable
@@ -1453,6 +1482,11 @@ ALTER TABLE "facility_business_hours"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "facility_holidays"
+  ADD CONSTRAINT "facility_holidays_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "facility_policies"
   ADD CONSTRAINT "facility_policies_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
   ON DELETE CASCADE
@@ -1754,6 +1788,20 @@ COMMENT ON COLUMN "facility_business_hours"."created_session_id" IS 'created_ses
 COMMENT ON COLUMN "facility_business_hours"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "facility_business_hours"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "facility_business_hours"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "facility_holidays" IS 'facility_holidays';
+COMMENT ON COLUMN "facility_holidays"."holiday_id" IS 'holiday_id';
+COMMENT ON COLUMN "facility_holidays"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "facility_holidays"."holiday_date" IS 'holiday_date';
+COMMENT ON COLUMN "facility_holidays"."holiday_name" IS 'holiday_name';
+COMMENT ON COLUMN "facility_holidays"."holiday_desc" IS 'holiday_desc';
+COMMENT ON COLUMN "facility_holidays"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "facility_holidays"."created_at" IS 'created_at';
+COMMENT ON COLUMN "facility_holidays"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "facility_holidays"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "facility_holidays"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "facility_holidays"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "facility_holidays"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "facility_policies" IS 'facility_policies';
 COMMENT ON COLUMN "facility_policies"."facility_policy_id" IS 'facility_policy_id';
