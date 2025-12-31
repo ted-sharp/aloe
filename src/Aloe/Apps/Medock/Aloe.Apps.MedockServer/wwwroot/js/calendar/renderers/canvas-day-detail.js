@@ -127,20 +127,21 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         fill: '#ffffff'
     });
 
+    // 日付テキストの色を計算
+    const dayOfWeek = new Date(dateStr).getDay();
+    let textColor;
+    if (isDateGrayed) {
+        textColor = '#9ca3af';
+    } else if (isHoliday || dayOfWeek === 0) {
+        textColor = CONFIG.colors.weekend.sun;
+    } else if (dayOfWeek === 6) {
+        textColor = CONFIG.colors.weekend.sat;
+    } else {
+        textColor = '#374151';
+    }
+
     // 日付テキスト
     if (showDateText) {
-        const dayOfWeek = new Date(dateStr).getDay();
-        let textColor;
-        if (isDateGrayed) {
-            textColor = '#9ca3af';
-        } else if (isHoliday || dayOfWeek === 0) {
-            textColor = CONFIG.colors.weekend.sun;
-        } else if (dayOfWeek === 6) {
-            textColor = CONFIG.colors.weekend.sat;
-        } else {
-            textColor = '#374151';
-        }
-
         drawText(contentCtx, {
             text: `${dateStr} (${dayNumber}日)`,
             x: yAxisWidth,

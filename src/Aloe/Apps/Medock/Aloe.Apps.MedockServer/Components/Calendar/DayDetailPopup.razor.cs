@@ -33,6 +33,7 @@ public partial class DayDetailPopup : ComponentBase
     private bool _isChartRendered;
     private bool _wasOpen;
     private DateOnly? _previousSelectedDate;
+    private string? HolidayName { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -42,12 +43,14 @@ public partial class DayDetailPopup : ComponentBase
             this._wasOpen = true;
             this._previousSelectedDate = this.SelectedDate;
             await this.RenderChartAsync();
+            await this.LoadHolidayNameAsync();
         }
         else if (!this.IsOpen && this._wasOpen)
         {
             this._wasOpen = false;
             this._isChartRendered = false;
             this._previousSelectedDate = null;
+            this.HolidayName = null;
             await this.DestroyChartAsync();
         }
         // SelectedDateが変更された場合、グラフを再描画
@@ -57,6 +60,28 @@ public partial class DayDetailPopup : ComponentBase
             this._isChartRendered = false;
             await this.DestroyChartAsync();
             await this.RenderChartAsync();
+            await this.LoadHolidayNameAsync();
+        }
+    }
+
+    private async Task LoadHolidayNameAsync()
+    {
+        if (!this.SelectedDate.HasValue)
+        {
+            this.HolidayName = null;
+            return;
+        }
+
+        try
+        {
+            var dateStr = this.SelectedDate.Value.ToString("yyyy-MM-dd");
+            this.HolidayName = await this.JSRuntime.InvokeAsync<string?>(
+                "MedockCalendar.getHolidayName", dateStr);
+            this.StateHasChanged();
+        }
+        catch
+        {
+            this.HolidayName = null;
         }
     }
 
@@ -152,10 +177,37 @@ public partial class DayDetailPopup : ComponentBase
         return DayOfWeekNames[(int)date.DayOfWeek];
     }
 
+    private string GetDateColorClass()
+    {
+        if (!this.SelectedDate.HasValue)
+            return "";
+
+        // 祝日は赤
+        if (!string.IsNullOrEmpty(this.HolidayName))
+            return "text-red-600";
+
+        var date = this.SelectedDate.Value;
+        var dayOfWeek = (int)date.DayOfWeek;
+
+        // 日曜日は赤、土曜日は青
+        if (dayOfWeek == 0)
+            return "text-red-600";
+        if (dayOfWeek == 6)
+            return "text-blue-600";
+
+        return "";
+    }
+
     private int GetTotalCount()
     {
         var slots = this.GetSlotsFromStats();
         return slots.Sum(s => s.Count);
+    }
+
+    private int GetTotalCapacity()
+    {
+        var slots = this.GetSlotsFromStats();
+        return slots.Sum(s => s.Cap);
     }
 
     private double GetOverallVacancyRatio()
@@ -169,6 +221,15 @@ public partial class DayDetailPopup : ComponentBase
 
     private string GetSymbol()
     {
+        var slots = this.GetSlotsFromStats();
+        var totalCount = slots.Sum(s => s.Count);
+        var totalCap = slots.Sum(s => s.Cap);
+        var totalAvailable = totalCap - totalCount;
+
+        // データなし（available と capacity が両方 0）
+        if (totalAvailable == 0 && totalCap == 0)
+            return "–";
+
         var vacancyRatio = this.GetOverallVacancyRatio();
         return vacancyRatio switch
         {
@@ -181,12 +242,22 @@ public partial class DayDetailPopup : ComponentBase
 
     private string GetSymbolColorClass()
     {
+        var slots = this.GetSlotsFromStats();
+        var totalCount = slots.Sum(s => s.Count);
+        var totalCap = slots.Sum(s => s.Cap);
+        var totalAvailable = totalCap - totalCount;
+
+        // データなし（available と capacity が両方 0）
+        if (totalAvailable == 0 && totalCap == 0)
+            return "text-gray-400";
+
         var vacancyRatio = this.GetOverallVacancyRatio();
         return vacancyRatio switch
         {
-            <= 0 => "text-red-500",
-            < 0.3 => "text-yellow-500",
-            _ => "text-emerald-500"
+            <= 0 => "text-red-500",      // × 満杯
+            < 0.3 => "text-yellow-500",  // △ やや空き
+            < 0.6 => "text-emerald-500", // ○ 空きあり
+            _ => "text-emerald-500"      // ◎ 十分空き
         };
     }
 

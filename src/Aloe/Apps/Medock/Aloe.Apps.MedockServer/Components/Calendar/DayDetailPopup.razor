@@ -8,30 +8,44 @@
 
         <div class="modal-box max-w-[90vw] max-h-[90vh] w-[90vw] h-[90vh] overflow-hidden flex flex-col bg-base-100/90 backdrop-blur-md">
             <!-- ヘッダー -->
-            <div class="flex items-start justify-between mb-2 flex-shrink-0">
-                <div class="flex items-center gap-2">
-                    <!-- 前日ボタン -->
-                    <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleNavigateToPreviousDay">&lt;</button>
+            <div class="flex-shrink-0 mb-2">
+                <!-- 年月日とナビゲーション -->
+                <div class="flex items-start gap-2">
+                    <!-- 前日ボタン + 年月日 + 翌日ボタン -->
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleNavigateToPreviousDay">&lt;</button>
                     @if (SelectedDate.HasValue)
                     {
-                        <div class="flex flex-col">
-                            <!-- 年月日を大きめに表示 -->
-                            <h3 class="font-bold text-2xl">
-                                @SelectedDate.Value.ToString("yyyy年MM月dd日")
-                            </h3>
-                            <!-- 曜日 + 件数 + 割合 + 記号 -->
-                            <div class="flex items-center gap-2 text-base mt-1">
-                                <span>@GetDayOfWeekJapanese(SelectedDate.Value)</span>
-                                <span>@GetTotalCount()件</span>
-                                <span>空き@(Math.Round(GetOverallVacancyRatio() * 100))%</span>
-                                <span class="font-bold text-lg @GetSymbolColorClass()">@GetSymbol()</span>
-                            </div>
-                        </div>
+                        <h3 class="font-bold text-2xl @GetDateColorClass()">
+                            @SelectedDate.Value.ToString("yyyy年MM月dd日")
+                        </h3>
                     }
-                    <!-- 翌日ボタン -->
-                    <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleNavigateToNextDay">&gt;</button>
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleNavigateToNextDay">&gt;</button>
+
+                    <!-- スペーサー -->
+                    <div class="flex-grow"></div>
+
+                    <!-- 閉じるボタン -->
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleClose">✕</button>
                 </div>
-                <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleClose">✕</button>
+
+                <!-- 祝日名・曜日情報（年月日の下） -->
+                @if (SelectedDate.HasValue)
+                {
+                    <div class="ml-10">
+                        <!-- 祝日名（あれば表示）-->
+                        @if (!string.IsNullOrEmpty(HolidayName))
+                        {
+                            <div class="text-red-600 font-semibold">@HolidayName</div>
+                        }
+                        <!-- 曜日 + 件数 + 割合 + 記号 -->
+                        <div class="flex items-center gap-2 text-base mt-1">
+                            <span class="@GetDateColorClass()">@GetDayOfWeekJapanese(SelectedDate.Value)</span>
+                            <span>@GetTotalCount()/@GetTotalCapacity()件</span>
+                            <span>空き@(Math.Round(GetOverallVacancyRatio() * 100))%</span>
+                            <span class="font-bold text-lg @GetSymbolColorClass()">@GetSymbol()</span>
+                        </div>
+                    </div>
+                }
             </div>
 
             <!-- Konvaキャンバスコンテナ -->

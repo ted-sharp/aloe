@@ -404,6 +404,16 @@ function destroyDayDetailPopup(containerId) {
     }
 }
 
+/**
+ * 指定日付の祝日名を取得
+ * @param {string} dateStr - 日付文字列（YYYY-MM-DD形式）
+ * @returns {string|null} 祝日名、祝日でない場合はnull
+ */
+function getHolidayName(dateStr) {
+    const state = getState();
+    return state.holidays?.get(dateStr) || null;
+}
+
 // Export Public API to global scope
 window.MedockCalendar = {
     init,
@@ -414,5 +424,6 @@ window.MedockCalendar = {
     render,
     destroy,
     renderDayDetailPopup,
-    destroyDayDetailPopup
+    destroyDayDetailPopup,
+    getHolidayName
 };

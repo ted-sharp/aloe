@@ -521,6 +521,28 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         align: 'center'
     });
 
+    // 祝日名を表示
+    const holidayName = state.holidays?.get(dateStr);
+    if (holidayName) {
+        const holidayFontSize = isYearView ? 7 : 12;
+        const maxHolidayChars = Math.floor(cellWidth / (holidayFontSize * 0.6)); // 文字幅の推定
+        const displayHolidayName = holidayName.length > maxHolidayChars
+            ? holidayName.substring(0, Math.max(1, maxHolidayChars - 1)) + '…'
+            : holidayName;
+
+        drawText(contentCtx, {
+            text: displayHolidayName,
+            x: cellLeft + 1,
+            y: cellTop + dateFontSize + 4,
+            width: cellWidth - 2,
+            fill: textColor,
+            fontSize: holidayFontSize,
+            fontFamily: CONFIG.font.numberFamily,
+            align: 'center',
+            opacity: 0.9
+        });
+    }
+
     // 簡易表示モードの判定
     const showSimpleView = state.options?.showSimpleView ?? false;
 

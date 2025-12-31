@@ -88,7 +88,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     const { weekDays, startHour, endHour, showSlots } = state.options;
     const hours = endHour - startHour;
     const timeColumnWidth = 60;
-    const headerHeight = 50;
+    const headerHeight = 65;
     const hourHeight = (height - headerHeight) / hours;
 
     // startDate: currentDate から始まる週表示
@@ -175,6 +175,26 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             fontSize: CONFIG.font.sizeMedium,
             align: 'center'
         });
+
+        // 祝日名を表示
+        const holidayName = state.holidays?.get(dateStr);
+        if (holidayName) {
+            const maxHolidayChars = Math.floor(dayWidth / (9 * 0.6)); // 文字幅の推定
+            const displayHolidayName = holidayName.length > maxHolidayChars
+                ? holidayName.substring(0, Math.max(1, maxHolidayChars - 1)) + '…'
+                : holidayName;
+
+            drawText(gridCtx, {
+                text: displayHolidayName,
+                x: x,
+                y: 41,
+                width: dayWidth,
+                fill: dayTextColor,
+                fontSize: 9,
+                align: 'center',
+                opacity: 0.8
+            });
+        }
 
         xOffset += dayWidth;
     }
