@@ -89,12 +89,22 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     const hours = endHour - startHour;
     const timeColumnWidth = 60;
     const headerHeight = 50;
-    const dayWidth = (width - timeColumnWidth) / weekDays;
     const hourHeight = (height - headerHeight) / hours;
 
     // startDate: currentDate から始まる週表示
     const startDate = new Date(state.currentDate);
     startDate.setHours(0, 0, 0);
+
+    // 各日付にデータがあるかチェックして、幅を動的に計算
+    const dayWidths = [];
+    const baseWidth = (width - timeColumnWidth) / weekDays;
+    for (let i = 0; i < weekDays; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const dateStr = dateToString(date);
+        const hasData = state.appointments && state.appointments.some(appt => appt.date === dateStr);
+        dayWidths.push(hasData ? baseWidth : baseWidth * 0.5);
+    }
 
     // ヘッダー背景
     drawRect(gridCtx, {
@@ -120,12 +130,15 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
     // 曜日ヘッダー
     const dayNames = ['日', '月', '火', '水', '木', '金', '土'];
+    let xOffset = timeColumnWidth;
     for (let i = 0; i < weekDays; i++) {
         const date = new Date(startDate);
         date.setDate(date.getDate() + i);
         const dateStr = dateToString(date);
         const dayOfWeek = date.getDay();
-        const x = timeColumnWidth + i * dayWidth;
+        const dayWidth = dayWidths[i];
+        const x = xOffset;
+        const isHoliday = state.holidays && state.holidays.has(dateStr);
 
         // ヘッダーセル背景
         const isTodayCell = isToday(dateStr);
@@ -140,12 +153,13 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         });
 
         // 曜日名
+        const dayTextColor = isHoliday || dayOfWeek === 0 ? CONFIG.colors.weekend.sun : dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151';
         drawText(gridCtx, {
             text: dayNames[dayOfWeek],
             x: x,
             y: 10,
             width: dayWidth,
-            fill: dayOfWeek === 0 ? CONFIG.colors.weekend.sun : dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151',
+            fill: dayTextColor,
             fontSize: CONFIG.font.sizeMedium,
             fontStyle: 'bold',
             align: 'center'
@@ -157,10 +171,12 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             x: x,
             y: 28,
             width: dayWidth,
-            fill: '#6b7280',
-            fontSize: CONFIG.font.sizeSmall,
+            fill: dayTextColor,
+            fontSize: CONFIG.font.sizeMedium,
             align: 'center'
         });
+
+        xOffset += dayWidth;
     }
 
     // 時間軸グリッド
@@ -213,13 +229,16 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     }
 
     // 縦線（曜日の区切り）
+    let verticalLineX = timeColumnWidth;
     for (let i = 0; i <= weekDays; i++) {
-        const x = timeColumnWidth + i * dayWidth;
         drawLine(gridCtx, {
-            points: [x, headerHeight, x, height],
+            points: [verticalLineX, headerHeight, verticalLineX, height],
             stroke: CONFIG.colors.grid,
             strokeWidth: 1
         });
+        if (i < weekDays) {
+            verticalLineX += dayWidths[i];
+        }
     }
 
     // 予約を描画
@@ -242,7 +261,13 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     return; // 範囲外
                 }
 
-                const x = timeColumnWidth + daysDiff * dayWidth + 2;
+                // daysDiffまでの幅の合計を計算
+                let xStart = timeColumnWidth;
+                for (let j = 0; j < daysDiff; j++) {
+                    xStart += dayWidths[j];
+                }
+                const dayWidth = dayWidths[daysDiff];
+                const x = xStart + 2;
                 const y = headerHeight + (startTime - startHour) * hourHeight;
                 const blockWidth = dayWidth - 4;
                 const blockHeight = (endTime - startTime) * hourHeight;
@@ -361,9 +386,15 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                 const [dayIndex, hourNum, half] = slotKey.split('-').map(Number);
                 const slotHeight = hourHeight / 2;
                 const maxAvatars = 4; // 1スロット最大4人まで表示
+                const dayWidth = dayWidths[dayIndex];
                 const avatarSize = Math.min(28, slotHeight - 4, (dayWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
 
-                const baseX = timeColumnWidth + dayIndex * dayWidth + 4;
+                // dayIndexまでの幅の合計を計算
+                let baseXStart = timeColumnWidth;
+                for (let j = 0; j < dayIndex; j++) {
+                    baseXStart += dayWidths[j];
+                }
+                const baseX = baseXStart + 4;
                 const baseY = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight + (slotHeight - avatarSize) / 2;
 
                 slotAppts.slice(0, maxAvatars).forEach((appt, idx) => {
