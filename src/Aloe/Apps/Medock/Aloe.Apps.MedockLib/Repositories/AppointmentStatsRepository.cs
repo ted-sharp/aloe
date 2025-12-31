@@ -243,6 +243,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 COALESCE(SUM(s.appt_available), 0)::int as ""TotalAvailable"",
                 array_agg(ss.slot_start ORDER BY ss.slot_start)::int[] as ""SlotStartMinutes"",
                 array_agg(ss.slot_end ORDER BY ss.slot_start)::int[] as ""SlotEndMinutes"",
+                array_agg(ss.slot_cap ORDER BY ss.slot_start)::int[] as ""SlotCaps"",
                 array_agg(ss.slot_available ORDER BY ss.slot_start)::int[] as ""SlotAvailables""
             FROM appointment_stats s
             INNER JOIN appointment_resources ar ON s.appt_res_id = ar.appt_res_id
@@ -298,7 +299,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                     SlotStarts = slotStarts,
                     SlotEnds = slotEnds,
                     SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
-                    SlotCaps = Array.Empty<int>(), // Equipmentでは使用しない
+                    SlotCaps = item.SlotCaps ?? Array.Empty<int>(), // 空き率計算用
                     SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
                     SlotFlags = null, // 将来的にIsOutsideHoursなどを設定
                     SlotFilteredCounts = null, // 現時点では使用しない
@@ -326,6 +327,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         public int TotalAvailable { get; set; }
         public int[]? SlotStartMinutes { get; set; }
         public int[]? SlotEndMinutes { get; set; }
+        public int[]? SlotCaps { get; set; }
         public int[]? SlotAvailables { get; set; }
     }
 }

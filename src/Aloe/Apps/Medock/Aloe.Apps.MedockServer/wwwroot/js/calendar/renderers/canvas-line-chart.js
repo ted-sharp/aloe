@@ -1,8 +1,10 @@
 /**
  * Canvas Line Chart Renderer
- * 
- * Equipmentリソースの空き数（available）を時間軸に沿った折れ線グラフで描画
- * Mainリソースの棒グラフと同じ時間軸を使用
+ *
+ * Equipmentリソースの空き率を時間軸に沿った折れ線グラフで描画
+ * - Y軸: 0-100%（第二軸、右側に配置）
+ * - 空き率: (available / capacity) × 100
+ * - 複数リソース選択時: AND合成（最小空き率を採用）
  */
 
 import { drawLine, drawCircle } from '../utils/canvas-utils.js';
@@ -47,17 +49,107 @@ function timeToX(timeInHours, startHour, endHour, lunchStartHour, lunchEndHour, 
 }
 
 /**
- * 時間文字列（"HH:mm"）を時間数に変換
- * @param {string} timeStr - 時間文字列（"09:30"形式）
- * @returns {number} 時間数（例：9.5）
+ * 複数リソースのスロットをAND合成（最小空き率を計算）
+ * @param {Array} resources - Equipmentリソースの配列
+ * @returns {Array} 合成されたスロットデータ [{startHours, endHours, availabilityRate}, ...]
  */
-function parseTime(timeStr) {
-    const parts = timeStr.split(':');
-    return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+function computeAndCompositeSlots(resources) {
+    if (!resources || resources.length === 0) {
+        return [];
+    }
+
+    // 単一リソースの場合はそのまま空き率を計算
+    if (resources.length === 1) {
+        const resource = resources[0];
+        const { slotStarts, slotEnds, slotAvailables, slotCaps } = resource;
+        if (!slotStarts || slotStarts.length === 0) {
+            return [];
+        }
+
+        const result = [];
+        for (let i = 0; i < slotStarts.length; i++) {
+            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const available = slotAvailables[i] || 0;
+            const capacity = slotCaps[i] || 0;
+            // 空き率を計算（オーバーブッキング時は負の値になり、下に突き抜けて表示される）
+            const availabilityRate = capacity > 0 ? (available / capacity) * 100 : 0;
+
+            result.push({
+                startHours: startMinutes / 60,
+                endHours: endMinutes / 60,
+                availabilityRate: availabilityRate
+            });
+        }
+        return result;
+    }
+
+    // 複数リソースの場合: 時間軸上で合成
+    // 全リソースの時間帯境界を収集
+    const timePoints = new Set();
+    resources.forEach(resource => {
+        const { slotStarts, slotEnds } = resource;
+        if (!slotStarts) return;
+        for (let i = 0; i < slotStarts.length; i++) {
+            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            timePoints.add(startMinutes);
+            timePoints.add(endMinutes);
+        }
+    });
+
+    // 時間帯境界をソート
+    const sortedTimePoints = Array.from(timePoints).sort((a, b) => a - b);
+    if (sortedTimePoints.length < 2) {
+        return [];
+    }
+
+    // 各時間区間で最小空き率を計算
+    const result = [];
+    for (let i = 0; i < sortedTimePoints.length - 1; i++) {
+        const segmentStart = sortedTimePoints[i];
+        const segmentEnd = sortedTimePoints[i + 1];
+        const segmentMid = (segmentStart + segmentEnd) / 2;
+
+        // この時間区間に含まれる各リソースの空き率を計算
+        let minAvailabilityRate = 100; // 最大値から開始
+        let hasData = false;
+
+        resources.forEach(resource => {
+            const { slotStarts, slotEnds, slotAvailables, slotCaps } = resource;
+            if (!slotStarts) return;
+
+            for (let j = 0; j < slotStarts.length; j++) {
+                const slotStartMinutes = slotStarts[j].split(':').map(Number).reduce((h, m) => h * 60 + m);
+                const slotEndMinutes = slotEnds[j].split(':').map(Number).reduce((h, m) => h * 60 + m);
+
+                // この区間がスロットに含まれるかチェック
+                if (segmentMid >= slotStartMinutes && segmentMid < slotEndMinutes) {
+                    const available = slotAvailables[j] || 0;
+                    const capacity = slotCaps[j] || 0;
+                    // 空き率を計算（オーバーブッキング時は負の値になり、下に突き抜けて表示される）
+                    const rate = capacity > 0 ? (available / capacity) * 100 : 0;
+                    minAvailabilityRate = Math.min(minAvailabilityRate, rate);
+                    hasData = true;
+                    break; // このリソースでは1つのスロットのみ
+                }
+            }
+        });
+
+        if (hasData) {
+            result.push({
+                startHours: segmentStart / 60,
+                endHours: segmentEnd / 60,
+                availabilityRate: minAvailabilityRate
+            });
+        }
+    }
+
+    return result;
 }
 
 /**
- * 折れ線グラフを描画（時間軸に沿った折れ線グラフ）
+ * 折れ線グラフを描画（0-100%空き率、AND合成）
  * @param {CanvasRenderingContext2D} contentCtx - コンテンツレイヤーコンテキスト
  * @param {object} params - パラメータ
  */
@@ -79,102 +171,65 @@ export function renderCanvasLineChart(contentCtx, params) {
         return false;
     }
 
+    // AND合成で最小空き率のスロットデータを計算
+    const compositeSlots = computeAndCompositeSlots(resources);
+    if (compositeSlots.length === 0) {
+        return false;
+    }
+
     const barAreaWidth = cellWidth - 4;
     const businessStartX = cellLeft + 2;
     const baselineY = barAreaTop + barAreaHeight;
 
-    // 各Equipmentリソースのスロットデータから最大available値を計算
-    let maxAvailable = Math.max(...resources.flatMap(r => r.slotAvailables || []));
+    // 折れ線の色（単一色、Equipment用）
+    const lineColor = '#f59e0b'; // amber-500
 
-    if (!isFinite(maxAvailable) || maxAvailable <= 0) {
-        maxAvailable = 1;
+    // データポイントを生成（プラトー形状）
+    const dataPoints = [];
+    compositeSlots.forEach(slot => {
+        const startX = timeToX(
+            slot.startHours, startHour, endHour,
+            lunchStartHour, lunchEndHour,
+            businessStartX, barAreaWidth
+        );
+        const endX = timeToX(
+            slot.endHours, startHour, endHour,
+            lunchStartHour, lunchEndHour,
+            businessStartX, barAreaWidth
+        );
+
+        // Y座標: 0-100%スケール（0%が下、100%が上）
+        const y = baselineY - (slot.availabilityRate / 100) * barAreaHeight;
+
+        dataPoints.push({ x: startX, y: y });
+        dataPoints.push({ x: endX, y: y });
+    });
+
+    // 折れ線を描画
+    if (dataPoints.length > 1) {
+        for (let i = 0; i < dataPoints.length - 1; i++) {
+            const p1 = dataPoints[i];
+            const p2 = dataPoints[i + 1];
+
+            drawLine(contentCtx, {
+                points: [p1.x, p1.y, p2.x, p2.y],
+                stroke: lineColor,
+                strokeWidth: 2,
+                opacity: 0.8
+            });
+        }
     }
 
-    // 各Equipmentリソースの折れ線グラフを描画
-    const colors = [
-        '#f59e0b', // amber-500
-        '#8b5cf6', // violet-500
-        '#ec4899', // pink-500
-        '#14b8a6', // teal-500
-        '#f97316'  // orange-500
-    ];
-
-    resources.forEach((resource, index) => {
-        const color = colors[index % colors.length];
-
-        // 新形式: 配列から直接アクセス
-        const { slotStarts, slotEnds, slotAvailables, slotFlags } = resource;
-
-        // 配列が空の場合は早期リターン
-        if (!slotStarts || slotStarts.length === 0) {
-            return;
-        }
-
-        const dataPoints = [];
-
-        // 配列を反復処理（サーバー側で既にソート済み）
-        for (let i = 0; i < slotStarts.length; i++) {
-            // フラグチェック（将来の実装用、現時点ではslotFlagsはnull）
-            // if (slotFlags && (slotFlags[i] & 2)) {
-            //     continue; // 時間外スロットをスキップ
-            // }
-
-            // "HH:mm"形式を分数に変換（例: "09:00" → 540, "09:30" → 570）
-            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
-            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
-
-            // 分を時間に変換（例: 540 → 9.0, 570 → 9.5）
-            const startHours = startMinutes / 60;
-            const endHours = endMinutes / 60;
-            const available = slotAvailables[i];
-
-            // X座標を計算（既存のtimeToX関数を使用）
-            const startX = timeToX(
-                startHours, startHour, endHour,
-                lunchStartHour, lunchEndHour,
-                businessStartX, barAreaWidth
-            );
-            const endX = timeToX(
-                endHours, startHour, endHour,
-                lunchStartHour, lunchEndHour,
-                businessStartX, barAreaWidth
-            );
-
-            // Y座標を計算
-            const y = baselineY - (available / maxAvailable) * barAreaHeight;
-
-            // スロットの開始点と終了点を追加（プラトー形状）
-            dataPoints.push({ x: startX, y: y });
-            dataPoints.push({ x: endX, y: y });
-        }
-
-        // 折れ線を描画
-        if (dataPoints.length > 1) {
-            for (let i = 0; i < dataPoints.length - 1; i++) {
-                const p1 = dataPoints[i];
-                const p2 = dataPoints[i + 1];
-
-                drawLine(contentCtx, {
-                    points: [p1.x, p1.y, p2.x, p2.y],
-                    stroke: color,
-                    strokeWidth: 2,
-                    opacity: 0.8
-                });
-            }
-        }
-
-        // データポイントを描画
-        dataPoints.forEach(point => {
-            drawCircle(contentCtx, {
-                x: point.x,
-                y: point.y,
-                radius: isYearView ? 1.5 : 2,
-                fill: color,
-                opacity: 0.9
-            });
+    // データポイントを描画（年間ビューでは小さく）
+    dataPoints.forEach(point => {
+        drawCircle(contentCtx, {
+            x: point.x,
+            y: point.y,
+            radius: isYearView ? 1.5 : 2,
+            fill: lineColor,
+            opacity: 0.9
         });
     });
 
     return true;
 }
-

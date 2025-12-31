@@ -961,16 +961,19 @@ internal static class AppointmentStatsSeeder
 
                 var appointmentCount = (int)Math.Ceiling(slotItem.Cap * effectiveRate);
 
-                // キャパオーバー：Mainリソースのみ、キャパシティに達している場合、稀に+1（available_count = -1）
-                // Equipmentリソースは物理的にオーバー不可
+                // 予約数の上限を設定
+                // Mainリソース：最大でキャパシティ+1件（1件のオーバーブッキングはセーフ）
+                // Equipmentリソース：キャパシティ以下（物理的にオーバー不可）
                 var isMainResource = resource.AppointmentResourceType == AppointmentResourceType.Main;
-                if (isMainResource && !isZeroDay && appointmentCount >= (int)(slotItem.Cap * 0.9))
+                if (isMainResource)
                 {
-                    var overCapacityChance = _random.Next(100);
-                    if (overCapacityChance < 2) // 2%の確率
-                    {
-                        appointmentCount = slotItem.Cap + 1; // available_count = -1
-                    }
+                    // 最大でキャパシティ + 1 に制限（1件のオーバーブッキング = available = -1 までOK）
+                    appointmentCount = Math.Min(appointmentCount, slotItem.Cap + 1);
+                }
+                else
+                {
+                    // Equipmentリソースはキャパシティを超えないように制限
+                    appointmentCount = Math.Min(appointmentCount, slotItem.Cap);
                 }
 
                 // 予約を生成

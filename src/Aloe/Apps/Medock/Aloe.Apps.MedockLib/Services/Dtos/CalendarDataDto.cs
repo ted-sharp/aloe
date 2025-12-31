@@ -74,7 +74,7 @@ public class ResourceStatSlotsDto
     public int[] SlotCounts { get; set; } = Array.Empty<int>();
 
     /// <summary>
-    /// スロットキャパシティの配列（Main用、Equipmentの場合は空配列）
+    /// スロットキャパシティの配列（Main/Equipment共用、空き率計算に使用）
     /// </summary>
     public int[] SlotCaps { get; set; } = Array.Empty<int>();
 

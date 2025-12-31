@@ -114,8 +114,10 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const yAxisWidth = 50;
     const xAxisHeight = 30;
     const topPadding = showDateText ? 40 : 10;
-    const rightPadding = 10;
-    const graphWidth = width - yAxisWidth - rightPadding;
+    // Equipmentデータがある場合は右Y軸用のスペースを確保
+    const hasEquipmentData = equipmentStats && Object.keys(equipmentStats).length > 0;
+    const rightAxisWidth = hasEquipmentData ? 50 : 10;
+    const graphWidth = width - yAxisWidth - rightAxisWidth;
     const graphHeight = height - topPadding - xAxisHeight;
 
     // 背景
@@ -343,8 +345,47 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         });
     }
 
+    // 右Y軸（第二軸: Equipment空き率 0-100%）を描画
+    if (hasEquipmentData) {
+        const rightAxisX = yAxisWidth + graphWidth;
+        const equipmentColor = '#f59e0b'; // amber-500
+
+        // 右Y軸の縦線
+        drawLine(gridCtx, {
+            points: [rightAxisX, topPadding, rightAxisX, baselineY],
+            stroke: equipmentColor,
+            strokeWidth: 1,
+            opacity: 0.6
+        });
+
+        // 0%, 25%, 50%, 75%, 100% の目盛り
+        const percentTicks = [0, 25, 50, 75, 100];
+        percentTicks.forEach(percent => {
+            const y = baselineY - (percent / 100) * graphHeight;
+
+            // 目盛り線（短い横線）
+            drawLine(gridCtx, {
+                points: [rightAxisX, y, rightAxisX + 5, y],
+                stroke: equipmentColor,
+                strokeWidth: 1,
+                opacity: 0.6
+            });
+
+            // ラベル
+            drawText(gridCtx, {
+                text: `${percent}%`,
+                x: rightAxisX + 8,
+                y: y - 5,
+                width: 40,
+                fill: equipmentColor,
+                fontSize: CONFIG.font.sizeSmall,
+                align: 'left'
+            });
+        });
+    }
+
     // Equipment折れ線グラフを描画（棒グラフの上に重ねて表示）
-    if (equipmentStats) {
+    if (hasEquipmentData) {
         renderCanvasLineChart(contentCtx, {
             cellLeft: yAxisWidth,
             cellTop: topPadding,
