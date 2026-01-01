@@ -113,7 +113,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     // レイアウト計算
     const yAxisWidth = 50;
     const xAxisHeight = 30;
-    const topPadding = showDateText ? 40 : 10;
+    const topPadding = showDateText ? 50 : 30;
     // Equipmentデータがある場合は右Y軸用のスペースを確保
     const hasEquipmentData = equipmentStats && Object.keys(equipmentStats).length > 0;
     const rightAxisWidth = hasEquipmentData ? 50 : 10;
@@ -210,6 +210,13 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const baselineY = topPadding + graphHeight;
     drawLine(gridCtx, {
         points: [yAxisWidth, baselineY, yAxisWidth + graphWidth, baselineY],
+        stroke: '#374151',
+        strokeWidth: 2
+    });
+
+    // Y軸の縦線
+    drawLine(gridCtx, {
+        points: [yAxisWidth, topPadding, yAxisWidth, baselineY],
         stroke: '#374151',
         strokeWidth: 2
     });
