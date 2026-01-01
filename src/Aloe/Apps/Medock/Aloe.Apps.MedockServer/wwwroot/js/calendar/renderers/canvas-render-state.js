@@ -191,6 +191,10 @@ export class RenderState {
     /**
      * 階層的Hit Test（年間ビュー用）
      * 月 -> 日 -> バーの順に検索
+     *
+     * 注意: year/month では bar の判定をスキップしてセル選択を優先する
+     * week ビュー（日詳細ダイアログ）のみ bar を優先する
+     *
      * @param {number} x - X座標
      * @param {number} y - Y座標
      * @returns {{ type: string, data: object }|null} Hit結果
@@ -203,29 +207,18 @@ export class RenderState {
                 return null;
             }
 
-            // 2. その月のセルを検索
+            // 2. その月のセルを検索（バーをスキップしてセル選択を優先）
             const cell = this.hitTestCell(x, y);
             if (!cell) {
                 return { type: 'month', data: month };
             }
 
-            // 3. その日のバーを検索
-            const bar = this.hitTestBar(x, y);
-            if (bar) {
-                return { type: 'bar', data: bar };
-            }
-
             return { type: 'cell', data: cell };
         } else if (this.viewType === 'month') {
-            // 月間ビュー: セル -> バー
+            // 月間ビュー: バーをスキップしてセル選択を優先
             const cell = this.hitTestCell(x, y);
             if (!cell) {
                 return null;
-            }
-
-            const bar = this.hitTestBar(x, y);
-            if (bar) {
-                return { type: 'bar', data: bar };
             }
 
             return { type: 'cell', data: cell };
