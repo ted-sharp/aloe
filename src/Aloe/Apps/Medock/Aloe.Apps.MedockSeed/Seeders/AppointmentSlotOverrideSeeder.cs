@@ -194,8 +194,8 @@ internal static class AppointmentSlotOverrideSeeder
 
                 slots.Add(new AppointmentSlotItem
                 {
-                    Start = currentTime,
-                    End = endTime,
+                    Start = currentTime.Hour * 60 + currentTime.Minute,
+                    End = endTime.Hour * 60 + endTime.Minute,
                     Cap = maxPerSlot
                 });
                 currentTime = endTime;
@@ -212,8 +212,8 @@ internal static class AppointmentSlotOverrideSeeder
 
                 slots.Add(new AppointmentSlotItem
                 {
-                    Start = currentTime,
-                    End = endTime,
+                    Start = currentTime.Hour * 60 + currentTime.Minute,
+                    End = endTime.Hour * 60 + endTime.Minute,
                     Cap = maxPerSlot
                 });
                 currentTime = endTime;
@@ -249,8 +249,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = increasedCap
             });
             currentTime = endTime;
@@ -265,8 +265,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = increasedCap
             });
             currentTime = endTime;
@@ -297,8 +297,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1,
                 IsOutsideHours = true
             });
@@ -314,8 +314,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1
             });
             currentTime = endTime;
@@ -329,8 +329,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1
             });
             currentTime = endTime;
@@ -346,8 +346,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1,
                 IsOutsideHours = true
             });
@@ -450,8 +450,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = maxPerSlot
             });
             currentTime = endTime;
@@ -466,8 +466,8 @@ internal static class AppointmentSlotOverrideSeeder
 
             slots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = maxPerSlot
             });
             currentTime = endTime;

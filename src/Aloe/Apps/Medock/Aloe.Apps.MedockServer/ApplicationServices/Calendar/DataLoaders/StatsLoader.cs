@@ -261,11 +261,9 @@ public class StatsLoader : IStatsLoader
             foreach (var overrideSlot in overrideSlots)
             {
                 // 既存のスロットから対応するカウントを取得
-                var slotStartMinutes = overrideSlot.Start.Hour * 60 + overrideSlot.Start.Minute;
-                var slotEndMinutes = overrideSlot.End.Hour * 60 + overrideSlot.End.Minute;
-
+                // overrideSlot.Start/End は既に分単位の int
                 var matchingSlot = existingSlots.FirstOrDefault(s =>
-                    s.SlotStart == slotStartMinutes && s.SlotEnd == slotEndMinutes);
+                    s.SlotStart == overrideSlot.Start && s.SlotEnd == overrideSlot.End);
 
                 newStatSlots.Add(new AppointmentStatSlots
                 {
@@ -273,8 +271,8 @@ public class StatsLoader : IStatsLoader
                     ApptStatId = stat.ApptStatId,
                     ApptDate = stat.ApptDate,
                     ApptResId = stat.ApptResId,
-                    SlotStart = slotStartMinutes,
-                    SlotEnd = slotEndMinutes,
+                    SlotStart = overrideSlot.Start,
+                    SlotEnd = overrideSlot.End,
                     SlotCount = matchingSlot?.SlotCount ?? 0,
                     SlotCap = overrideSlot.Cap,
                     IsDeleted = false,

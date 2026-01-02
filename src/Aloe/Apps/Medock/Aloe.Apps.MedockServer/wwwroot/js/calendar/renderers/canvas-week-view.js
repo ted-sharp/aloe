@@ -328,8 +328,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         const slotCountsForBlock = [];
 
                         for (let i = 0; i < statData.slotStarts.length; i++) {
-                            const slotStart = parseTimeToHours(statData.slotStarts[i]);
-                            const slotEnd = parseTimeToHours(statData.slotEnds ? statData.slotEnds[i] : statData.slotStarts[i]);
+                            const slotStartMinutes = statData.slotStarts[i];
+                            const slotEndMinutes = statData.slotEnds ? statData.slotEnds[i] : statData.slotStarts[i];
+                            const slotStart = slotStartMinutes / 60;  // 分を時間に変換
+                            const slotEnd = slotEndMinutes / 60;
 
                             // ブロック時間範囲と重なるスロットを含める
                             if (slotStart < endTime && slotEnd > startTime) {

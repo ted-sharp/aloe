@@ -68,8 +68,8 @@ function computeAndCompositeSlots(resources) {
 
         const result = [];
         for (let i = 0; i < slotStarts.length; i++) {
-            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
-            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const startMinutes = slotStarts[i];  // 既にint（分）
+            const endMinutes = slotEnds[i];      // 既にint（分）
             const available = slotAvailables[i] || 0;
             const capacity = slotCaps[i] || 0;
             // 空き率を計算（オーバーブッキング時は負の値になり、下に突き抜けて表示される）
@@ -91,8 +91,8 @@ function computeAndCompositeSlots(resources) {
         const { slotStarts, slotEnds } = resource;
         if (!slotStarts) return;
         for (let i = 0; i < slotStarts.length; i++) {
-            const startMinutes = slotStarts[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
-            const endMinutes = slotEnds[i].split(':').map(Number).reduce((h, m) => h * 60 + m);
+            const startMinutes = slotStarts[i];  // 既にint（分）
+            const endMinutes = slotEnds[i];      // 既にint（分）
             timePoints.add(startMinutes);
             timePoints.add(endMinutes);
         }

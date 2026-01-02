@@ -369,21 +369,17 @@ export function renderCanvasBarChart(contentCtx, params) {
 
 /**
  * スロットの時間範囲を解析（並列配列用）
- * @param {string} startStr - 開始時刻文字列（"HH:mm"形式）
- * @param {string} endStr - 終了時刻文字列（"HH:mm"形式）
+ * @param {number} startMinutes - 開始時刻（分単位）
+ * @param {number} endMinutes - 終了時刻（分単位）
  * @param {number} startHour - デフォルト開始時刻
  * @param {number} endHour - デフォルト終了時刻
  * @returns {{start: number, end: number}}
  */
-function parseSlotTimeRangeFromStrings(startStr, endStr, startHour, endHour) {
-    if (startStr && endStr) {
-        const parseTime = (timeStr) => {
-            const parts = timeStr.split(':');
-            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-        };
+function parseSlotTimeRangeFromStrings(startMinutes, endMinutes, startHour, endHour) {
+    if (typeof startMinutes === 'number' && typeof endMinutes === 'number') {
         return {
-            start: parseTime(startStr),
-            end: parseTime(endStr)
+            start: startMinutes / 60,  // 分を時間に変換
+            end: endMinutes / 60
         };
     }
 

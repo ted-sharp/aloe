@@ -442,9 +442,15 @@ internal static class AppointmentStatsSeeder
                     var isHalfDay = SeederHelper.IsHalfDay(currentDate);
 
                     // 半日営業の場合、昼休み開始前のスロットのみを対象とする
+                    // スロット時刻を分に変換
+                    int lunchStartMinutes = lunchStartTime.Hour * 60 + lunchStartTime.Minute;
+                    int lunchEndMinutes = lunchEndTime.Hour * 60 + lunchEndTime.Minute;
+                    int businessStartMinutes = businessStartTime.Hour * 60 + businessStartTime.Minute;
+                    int businessEndMinutes = businessEndTime.Hour * 60 + businessEndTime.Minute;
+
                     // 時間外スロット（IsOutsideHours = true）は除外する（別途処理するため）
                     var activeSlots = isHalfDay
-                        ? slotDef.Slots.Where(s => s.Start < lunchStartTime && !s.IsOutsideHours).ToList()
+                        ? slotDef.Slots.Where(s => s.Start < lunchStartMinutes && !s.IsOutsideHours).ToList()
                         : slotDef.Slots.Where(s => !s.IsOutsideHours).ToList();
 
                     if (!statsMap.ContainsKey(key))
@@ -469,9 +475,9 @@ internal static class AppointmentStatsSeeder
 
                     // 時間外スロットを取得（スロット定義から動的に取得）
                     var outsideHoursSlots = slotDef.Slots.Where(s => s.IsOutsideHours).ToList();
-                    var morningSlot = outsideHoursSlots.FirstOrDefault(s => s.End <= businessStartTime);
-                    var lunchSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= lunchStartTime && s.End <= lunchEndTime);
-                    var eveningSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= businessEndTime);
+                    var morningSlot = outsideHoursSlots.FirstOrDefault(s => s.End <= businessStartMinutes);
+                    var lunchSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= lunchStartMinutes && s.End <= lunchEndMinutes);
+                    var eveningSlot = outsideHoursSlots.FirstOrDefault(s => s.Start >= businessEndMinutes);
 
                     // 最適化：TimeSlotCountsをTimeOnlyに変換（1回だけパース）
                     var parsedTimeSlotCounts = new List<(TimeOnly Time, int Count)>();
@@ -516,7 +522,8 @@ internal static class AppointmentStatsSeeder
                         int count = 0;
                         foreach (var (appointmentTime, cnt) in businessHoursAppointments)
                         {
-                            if (appointmentTime >= slotItem.Start && appointmentTime < slotItem.End)
+                            var appointmentMinutes = appointmentTime.Hour * 60 + appointmentTime.Minute;
+                            if (appointmentMinutes >= slotItem.Start && appointmentMinutes < slotItem.End)
                             {
                                 count += cnt;
                             }
@@ -524,8 +531,8 @@ internal static class AppointmentStatsSeeder
 
                         graphSlots.Add(new AppointmentGraphItem
                         {
-                            Start = slotItem.Start,
-                            End = slotItem.End,
+                            Start = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.Start)),
+                            End = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.End)),
                             Count = count,
                             Cap = slotItem.Cap,
                             HasOutsideHours = false
@@ -538,8 +545,8 @@ internal static class AppointmentStatsSeeder
                         var count = morningAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
-                            Start = morningSlot.Start,
-                            End = morningSlot.End,
+                            Start = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(morningSlot.Start)),
+                            End = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(morningSlot.End)),
                             Count = count,
                             Cap = morningSlot.Cap,
                             HasOutsideHours = true
@@ -551,8 +558,8 @@ internal static class AppointmentStatsSeeder
                         var count = lunchAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
-                            Start = lunchSlot.Start,
-                            End = lunchSlot.End,
+                            Start = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(lunchSlot.Start)),
+                            End = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(lunchSlot.End)),
                             Count = count,
                             Cap = lunchSlot.Cap,
                             HasOutsideHours = true
@@ -564,8 +571,8 @@ internal static class AppointmentStatsSeeder
                         var count = eveningAppointments.Sum(x => x.Count);
                         graphSlots.Add(new AppointmentGraphItem
                         {
-                            Start = eveningSlot.Start,
-                            End = eveningSlot.End,
+                            Start = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(eveningSlot.Start)),
+                            End = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(eveningSlot.End)),
                             Count = count,
                             Cap = eveningSlot.Cap,
                             HasOutsideHours = true
@@ -932,16 +939,20 @@ internal static class AppointmentStatsSeeder
             // 閑散期の日に対して、ごく稀に（3%）この日全スロット0件の日を生成
             var isZeroDay = IsOffSeasonMonth(currentDate.Month) && _random.Next(100) < 3; // 3%の確率
 
+            // スロット時刻を分に変換
+            int lunchStartMinutes = lunchStartTime.Hour * 60 + lunchStartTime.Minute;
+
             foreach (var slotItem in slotDef.Slots)
             {
                 // 半日営業の場合、午後のスロット（12:00以降）はスキップ
-                if (isHalfDay && slotItem.Start >= lunchStartTime)
+                if (isHalfDay && slotItem.Start >= lunchStartMinutes)
                 {
                     continue;
                 }
 
                 // 時間帯ごとの充足率を取得（時間帯による偏りを反映）
-                var timeSlotRate = GetTimeSlotOccupancyRate(slotItem.Start);
+                var slotStartTimeOnly = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.Start));
+                var timeSlotRate = GetTimeSlotOccupancyRate(slotStartTimeOnly);
                 // スロットごとの微細な変動（±5%）
                 var slotVariationRate = 0.95 + _random.NextDouble() * 0.1;
 
@@ -983,6 +994,9 @@ internal static class AppointmentStatsSeeder
                     var patient = patients[_random.Next(patients.Count)];
                     var organization = organizations[_random.Next(organizations.Count)];
 
+                    // スロット時刻（分）をTimeOnlyに変換
+                    var startTimeOnly = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.Start));
+
                     // Appointmentを作成
                     var appointment = new Appointment
                     {
@@ -991,8 +1005,8 @@ internal static class AppointmentStatsSeeder
                         OrgId = organization.OrgId,
                         PtId = patient.PtId,
                         ApptDate = currentDate,
-                        ApptStartTime = slotItem.Start,
-                        ApptDurationMin = (int)slotItem.Duration.TotalMinutes,
+                        ApptStartTime = startTimeOnly,
+                        ApptDurationMin = slotItem.Duration,  // Duration は既に分単位の int
                         ApptStatusCode = 0,
                         ApptMemo = String.Empty,
                         IsDeleted = false
@@ -1007,7 +1021,7 @@ internal static class AppointmentStatsSeeder
                         ApptResAssignId = Guid.CreateVersion7(),
                         ApptId = appointment.ApptId,
                         ApptResId = resource.ApptResId,
-                        ApptStartTime = slotItem.Start,
+                        ApptStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.Start)),
                         IsDeleted = false
                     };
 

@@ -284,11 +284,9 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                     groupedByDate[item.ApptDate] = new List<ResourceStatSlotsDto>();
                 }
 
-                // 分数を"HH:mm"形式の文字列に変換
+                // 分数はそのままint配列として使用
                 var slotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>();
                 var slotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>();
-                var slotStarts = slotStartMinutes.Select(m => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(m)).ToString("HH:mm")).ToArray();
-                var slotEnds = slotEndMinutes.Select(m => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(m)).ToString("HH:mm")).ToArray();
 
                 groupedByDate[item.ApptDate].Add(new ResourceStatSlotsDto
                 {
@@ -296,8 +294,8 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                     ResourceName = item.ResourceName ?? String.Empty,
                     TotalCapacity = item.TotalCapacity,
                     TotalAvailable = item.TotalAvailable,
-                    SlotStarts = slotStarts,
-                    SlotEnds = slotEnds,
+                    SlotStarts = slotStartMinutes,
+                    SlotEnds = slotEndMinutes,
                     SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
                     SlotCaps = item.SlotCaps ?? Array.Empty<int>(), // 空き率計算用
                     SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),

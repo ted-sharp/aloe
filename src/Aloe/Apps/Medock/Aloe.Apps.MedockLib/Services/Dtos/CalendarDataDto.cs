@@ -59,14 +59,14 @@ public class ResourceStatSlotsDto
     public int TotalCapacity { get; set; }
 
     /// <summary>
-    /// スロット開始時刻の配列（"HH:mm" 形式の文字列）
+    /// スロット開始時刻の配列（分単位、0:00からの分数）
     /// </summary>
-    public string[] SlotStarts { get; set; } = Array.Empty<string>();
+    public int[] SlotStarts { get; set; } = Array.Empty<int>();
 
     /// <summary>
-    /// スロット終了時刻の配列（"HH:mm" 形式の文字列）
+    /// スロット終了時刻の配列（分単位、0:00からの分数）
     /// </summary>
-    public string[] SlotEnds { get; set; } = Array.Empty<string>();
+    public int[] SlotEnds { get; set; } = Array.Empty<int>();
 
     /// <summary>
     /// スロット使用数の配列（Main用、Equipmentの場合は空配列）

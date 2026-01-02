@@ -126,8 +126,8 @@ internal static class AppointmentSlotSeeder
 
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1
             });
             currentTime = endTime;
@@ -142,8 +142,8 @@ internal static class AppointmentSlotSeeder
 
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = 1
             });
             currentTime = endTime;
@@ -156,8 +156,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = outsideHoursStart,
-                End = businessStart,
+                Start = outsideHoursStart.Hour * 60 + outsideHoursStart.Minute,
+                End = businessStart.Hour * 60 + businessStart.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });
@@ -168,8 +168,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = lunchStart,
-                End = lunchEnd,
+                Start = lunchStart.Hour * 60 + lunchStart.Minute,
+                End = lunchEnd.Hour * 60 + lunchEnd.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });
@@ -181,8 +181,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = businessEnd,
-                End = outsideHoursEnd,
+                Start = businessEnd.Hour * 60 + businessEnd.Minute,
+                End = outsideHoursEnd.Hour * 60 + outsideHoursEnd.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });
@@ -234,8 +234,8 @@ internal static class AppointmentSlotSeeder
 
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = maxPerSlot
             });
             currentTime = endTime;
@@ -250,8 +250,8 @@ internal static class AppointmentSlotSeeder
 
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = currentTime,
-                End = endTime,
+                Start = currentTime.Hour * 60 + currentTime.Minute,
+                End = endTime.Hour * 60 + endTime.Minute,
                 Cap = maxPerSlot
             });
             currentTime = endTime;
@@ -264,8 +264,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = outsideHoursStart,
-                End = businessStart,
+                Start = outsideHoursStart.Hour * 60 + outsideHoursStart.Minute,
+                End = businessStart.Hour * 60 + businessStart.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });
@@ -276,8 +276,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = lunchStart,
-                End = lunchEnd,
+                Start = lunchStart.Hour * 60 + lunchStart.Minute,
+                End = lunchEnd.Hour * 60 + lunchEnd.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });
@@ -289,8 +289,8 @@ internal static class AppointmentSlotSeeder
         {
             timeSlots.Add(new AppointmentSlotItem
             {
-                Start = businessEnd,
-                End = outsideHoursEnd,
+                Start = businessEnd.Hour * 60 + businessEnd.Minute,
+                End = outsideHoursEnd.Hour * 60 + outsideHoursEnd.Minute,
                 Cap = 0,
                 IsOutsideHours = true
             });

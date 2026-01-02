@@ -59,8 +59,8 @@ public class CalendarDataService : ICalendarDataService
                 var stat = statsList.FirstOrDefault();
 
                 // 並列配列を初期化
-                string[] slotStarts = Array.Empty<string>();
-                string[] slotEnds = Array.Empty<string>();
+                int[] slotStarts = Array.Empty<int>();
+                int[] slotEnds = Array.Empty<int>();
                 int[] slotCounts = Array.Empty<int>();
                 int[] slotCaps = Array.Empty<int>();
                 int[] slotAvailables = Array.Empty<int>();
@@ -77,8 +77,8 @@ public class CalendarDataService : ICalendarDataService
                     var count = validSlots.Count;
                     if (count > 0)
                     {
-                        slotStarts = new string[count];
-                        slotEnds = new string[count];
+                        slotStarts = new int[count];
+                        slotEnds = new int[count];
                         slotCounts = new int[count];
                         slotCaps = new int[count];
                         slotAvailables = new int[count];
@@ -96,8 +96,8 @@ public class CalendarDataService : ICalendarDataService
                                 isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
                             }
 
-                            slotStarts[i] = slotStartTime.ToString("HH:mm");
-                            slotEnds[i] = slotEndTime.ToString("HH:mm");
+                            slotStarts[i] = statSlot.SlotStart;
+                            slotEnds[i] = statSlot.SlotEnd;
                             slotCounts[i] = statSlot.SlotCount;
                             slotCaps[i] = statSlot.SlotCap;
                             slotAvailables[i] = statSlot.SlotAvailable;

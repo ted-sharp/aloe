@@ -8,17 +8,17 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 /// </summary>
 public class AppointmentSlotItem
 {
-    /// <summary>開始時刻</summary>
+    /// <summary>開始時刻（分単位、0:00からの分数）</summary>
     [JsonPropertyName("start")]
-    public TimeOnly Start { get; set; }
+    public int Start { get; set; }
 
-    /// <summary>終了時刻</summary>
+    /// <summary>終了時刻（分単位、0:00からの分数）</summary>
     [JsonPropertyName("end")]
-    public TimeOnly End { get; set; }
+    public int End { get; set; }
 
-    /// <summary>期間（End - Start）</summary>
+    /// <summary>期間（End - Start、分単位）</summary>
     [JsonPropertyName("duration")]
-    public TimeSpan Duration => this.End - this.Start;
+    public int Duration => this.End - this.Start;
 
     /// <summary>最大予約数（キャパシティ）</summary>
     [JsonPropertyName("cap")]
