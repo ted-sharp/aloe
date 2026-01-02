@@ -49,6 +49,7 @@ public partial class DayDetailPopup : ComponentBase
     private bool _wasOpen;
     private DateOnly? _previousSelectedDate;
     private string? HolidayName { get; set; }
+    private SlotClickedEventArgs? _selectedSlot { get; set; }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -66,6 +67,7 @@ public partial class DayDetailPopup : ComponentBase
             this._isChartRendered = false;
             this._previousSelectedDate = null;
             this.HolidayName = null;
+            this._selectedSlot = null;
             await this.DestroyChartAsync();
         }
         // SelectedDateが変更された場合、グラフを再描画
@@ -73,6 +75,7 @@ public partial class DayDetailPopup : ComponentBase
         {
             this._previousSelectedDate = this.SelectedDate;
             this._isChartRendered = false;
+            this._selectedSlot = null;
             await this.DestroyChartAsync();
             await this.RenderChartAsync();
             await this.LoadHolidayNameAsync();
@@ -309,7 +312,61 @@ public partial class DayDetailPopup : ComponentBase
     }
 
     /// <summary>
-    /// JavaScriptからスロット選択を受け取る
+    /// JavaScriptからスロット選択を受け取る（シングルクリック用）
+    /// </summary>
+    [JSInvokable("OnSlotSelected")]
+    public Task OnSlotSelectedFromJs(string dateStr, int startMinutes, int endMinutes, int capacity, int count)
+    {
+        try
+        {
+            if (!DateOnly.TryParse(dateStr, out var date))
+            {
+                return Task.CompletedTask;
+            }
+
+            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
+            var endTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(endMinutes));
+
+            this._selectedSlot = new SlotClickedEventArgs
+            {
+                Date = date,
+                StartTime = startTime,
+                EndTime = endTime,
+                Capacity = capacity,
+                Count = count
+            };
+
+            this.StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DayDetailPopup.OnSlotSelected error: {ex.Message}");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// JavaScriptからスロット選択解除を受け取る
+    /// </summary>
+    [JSInvokable("OnSlotDeselected")]
+    public Task OnSlotDeselectedFromJs()
+    {
+        try
+        {
+            this._selectedSlot = null;
+            this.StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DayDetailPopup.OnSlotDeselected error: {ex.Message}");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// JavaScriptからスロット選択を受け取る（ダブルクリック用）
     /// </summary>
     [JSInvokable("OnSlotClicked")]
     public async Task OnSlotClickedFromJs(string dateStr, int startMinutes, int endMinutes, int capacity, int count)
@@ -339,6 +396,28 @@ public partial class DayDetailPopup : ComponentBase
         catch (Exception ex)
         {
             Console.WriteLine($"DayDetailPopup.OnSlotClicked error: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// 仮予約ボタンのクリックハンドラ
+    /// </summary>
+    private async Task HandleTentativeReservationClick()
+    {
+        if (this._selectedSlot != null)
+        {
+            await this.OnSlotClicked.InvokeAsync(this._selectedSlot);
+        }
+    }
+
+    /// <summary>
+    /// 予約ボタンのクリックハンドラ
+    /// </summary>
+    private async Task HandleReservationClick()
+    {
+        if (this._selectedSlot != null)
+        {
+            await this.OnSlotClicked.InvokeAsync(this._selectedSlot);
         }
     }
 }

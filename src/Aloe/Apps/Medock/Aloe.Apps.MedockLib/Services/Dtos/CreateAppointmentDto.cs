@@ -8,9 +8,10 @@ public class CreateAppointmentDto
     public DateOnly Date { get; set; }
     public TimeOnly? StartTime { get; set; }
     public TimeOnly? EndTime { get; set; }
-    public Guid PatientId { get; set; }
-    public Guid OrganizationId { get; set; }
+    public Guid? PatientId { get; set; }
+    public Guid? OrganizationId { get; set; }
     public Guid FloorId { get; set; }
     public int Status { get; set; } = 0;
+    public string? Memo { get; set; }
 }
 

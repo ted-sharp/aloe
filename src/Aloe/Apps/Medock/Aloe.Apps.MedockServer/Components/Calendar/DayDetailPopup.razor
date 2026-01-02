@@ -56,8 +56,8 @@
             <!-- フッター -->
             <div class="modal-action justify-between flex-shrink-0 mt-4">
                 <div class="flex gap-2">
-                    <button class="btn btn-outline btn-primary" disabled>仮予約（仮）</button>
-                    <button class="btn btn-primary" disabled>予約（仮）</button>
+                    <button class="btn btn-outline btn-primary" disabled="@(_selectedSlot == null)" @onclick="HandleTentativeReservationClick">仮予約</button>
+                    <button class="btn btn-primary" disabled="@(_selectedSlot == null)" @onclick="HandleReservationClick">予約</button>
                 </div>
                 <div class="flex gap-2">
                     <button class="btn btn-primary" @onclick="HandleGoToWeekView">週表示へ</button>

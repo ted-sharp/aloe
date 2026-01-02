@@ -1,7 +1,10 @@
 using Aloe.Apps.MedockLib.Constants;
+using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.AspNetCore.Components;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -15,6 +18,18 @@ public partial class AppointmentModal : ComponentBase
     /// </summary>
     [Inject]
     private IAppointmentService AppointmentService { get; set; } = default!;
+
+    /// <summary>
+    /// ユーザーコンテキストサービス
+    /// </summary>
+    [Inject]
+    private IUserContextService UserContextService { get; set; } = default!;
+
+    /// <summary>
+    /// DbContextファクトリ
+    /// </summary>
+    [Inject]
+    private IDbContextFactory<MedockDbContext> ContextFactory { get; set; } = default!;
 
     /// <summary>
     /// ロガー
@@ -165,12 +180,6 @@ public partial class AppointmentModal : ComponentBase
 
     private async Task HandleSubmit()
     {
-        if (String.IsNullOrWhiteSpace(this.FormModel.PatientName))
-        {
-            this.ErrorMessage = "患者名を入力してください。";
-            return;
-        }
-
         this.IsSaving = true;
         this.ErrorMessage = null;
         this.StateHasChanged();
@@ -247,47 +256,161 @@ public partial class AppointmentModal : ComponentBase
     /// </summary>
     private async Task CreateAppointmentAsync()
     {
-        // 新規作成時は必須フィールドの確認
-        if (!this.FormModel.PatientId.HasValue)
+        try
         {
-            this.ErrorMessage = "患者IDが指定されていません。";
-            return;
+            this.Logger.LogInformation("Creating new appointment");
+
+            // ユーザーコンテキストから施設IDを取得
+            var facilityId = this.UserContextService.CurrentUser?.FacilityId ?? Guid.Empty;
+
+            if (facilityId == Guid.Empty)
+            {
+                this.ErrorMessage = "施設が選択されていません。";
+                return;
+            }
+
+            // DbContextを使用して必要なデータを取得
+            using var context = this.ContextFactory.CreateDbContext();
+
+            // PatientIdがなければ患者を作成または取得（仮予約は null でも許可）
+            Guid? patientId = null;
+            if (this.FormModel.PatientId.HasValue)
+            {
+                patientId = this.FormModel.PatientId.Value;
+            }
+            else if (!string.IsNullOrWhiteSpace(this.FormModel.PatientName))
+            {
+                // 患者名が入力されている場合のみ患者を作成
+                patientId = await this.GetOrCreatePatientAsync(context, facilityId, this.FormModel.PatientName);
+            }
+            // else: patientId は null のまま（仮予約）
+
+            // OrganizationIdがなければデフォルト組織を取得（仮予約は null でも許可）
+            Guid? organizationId = null;
+            if (this.FormModel.OrganizationId.HasValue)
+            {
+                organizationId = this.FormModel.OrganizationId.Value;
+            }
+            else
+            {
+                var defaultOrgId = await this.GetDefaultOrganizationAsync(context, facilityId);
+                if (defaultOrgId != Guid.Empty)
+                {
+                    organizationId = defaultOrgId;
+                }
+                // else: organizationId は null のまま（デフォルト組織がない場合でも仮予約は許可）
+            }
+
+            // FloorIdがなければデフォルトフロアを取得
+            Guid floorId;
+            if (this.FormModel.FloorId.HasValue)
+            {
+                floorId = this.FormModel.FloorId.Value;
+            }
+            else
+            {
+                floorId = await this.GetDefaultFloorAsync(context, facilityId);
+                if (floorId == Guid.Empty)
+                {
+                    this.ErrorMessage = "デフォルトフロアが見つかりません。";
+                    return;
+                }
+            }
+
+            this.Logger.LogInformation("Using IDs - PatientId: {PatientId}, OrgId: {OrgId}, FloorId: {FloorId}", patientId?.ToString() ?? "(null)", organizationId?.ToString() ?? "(null)", floorId);
+
+            var dto = new CreateAppointmentDto
+            {
+                Date = this.FormModel.Date,
+                StartTime = this.FormModel.StartTime,
+                EndTime = this.FormModel.EndTime,
+                Status = this.FormModel.Status,
+                PatientId = patientId,
+                OrganizationId = organizationId,
+                FloorId = floorId,
+                Memo = this.FormModel.Memo
+            };
+
+            var result = await this.AppointmentService.CreateAppointmentAsync(dto);
+
+            if (!result.IsSuccess)
+            {
+                this.Logger.LogError("Failed to create appointment: {Error}", result.ErrorMessage);
+                throw new Exception(result.ErrorMessage ?? "予約の作成に失敗しました。");
+            }
+
+            this.Logger.LogInformation("Appointment created successfully");
+        }
+        catch (Exception ex)
+        {
+            this.Logger.LogError(ex, "Error in CreateAppointmentAsync");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 患者を取得、または新規作成
+    /// </summary>
+    private async Task<Guid> GetOrCreatePatientAsync(MedockDbContext context, Guid facilityId, string patientName)
+    {
+        // 患者名が指定されている場合は検索
+        if (!string.IsNullOrWhiteSpace(patientName))
+        {
+            // 同じ名前の患者を検索
+            var existingPatient = await context.Patients
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.PtName == patientName && p.FacilityId == facilityId && !p.IsDeleted);
+
+            if (existingPatient != null)
+            {
+                return existingPatient.PtId;
+            }
         }
 
-        if (!this.FormModel.OrganizationId.HasValue)
+        // 患者が見つからない場合または名前が空の場合は新規作成
+        var newPatient = new Patient
         {
-            this.ErrorMessage = "組織IDが指定されていません。";
-            return;
-        }
-
-        if (!this.FormModel.FloorId.HasValue)
-        {
-            this.ErrorMessage = "フロアIDが指定されていません。";
-            return;
-        }
-
-        this.Logger.LogInformation("Creating new appointment");
-
-        var dto = new CreateAppointmentDto
-        {
-            Date = this.FormModel.Date,
-            StartTime = this.FormModel.StartTime,
-            EndTime = this.FormModel.EndTime,
-            Status = this.FormModel.Status,
-            PatientId = this.FormModel.PatientId.Value,
-            OrganizationId = this.FormModel.OrganizationId.Value,
-            FloorId = this.FormModel.FloorId.Value
+            PtId = Guid.CreateVersion7(),
+            FacilityId = facilityId,
+            CanonicalPtId = Guid.CreateVersion7(),
+            PtCode = $"PT{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+            PtName = patientName ?? string.Empty,
+            PtNameCompat = patientName ?? string.Empty,
+            PrimaryOrgId = await this.GetDefaultOrganizationAsync(context, facilityId),
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
         };
 
-        var result = await this.AppointmentService.CreateAppointmentAsync(dto);
+        context.Patients.Add(newPatient);
+        await context.SaveChangesAsync();
 
-        if (!result.IsSuccess)
-        {
-            this.Logger.LogError("Failed to create appointment: {Error}", result.ErrorMessage);
-            throw new Exception(result.ErrorMessage ?? "予約の作成に失敗しました。");
-        }
+        this.Logger.LogInformation("Created new patient: {PatientName} ({PatientId})", string.IsNullOrEmpty(patientName) ? "(空欄)" : patientName, newPatient.PtId);
 
-        this.Logger.LogInformation("Appointment created successfully");
+        return newPatient.PtId;
+    }
+
+    /// <summary>
+    /// デフォルト組織を取得
+    /// </summary>
+    private async Task<Guid> GetDefaultOrganizationAsync(MedockDbContext context, Guid facilityId)
+    {
+        var defaultOrg = await context.Organizations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(o => o.FacilityId == facilityId && !o.IsDeleted);
+
+        return defaultOrg?.OrgId ?? Guid.Empty;
+    }
+
+    /// <summary>
+    /// デフォルトフロアを取得
+    /// </summary>
+    private async Task<Guid> GetDefaultFloorAsync(MedockDbContext context, Guid facilityId)
+    {
+        var defaultFloor = await context.Floors
+            .AsNoTracking()
+            .FirstOrDefaultAsync(f => f.FacilityId == facilityId && !f.IsDeleted);
+
+        return defaultFloor?.FloorId ?? Guid.Empty;
     }
 
     private async Task HandleDelete()

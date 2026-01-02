@@ -161,13 +161,31 @@ export function setupDayDetailInteractions(canvasManager, renderState, dotNetRef
 
                 selectedBar = bar;
                 drawHighlightAndSelection(hoveredBar, selectedBar);
+
+                // Blazor側に選択を通知
+                if (dotNetRef) {
+                    dotNetRef.invokeMethodAsync('OnSlotSelected',
+                        dateStr,
+                        bar.startMinutes,
+                        bar.endMinutes,
+                        bar.cap,
+                        bar.count
+                    );
+                }
             }
         } else {
             // バーの外をクリック：選択を解除
-            selectedBar = null;
-            lastClickTime = 0;
-            lastClickBarId = null;
-            drawHighlightAndSelection(hoveredBar, selectedBar);
+            if (selectedBar) {
+                selectedBar = null;
+                lastClickTime = 0;
+                lastClickBarId = null;
+                drawHighlightAndSelection(hoveredBar, selectedBar);
+
+                // Blazor側に選択解除を通知
+                if (dotNetRef) {
+                    dotNetRef.invokeMethodAsync('OnSlotDeselected');
+                }
+            }
         }
     });
 }

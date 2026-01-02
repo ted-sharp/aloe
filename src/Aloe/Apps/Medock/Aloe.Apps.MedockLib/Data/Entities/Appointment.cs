@@ -8,8 +8,8 @@ public class Appointment : IAuditableEntity
 {
     [Key][Column("appt_id")] public Guid ApptId { get; set; }
     [Column("floor_id")][ForeignKey("Floor")] public Guid FloorId { get; set; }
-    [Column("org_id")][ForeignKey("Organization")] public Guid OrgId { get; set; }
-    [Column("pt_id")][ForeignKey("Patient")] public Guid PtId { get; set; }
+    [Column("org_id")][ForeignKey("Organization")] public Guid? OrgId { get; set; }
+    [Column("pt_id")][ForeignKey("Patient")] public Guid? PtId { get; set; }
     [Column("appt_date")] public DateOnly? ApptDate { get; set; }
     [Column("appt_start_time")] public TimeOnly? ApptStartTime { get; set; }
     [Column("appt_duration_min")] public int? ApptDurationMin { get; set; }

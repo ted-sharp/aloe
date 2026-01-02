@@ -78,10 +78,10 @@
                     <!-- 患者名 -->
                     <div class="form-control md:col-span-2">
                         <label class="label">
-                            <span class="label-text font-medium">患者名 <span class="text-error">*</span></span>
+                            <span class="label-text font-medium">患者名</span>
                         </label>
-                        <InputText @bind-Value="FormModel.PatientName" 
-                                   placeholder="患者名を入力" 
+                        <InputText @bind-Value="FormModel.PatientName"
+                                   placeholder="患者名を入力（任意）"
                                    class="input input-bordered w-full" />
                         <ValidationMessage For="@(() => FormModel.PatientName)" class="text-error text-sm mt-1" />
                     </div>
