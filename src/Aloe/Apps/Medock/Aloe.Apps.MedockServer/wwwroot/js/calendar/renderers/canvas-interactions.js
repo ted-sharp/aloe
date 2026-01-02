@@ -359,7 +359,7 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
         if (hitResult.type === 'slot') {
             // 週間ビュー: スロットがクリックされた
             const slot = hitResult.data;
-            const { dateStr, slotIndex, stats } = slot;
+            const { dateStr, slotIndex, stats, appointment } = slot;
 
             // スロットデータを取得
             const startMinutes = stats.slotStarts[slotIndex];
@@ -381,8 +381,7 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             const isDoubleClick = (now - state.lastClickTime < 300) && (state.lastClickDate === slotId);
 
             if (isDoubleClick) {
-                // ダブルクリック：予約モーダルを開く
-                console.log('Week slot double-clicked:', { dateStr, startMinutes, endMinutes, cap, count });
+                console.log('Week slot double-clicked');
                 setState({ lastClickTime: 0, lastClickDate: null });
                 selectedSlot = null;
                 stopSlotDrawTimer();
@@ -390,8 +389,16 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
 
                 // Blazor側に通知
                 if (state.dotNetRef) {
-                    state.dotNetRef.invokeMethodAsync('OnWeekSlotClicked',
-                        dateStr, startMinutes, endMinutes, cap, count);
+                    // 既存の予約がある場合は編集モード
+                    if (appointment && appointment.id) {
+                        console.log('Opening appointment for edit:', appointment.id);
+                        state.dotNetRef.invokeMethodAsync('OnAppointmentClicked', appointment.id);
+                    } else {
+                        // 新規作成モード（既存フロー維持）
+                        console.log('Opening new appointment dialog');
+                        state.dotNetRef.invokeMethodAsync('OnWeekSlotClicked',
+                            dateStr, startMinutes, endMinutes, cap, count);
+                    }
                 }
             } else {
                 // シングルクリック：選択状態のみ

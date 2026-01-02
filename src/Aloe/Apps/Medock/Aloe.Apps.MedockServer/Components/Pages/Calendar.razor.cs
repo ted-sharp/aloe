@@ -549,11 +549,13 @@ public partial class Calendar : ComponentBase
     private void HandleAppointmentClick(Guid apptId)
     {
         this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0), apptId);
+        this.StateHasChanged();
     }
 
     private void HandleCreateRequest((DateOnly Date, TimeOnly Time) request)
     {
         this.State.OpenModal(request.Date, request.Time);
+        this.StateHasChanged();
     }
 
     private async Task HandleWeekDaysChanged(int days)
@@ -577,17 +579,27 @@ public partial class Calendar : ComponentBase
     private void OpenNewAppointmentModal()
     {
         this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0));
+        this.StateHasChanged();
     }
 
     private void CloseModal()
     {
         this.State.CloseModal();
+        this.StateHasChanged();
     }
 
     private async Task HandleSaveAppointment()
     {
         this.CloseModal();
         // 予約保存後にデータを再取得
+        await this.RefreshCalendarDataAsync();
+        this.StateHasChanged();
+    }
+
+    private async Task HandleDeleteAppointment()
+    {
+        this.CloseModal();
+        // 予約削除後にデータを再取得
         await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
     }

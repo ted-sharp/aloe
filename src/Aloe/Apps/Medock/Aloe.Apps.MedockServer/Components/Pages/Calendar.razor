@@ -339,16 +339,14 @@
 </div>
 
 <!-- 予約モーダル -->
-@if (IsModalOpen)
-{
-    <AppointmentModal
-        IsOpen="@IsModalOpen"
-        SelectedDate="@ModalDate"
-        SelectedTime="@ModalTime"
-        AppointmentId="@SelectedAppointmentId"
-        OnClose="@CloseModal"
-        OnSave="@HandleSaveAppointment" />
-}
+<AppointmentModal
+    IsOpen="@IsModalOpen"
+    SelectedDate="@ModalDate"
+    SelectedTime="@ModalTime"
+    AppointmentId="@SelectedAppointmentId"
+    OnClose="@CloseModal"
+    OnSave="@HandleSaveAppointment"
+    OnDelete="@HandleDeleteAppointment" />
 
 <!-- 日詳細ダイアログ -->
 @if (IsDayDetailOpen)

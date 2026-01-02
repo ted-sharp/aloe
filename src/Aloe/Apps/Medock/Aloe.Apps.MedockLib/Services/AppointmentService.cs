@@ -114,6 +114,7 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
+            var now = new DateTime(this._dateTimeProvider.Now.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
             var appointment = new Appointment
             {
                 ApptId = Guid.CreateVersion7(),
@@ -127,8 +128,8 @@ public class AppointmentService : IAppointmentService
                 FloorId = dto.FloorId,
                 ApptStatusCode = dto.Status,
                 IsDeleted = false,
-                CreatedAt = this._dateTimeProvider.Now,
-                UpdatedAt = this._dateTimeProvider.Now
+                CreatedAt = now,
+                UpdatedAt = now
             };
 
             await this._appointmentRepository.AddAsync(appointment);
@@ -170,6 +171,25 @@ public class AppointmentService : IAppointmentService
                 return Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
 
+            // 楽観的ロック：他のユーザーによる更新を検出
+            if (dto.ExpectedUpdatedAt.HasValue)
+            {
+                // 秒単位で比較（マイクロ秒の差を無視）
+                var expectedSeconds = new DateTime(dto.ExpectedUpdatedAt.Value.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+                var actualSeconds = new DateTime(appointment.UpdatedAt.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+
+                if (actualSeconds != expectedSeconds)
+                {
+                    var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+                    this._logger.LogWarning(
+                        "Concurrency conflict detected for appointment {ApptId}. Expected UpdatedAt: {Expected}, Actual: {Actual}",
+                        apptId, expectedSeconds, actualSeconds);
+                    return Result<AppointmentDto>.Failure(
+                        "This appointment was modified by another user. Please refresh and try again.",
+                        "APPT_CONCURRENCY_ERROR");
+                }
+            }
+
             if (dto.Date.HasValue) appointment.ApptDate = dto.Date.Value;
             if (dto.StartTime.HasValue) appointment.ApptStartTime = dto.StartTime.Value;
             if (dto.StartTime.HasValue && dto.EndTime.HasValue)
@@ -178,8 +198,10 @@ public class AppointmentService : IAppointmentService
             if (dto.OrganizationId.HasValue) appointment.OrgId = dto.OrganizationId.Value;
             if (dto.FloorId.HasValue) appointment.FloorId = dto.FloorId.Value;
             if (dto.Status.HasValue) appointment.ApptStatusCode = dto.Status.Value;
+            if (dto.Memo != null) appointment.ApptMemo = dto.Memo;
 
-            appointment.UpdatedAt = this._dateTimeProvider.Now;
+            // 秒単位で丸める（マイクロ秒の差を排除）
+            appointment.UpdatedAt = new DateTime(this._dateTimeProvider.Now.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
 
             await this._appointmentRepository.UpdateAsync(appointment);
 
@@ -285,6 +307,7 @@ public class AppointmentService : IAppointmentService
             FloorId = appointment.FloorId,
             FloorName = appointment.Floor?.FloorName,
             Status = appointment.ApptStatusCode,
+            Memo = appointment.ApptMemo,
             CreatedAt = appointment.CreatedAt,
             UpdatedAt = appointment.UpdatedAt
         };

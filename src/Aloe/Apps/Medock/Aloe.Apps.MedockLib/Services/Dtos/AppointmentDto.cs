@@ -16,6 +16,7 @@ public class AppointmentDto
     public string? FloorName { get; set; }
     public Guid? FloorId { get; set; }
     public int Status { get; set; }
+    public string? Memo { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }
