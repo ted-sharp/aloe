@@ -97,6 +97,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     startDate.setHours(0, 0, 0);
 
     // 各日付にデータがあるかチェックして、幅を動的に計算
+    // weekDaysが小さい場合（1, 3）は常に全幅を使用
+    // weekDaysが大きい場合（7, 14, 31）はデータの有無で幅を調整
     const dayWidths = [];
     const baseWidth = (width - timeColumnWidth) / weekDays;
     for (let i = 0; i < weekDays; i++) {
@@ -104,7 +106,14 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         date.setDate(date.getDate() + i);
         const dateStr = dateToString(date);
         const hasData = state.appointments && state.appointments.some(appt => appt.date === dateStr);
-        dayWidths.push(hasData ? baseWidth : baseWidth * 0.5);
+
+        if (weekDays <= 3) {
+            // 1日間・3日間表示では常にbaseWidthを使用
+            dayWidths.push(baseWidth);
+        } else {
+            // 7日間以上の表示ではデータの有無で幅を調整
+            dayWidths.push(hasData ? baseWidth : baseWidth * 0.5);
+        }
     }
 
     // ヘッダー背景
@@ -200,17 +209,18 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         xOffset += dayWidth;
     }
 
-    // 時間軸グリッド
-    for (let hour = 0; hour <= hours; hour++) {
-        const y = headerHeight + hour * hourHeight;
+    // 時間軸グリッド（30分単位）
+    for (let half = 0; half <= hours * 2; half++) {
+        const y = headerHeight + half * (hourHeight / 2);
+        const hourValue = startHour + Math.floor(half / 2);
+        const minutes = (half % 2) * 30;
 
-        // 時間ラベル
-        if (hour < hours) {
-            const hourValue = startHour + hour;
+        // 時間ラベル（30分ごと）
+        if (half < hours * 2) {
             drawText(gridCtx, {
-                text: `${String(hourValue).padStart(2, '0')}:00`,
+                text: `${String(hourValue).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
                 x: 5,
-                y: y + hourHeight / 2 - 6,
+                y: y - 6,
                 width: timeColumnWidth - 10,
                 fill: '#6b7280',
                 fontSize: CONFIG.font.sizeSmall,
@@ -218,26 +228,16 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             });
         }
 
-        // 横線（時間の区切り）
+        // 横線（30分の区切り）
         drawLine(gridCtx, {
             points: [timeColumnWidth, y, width, y],
             stroke: CONFIG.colors.grid,
-            strokeWidth: 1
+            strokeWidth: half % 2 === 0 ? 1 : 0.5,
+            opacity: half % 2 === 0 ? 1 : 0.5
         });
 
-        // 30分スロットの区切り線を描画（簡易表示・詳細表示両方）
-        if (hour < hours) {
-            const halfHourY = y + hourHeight / 2;
-            drawLine(gridCtx, {
-                points: [timeColumnWidth, halfHourY, width, halfHourY],
-                stroke: CONFIG.colors.grid,
-                strokeWidth: 0.5,
-                opacity: 0.5
-            });
-        }
-
-        // 背景色（交互）
-        if (hour < hours && hour % 2 === 0) {
+        // 背景色（交互、1時間ごと）
+        if (half < hours * 2 && half % 4 === 0) {
             drawRect(backgroundCtx, {
                 x: timeColumnWidth,
                 y: y,
