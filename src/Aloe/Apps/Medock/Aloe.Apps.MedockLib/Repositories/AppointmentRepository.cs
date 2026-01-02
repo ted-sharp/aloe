@@ -39,6 +39,8 @@ public class AppointmentRepository : IAppointmentRepository
                 .Include(a => a.Floor)
                 .Include(a => a.Organization)
                 .Include(a => a.Patient)
+                .Include(a => a.AppointmentResourceReservations)
+                    .ThenInclude(r => r.AppointmentResource)
                 .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
         }
         catch (Exception ex)

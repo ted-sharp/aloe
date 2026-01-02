@@ -91,9 +91,44 @@
                         <label class="label">
                             <span class="label-text font-medium">団体名</span>
                         </label>
-                        <InputText @bind-Value="FormModel.OrganizationName" 
-                                   placeholder="団体名を入力（任意）" 
+                        <InputText @bind-Value="FormModel.OrganizationName"
+                                   placeholder="団体名を入力（任意）"
                                    class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- 機器リソース -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-semibold">リソース（機器）</span>
+                            @if (AvailableEquipmentResources.Any())
+                            {
+                                <div class="flex gap-1">
+                                    <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllEquipment">全選択</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllEquipment">全解除</button>
+                                </div>
+                            }
+                        </label>
+                        @if (AvailableEquipmentResources.Any())
+                        {
+                            <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                                @foreach (var resource in AvailableEquipmentResources)
+                                {
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox"
+                                               class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                               checked="@FormModel.SelectedEquipmentResourceIds.Contains(resource.Id)"
+                                               @onchange="() => ToggleEquipmentResource(resource.Id)" />
+                                        <span class="badge @(FormModel.SelectedEquipmentResourceIds.Contains(resource.Id) ? "badge-primary" : "badge-outline")">
+                                            @resource.Name
+                                        </span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500">利用可能なリソースがありません</p>
+                        }
                     </div>
 
                     <!-- メモ -->

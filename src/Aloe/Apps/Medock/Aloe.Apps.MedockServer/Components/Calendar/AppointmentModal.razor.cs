@@ -91,11 +91,15 @@ public partial class AppointmentModal : ComponentBase
         .SelectMany(h => new[] { $"{h:D2}:00", $"{h:D2}:30" })
         .ToArray();
 
+    // 利用可能な機器リソース
+    private List<FilterItem> AvailableEquipmentResources { get; set; } = new();
+
     protected override async Task OnParametersSetAsync()
     {
         // パラメータが変わったら常に初期化
         this.Logger.LogInformation("OnParametersSetAsync called: IsOpen={IsOpen}, AppointmentId={AppointmentId}", this.IsOpen, this.AppointmentId);
         await this.InitializeFormAsync();
+        await this.LoadAvailableEquipmentResourcesAsync();
     }
 
     private async Task InitializeFormAsync()
@@ -163,7 +167,10 @@ public partial class AppointmentModal : ComponentBase
                 OrganizationId = dto.OrganizationId,
                 FloorId = dto.FloorId,
                 Memo = dto.Memo,
-                UpdatedAt = dto.UpdatedAt  // 楽観的ロック用に保存
+                UpdatedAt = dto.UpdatedAt,  // 楽観的ロック用に保存
+                SelectedEquipmentResourceIds = dto.EquipmentResources
+                    .Select(r => r.Id)
+                    .ToList()
             };
 
             this.Logger.LogInformation("FormModel loaded: UpdatedAt={UpdatedAt}", this.FormModel.UpdatedAt);
@@ -176,6 +183,77 @@ public partial class AppointmentModal : ComponentBase
             this.Logger.LogError(ex, "Error loading appointment: {AppointmentId}", this.AppointmentId);
             this.ErrorMessage = "予約データの読み込み中にエラーが発生しました。";
         }
+    }
+
+    /// <summary>
+    /// 利用可能な機器リソースを読み込む
+    /// </summary>
+    private async Task LoadAvailableEquipmentResourcesAsync()
+    {
+        try
+        {
+            var facilityId = this.UserContextService.CurrentUser?.FacilityId ?? Guid.Empty;
+            if (facilityId == Guid.Empty)
+            {
+                this.Logger.LogWarning("Facility ID not found in user context");
+                return;
+            }
+
+            await using var context = await this.ContextFactory.CreateDbContextAsync();
+
+            this.AvailableEquipmentResources = await context.AppointmentResources
+                .AsNoTracking()
+                .Where(r => r.Floor.FacilityId == facilityId &&
+                           !r.IsDeleted &&
+                           r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
+                .OrderBy(r => r.ApptResSeq)
+                .ThenBy(r => r.ApptResName)
+                .Select(r => new FilterItem
+                {
+                    Id = r.ApptResId,
+                    Name = r.ApptResName
+                })
+                .ToListAsync();
+
+            this.Logger.LogDebug("Loaded {Count} equipment resources", this.AvailableEquipmentResources.Count);
+        }
+        catch (Exception ex)
+        {
+            this.Logger.LogError(ex, "Error loading available equipment resources");
+        }
+    }
+
+    /// <summary>
+    /// 機器リソースの選択状態をトグルする
+    /// </summary>
+    private void ToggleEquipmentResource(Guid resourceId)
+    {
+        if (this.FormModel.SelectedEquipmentResourceIds.Contains(resourceId))
+        {
+            this.FormModel.SelectedEquipmentResourceIds.Remove(resourceId);
+        }
+        else
+        {
+            this.FormModel.SelectedEquipmentResourceIds.Add(resourceId);
+        }
+    }
+
+    /// <summary>
+    /// すべての機器リソースを選択する
+    /// </summary>
+    private void SelectAllEquipment()
+    {
+        this.FormModel.SelectedEquipmentResourceIds = this.AvailableEquipmentResources
+            .Select(r => r.Id)
+            .ToList();
+    }
+
+    /// <summary>
+    /// すべての機器リソースの選択を解除する
+    /// </summary>
+    private void ClearAllEquipment()
+    {
+        this.FormModel.SelectedEquipmentResourceIds.Clear();
     }
 
     private async Task HandleSubmit()
@@ -235,7 +313,8 @@ public partial class AppointmentModal : ComponentBase
             OrganizationId = this.FormModel.OrganizationId,
             FloorId = this.FormModel.FloorId,
             Memo = this.FormModel.Memo,
-            ExpectedUpdatedAt = this.FormModel.UpdatedAt  // 楽観的ロック用
+            ExpectedUpdatedAt = this.FormModel.UpdatedAt,  // 楽観的ロック用
+            EquipmentResourceIds = this.FormModel.SelectedEquipmentResourceIds
         };
 
         this.Logger.LogInformation("Sending update: ExpectedUpdatedAt={ExpectedUpdatedAt}", dto.ExpectedUpdatedAt);
@@ -328,7 +407,8 @@ public partial class AppointmentModal : ComponentBase
                 PatientId = patientId,
                 OrganizationId = organizationId,
                 FloorId = floorId,
-                Memo = this.FormModel.Memo
+                Memo = this.FormModel.Memo,
+                EquipmentResourceIds = this.FormModel.SelectedEquipmentResourceIds
             };
 
             var result = await this.AppointmentService.CreateAppointmentAsync(dto);
@@ -472,6 +552,15 @@ public partial class AppointmentModal : ComponentBase
     }
 
     /// <summary>
+    /// フィルター項目（リソース表示用）
+    /// </summary>
+    public class FilterItem
+    {
+        public Guid Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// フォームモデル
     /// </summary>
     public class AppointmentFormModel
@@ -491,6 +580,9 @@ public partial class AppointmentModal : ComponentBase
 
         // 楽観的ロック用：最終更新日時
         public DateTime? UpdatedAt { get; set; }
+
+        // 選択した機器リソースID
+        public List<Guid> SelectedEquipmentResourceIds { get; set; } = new();
 
         public TimeOnly? StartTime => TimeOnly.TryParse(this.StartTimeString, out var t) ? t : null;
         public TimeOnly? EndTime => TimeOnly.TryParse(this.EndTimeString, out var t) ? t : null;

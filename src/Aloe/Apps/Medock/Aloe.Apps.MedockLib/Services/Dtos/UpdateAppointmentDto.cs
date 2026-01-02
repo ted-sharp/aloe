@@ -13,6 +13,7 @@ public class UpdateAppointmentDto
     public Guid? FloorId { get; set; }
     public int? Status { get; set; }
     public string? Memo { get; set; }
+    public List<Guid> EquipmentResourceIds { get; set; } = new();
 
     /// <summary>
     /// 楽観的ロック用：クライアント側で読み込んだ時点の最終更新日時

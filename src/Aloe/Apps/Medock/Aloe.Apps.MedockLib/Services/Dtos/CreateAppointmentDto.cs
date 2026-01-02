@@ -13,5 +13,6 @@ public class CreateAppointmentDto
     public Guid FloorId { get; set; }
     public int Status { get; set; } = 0;
     public string? Memo { get; set; }
+    public List<Guid> EquipmentResourceIds { get; set; } = new();
 }
 

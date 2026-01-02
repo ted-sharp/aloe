@@ -19,5 +19,15 @@ public class AppointmentDto
     public string? Memo { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
+    public List<EquipmentResourceDto> EquipmentResources { get; set; } = new();
+}
+
+/// <summary>
+/// 予約に関連する機器リソースDTO
+/// </summary>
+public class EquipmentResourceDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
 }
 
