@@ -419,9 +419,30 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             // 各スロットにアバターを描画
             slotMap.forEach((slotAppts, slotKey) => {
                 const [hourNum, half] = slotKey.split('-').map(Number);
-                const slotHeight = hourHeight / 2;
-                const maxAvatars = 4; // 1スロット最大4人まで表示
-                const avatarSize = Math.min(28, slotHeight - 4, (cellWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
+                const padding = 2; // アバター間の余白
+
+                // スロット内の予約から最長の時間長（分）を計算
+                let maxDurationMinutes = 30; // デフォルト: 30分スロット
+                slotAppts.forEach(appt => {
+                    if (appt.startTime && appt.endTime) {
+                        const startHours = parseTimeToHours(appt.startTime);
+                        const endHours = parseTimeToHours(appt.endTime);
+                        const durationMinutes = Math.round((endHours - startHours) * 60);
+                        maxDurationMinutes = Math.max(maxDurationMinutes, durationMinutes);
+                    }
+                });
+
+                // 30分スロット高さは固定: hourHeight / 2
+                const baseSlotHeight = hourHeight / 2;
+
+                // スロット高さから最大2行表示可能なアバターサイズを計算
+                const avatarSize = Math.max(16, Math.floor((baseSlotHeight - 4) / 2 - padding));
+
+                // 行数と列数を計算
+                const maxRows = 2; // 30分スロットで2行
+                const maxCols = Math.max(1, Math.floor((cellWidth - 8) / (avatarSize + padding)));
+                // +Nを別枠として考慮: 最後の1枠を予約
+                const maxAvatars = (maxRows * maxCols) - 1;
 
                 // スロット開始時刻（分）を計算してslotIndexを特定
                 const slotStartMinutes = hourNum * 60 + half * 30;
@@ -429,9 +450,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 // スロット枠の描画位置
                 const slotLeft = cellLeft + 2;
-                const slotTop = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight;
+                const slotTop = headerHeight + (hourNum - startHour) * hourHeight + half * baseSlotHeight;
                 const slotWidth = cellWidth - 4;
-                const slotBlockHeight = slotHeight;
+                const slotBlockHeight = baseSlotHeight;
 
                 // スロット枠を描画（簡易表示モードと同じロジック）
                 if (slotIndex >= 0 && stats) {
@@ -466,12 +487,14 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     });
                 }
 
-                const baseX = cellLeft + 4;
-                const baseY = slotTop + (slotBlockHeight - avatarSize) / 2;
+                const baseX = cellLeft + 2;
+                const baseY = slotTop + 2;
 
                 slotAppts.slice(0, maxAvatars).forEach((appt, idx) => {
-                    const avatarX = baseX + idx * (avatarSize + 4);
-                    const avatarY = baseY;
+                    const row = Math.floor(idx / maxCols);
+                    const col = idx % maxCols;
+                    const avatarX = baseX + col * (avatarSize + padding);
+                    const avatarY = baseY + row * (avatarSize + padding);
                     const initial = getInitial(appt.patientName);
                     const colorIdx = appt.patientName ? appt.patientName.charCodeAt(0) % avatarColors.length : 0;
                     const avatarColor = avatarColors[colorIdx];
@@ -512,6 +535,39 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         appointment: appt
                     });
                 });
+
+                // 省略表示: maxAvatarsを超える予約がある場合、「+N」を表示
+                if (slotAppts.length > maxAvatars) {
+                    const overflowCount = slotAppts.length - maxAvatars;
+                    // +Nは最後の1枠に配置（maxAvatarsの次の位置）
+                    const overflowIdx = maxAvatars;
+                    const overflowRow = Math.floor(overflowIdx / maxCols);
+                    const overflowCol = overflowIdx % maxCols;
+                    const overflowX = baseX + overflowCol * (avatarSize + padding);
+                    const overflowY = baseY + overflowRow * (avatarSize + padding);
+
+                    // 背景円（グレー）
+                    drawCircle(contentCtx, {
+                        x: overflowX + avatarSize / 2,
+                        y: overflowY + avatarSize / 2,
+                        radius: avatarSize / 2,
+                        fill: '#d1d5db',
+                        stroke: '#ffffff',
+                        strokeWidth: 2
+                    });
+
+                    // テキスト「+N」
+                    drawText(contentCtx, {
+                        text: `+${overflowCount}`,
+                        x: overflowX,
+                        y: overflowY + avatarSize / 2 - 5,
+                        width: avatarSize,
+                        fill: '#374151',
+                        fontSize: 9,
+                        fontStyle: 'bold',
+                        align: 'center'
+                    });
+                }
             });
         }
     }
