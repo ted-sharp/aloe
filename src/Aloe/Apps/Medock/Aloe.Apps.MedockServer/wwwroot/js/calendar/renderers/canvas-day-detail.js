@@ -56,8 +56,9 @@ function parseSlotTimeRange(slot, startHour, endHour) {
  * @param {boolean} isHoliday - 祝日フラグ
  * @param {boolean} showDateText - 日付テキストを表示するか
  * @param {object} equipmentStats - Equipment統計データ（オプション）
+ * @param {object} renderState - RenderState（ローカル、Hit Test用）
  */
-export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true, equipmentStats = null) {
+export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true, equipmentStats = null, renderState = null) {
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -304,6 +305,23 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
                     fontSize: CONFIG.font.sizeSmall,
                     fontStyle: 'bold',
                     align: 'center'
+                });
+            }
+
+            // Hit Test用にバーを登録
+            if (renderState && !isSlotGrayed) {
+                renderState.addBar(dateStr, {
+                    x: barX,
+                    y: barY,
+                    width: barWidth,
+                    height: barHeight,
+                    slotIndex: i,
+                    startMinutes: slotStartStr,
+                    endMinutes: slotEndStr,
+                    cap: cap,
+                    count: count,
+                    available: available,
+                    isGrayed: isSlotGrayed
                 });
             }
         } else if (available < 0) {

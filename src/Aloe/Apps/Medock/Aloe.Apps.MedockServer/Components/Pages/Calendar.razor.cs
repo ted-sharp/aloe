@@ -792,4 +792,20 @@ public partial class Calendar : ComponentBase
         }
         this.StateHasChanged();
     }
+
+    /// <summary>
+    /// 日詳細ダイアログでスロットが選択された時の処理
+    /// </summary>
+    private void HandleDayDetailSlotClicked(DayDetailPopup.SlotClickedEventArgs args)
+    {
+        this.Logger.LogInformation("日詳細スロット選択: Date={Date}, Time={Start}-{End}",
+            args.Date, args.StartTime, args.EndTime);
+
+        // ポップアップを閉じる
+        this.CloseDayDetail();
+
+        // 予約モーダルを開く
+        this.State.OpenModal(args.Date, args.StartTime);
+        this.StateHasChanged();
+    }
 }

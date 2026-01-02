@@ -5,6 +5,18 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class DayDetailPopup : ComponentBase
 {
+    /// <summary>
+    /// スロット選択イベントの引数
+    /// </summary>
+    public class SlotClickedEventArgs
+    {
+        public DateOnly Date { get; set; }
+        public TimeOnly StartTime { get; set; }
+        public TimeOnly EndTime { get; set; }
+        public int Capacity { get; set; }
+        public int Count { get; set; }
+    }
+
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
@@ -28,6 +40,9 @@ public partial class DayDetailPopup : ComponentBase
 
     [Parameter]
     public EventCallback<DateOnly> OnNavigateToNextDay { get; set; }
+
+    [Parameter]
+    public EventCallback<SlotClickedEventArgs> OnSlotClicked { get; set; }
 
     private string ChartContainerId { get; } = $"day-detail-chart-{Guid.CreateVersion7():N}";
     private bool _isChartRendered;
@@ -104,7 +119,9 @@ public partial class DayDetailPopup : ComponentBase
             if (isReady)
             {
                 var dateStr = this.SelectedDate.Value.ToString("yyyy-MM-dd");
-                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", this.ChartContainerId, dateStr);
+                // DotNetObjectReferenceを作成してJavaScript側に渡す
+                var dotNetRef = DotNetObjectReference.Create(this);
+                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", this.ChartContainerId, dateStr, dotNetRef);
                 this._isChartRendered = true;
             }
         }
@@ -288,6 +305,40 @@ public partial class DayDetailPopup : ComponentBase
         if (this.SelectedDate.HasValue)
         {
             await this.OnNavigateToNextDay.InvokeAsync(this.SelectedDate.Value.AddDays(1));
+        }
+    }
+
+    /// <summary>
+    /// JavaScriptからスロット選択を受け取る
+    /// </summary>
+    [JSInvokable("OnSlotClicked")]
+    public async Task OnSlotClickedFromJs(string dateStr, int startMinutes, int endMinutes, int capacity, int count)
+    {
+        try
+        {
+            if (!DateOnly.TryParse(dateStr, out var date))
+            {
+                return;
+            }
+
+            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
+            var endTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(endMinutes));
+
+            var args = new SlotClickedEventArgs
+            {
+                Date = date,
+                StartTime = startTime,
+                EndTime = endTime,
+                Capacity = capacity,
+                Count = count
+            };
+
+            // イベント発火（容量チェックなし）
+            await this.OnSlotClicked.InvokeAsync(args);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"DayDetailPopup.OnSlotClicked error: {ex.Message}");
         }
     }
 }

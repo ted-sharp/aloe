@@ -77,6 +77,9 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
 
     // ホバー中のセル情報
     let hoveredCell = null;
+    let hoveredSlot = null;
+    let selectedSlot = null;
+    let slotDrawTimer = null;
 
     /**
      * マウス座標からHit Testを実行
@@ -153,6 +156,60 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
     }
 
     /**
+     * スロット描画タイマーを開始（選択状態が消えるのを防ぐ）
+     */
+    function startSlotDrawTimer() {
+        if (slotDrawTimer) {
+            clearInterval(slotDrawTimer);
+        }
+        slotDrawTimer = setInterval(() => {
+            if (hoveredSlot || selectedSlot) {
+                drawSlotHighlightAndSelection(hoveredSlot, selectedSlot);
+            } else {
+                clearInterval(slotDrawTimer);
+                slotDrawTimer = null;
+            }
+        }, 100); // 100ms ごとに再描画
+    }
+
+    /**
+     * スロット描画タイマーを停止
+     */
+    function stopSlotDrawTimer() {
+        if (slotDrawTimer) {
+            clearInterval(slotDrawTimer);
+            slotDrawTimer = null;
+        }
+    }
+
+    /**
+     * スロットのホバー・選択状態を描画
+     */
+    function drawSlotHighlightAndSelection(hoveredSlot, selectedSlot) {
+        const interactionCtx = canvasManager.getContext('interaction');
+        canvasManager.clearLayer('interaction');
+
+        // 選択状態を描画（実線）
+        if (selectedSlot && selectedSlot.bounds) {
+            const bounds = selectedSlot.bounds;
+            interactionCtx.strokeStyle = '#3b82f6';
+            interactionCtx.lineWidth = 3;
+            interactionCtx.setLineDash([]);
+            interactionCtx.strokeRect(bounds.x - 2, bounds.y - 2, bounds.width + 4, bounds.height + 4);
+        }
+
+        // ホバー状態を描画（点線、選択状態でなければ）
+        if (hoveredSlot && hoveredSlot.bounds && (!selectedSlot || (selectedSlot.dateStr !== hoveredSlot.dateStr || selectedSlot.slotIndex !== hoveredSlot.slotIndex))) {
+            const bounds = hoveredSlot.bounds;
+            interactionCtx.strokeStyle = '#3b82f6';
+            interactionCtx.lineWidth = 2;
+            interactionCtx.setLineDash([4, 4]);
+            interactionCtx.strokeRect(bounds.x - 1, bounds.y - 1, bounds.width + 2, bounds.height + 2);
+            interactionCtx.setLineDash([]);
+        }
+    }
+
+    /**
      * マウス移動ハンドラ
      */
     interactionCanvas.addEventListener('mousemove', (e) => {
@@ -177,6 +234,21 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
         } else if (hitResult && hitResult.type === 'bar') {
             // バーの上
             interactionCanvas.style.cursor = 'pointer';
+        } else if (hitResult && hitResult.type === 'slot') {
+            // 週間ビュー: スロットの上
+            const slot = hitResult.data;
+
+            // スロットが変わった場合のみカーソルを更新
+            if (!hoveredSlot || hoveredSlot.dateStr !== slot.dateStr || hoveredSlot.slotIndex !== slot.slotIndex) {
+                hoveredSlot = slot;
+                // グレーアウトフラグを確認
+                const flags = slot.stats.slotFlags ? slot.stats.slotFlags[slot.slotIndex] : 0;
+                const isGrayed = (flags & 0b001) !== 0;
+                interactionCanvas.style.cursor = isGrayed ? 'not-allowed' : 'pointer';
+            }
+
+            // 常に描画を更新（interaction レイヤーのクリア対策）
+            drawSlotHighlightAndSelection(hoveredSlot, selectedSlot);
         } else {
             // 何もない場所
             if (hoveredCell) {
@@ -185,6 +257,10 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
                 canvasManager.clearLayer('interaction');
                 // 選択中の枠線を再描画
                 drawSelectedBorder(interactionCtx);
+                interactionCanvas.style.cursor = 'default';
+            } else if (hoveredSlot) {
+                hoveredSlot = null;
+                drawSlotHighlightAndSelection(null, selectedSlot);
                 interactionCanvas.style.cursor = 'default';
             }
         }
@@ -200,6 +276,11 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             canvasManager.clearLayer('interaction');
             // 選択中の枠線を再描画
             drawSelectedBorder(interactionCtx);
+            interactionCanvas.style.cursor = 'default';
+        } else if (hoveredSlot) {
+            hoveredSlot = null;
+            startSlotDrawTimer(); // timer を続ける（selectedSlot がある場合）
+            drawSlotHighlightAndSelection(null, selectedSlot);
             interactionCanvas.style.cursor = 'default';
         }
     });
@@ -272,6 +353,57 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             const bar = hitResult.data;
             console.log('Bar clicked:', bar);
             // TODO: バーの詳細を表示
+            return;
+        }
+
+        if (hitResult.type === 'slot') {
+            // 週間ビュー: スロットがクリックされた
+            const slot = hitResult.data;
+            const { dateStr, slotIndex, stats } = slot;
+
+            // スロットデータを取得
+            const startMinutes = stats.slotStarts[slotIndex];
+            const endMinutes = stats.slotEnds[slotIndex];
+            const cap = stats.slotCaps[slotIndex];
+            const count = stats.slotCounts[slotIndex];
+            const flags = stats.slotFlags ? stats.slotFlags[slotIndex] : 0;
+            const isGrayed = (flags & 0b001) !== 0;
+
+            // 検証: グレーアウトされたスロットはスキップ
+            if (isGrayed) {
+                console.log('Slot is grayed out, ignoring click');
+                return;
+            }
+
+            // ダブルクリック検出（同じスロットを300ms以内に2回クリック）
+            const now = Date.now();
+            const slotId = `${dateStr}-${slotIndex}`;
+            const isDoubleClick = (now - state.lastClickTime < 300) && (state.lastClickDate === slotId);
+
+            if (isDoubleClick) {
+                // ダブルクリック：予約モーダルを開く
+                console.log('Week slot double-clicked:', { dateStr, startMinutes, endMinutes, cap, count });
+                setState({ lastClickTime: 0, lastClickDate: null });
+                selectedSlot = null;
+                stopSlotDrawTimer();
+                drawSlotHighlightAndSelection(null, null);
+
+                // Blazor側に通知
+                if (state.dotNetRef) {
+                    state.dotNetRef.invokeMethodAsync('OnWeekSlotClicked',
+                        dateStr, startMinutes, endMinutes, cap, count);
+                }
+            } else {
+                // シングルクリック：選択状態のみ
+                console.log('Week slot selected:', { dateStr, startMinutes, endMinutes, cap, count });
+                selectedSlot = slot;
+                startSlotDrawTimer(); // 定期的に描画を続ける
+                drawSlotHighlightAndSelection(hoveredSlot, selectedSlot);
+                setState({
+                    lastClickTime: now,
+                    lastClickDate: slotId
+                });
+            }
             return;
         }
 

@@ -16,7 +16,8 @@ import { renderCanvasYearView } from './renderers/canvas-year-view.js';
 import { renderCanvasWeekView } from './renderers/canvas-week-view.js';
 import { renderCanvasDayDetail } from './renderers/canvas-day-detail.js';
 import { setupCanvasInteractions, drawSelectionBorder } from './renderers/canvas-interactions.js';
-import { getRenderState } from './renderers/canvas-render-state.js';
+import { getRenderState, RenderState } from './renderers/canvas-render-state.js';
+import { setupDayDetailInteractions } from './renderers/canvas-day-detail-interactions.js';
 import { startConnection, stopConnection } from './realtime/signalr-client.js';
 
 // Blazor DayDetailPopup用のステージを管理
@@ -323,8 +324,9 @@ function destroy() {
  * Blazor DayDetailPopup用: 指定コンテナにCanvas APIグラフを描画
  * @param {string} containerId - DOM container ID
  * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
+ * @param {object} dotNetRef - DayDetailPopupコンポーネントの.NET参照（オプション）
  */
-function renderDayDetailPopup(containerId, dateStr) {
+function renderDayDetailPopup(containerId, dateStr, dotNetRef = null) {
     const container = document.getElementById(containerId);
     if (!container) {
         console.error('MedockCalendar: DayDetailPopup container not found:', containerId);
@@ -333,9 +335,14 @@ function renderDayDetailPopup(containerId, dateStr) {
 
     // 既存のCanvas Managerがあれば破棄
     if (dayDetailPopupStages.has(containerId)) {
-        const existingManager = dayDetailPopupStages.get(containerId);
-        if (existingManager && existingManager.destroy) {
-            existingManager.destroy();
+        const existingStage = dayDetailPopupStages.get(containerId);
+        if (existingStage) {
+            if (existingStage.canvasManager && existingStage.canvasManager.destroy) {
+                existingStage.canvasManager.destroy();
+            }
+            if (existingStage.resizeObserver) {
+                existingStage.resizeObserver.disconnect();
+            }
         }
         dayDetailPopupStages.delete(containerId);
     }
@@ -359,11 +366,26 @@ function renderDayDetailPopup(containerId, dateStr) {
     // Equipment統計データを取得
     const equipmentStats = state.equipmentStats.get(dateStr) || null;
 
-    // グラフを描画（日詳細ポップアップでは日付テキストを表示しない）
-    renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats);
+    // ポップアップ専用のローカルRenderStateを作成
+    const popupRenderState = new RenderState();
+    popupRenderState.setViewType('day-detail');
 
-    // Canvas Managerを保存
-    dayDetailPopupStages.set(containerId, popupCanvasManager);
+    // グラフを描画（日詳細ポップアップでは日付テキストを表示しない、renderStateを渡す）
+    renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats, popupRenderState);
+
+    // インタラクションハンドラーをセットアップ（dotNetRefがある場合）
+    if (dotNetRef) {
+        setupDayDetailInteractions(popupCanvasManager, popupRenderState, dotNetRef, dateStr);
+    }
+
+    // Canvas Managerとその他の情報を保存
+    dayDetailPopupStages.set(containerId, {
+        canvasManager: popupCanvasManager,
+        renderState: popupRenderState,
+        dotNetRef: dotNetRef,
+        dateStr: dateStr,
+        resizeObserver: null
+    });
 
     // リサイズ対応（CanvasManagerが自動でリサイズするため、再描画のみ）
     const resizeObserver = new ResizeObserver(entries => {
@@ -374,19 +396,27 @@ function renderDayDetailPopup(containerId, dateStr) {
             if (popupCanvasManager.width !== newWidth || popupCanvasManager.height !== newHeight) {
                 // Canvas Managerがリサイズを処理
                 popupCanvasManager.resize(newWidth, newHeight);
-                
+
                 // Equipment統計データを再取得
                 const equipmentStats = state.equipmentStats.get(dateStr) || null;
-                
+
                 // 再描画
-                renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats);
+                renderCanvasDayDetail(popupCanvasManager, state, dateStr, dayNumber, isHoliday, false, equipmentStats, popupRenderState);
+
+                // インタラクションを再セットアップ
+                if (dotNetRef) {
+                    setupDayDetailInteractions(popupCanvasManager, popupRenderState, dotNetRef, dateStr);
+                }
             }
         }
     });
     resizeObserver.observe(container);
 
     // クリーンアップ用にResizeObserverを保存
-    popupCanvasManager._resizeObserver = resizeObserver;
+    const stage = dayDetailPopupStages.get(containerId);
+    if (stage) {
+        stage.resizeObserver = resizeObserver;
+    }
 }
 
 /**

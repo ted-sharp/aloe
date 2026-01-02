@@ -99,5 +99,26 @@ public partial class CalendarCanvas
             await this.OnShowDayDetail.InvokeAsync(date);
         }
     }
+
+    [JSInvokable("OnWeekSlotClicked")]
+    public async Task OnWeekSlotClickedFromJs(string dateStr, int startMinutes, int endMinutes, int capacity, int count)
+    {
+        try
+        {
+            if (!DateOnly.TryParse(dateStr, out var date))
+            {
+                return;
+            }
+
+            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
+
+            // 予約作成リクエストとして発火（容量チェックなし）
+            await this.OnCreateRequested.InvokeAsync((date, startTime));
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"OnWeekSlotClicked error: {ex.Message}");
+        }
+    }
 }
 
