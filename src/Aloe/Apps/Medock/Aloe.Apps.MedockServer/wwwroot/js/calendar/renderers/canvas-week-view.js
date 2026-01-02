@@ -395,6 +395,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             // 該当日のAppointmentsを取得
             const dayAppointments = state.appointments?.filter(appt => appt.date === dateStr) || [];
 
+            // スロット統計データを取得（クリック処理に必要）
+            const stats = state.mainStats?.get(dateStr);
+
             // 時間範囲内のAppointmentsをスロット別にグループ化
             const slotMap = new Map(); // key: "hour-half" -> appointments[]
 
@@ -420,8 +423,51 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                 const maxAvatars = 4; // 1スロット最大4人まで表示
                 const avatarSize = Math.min(28, slotHeight - 4, (cellWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
 
+                // スロット開始時刻（分）を計算してslotIndexを特定
+                const slotStartMinutes = hourNum * 60 + half * 30;
+                const slotIndex = stats?.slotStarts?.findIndex(start => start === slotStartMinutes) ?? -1;
+
+                // スロット枠の描画位置
+                const slotLeft = cellLeft + 2;
+                const slotTop = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight;
+                const slotWidth = cellWidth - 4;
+                const slotBlockHeight = slotHeight;
+
+                // スロット枠を描画（簡易表示モードと同じロジック）
+                if (slotIndex >= 0 && stats) {
+                    const count = (stats.slotCounts && stats.slotCounts[slotIndex] !== undefined && stats.slotCounts[slotIndex] !== null) ? stats.slotCounts[slotIndex] : 0;
+                    const cap = (stats.slotCaps && stats.slotCaps[slotIndex] !== undefined && stats.slotCaps[slotIndex] !== null && stats.slotCaps[slotIndex] > 0) ? stats.slotCaps[slotIndex] : 0;
+                    const available = cap - count;
+
+                    const slotColor = getWinterColorFromAvailable(available, cap);
+                    drawRect(contentCtx, {
+                        x: slotLeft,
+                        y: slotTop,
+                        width: slotWidth,
+                        height: slotBlockHeight,
+                        fill: slotColor,
+                        cornerRadius: 4,
+                        opacity: 0.15,  // 背景は薄く
+                        stroke: slotColor,  // 枠線は濃い色
+                        strokeWidth: 2
+                    });
+
+                    // スロット枠用のHit Test登録（枠のクリック判定）
+                    renderState.addWeekSlot({
+                        bounds: {
+                            x: slotLeft,
+                            y: slotTop,
+                            width: slotWidth,
+                            height: slotBlockHeight
+                        },
+                        dateStr: dateStr,
+                        slotIndex: slotIndex,
+                        stats: stats
+                    });
+                }
+
                 const baseX = cellLeft + 4;
-                const baseY = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight + (slotHeight - avatarSize) / 2;
+                const baseY = slotTop + (slotBlockHeight - avatarSize) / 2;
 
                 slotAppts.slice(0, maxAvatars).forEach((appt, idx) => {
                     const avatarX = baseX + idx * (avatarSize + 4);
@@ -452,7 +498,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         align: 'center'
                     });
 
-                    // Hit Test用に登録
+                    // アバター用のHit Test登録（個別アバターのクリック判定）
                     renderState.addWeekSlot({
                         bounds: {
                             x: avatarX,
@@ -460,6 +506,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                             width: avatarSize,
                             height: avatarSize
                         },
+                        dateStr: dateStr,
+                        slotIndex: slotIndex,
+                        stats: stats,
                         appointment: appt
                     });
                 });
