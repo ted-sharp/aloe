@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle } from '../utils/canvas-utils.js';
 import { dateToString, getStartOfWeek, isToday, parseDate } from '../utils/date-utils.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
+import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
 import {
     getSymbolFromVacancyRatio,
     calculateVacancyRatio,
@@ -224,8 +225,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             strokeWidth: 1
         });
 
-        // 詳細表示モードの場合、30分スロットの区切り線も描画
-        if (!showSlots && hour < hours) {
+        // 30分スロットの区切り線を描画（簡易表示・詳細表示両方）
+        if (hour < hours) {
             const halfHourY = y + hourHeight / 2;
             drawLine(gridCtx, {
                 points: [timeColumnWidth, halfHourY, width, halfHourY],
@@ -261,141 +262,150 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         }
     }
 
-    // 予約を描画
-    if (state.appointments && state.appointments.length > 0) {
-        const filteredAppointments = state.appointments.filter(appt => {
-            const apptDate = parseDate(appt.date);
-            const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
-            return daysDiff >= 0 && daysDiff < weekDays;
-        });
+    // 各日付のスロット統計を描画
+    for (let i = 0; i < weekDays; i++) {
+        const date = new Date(startDate);
+        date.setDate(date.getDate() + i);
+        const dateStr = dateToString(date);
+
+        // dayIndまでの幅の合計を計算
+        let xStart = timeColumnWidth;
+        for (let j = 0; j < i; j++) {
+            xStart += dayWidths[j];
+        }
+        const dayWidth = dayWidths[i];
+        const cellLeft = xStart;
+        const cellTop = headerHeight;
+        const cellWidth = dayWidth;
+        const cellHeight = height - headerHeight;
+
+        const isHoliday = state.holidays && state.holidays.has(dateStr);
 
         if (showSlots) {
-            // 簡易表示モード: 記号表示（●▼×）
-            filteredAppointments.forEach((appt, index) => {
-                const apptDate = parseDate(appt.date);
-                const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
-                const startTime = parseTimeToHours(appt.startTime || '09:00');
-                const endTime = parseTimeToHours(appt.endTime || '10:00');
+            // 簡易表示モード: mainStatsの各スロットごとに記号を描画（月間ビューの棒グラフと同じロジック）
+            const stats = state.mainStats?.get(dateStr);
+            if (stats && stats.slotStarts && stats.slotCaps && stats.slotCounts) {
+                const slotStarts = stats.slotStarts || [];
+                const slotEnds = stats.slotEnds || [];
+                const slotCounts = stats.slotCounts || [];
+                const slotCaps = stats.slotCaps || [];
+                const slotFlags = stats.slotFlags || null;
+                const slotCount = slotStarts.length;
 
-                if (startTime < startHour || endTime > endHour) {
-                    return; // 範囲外
+                // 営業時間情報を取得
+                const businessHours = state.options?.businessHours;
+                let lunchStartHour = null;
+                let lunchEndHour = null;
+                if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+                    const parseTime = (timeStr) => {
+                        const parts = timeStr.split(':');
+                        return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+                    };
+                    lunchStartHour = parseTime(businessHours.lunchStartTime);
+                    lunchEndHour = parseTime(businessHours.lunchEndTime);
                 }
 
-                // daysDiffまでの幅の合計を計算
-                let xStart = timeColumnWidth;
-                for (let j = 0; j < daysDiff; j++) {
-                    xStart += dayWidths[j];
-                }
-                const dayWidth = dayWidths[daysDiff];
-                const x = xStart + 2;
-                const y = headerHeight + (startTime - startHour) * hourHeight;
-                const blockWidth = dayWidth - 4;
-                const blockHeight = (endTime - startTime) * hourHeight;
-
-                const statusColor = CONFIG.colors.status[appt.status] || '#9ca3af';
-
-                // ブロック
-                drawRect(contentCtx, {
-                    x: x,
-                    y: y,
-                    width: blockWidth,
-                    height: blockHeight,
-                    fill: statusColor,
-                    cornerRadius: 4,
-                    opacity: 0.9,
-                    stroke: 'rgba(0, 0, 0, 0.2)',
-                    strokeWidth: 1
-                });
-
-                // スロット情報を取得して統一ロジックで記号を描画
-                const dateStr = appt.date;
-                let symbolType = 'x'; // デフォルト
-                let slotAvailable = 0;
-                let slotCapacity = 0;
-
-                if (state.mainStats && state.mainStats.has(dateStr)) {
-                    const statData = state.mainStats.get(dateStr);
-
-                    // slotStarts, slotEnds, slotCaps, slotCountsが並列配列として存在
-                    if (statData.slotStarts && statData.slotCaps && statData.slotCounts) {
-                        // 予約の開始時刻（小数点形式 9.5 = 09:30）をスロット時刻（HH:mm）に変換
-                        const hours = Math.floor(startTime);
-                        const minutes = Math.round((startTime - hours) * 60);
-                        const slotStartStr = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-
-                        // ブロック期間内のすべてのスロット情報を集計
-                        const slotCapsForBlock = [];
-                        const slotCountsForBlock = [];
-
-                        for (let i = 0; i < statData.slotStarts.length; i++) {
-                            const slotStartMinutes = statData.slotStarts[i];
-                            const slotEndMinutes = statData.slotEnds ? statData.slotEnds[i] : statData.slotStarts[i];
-                            const slotStart = slotStartMinutes / 60;  // 分を時間に変換
-                            const slotEnd = slotEndMinutes / 60;
-
-                            // ブロック時間範囲と重なるスロットを含める
-                            if (slotStart < endTime && slotEnd > startTime) {
-                                const cap = statData.slotCaps[i];
-                                if (cap > 0) {
-                                    slotCapsForBlock.push(cap);
-                                    slotCountsForBlock.push(statData.slotCounts[i] || 0);
-                                }
-                            }
-                        }
-
-                        // ブロック内のすべてのスロットから空き率を計算
-                        if (slotCapsForBlock.length > 0) {
-                            const slotFlags = statData.slotFlags || null;
-                            const { vacancyRatio, available, capacity } = calculateVacancyRatio(
-                                slotCapsForBlock,
-                                slotCountsForBlock,
-                                slotFlags,
-                                false
-                            );
-
-                            symbolType = getSymbolFromVacancyRatio(vacancyRatio);
-                            slotAvailable = available;
-                            slotCapacity = capacity;
-                        }
+                // 表示対象のスロットを判定
+                const validIndices = [];
+                for (let idx = 0; idx < slotCount; idx++) {
+                    const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
+                    const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
+                    if (cap > 0 || count > 0) {
+                        validIndices.push(idx);
                     }
                 }
 
-                // 記号と情報を描画
-                const symbolCenterX = x + blockWidth / 2;
-                const symbolCenterY = y + blockHeight / 2;
-                const symbolSize = Math.min(blockWidth * 0.5, blockHeight * 0.5, 24);
+                // 時間範囲内のスロットを取得
+                const slotsInRange = [];
+                for (const idx of validIndices) {
+                    const slotStartMinutes = slotStarts[idx];
+                    const slotEndMinutes = slotEnds[idx];
+                    const slotStartHour = slotStartMinutes / 60;
+                    const slotEndHour = slotEndMinutes / 60;
 
-                drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, 0.9);
+                    // 昼休み時間帯かどうかを判定
+                    const isInLunchTime = lunchStartHour !== null && lunchEndHour !== null &&
+                        ((slotStartHour >= lunchStartHour && slotStartHour < lunchEndHour) ||
+                            (slotEndHour > lunchStartHour && slotEndHour <= lunchEndHour) ||
+                            (slotStartHour <= lunchStartHour && slotEndHour >= lunchEndHour));
 
-                // ブロック高さが十分な場合は n/m テキストも表示
-                if (blockHeight >= 60 && slotCapacity > 0) {
-                    const textY = symbolCenterY + symbolSize / 2 + 8;
-                    drawSlotInfoText(contentCtx, x + 5, textY, blockWidth - 10, slotAvailable, slotCapacity, false, 0.9);
+                    if (slotEndHour > startHour && slotStartHour < endHour && !isInLunchTime) {
+                        slotsInRange.push(idx);
+                    }
                 }
 
-                // Hit Test用に登録
-                renderState.addWeekSlot({
-                    bounds: { x, y, width: blockWidth, height: blockHeight },
-                    appointment: appt
+                // 各スロットごとに記号を描画（時刻軸に沿って縦に配置）
+                slotsInRange.forEach((idx) => {
+                    const slotStartMinutes = slotStarts[idx];
+                    const slotEndMinutes = slotEnds[idx];
+                    const slotStartHour = Math.max(startHour, slotStartMinutes / 60);
+                    const slotEndHour = Math.min(endHour, slotEndMinutes / 60);
+
+                    const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
+                    const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
+                    const available = cap - count;
+
+                    const { vacancyRatio } = calculateVacancyRatio([cap], [count], null, false);
+                    const symbolType = getSymbolFromVacancyRatio(vacancyRatio);
+
+                    // スロットの描画位置を計算（日の列内、時刻軸に沿って）
+                    const slotTop = headerHeight + (slotStartHour - startHour) * hourHeight;
+                    const slotHeight = (slotEndHour - slotStartHour) * hourHeight;
+                    const slotLeft = cellLeft + 2;
+                    const slotWidth = cellWidth - 4;
+
+                    // スロットブロックを描画（薄い背景 + 枠線で範囲を表示）
+                    const slotColor = getWinterColorFromAvailable(available, cap);
+                    drawRect(contentCtx, {
+                        x: slotLeft,
+                        y: slotTop,
+                        width: slotWidth,
+                        height: slotHeight,
+                        fill: slotColor,
+                        cornerRadius: 4,
+                        opacity: 0.15,  // 背景は薄く
+                        stroke: slotColor,  // 枠線は濃い色
+                        strokeWidth: 2
+                    });
+
+                    // シンボルをブロック内に配置
+                    const symbolCenterX = slotLeft + slotWidth / 2;
+                    const symbolCenterY = slotTop + slotHeight / 2;
+                    const symbolSize = Math.min(slotWidth * 0.4, slotHeight * 0.5, 20);
+
+                    drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, 1.0);
+
+                    // 「n/m」テキストも表示（スロット高さが十分な場合）
+                    if (slotHeight >= 40 && cap > 0) {
+                        const textY = symbolCenterY + symbolSize / 2 + 4;
+                        drawSlotInfoText(contentCtx, slotLeft + 2, textY, slotWidth - 4, available, cap, false, 1.0);
+                    }
+
+                    // Hit Test用に登録
+                    renderState.addWeekSlot({
+                        bounds: { x: slotLeft, y: slotTop, width: slotWidth, height: slotHeight },
+                        dateStr: dateStr,
+                        slotIndex: idx,
+                        stats: stats
+                    });
                 });
-            });
+            }
         } else {
             // 詳細表示モード: アバター表示（30分スロット単位）
-            const slotMap = new Map(); // key: "dayIndex-hour-half" -> appointments[]
+            // 該当日のAppointmentsを取得
+            const dayAppointments = state.appointments?.filter(appt => appt.date === dateStr) || [];
 
-            filteredAppointments.forEach(appt => {
-                const apptDate = parseDate(appt.date);
-                const daysDiff = Math.floor((apptDate - startDate) / (1000 * 60 * 60 * 24));
+            // 時間範囲内のAppointmentsをスロット別にグループ化
+            const slotMap = new Map(); // key: "hour-half" -> appointments[]
 
-                if (daysDiff < 0 || daysDiff >= weekDays) return;
-
+            dayAppointments.forEach(appt => {
                 const startTime = parseTimeToHours(appt.startTime || '09:00');
                 if (startTime < startHour || startTime >= endHour) return;
 
                 const hourNum = Math.floor(startTime);
                 const minNum = Math.round((startTime - hourNum) * 60);
                 const half = minNum >= 30 ? 1 : 0;
-                const slotKey = `${daysDiff}-${hourNum}-${half}`;
+                const slotKey = `${hourNum}-${half}`;
 
                 if (!slotMap.has(slotKey)) {
                     slotMap.set(slotKey, []);
@@ -405,18 +415,12 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
             // 各スロットにアバターを描画
             slotMap.forEach((slotAppts, slotKey) => {
-                const [dayIndex, hourNum, half] = slotKey.split('-').map(Number);
+                const [hourNum, half] = slotKey.split('-').map(Number);
                 const slotHeight = hourHeight / 2;
                 const maxAvatars = 4; // 1スロット最大4人まで表示
-                const dayWidth = dayWidths[dayIndex];
-                const avatarSize = Math.min(28, slotHeight - 4, (dayWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
+                const avatarSize = Math.min(28, slotHeight - 4, (cellWidth - 8) / Math.min(slotAppts.length, maxAvatars) - 4);
 
-                // dayIndexまでの幅の合計を計算
-                let baseXStart = timeColumnWidth;
-                for (let j = 0; j < dayIndex; j++) {
-                    baseXStart += dayWidths[j];
-                }
-                const baseX = baseXStart + 4;
+                const baseX = cellLeft + 4;
                 const baseY = headerHeight + (hourNum - startHour) * hourHeight + half * slotHeight + (slotHeight - avatarSize) / 2;
 
                 slotAppts.slice(0, maxAvatars).forEach((appt, idx) => {
