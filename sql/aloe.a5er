@@ -338,8 +338,8 @@ Left=1500
 Top=1000
 Field="appt_id","appt_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="org_id","org_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="pt_id","pt_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="org_id","org_id","UUID",,,"","",$000099FF,""
+Field="pt_id","pt_id","UUID",,,"","",$000099FF,""
 Field="appt_date","appt_date","@DATE",,,"","未定がある",$000099FF,""
 Field="appt_start_time","appt_start_time","@TIME",,,"","",$FFFFFFFF,""
 Field="appt_duration_min","appt_duration_min","@INT",,,"","",$FFFFFFFF,""
@@ -351,7 +351,7 @@ Index==0,pt_id
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20251218211123
+ModifiedDateTime=20260102233828
 Position="APPT",1500,1000
 ZOrder=221
 
@@ -2178,7 +2178,7 @@ LName=facility_holidays
 Comment=
 TableInnerOption=
 TableOption=
-Page=appt
+Page=APPT
 Left=300
 Top=1700
 Field="holiday_id","holiday_id","UUID","NOT NULL",0,"","",$000028FF,""
@@ -2192,7 +2192,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251231154927
-Position="appt",300,1700
+Position="APPT",300,1700
 ZOrder=395
 
 [Relation]

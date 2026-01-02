@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2025/12/31 15:58:12
+-- Date/Time    : 2026/01/02 23:39:16
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -238,8 +238,8 @@ DROP TABLE if exists "appointments" CASCADE;
 CREATE TABLE "appointments" (
   "appt_id" UUID DEFAULT uuidv7() NOT NULL
   , "floor_id" UUID NOT NULL
-  , "org_id" UUID NOT NULL
-  , "pt_id" UUID NOT NULL
+  , "org_id" UUID
+  , "pt_id" UUID
   , "appt_date" date
   , "appt_start_time" time
   , "appt_duration_min" integer
