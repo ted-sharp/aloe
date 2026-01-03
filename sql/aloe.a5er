@@ -268,39 +268,15 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=300
-Top=1500
+Top=2300
 Field="holiday_date","holiday_date","@DATE","NOT NULL",0,"CURRENT_DATE","",$000000FF,""
 Field="holiday_name","holiday_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251205185847
-Position="APPT",300,1500
+Position="APPT",300,2300
 ZOrder=180
-
-[Entity]
-PName=floors
-LName=floors
-Comment=
-TableInnerOption=
-TableOption=
-Page=APPT
-Left=300
-Top=500
-Field="floor_id","floor_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
-Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
-Field="floor_code","floor_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000000FF,""
-Field="floor_name","floor_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="floor_desc","floor_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="floor_seq","floor_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
-Index==1,facility_id,floor_code
-IndexOption=WHERE is_deleted = FALSE
-EffectMode=Gradation
-Color=$000000
-BkColor=$D1D1FF
-ModifiedDateTime=20251216220700
-Position="APPT",300,500
-ZOrder=201
 
 [Entity]
 PName=appointment_resources
@@ -309,7 +285,7 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=1500
+Left=300
 Top=500
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -324,7 +300,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251219235610
-Position="APPT",1500,500
+Position="APPT",300,500,876,1000
 ZOrder=217
 
 [Entity]
@@ -334,8 +310,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=1500
-Top=1000
+Left=1800
+Top=1500
 Field="appt_id","appt_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="org_id","org_id","UUID",,,"","",$000099FF,""
@@ -352,21 +328,20 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20260102233828
-Position="APPT",1500,1000
+Position="APPT",1800,1500
 ZOrder=221
 
 [Entity]
-PName=appointment_slots
-LName=appointment_slots
+PName=appointment_schedules
+LName=appointment_schedules
 Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=3100
+Left=1500
 Top=500
-Field="appt_slot_id","appt_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_schedule_id","appt_schedule_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
-Field="appt_slots","appt_slots","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
 Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","期限内の古い方から順に適用していく",$FFFFFFFF,""
 Field="active_to","active_to","@DATE","NOT NULL",,"\q9999-12-31\q","排他",$FFFFFFFF,""
@@ -374,8 +349,8 @@ Index==0,appt_res_id
 EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
-ModifiedDateTime=20251218205849
-Position="APPT",3100,500
+ModifiedDateTime=20260103151143
+Position="APPT",1500,500
 ZOrder=228
 
 [Entity]
@@ -825,28 +800,6 @@ TermPos2=R
 ZOrder=300
 
 [Relation]
-Entity1=floors
-Entity2=appointment_resources
-RelationType1=2
-RelationType2=3
-Fields1=floor_id
-Fields2=floor_id
-Cardinarity1=
-Cardinarity2=
-Position="APPT",0,1667,5989,1667,R,R,""
-Dependence=0
-Caption=
-PName=
-ModifiedDateTime=20251213150128
-LineMode=0
-Bar1=167
-Bar2=599
-Bar3=167
-TermPos1=R
-TermPos2=R
-ZOrder=304
-
-[Relation]
 Entity1=organizations
 Entity2=appointments
 RelationType1=2
@@ -856,7 +809,7 @@ Fields2=org_id
 Cardinarity1=
 Cardinarity2=
 Position="ORG_PT",0,8951,4583,3750,R,R,""
-Position="APPT",0,5417,4583,8741,R,L,""
+Position="APPT",0,5417,4583,3303,R,L,""
 Dependence=0
 Caption=
 PName=
@@ -878,7 +831,7 @@ Fields2=pt_id
 Cardinarity1=
 Cardinarity2=
 Position="ORG_PT",0,8597,4583,1997,R,R,""
-Position="APPT",0,5417,4583,6542,R,L,""
+Position="APPT",0,5417,4583,5444,R,L,""
 Dependence=0
 Caption=
 PName=
@@ -897,8 +850,8 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=3000
-Top=1400
+Left=1800
+Top=2200
 Field="appt_stat_id","appt_stat_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000000FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000000FF,""
@@ -912,7 +865,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251226223557
-Position="APPT",3000,1400
+Position="APPT",1800,2200
 ZOrder=311
 
 [Relation]
@@ -1293,7 +1246,7 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=300
-Top=1000
+Top=1800
 Field="facility_business_hours_id","facility_business_hours_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
 Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="business_hours","business_hours","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
@@ -1305,7 +1258,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251218204847
-Position="APPT",300,1000
+Position="APPT",300,1800
 ZOrder=350
 
 [Relation]
@@ -1331,68 +1284,25 @@ TermPos2=R
 ZOrder=351
 
 [Relation]
-Entity1=facilities
-Entity2=floors
-RelationType1=2
-RelationType2=3
-Fields1=facility_id
-Fields2=facility_id
-Cardinarity1=
-Cardinarity2=
-Position="FAC",0,6211,9097,1085,R,R,""
-Position="APPT",0,1082,8918,1667,R,L,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=621
-Bar2=910
-Bar3=108
-TermPos1=R
-TermPos2=R
-ZOrder=352
-
-[Relation]
 Entity1=appointment_resources
-Entity2=appointment_slots
+Entity2=appointment_schedules
 RelationType1=2
 RelationType2=3
 Fields1=appt_res_id
 Fields2=appt_res_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,4950,5176,4950,R,R,""
+Position="APPT",0,1509,6907,5941,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=495
-Bar2=518
-Bar3=495
+Bar1=151
+Bar2=691
+Bar3=594
 TermPos1=R
 TermPos2=R
 ZOrder=353
-
-[Relation]
-Entity1=floors
-Entity2=appointments
-RelationType1=2
-RelationType2=3
-Fields1=floor_id
-Fields2=floor_id
-Cardinarity1=
-Cardinarity2=
-Position="APPT",2,8177,5989,1102,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=2
-Bar1=818
-Bar2=599
-Bar3=110
-TermPos1=R
-TermPos2=R
-ZOrder=354
 
 [Relation]
 Entity1=appointment_resources
@@ -1403,14 +1313,14 @@ Fields1=appt_res_id
 Fields2=appt_res_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,8162,6786,1404,R,R,""
+Position="APPT",2,9499,3584,1606,R,R,""
 Dependence=0
 Caption=
 PName=
-LineMode=0
-Bar1=816
-Bar2=679
-Bar3=140
+LineMode=2
+Bar1=950
+Bar2=358
+Bar3=161
 TermPos1=R
 TermPos2=R
 ZOrder=356
@@ -1423,7 +1333,7 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=3000
-Top=2500
+Top=1500
 Field="appt_res_assign_id","appt_res_assign_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_id","appt_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -1433,51 +1343,30 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20260103132957
-Position="APPT",3000,2500
+Position="APPT",3000,1500
 ZOrder=357
 
 [Entity]
-PName=appointment_slot_overrides
-LName=appointment_slot_overrides
+PName=appointment_schedule_slot_cap_overrides
+LName=appointment_schedule_slot_cap_overrides
 Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=3100
-Top=1000
-Field="appt_slot_override_id","appt_slot_override_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Left=3000
+Top=100
+Field="appt_schedule_slot_cap_override_id","appt_schedule_slot_cap_override_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_schedule_slot_id","appt_schedule_slot_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="appt_date","appt_date","@DATE","NOT NULL",,"CURRENT_DATE","",$000000FF,""
-Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000000FF,""
-Field="appt_slots","appt_slots","JSONB","NOT NULL",,"\q{}\q","",$FFFFFFFF,""
-Index==1,appt_date,appt_res_id
+Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==1,appt_schedule_slot_id,appt_date
 IndexOption=WHERE is_deleted = FALSE
-EffectMode=Gradation
+EffectMode=None
 Color=$000000
-BkColor=$D1D1FF
-ModifiedDateTime=20251216220725
-Position="APPT",3100,1000
+BkColor=$FFFFFF
+ModifiedDateTime=20260103214725
+Position="APPT",3000,100
 ZOrder=358
-
-[Relation]
-Entity1=appointment_resources
-Entity2=appointment_slot_overrides
-RelationType1=2
-RelationType2=3
-Fields1=appt_res_id
-Fields2=appt_res_id
-Cardinarity1=
-Cardinarity2=
-Position="APPT",0,6599,8625,2480,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=660
-Bar2=862
-Bar3=248
-TermPos1=R
-TermPos2=R
-ZOrder=359
 
 [Relation]
 Entity1=appointments
@@ -1488,14 +1377,14 @@ Fields1=appt_id
 Fields2=appt_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,1102,2309,6618,R,R,""
+Position="APPT",0,1104,4261,3312,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
 Bar1=110
-Bar2=231
-Bar3=662
+Bar2=426
+Bar3=331
 TermPos1=R
 TermPos2=R
 ZOrder=360
@@ -1509,34 +1398,17 @@ Fields1=appt_res_id
 Fields2=appt_res_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",2,9811,3608,3319,R,R,""
+Position="APPT",4,8494,1464,3241,R,R,""
 Dependence=0
 Caption=
 PName=
-LineMode=2
-Bar1=981
-Bar2=361
-Bar3=332
+LineMode=4
+Bar1=849
+Bar2=146
+Bar3=324
 TermPos1=R
 TermPos2=R
 ZOrder=361
-
-[Comment]
-Comment=```jsonb\n{\n  "appt_slots": [\n    {\n      "label": "8階,平日",\n      "dow": [1, 2, 3, 4, 5], // 0:日, 1:月, ... 6:土\n      "slots": [\n        {\n          "start": "09:00",\n          "end": "12:00",\n          "interval_min": 15,\n          "cap": 1,\n        },\n        {\n          "start": "13:00",\n          "end": "16:00",\n          "interval_min": 15,\n          "cap": 1,\n        }\n      ]\n  ]\n}\n```
-FontName=Tahoma
-FontBold=0
-FontItalic=0
-FontUnderline=0
-FontSize=9
-FontColor=$000000
-LineColor=$000000
-BkColor=$FFFFFF
-Page=appt
-Left=1500
-Top=1600
-ZOrder=363
-Width=828
-Height=1008
 
 [Entity]
 PName=user_sessions
@@ -1852,13 +1724,13 @@ Fields1=appt_res_id
 Fields2=appt_res_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,3301,8296,903,R,R,""
+Position="APPT",0,7488,8296,903,R,R,""
 Position="PLAN",0,1704,8296,6566,R,L,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=330
+Bar1=749
 Bar2=830
 Bar3=90
 TermPos1=R
@@ -1872,7 +1744,7 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=1500
+Left=300
 Top=100
 Field="appt_res_group_id","appt_res_group_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -1885,7 +1757,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251218204534
-Position="APPT",1500,100
+Position="APPT",300,100
 ZOrder=381
 
 [Entity]
@@ -1895,7 +1767,7 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=3000
+Left=1500
 Top=100
 Field="appt_res_group_member_id","appt_res_group_member_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
@@ -1906,7 +1778,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251218204523
-Position="APPT",3000,100
+Position="APPT",1500,100
 ZOrder=382
 
 [Relation]
@@ -1929,27 +1801,6 @@ Bar3=333
 TermPos1=R
 TermPos2=R
 ZOrder=383
-
-[Relation]
-Entity1=appointment_resources
-Entity2=appointment_resource_group_members
-RelationType1=2
-RelationType2=3
-Fields1=appt_res_id
-Fields2=appt_res_id
-Cardinarity1=
-Cardinarity2=
-Position="APPT",0,1651,6786,6633,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=165
-Bar2=679
-Bar3=663
-TermPos1=R
-TermPos2=R
-ZOrder=384
 
 [Relation]
 Entity1=preferences
@@ -2131,7 +1982,7 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=3000
-Top=1900
+Top=2200
 Field="appt_stat_slot_id","appt_stat_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
 Field="appt_stat_id","appt_stat_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000099FF,""
@@ -2147,7 +1998,7 @@ EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
 ModifiedDateTime=20251226223538
-Position="APPT",3000,1900
+Position="APPT",3000,2200
 ZOrder=393
 
 [Relation]
@@ -2159,14 +2010,14 @@ Fields1=appt_stat_id
 Fields2=appt_stat_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",0,1701,6699,1553,R,R,""
+Position="APPT",0,1606,6699,1071,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=0
-Bar1=170
+Bar1=161
 Bar2=670
-Bar3=155
+Bar3=107
 TermPos1=R
 TermPos2=R
 ZOrder=394
@@ -2179,7 +2030,7 @@ TableInnerOption=
 TableOption=
 Page=APPT
 Left=300
-Top=1700
+Top=2500
 Field="holiday_id","holiday_id","UUID","NOT NULL",0,"","",$000028FF,""
 Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
 Field="holiday_date","holiday_date","@DATE","NOT NULL",,"CURRENT_DATE","",$000000FF,""
@@ -2191,7 +2042,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251231154927
-Position="APPT",300,1700
+Position="APPT",300,2500
 ZOrder=395
 
 [Relation]
@@ -2203,6 +2054,7 @@ Fields1=facility_id
 Fields2=facility_id
 Cardinarity1=
 Cardinarity2=
+Position="FAC",0,1661,8339,4352,R,R,""
 Position="APPT",0,1661,8339,1946,R,L,""
 Dependence=0
 Caption=
@@ -2214,3 +2066,264 @@ Bar3=195
 TermPos1=R
 TermPos2=L
 ZOrder=396
+
+[Entity]
+PName=appointment_schedule_slots
+LName=appointment_schedule_slots
+Comment=
+TableInnerOption=
+TableOption=
+Page=appt
+Left=3000
+Top=500
+Field="appt_schedule_slot_id","appt_schedule_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_schedule_id","appt_schedule_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="days_of_week","days_of_week","INTEGER[]","NOT NULL",,"","",$000099FF,""
+Field="slot_start_min","slot_start_min","@INT","NOT NULL",,"540","",$FFFFFFFF,""
+Field="slot_end_min","slot_end_min","@INT","NOT NULL",,"570","",$FFFFFFFF,""
+Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==0,updated_at
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20260103170401
+Position="appt",3000,500
+ZOrder=397
+
+[Relation]
+Entity1=appointment_schedules
+Entity2=appointment_schedule_slots
+RelationType1=2
+RelationType2=3
+Fields1=appt_schedule_id
+Fields2=appt_schedule_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,1982,4966,1652,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=198
+Bar2=497
+Bar3=165
+TermPos1=R
+TermPos2=R
+ZOrder=398
+
+[Relation]
+Entity1=appointment_schedule_slots
+Entity2=appointment_schedule_slot_cap_overrides
+RelationType1=2
+RelationType2=3
+Fields1=appt_schedule_slot_id
+Fields2=appt_schedule_slot_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,1332,4899,983,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=133
+Bar2=490
+Bar3=98
+TermPos1=R
+TermPos2=R
+ZOrder=400
+
+[Entity]
+PName=appointment_schedule_overrides
+LName=appointment_schedule_overrides
+Comment=
+TableInnerOption=
+TableOption=
+Page=appt
+Left=1500
+Top=1000
+Field="appt_schedule_override_id","appt_schedule_override_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_schedule_id","appt_schedule_id","UUID","NOT NULL",,"","",$000000FF,""
+Field="appt_date","appt_date","@DATE","NOT NULL",,"CURRENT_DATE","",$000000FF,""
+Index==1,appt_schedule_id,appt_date
+IndexOption=WHERE is_deleted = FALSE
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20260103214658
+Position="appt",1500,1000
+ZOrder=401
+
+[Relation]
+Entity1=floors
+Entity2=appointments
+RelationType1=2
+RelationType2=3
+Fields1=floor_id
+Fields2=floor_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",2,8177,5989,1099,R,R,""
+Position="APPT",0,5649,4351,1104,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=2
+Bar1=818
+Bar2=599
+Bar3=110
+TermPos1=R
+TermPos2=R
+ZOrder=405
+
+[Relation]
+Entity1=appointment_resources
+Entity2=appointment_resource_group_members
+RelationType1=2
+RelationType2=3
+Fields1=appt_res_id
+Fields2=appt_res_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,503,3809,6633,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=50
+Bar2=381
+Bar3=663
+TermPos1=R
+TermPos2=R
+ZOrder=406
+
+[Relation]
+Entity1=facilities
+Entity2=floors
+RelationType1=2
+RelationType2=3
+Fields1=facility_id
+Fields2=facility_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1082,8918,1652,R,L,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=108
+Bar2=892
+Bar3=165
+TermPos1=R
+TermPos2=L
+ZOrder=404
+
+[Relation]
+Entity1=floors
+Entity2=appointment_resources
+RelationType1=2
+RelationType2=3
+Fields1=floor_id
+Fields2=floor_id
+Cardinarity1=
+Cardinarity2=
+Position="FAC",0,1667,5989,1700,R,R,""
+Position="APPT",0,4840,5160,503,R,L,""
+Dependence=0
+Caption=
+PName=
+ModifiedDateTime=20251213150128
+LineMode=0
+Bar1=167
+Bar2=599
+Bar3=170
+TermPos1=R
+TermPos2=R
+ZOrder=403
+
+[Entity]
+PName=floors
+LName=floors
+Comment=
+TableInnerOption=
+TableOption=
+Page=fac
+Left=2700
+Top=1500
+Field="floor_id","floor_id","UUID","NOT NULL",0,"uuidv7()","",$000000FF,""
+Field="facility_id","facility_id","UUID","NOT NULL",,"","",$000000FF,""
+Field="floor_code","floor_code","@VARCHAR(10)","NOT NULL",,"\q\q","",$000000FF,""
+Field="floor_name","floor_name","@VARCHAR(100)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="floor_desc","floor_desc","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="floor_seq","floor_seq","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==1,facility_id,floor_code
+IndexOption=WHERE is_deleted = FALSE
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20251216220700
+Position="fac",2700,1500
+ZOrder=402
+
+[Relation]
+Entity1=appointment_schedules
+Entity2=appointment_schedule_overrides
+RelationType1=2
+RelationType2=3
+Fields1=appt_schedule_id
+Fields2=appt_schedule_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,1475,4417,1202,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=148
+Bar2=442
+Bar3=120
+TermPos1=R
+TermPos2=R
+ZOrder=407
+
+[Entity]
+PName=appointment_schedule_slot_overrides
+LName=appointment_schedule_slot_overrides
+Comment=
+TableInnerOption=
+TableOption=
+Page=appt
+Left=3000
+Top=1000
+Field="appt_schedule_slot_override_id","appt_schedule_slot_override_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
+Field="appt_schedule_override_id","appt_schedule_override_id","UUID","NOT NULL",,"","",$000099FF,""
+Field="slot_start_min","slot_start_min","@INT","NOT NULL",,"540","",$FFFFFFFF,""
+Field="slot_end_min","slot_end_min","@INT","NOT NULL",,"570","",$FFFFFFFF,""
+Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
+Index==0,updated_at
+EffectMode=None
+Color=$000000
+BkColor=$FFFFFF
+ModifiedDateTime=20260103222112
+Position="appt",3000,1000
+ZOrder=408
+
+[Relation]
+Entity1=appointment_schedule_overrides
+Entity2=appointment_schedule_slot_overrides
+RelationType1=2
+RelationType2=3
+Fields1=appt_schedule_override_id
+Fields2=appt_schedule_override_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,3271,5876,1963,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=327
+Bar2=588
+Bar3=196
+TermPos1=R
+TermPos2=R
+ZOrder=409
