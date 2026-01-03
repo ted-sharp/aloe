@@ -76,8 +76,7 @@ public class AppointmentResource : IAuditableEntity
 
     // Navigation Properties
     public virtual Floor Floor { get; set; } = null!;
-    public virtual ICollection<AppointmentSlot> AppointmentSlots { get; set; } = new List<AppointmentSlot>();
-    public virtual ICollection<AppointmentSlotOverride> AppointmentSlotOverrides { get; set; } = new List<AppointmentSlotOverride>();
+    public virtual ICollection<AppointmentSchedule> AppointmentSchedules { get; set; } = new List<AppointmentSchedule>();
     public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
     public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
     public virtual ICollection<AppointmentResourceGroupMember> AppointmentResourceGroupMembers { get; set; } = new List<AppointmentResourceGroupMember>();

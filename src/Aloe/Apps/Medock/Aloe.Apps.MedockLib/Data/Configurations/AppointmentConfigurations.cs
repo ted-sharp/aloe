@@ -113,31 +113,6 @@ public class AppointmentStatSlotsConfiguration : IEntityTypeConfiguration<Appoin
     }
 }
 
-/// <summary>
-/// AppointmentSlot エンティティ設定
-/// </summary>
-public class AppointmentSlotConfiguration : IEntityTypeConfiguration<AppointmentSlot>
-{
-    public void Configure(EntityTypeBuilder<AppointmentSlot> entity)
-    {
-        entity.ToTable("appointment_slots");
-        entity.HasKey(e => e.ApptSlotId);
-        entity.Property(e => e.ApptSlotId).HasColumnName("appt_slot_id");
-        entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb").HasDefaultValue("{}");
-        entity.Property(e => e.IsActive).HasColumnName("is_active").HasDefaultValue(false);
-        entity.Property(e => e.ActiveFrom).HasColumnName("active_from").HasDefaultValueSql("CURRENT_DATE");
-        entity.Property(e => e.ActiveTo).HasColumnName("active_to").HasDefaultValueSql("'9999-12-31'::date");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
-        ConfigurationHelper.ConfigureAuditableEntity(entity);
-
-        entity.HasOne(e => e.AppointmentResource)
-            .WithMany(ar => ar.AppointmentSlots)
-            .HasForeignKey(e => e.ApptResId);
-
-        entity.HasIndex(e => e.ApptResId);
-    }
-}
 
 /// <summary>
 /// AppointmentResource エンティティ設定
@@ -173,31 +148,6 @@ public class AppointmentResourceConfiguration : IEntityTypeConfiguration<Appoint
     }
 }
 
-/// <summary>
-/// AppointmentSlotOverride エンティティ設定
-/// </summary>
-public class AppointmentSlotOverrideConfiguration : IEntityTypeConfiguration<AppointmentSlotOverride>
-{
-    public void Configure(EntityTypeBuilder<AppointmentSlotOverride> entity)
-    {
-        entity.ToTable("appointment_slot_overrides");
-        entity.HasKey(e => e.ApptSlotOverrideId);
-        entity.Property(e => e.ApptSlotOverrideId).HasColumnName("appt_slot_override_id");
-        entity.Property(e => e.ApptDate).HasColumnName("appt_date").HasDefaultValueSql("CURRENT_DATE");
-        entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.ApptSlots).HasColumnName("appt_slots").HasColumnType("jsonb").HasDefaultValue("{}");
-        entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
-        ConfigurationHelper.ConfigureAuditableEntity(entity);
-
-        entity.HasOne(e => e.AppointmentResource)
-            .WithMany(ar => ar.AppointmentSlotOverrides)
-            .HasForeignKey(e => e.ApptResId);
-
-        entity.HasIndex(e => new { e.ApptDate, e.ApptResId })
-            .IsUnique()
-            .HasFilter("[is_deleted] = 0");
-    }
-}
 
 /// <summary>
 /// AppointmentResourceReservation エンティティ設定

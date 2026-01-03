@@ -75,22 +75,9 @@ public class StatsLoader : IStatsLoader
             this._logger.LogInformation("LoadMainStatsAsync query: {ElapsedMs}ms, Count={Count}",
                 querySw.ElapsedMilliseconds, mainStats.Count);
 
-            // AppointmentSlotOverrideを取得
-            var overrideSw = Stopwatch.StartNew();
-            using var context = this._contextFactory.CreateDbContext();
-            var slotOverrides = await context.AppointmentSlotOverrides
-                .AsNoTracking()
-                .Where(o => !o.IsDeleted &&
-                           o.ApptDate >= startDate &&
-                           o.ApptDate <= endDate)
-                .Include(o => o.AppointmentResource)
-                .ToListAsync();
-            var overridesByDateAndResource = slotOverrides
-                .GroupBy(o => (o.ApptDate, o.ApptResId))
-                .ToDictionary(g => g.Key, g => g.First());
-            overrideSw.Stop();
-            this._logger.LogInformation("LoadMainStatsAsync slotOverrides: {ElapsedMs}ms, Count={Count}",
-                overrideSw.ElapsedMilliseconds, slotOverrides.Count);
+            // NOTE: AppointmentSlotOverrides have been replaced with AppointmentScheduleOverrides
+            // Stats are now pre-calculated during seeding, so runtime override application is no longer needed
+            var overridesByDateAndResource = new Dictionary<(DateOnly, Guid), AppointmentScheduleOverride>();
 
             // 日付ごとにグループ化
             var groupSw = Stopwatch.StartNew();
@@ -111,20 +98,10 @@ public class StatsLoader : IStatsLoader
                 // その日のMainリソースStatsがあれば設定、なければ空リスト
                 if (statsByDate.TryGetValue(date, out var mainStatsList))
                 {
-                    // AppointmentSlotOverrideがあれば適用
-                    var statsWithOverrides = mainStatsList.Select(stat =>
-                    {
-                        var key = (date, stat.AppointmentResource.ApptResId);
-                        if (overridesByDateAndResource.TryGetValue(key, out var slotOverride))
-                        {
-                            // 上書きされたスロット定義でAppointmentStatSlotsを再構築
-                            return ApplySlotOverride(stat, slotOverride);
-                        }
-                        return stat;
-                    }).ToList();
-
-                    state.MainStats[dateStr] = statsWithOverrides;
-                    state.OriginalMainStats[dateStr] = statsWithOverrides.ToList(); // コピーを作成
+                    // NOTE: Slot overrides are now pre-calculated during seeding
+                    // Stats are already in their final form from the database
+                    state.MainStats[dateStr] = mainStatsList;
+                    state.OriginalMainStats[dateStr] = mainStatsList.ToList();
                 }
                 else
                 {
@@ -237,77 +214,4 @@ public class StatsLoader : IStatsLoader
         };
     }
 
-    /// <summary>
-    /// AppointmentSlotOverrideをAppointmentStatsに適用
-    /// </summary>
-    private static AppointmentStats ApplySlotOverride(AppointmentStats stat, AppointmentSlotOverride slotOverride)
-    {
-        if (slotOverride.ApptSlotsData == null || !slotOverride.ApptSlotsData.Slots.Any())
-        {
-            // 上書きデータが空の場合は、元の統計をそのまま返す
-            return stat;
-        }
-
-        try
-        {
-            // 既存のAppointmentStatSlotsを取得
-            var existingSlots = stat.AppointmentStatSlots?.Where(s => !s.IsDeleted).ToList() ?? new List<AppointmentStatSlots>();
-
-            // 上書きされたスロット定義を使用して新しいAppointmentStatSlotsを構築
-            var overrideSlots = slotOverride.ApptSlotsData.Slots;
-            var newStatSlots = new List<AppointmentStatSlots>();
-
-            // 上書きされたスロット定義を元に、既存のカウントをマッピング
-            foreach (var overrideSlot in overrideSlots)
-            {
-                // 既存のスロットから対応するカウントを取得
-                // overrideSlot.Start/End は既に分単位の int
-                var matchingSlot = existingSlots.FirstOrDefault(s =>
-                    s.SlotStart == overrideSlot.Start && s.SlotEnd == overrideSlot.End);
-
-                newStatSlots.Add(new AppointmentStatSlots
-                {
-                    ApptStatSlotId = Guid.CreateVersion7(),
-                    ApptStatId = stat.ApptStatId,
-                    ApptDate = stat.ApptDate,
-                    ApptResId = stat.ApptResId,
-                    SlotStart = overrideSlot.Start,
-                    SlotEnd = overrideSlot.End,
-                    SlotCount = matchingSlot?.SlotCount ?? 0,
-                    SlotCap = overrideSlot.Cap,
-                    IsDeleted = false,
-                    CreatedAt = matchingSlot?.CreatedAt ?? DateTime.UtcNow,
-                    CreatedUserId = matchingSlot?.CreatedUserId ?? Guid.Empty,
-                    CreatedSessionId = matchingSlot?.CreatedSessionId ?? Guid.Empty,
-                    UpdatedAt = DateTime.UtcNow,
-                    UpdatedUserId = Guid.Empty,
-                    UpdatedSessionId = Guid.Empty
-                });
-            }
-
-            // 新しいAppointmentStatsを作成（AppointmentStatSlotsを含む）
-            return new AppointmentStats
-            {
-                ApptStatId = stat.ApptStatId,
-                ApptDate = stat.ApptDate,
-                ApptResId = stat.ApptResId,
-                ApptCap = stat.ApptCap,
-                ApptCount = stat.ApptCount,
-                AppointmentResource = stat.AppointmentResource,
-                AppointmentStatSlots = newStatSlots,
-                IsDeleted = stat.IsDeleted,
-                CreatedAt = stat.CreatedAt,
-                CreatedUserId = stat.CreatedUserId,
-                CreatedSessionId = stat.CreatedSessionId,
-                UpdatedAt = stat.UpdatedAt,
-                UpdatedUserId = stat.UpdatedUserId,
-                UpdatedSessionId = stat.UpdatedSessionId
-            };
-        }
-        catch (Exception)
-        {
-            // エラー時は元の統計をそのまま返す
-            return stat;
-        }
-    }
 }

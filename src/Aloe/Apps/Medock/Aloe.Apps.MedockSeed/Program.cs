@@ -180,13 +180,14 @@ try
     // プランリソース要件（プラン・リソースの後）
     await RunSeederAsync("PlanResourceRequirementSeeder", () => PlanResourceRequirementSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
-    // 予約スロット（リソースの後）
-    await RunSeederAsync("AppointmentSlotSeeder", () => AppointmentSlotSeeder.SeedAsync(context, dateTimeProvider));
-    await RunSeederAsync("AppointmentSlotOverrideSeeder", () => AppointmentSlotOverrideSeeder.SeedAsync(context, dateTimeProvider));
+    // 予約スケジュール（新システム）
+    await RunSeederAsync("AppointmentScheduleSeeder", () => AppointmentScheduleSeeder.SeedAsync(context, dateTimeProvider));
+    await RunSeederAsync("AppointmentScheduleOverrideSeeder", () => AppointmentScheduleOverrideSeeder.SeedAsync(context, dateTimeProvider));
 
-    // 予約データと統計（Mainリソースの予約はAppointmentStatsSeederで生成）
-    // AppointmentSeederとAppointmentResourceAssignmentSeederはスキップし、
-    // AppointmentStatsSeederで季節に応じた予約数を生成する
+    // 予約データと統計
+    // 1. AppointmentSeeder: 実際の appointment レコードを生成
+    // 2. AppointmentStatsSeeder: 生成された appointments から統計情報を集計
+    await RunSeederAsync("AppointmentSeeder", () => AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider));
     await RunSeederAsync("AppointmentStatsSeeder", () => AppointmentStatsSeeder.SeedAsync(context, contextFactory, dateTimeProvider));
 
     // RBAC関連

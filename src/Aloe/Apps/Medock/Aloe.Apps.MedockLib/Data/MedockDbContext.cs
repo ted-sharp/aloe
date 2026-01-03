@@ -56,8 +56,11 @@ public class MedockDbContext : DbContext
     public DbSet<AppointmentResource> AppointmentResources => this.Set<AppointmentResource>();
     public DbSet<AppointmentResourceGroup> AppointmentResourceGroups => this.Set<AppointmentResourceGroup>();
     public DbSet<AppointmentResourceGroupMember> AppointmentResourceGroupMembers => this.Set<AppointmentResourceGroupMember>();
-    public DbSet<AppointmentSlot> AppointmentSlots => this.Set<AppointmentSlot>();
-    public DbSet<AppointmentSlotOverride> AppointmentSlotOverrides => this.Set<AppointmentSlotOverride>();
+    public DbSet<AppointmentSchedule> AppointmentSchedules => this.Set<AppointmentSchedule>();
+    public DbSet<AppointmentScheduleSlot> AppointmentScheduleSlots => this.Set<AppointmentScheduleSlot>();
+    public DbSet<AppointmentScheduleOverride> AppointmentScheduleOverrides => this.Set<AppointmentScheduleOverride>();
+    public DbSet<AppointmentScheduleSlotOverride> AppointmentScheduleSlotOverrides => this.Set<AppointmentScheduleSlotOverride>();
+    public DbSet<AppointmentScheduleSlotCapOverride> AppointmentScheduleSlotCapOverrides => this.Set<AppointmentScheduleSlotCapOverride>();
     public DbSet<AppointmentResourceAssignment> AppointmentResourceAssignments => this.Set<AppointmentResourceAssignment>();
     public DbSet<AppointmentStats> AppointmentStats => this.Set<AppointmentStats>();
     public DbSet<AppointmentStatSlots> AppointmentStatSlots => this.Set<AppointmentStatSlots>();
