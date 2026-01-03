@@ -107,6 +107,22 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const endHour = state.options.endHour || 18;
     const totalHours = endHour - startHour;
 
+    // ビジネスアワー内のスロットのインデックスを事前に収集
+    const validSlotIndices = [];
+    for (let i = 0; i < slotCount; i++) {
+        // ビジネスアワー外のスロットを除外（ビット1: IsOutsideHours）
+        const isOutsideHours = slotFlags && (slotFlags[i] & 0b010) !== 0;
+        if (isOutsideHours) continue;
+        
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
+        if (cap <= 0) continue;
+        
+        validSlotIndices.push(i);
+    }
+    
+    // ビジネスアワー内のスロット数に更新
+    const validSlotCount = validSlotIndices.length;
+
     // レイアウト計算
     const yAxisWidth = 50;
     const xAxisHeight = 30;
@@ -154,7 +170,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     }
 
     // データがない場合
-    if (slotCount === 0) {
+    if (validSlotCount === 0) {
         drawText(contentCtx, {
             text: 'データなし',
             x: yAxisWidth,
@@ -167,15 +183,33 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         return;
     }
 
-    // 最大値を計算
+    // 有効なスロットの実際の開始時刻と終了時刻を計算
+    let actualStartHour = endHour;
+    let actualEndHour = startHour;
     let maxValue = 0;
-    for (let i = 0; i < slotCount; i++) {
+    
+    for (const i of validSlotIndices) {
         const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         maxValue = Math.max(maxValue, cap);
+        
+        const slotStartStr = slotStarts[i];
+        const slotEndStr = slotEnds[i];
+        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
+        const slotStart = Math.max(startHour, Math.min(endHour, timeRange.start));
+        const slotEnd = Math.min(endHour, Math.max(startHour, timeRange.end));
+        
+        actualStartHour = Math.min(actualStartHour, slotStart);
+        actualEndHour = Math.max(actualEndHour, slotEnd);
     }
 
     if (maxValue <= 0) {
         maxValue = 10; // デフォルト
+    }
+    
+    // 有効なスロットがない場合は、ビジネスアワー全体を使用
+    if (actualStartHour >= actualEndHour) {
+        actualStartHour = startHour;
+        actualEndHour = endHour;
     }
 
     // Y軸の目盛り
@@ -218,37 +252,50 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         strokeWidth: 2
     });
 
-    // 昼休み時間帯の長さを計算
-    const lunchDuration = (lunchStartHour !== null && lunchEndHour !== null)
-        ? (lunchEndHour - lunchStartHour)
+    // 昼休み時間帯の長さを計算（実際の範囲内で）
+    const actualLunchStartHour = (lunchStartHour !== null && lunchStartHour >= actualStartHour && lunchStartHour <= actualEndHour) 
+        ? lunchStartHour 
+        : null;
+    const actualLunchEndHour = (lunchEndHour !== null && lunchEndHour >= actualStartHour && lunchEndHour <= actualEndHour) 
+        ? lunchEndHour 
+        : null;
+    
+    const actualTotalHours = actualEndHour - actualStartHour;
+    const lunchDuration = (actualLunchStartHour !== null && actualLunchEndHour !== null)
+        ? (actualLunchEndHour - actualLunchStartHour)
         : 0;
-    const effectiveTotalHours = totalHours - lunchDuration;
+    const effectiveTotalHours = actualTotalHours - lunchDuration;
 
-    // 時刻をX座標に変換する関数
+    // 時刻をX座標に変換する関数（実際の範囲に合わせて調整）
     const timeToX = (timeInHours) => {
+        // 実際の範囲内にクリップ
+        const clippedTime = Math.max(actualStartHour, Math.min(actualEndHour, timeInHours));
+        
         let relativePosition;
-        if (lunchStartHour !== null && lunchEndHour !== null && effectiveTotalHours > 0) {
-            const morningHours = lunchStartHour - startHour;
-            const afternoonHours = endHour - lunchEndHour;
+        if (actualLunchStartHour !== null && actualLunchEndHour !== null && effectiveTotalHours > 0) {
+            const morningHours = actualLunchStartHour - actualStartHour;
+            const afternoonHours = actualEndHour - actualLunchEndHour;
 
-            if (timeInHours < lunchStartHour) {
-                const morningRatio = (timeInHours - startHour) / morningHours;
+            if (clippedTime < actualLunchStartHour) {
+                const morningRatio = morningHours > 0 ? (clippedTime - actualStartHour) / morningHours : 0;
                 relativePosition = morningRatio * (morningHours / effectiveTotalHours);
-            } else if (timeInHours >= lunchEndHour) {
-                const afternoonRatio = (timeInHours - lunchEndHour) / afternoonHours;
+            } else if (clippedTime >= actualLunchEndHour) {
+                const afternoonRatio = afternoonHours > 0 ? (clippedTime - actualLunchEndHour) / afternoonHours : 0;
                 const morningWidth = morningHours / effectiveTotalHours;
                 relativePosition = morningWidth + afternoonRatio * (afternoonHours / effectiveTotalHours);
             } else {
                 relativePosition = morningHours / effectiveTotalHours;
             }
         } else {
-            relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
+            relativePosition = actualTotalHours > 0 
+                ? (clippedTime - actualStartHour) / actualTotalHours 
+                : 0;
         }
         return yAxisWidth + relativePosition * graphWidth;
     };
 
-    // スロットを描画（並列配列対応）
-    for (let i = 0; i < slotCount; i++) {
+    // スロットを描画（並列配列対応、ビジネスアワー内のスロットのみ）
+    for (const i of validSlotIndices) {
         const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
         const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         const available = cap - count;
@@ -256,13 +303,12 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
         const isSlotGrayed = (slotFlags && (slotFlags[i] & 0b001) !== 0) || isDateGrayed;
 
-        if (cap <= 0) continue;
-
         const slotStartStr = slotStarts[i];
         const slotEndStr = slotEnds[i];
         const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
-        const slotStart = Math.max(startHour, timeRange.start);
-        const slotEnd = Math.min(endHour, timeRange.end);
+        // 実際の範囲内にクリップ（timeToX関数内でもクリップされるが、ここでも明示的にクリップ）
+        const slotStart = Math.max(actualStartHour, Math.min(actualEndHour, timeRange.start));
+        const slotEnd = Math.min(actualEndHour, Math.max(actualStartHour, timeRange.end));
 
         const slotStartX = timeToX(slotStart);
         const slotEndX = timeToX(slotEnd);
@@ -355,9 +401,9 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         }
     }
 
-    // 昼休みライン
-    if (lunchStartHour !== null && lunchEndHour !== null) {
-        const lunchStartX = timeToX(lunchStartHour);
+    // 昼休みライン（実際の範囲内の場合のみ描画）
+    if (actualLunchStartHour !== null && actualLunchEndHour !== null) {
+        const lunchStartX = timeToX(actualLunchStartHour);
         drawLine(contentCtx, {
             points: [lunchStartX, topPadding, lunchStartX, baselineY],
             stroke: '#d1d5db',
@@ -416,10 +462,10 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             barAreaTop: topPadding,
             barAreaHeight: graphHeight,
             equipmentStats,
-            startHour,
-            endHour,
-            lunchStartHour,
-            lunchEndHour,
+            startHour: actualStartHour,
+            endHour: actualEndHour,
+            lunchStartHour: actualLunchStartHour,
+            lunchEndHour: actualLunchEndHour,
             isYearView: false
         });
     }
