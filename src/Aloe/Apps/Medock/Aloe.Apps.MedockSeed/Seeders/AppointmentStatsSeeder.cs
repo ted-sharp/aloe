@@ -915,7 +915,6 @@ internal static class AppointmentStatsSeeder
                             ApptResAssignId = Guid.CreateVersion7(),
                             ApptId = emergencyAppointment.ApptId,
                             ApptResId = resource.ApptResId,
-                            ApptStartTime = emergencyTime,
                             IsDeleted = false
                         };
 
@@ -1021,7 +1020,6 @@ internal static class AppointmentStatsSeeder
                         ApptResAssignId = Guid.CreateVersion7(),
                         ApptId = appointment.ApptId,
                         ApptResId = resource.ApptResId,
-                        ApptStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotItem.Start)),
                         IsDeleted = false
                     };
 
@@ -1086,7 +1084,6 @@ internal static class AppointmentStatsSeeder
                     ApptResAssignId = Guid.CreateVersion7(),
                     ApptId = irregularAppointment.ApptId,
                     ApptResId = resource.ApptResId,
-                    ApptStartTime = irregularTime,
                     IsDeleted = false
                 };
 

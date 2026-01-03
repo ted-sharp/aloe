@@ -186,7 +186,6 @@ public class AppointmentService : IAppointmentService
                     ApptResAssignId = Guid.CreateVersion7(),
                     ApptId = appointment.ApptId,
                     ApptResId = mainResource.ApptResId,
-                    ApptStartTime = appointment.ApptStartTime,
                     IsDeleted = false,
                     CreatedAt = now,
                     UpdatedAt = now
@@ -208,7 +207,6 @@ public class AppointmentService : IAppointmentService
                         ApptResAssignId = Guid.CreateVersion7(),
                         ApptId = appointment.ApptId,
                         ApptResId = resourceId,
-                        ApptStartTime = appointment.ApptStartTime,
                         IsDeleted = false,
                         CreatedAt = now,
                         UpdatedAt = now
@@ -324,7 +322,6 @@ public class AppointmentService : IAppointmentService
                     ApptResAssignId = Guid.CreateVersion7(),
                     ApptId = apptId,
                     ApptResId = mainResource.ApptResId,
-                    ApptStartTime = appointment.ApptStartTime,
                     IsDeleted = false,
                     CreatedAt = appointment.UpdatedAt,
                     UpdatedAt = appointment.UpdatedAt
@@ -346,7 +343,6 @@ public class AppointmentService : IAppointmentService
                         ApptResAssignId = Guid.CreateVersion7(),
                         ApptId = apptId,
                         ApptResId = resourceId,
-                        ApptStartTime = appointment.ApptStartTime,
                         IsDeleted = false,
                         CreatedAt = appointment.UpdatedAt,
                         UpdatedAt = appointment.UpdatedAt

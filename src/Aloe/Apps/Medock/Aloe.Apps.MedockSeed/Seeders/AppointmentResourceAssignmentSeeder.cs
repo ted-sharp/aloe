@@ -72,7 +72,6 @@ internal static class AppointmentResourceAssignmentSeeder
                     ApptResAssignId = Guid.CreateVersion7(),
                     ApptId = appointment.ApptId,
                     ApptResId = resource.ApptResId,
-                    ApptStartTime = appointment.ApptStartTime,
                     IsDeleted = false
                 };
 

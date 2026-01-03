@@ -211,7 +211,6 @@ public class AppointmentResourceReservationConfiguration : IEntityTypeConfigurat
         entity.Property(e => e.ApptResAssignId).HasColumnName("appt_res_assign_id");
         entity.Property(e => e.ApptId).HasColumnName("appt_id");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.ApptStartTime).HasColumnName("appt_start_time").HasColumnType("time");
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 

@@ -25,10 +25,6 @@ public class AppointmentResourceAssignment : IAuditableEntity
     [ForeignKey("AppointmentResource")]
     public Guid ApptResId { get; set; }
 
-    /// <summary>予約開始時間</summary>
-    [Column("appt_start_time")]
-    public TimeOnly? ApptStartTime { get; set; }
-
     /// <summary>削除フラグ</summary>
     [Column("is_deleted")]
     public bool IsDeleted { get; set; }

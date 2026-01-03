@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2026/01/02 23:39:16
+-- Date/Time    : 2026/01/03 13:30:34
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -21,7 +21,6 @@ CREATE TABLE "appointment_resource_assignments" (
   "appt_res_assign_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_id" UUID NOT NULL
   , "appt_res_id" UUID NOT NULL
-  , "appt_start_time" time
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -1636,7 +1635,6 @@ COMMENT ON TABLE "appointment_resource_assignments" IS 'appointment_resource_ass
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_res_assign_id" IS 'appt_res_assign_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_id" IS 'appt_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."appt_res_id" IS 'appt_res_id';
-COMMENT ON COLUMN "appointment_resource_assignments"."appt_start_time" IS 'appt_start_time';
 COMMENT ON COLUMN "appointment_resource_assignments"."is_deleted" IS 'is_deleted';
 COMMENT ON COLUMN "appointment_resource_assignments"."created_at" IS 'created_at';
 COMMENT ON COLUMN "appointment_resource_assignments"."created_user_id" IS 'created_user_id';
