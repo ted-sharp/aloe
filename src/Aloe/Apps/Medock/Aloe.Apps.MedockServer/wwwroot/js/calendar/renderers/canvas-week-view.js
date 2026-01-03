@@ -87,7 +87,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     const backgroundCtx = contexts.get('background');
 
     const { weekDays, startHour, endHour, showSlots } = state.options;
-    const hours = endHour - startHour;
+    // ビジネスアワーの前後に30分（1スロット）を追加
+    const displayStartHour = startHour - 0.5;  // 30分前
+    const displayEndHour = endHour + 0.5;       // 30分後
+    const hours = displayEndHour - displayStartHour;
     const timeColumnWidth = 60;
     const headerHeight = 65;
     const hourHeight = (height - headerHeight) / hours;
@@ -212,13 +215,15 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     // 時間軸グリッド（30分単位）
     for (let half = 0; half <= hours * 2; half++) {
         const y = headerHeight + half * (hourHeight / 2);
-        const hourValue = startHour + Math.floor(half / 2);
-        const minutes = (half % 2) * 30;
+        // displayStartHourを基準に時間を計算（30分単位）
+        const currentTime = displayStartHour + (half * 0.5);
+        const actualHour = Math.floor(currentTime);
+        const actualMinutes = Math.round((currentTime - actualHour) * 60);
 
         // 時間ラベル（30分ごと）
         if (half < hours * 2) {
             drawText(gridCtx, {
-                text: `${String(hourValue).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`,
+                text: `${String(actualHour).padStart(2, '0')}:${String(actualMinutes).padStart(2, '0')}`,
                 x: 5,
                 y: y - 6,
                 width: timeColumnWidth - 10,
@@ -329,7 +334,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                             (slotEndHour > lunchStartHour && slotEndHour <= lunchEndHour) ||
                             (slotStartHour <= lunchStartHour && slotEndHour >= lunchEndHour));
 
-                    if (slotEndHour > startHour && slotStartHour < endHour && !isInLunchTime) {
+                    // 拡張された表示範囲内のスロットを表示（ビジネスアワーの前後30分を含む）
+                    if (slotEndHour > displayStartHour && slotStartHour < displayEndHour && !isInLunchTime) {
                         slotsInRange.push(idx);
                     }
                 }
@@ -338,8 +344,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                 slotsInRange.forEach((idx) => {
                     const slotStartMinutes = slotStarts[idx];
                     const slotEndMinutes = slotEnds[idx];
-                    const slotStartHour = Math.max(startHour, slotStartMinutes / 60);
-                    const slotEndHour = Math.min(endHour, slotEndMinutes / 60);
+                    // 拡張された表示範囲内に収まるように調整（ただし、スロットの実際の範囲は保持）
+                    const slotStartHour = Math.max(displayStartHour, slotStartMinutes / 60);
+                    const slotEndHour = Math.min(displayEndHour, slotEndMinutes / 60);
 
                     const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
                     const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
@@ -349,7 +356,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const symbolType = getSymbolFromVacancyRatio(vacancyRatio);
 
                     // スロットの描画位置を計算（日の列内、時刻軸に沿って）
-                    const slotTop = headerHeight + (slotStartHour - startHour) * hourHeight;
+                    // displayStartHourを基準に位置を計算
+                    const slotTop = headerHeight + (slotStartHour - displayStartHour) * hourHeight;
                     const slotHeight = (slotEndHour - slotStartHour) * hourHeight;
                     const slotLeft = cellLeft + 2;
                     const slotWidth = cellWidth - 4;
@@ -403,7 +411,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
             dayAppointments.forEach(appt => {
                 const startTime = parseTimeToHours(appt.startTime || '09:00');
-                if (startTime < startHour || startTime >= endHour) return;
+                // 拡張された表示範囲内の予約を表示
+                if (startTime < displayStartHour || startTime >= displayEndHour) return;
 
                 const hourNum = Math.floor(startTime);
                 const minNum = Math.round((startTime - hourNum) * 60);
@@ -450,7 +459,8 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 // スロット枠の描画位置
                 const slotLeft = cellLeft + 2;
-                const slotTop = headerHeight + (hourNum - startHour) * hourHeight + half * baseSlotHeight;
+                // displayStartHourを基準に位置を計算
+                const slotTop = headerHeight + (hourNum - displayStartHour) * hourHeight + half * baseSlotHeight;
                 const slotWidth = cellWidth - 4;
                 const slotBlockHeight = baseSlotHeight;
 
