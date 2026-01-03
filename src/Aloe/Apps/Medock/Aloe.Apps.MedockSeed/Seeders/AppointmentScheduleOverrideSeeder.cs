@@ -33,9 +33,6 @@ internal static class AppointmentScheduleOverrideSeeder
             .Select(c => (c.ApptScheduleSlotId, c.ApptDate))
             .ToHashSet();
 
-        Console.WriteLine($"  [DEBUG] Found {existingOverrideSet.Count} existing schedule overrides");
-        Console.WriteLine($"  [DEBUG] Found {existingCapOverrideSet.Count} existing capacity overrides");
-
         var dateRange = SeederHelper.GetDefaultDateRange(dateTimeProvider);
         var startDate = dateRange.StartDate;
         var endDate = dateRange.EndDate;
