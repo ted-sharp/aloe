@@ -440,7 +440,6 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     const slotAvailables = stats?.slotAvailables || [];
     const slotFlags = stats?.slotFlags || null;
     const slotCount = slotStarts.length;
-
     // 営業時間情報を取得
     const businessHours = state.options?.businessHours;
 

@@ -71,6 +71,7 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
 
     // 各日付セルのバーチャートを描画
     let day = 1;
+    let barChartCallCount = 0;
     for (let row = 0; row < rows; row++) {
         for (let col = 0; col < 7; col++) {
             const cellIndex = row * 7 + col;
@@ -94,6 +95,8 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
             weekRowBoundsMap.get(row).dates.push(dateStr);
 
             // バーチャートを描画
+            if (barChartCallCount === 0) {
+            }
             renderCanvasDayBarChart(contexts, state, {
                 cellLeft,
                 cellTop,
@@ -103,6 +106,7 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
                 dayNumber: day,
                 isHoliday
             });
+            barChartCallCount++;
 
             // Equipment折れ線グラフを描画（各セル内、時間軸に沿って）
             const equipmentStats = state.equipmentStats.get(dateStr);

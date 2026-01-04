@@ -145,7 +145,8 @@ function updateData(data) {
     }
 
     if (data.mainStats) {
-        setState({ mainStats: new Map(Object.entries(data.mainStats)) });
+        const mainStatsMap = new Map(Object.entries(data.mainStats));
+        setState({ mainStats: mainStatsMap });
     }
 
     if (data.equipmentStats) {
@@ -165,6 +166,7 @@ function updateData(data) {
  * @param {string} dateStr - Optional date string 'YYYY-MM-DD'
  */
 function changeView(viewType, dateStr) {
+    const state = getState();
     const updates = { currentView: viewType };
     if (dateStr) {
         updates.currentDate = parseDate(dateStr);

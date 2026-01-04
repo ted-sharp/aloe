@@ -99,7 +99,6 @@ public partial class CalendarCanvas
             this.CurrentDate.ToString("yyyy-MM-dd"));
         jsViewSw.Stop();
         Console.WriteLine($"[Performance] CalendarCanvas.InitializeCalendarAsync JS changeView: {jsViewSw.ElapsedMilliseconds}ms");
-
         // 初期化完了フラグを設定
         this._isInitialized = true;
         this._lastViewType = this.ViewType;
@@ -110,15 +109,18 @@ public partial class CalendarCanvas
 
         // 初期化中にパラメータが更新されていた場合、最新のデータで再描画
         var currentMainStatsCount = this.MainStats?.Count ?? 0;
-        if (currentMainStatsCount > 0 && currentMainStatsCount != this._lastMainStatsCount)
+        var currentMainStatsSlotsCount = this.MainStatsSlots?.Count ?? 0;
+        if (currentMainStatsCount > 0 && (currentMainStatsCount != this._lastMainStatsCount || currentMainStatsSlotsCount != this._lastMainStatsSlotsCount))
         {
-            Console.WriteLine($"[Performance] InitializeCalendarAsync - Data updated during init, refreshing: {this._lastMainStatsCount} -> {currentMainStatsCount}");
+            Console.WriteLine($"[Performance] InitializeCalendarAsync - Data updated during init, refreshing: MainStats {this._lastMainStatsCount} -> {currentMainStatsCount}, MainStatsSlots {this._lastMainStatsSlotsCount} -> {currentMainStatsSlotsCount}");
             this._lastMainStatsCount = currentMainStatsCount;
+            this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
             await this.UpdateDataAsync();
         }
         else
         {
             this._lastMainStatsCount = currentMainStatsCount;
+            this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
         }
     }
 }
