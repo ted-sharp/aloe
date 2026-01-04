@@ -25,7 +25,8 @@ public partial class CalendarCanvas
                 this.Holidays ?? new Dictionary<string, string>(),
                 this.FilterTimeSlots,
                 this.EquipmentStatsOptimized,
-                this.BusinessHours);
+                this.BusinessHours,
+                this.MainStatsSlots);
 
             buildSw.Stop();
             Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");

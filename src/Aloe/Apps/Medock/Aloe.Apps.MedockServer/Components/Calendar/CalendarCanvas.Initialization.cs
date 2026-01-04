@@ -50,7 +50,8 @@ public partial class CalendarCanvas
             this.Holidays ?? new Dictionary<string, string>(),
             this.FilterTimeSlots,
             this.EquipmentStatsOptimized,
-            this.BusinessHours);
+            this.BusinessHours,
+            this.MainStatsSlots);
 
         buildSw.Stop();
         Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
@@ -106,7 +107,19 @@ public partial class CalendarCanvas
         this._lastWeekDays = this.WeekDays;
         this._lastShowSlots = this.ShowSlots;
         this._lastShowSimpleView = this.ShowSimpleView;
-        this._lastMainStatsCount = this.MainStats?.Count ?? 0;
+
+        // 初期化中にパラメータが更新されていた場合、最新のデータで再描画
+        var currentMainStatsCount = this.MainStats?.Count ?? 0;
+        if (currentMainStatsCount > 0 && currentMainStatsCount != this._lastMainStatsCount)
+        {
+            Console.WriteLine($"[Performance] InitializeCalendarAsync - Data updated during init, refreshing: {this._lastMainStatsCount} -> {currentMainStatsCount}");
+            this._lastMainStatsCount = currentMainStatsCount;
+            await this.UpdateDataAsync();
+        }
+        else
+        {
+            this._lastMainStatsCount = currentMainStatsCount;
+        }
     }
 }
 

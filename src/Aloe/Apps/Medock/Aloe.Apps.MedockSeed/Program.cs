@@ -185,9 +185,14 @@ try
 
     // 予約データと統計
     // 1. AppointmentSeeder: 実際の appointment レコードを生成（月別繁忙度と時間帯による揺らぎを反映）
-    // 2. AppointmentStatsSeeder: 生成された appointments から統計情報を集計（集計結果のみ）
-    await RunSeederAsync("AppointmentSeeder", () => AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider));
-    await RunSeederAsync("AppointmentStatsSeeder", () => AppointmentStatsSeeder.SeedAsync(context, contextFactory, dateTimeProvider));
+    //    同時にメモリ上でスロット単位の集計を行い、結果を返す
+    // 2. AppointmentStatsSeeder: 集計データを使用して統計情報を作成（正確なスロット分布）
+    var slotAggregation = await RunSeederWithResultAsync<Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int>>(
+        "AppointmentSeeder",
+        () => AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider));
+
+    // Pass aggregation data to AppointmentStatsSeeder
+    await RunSeederAsync("AppointmentStatsSeeder", () => AppointmentStatsSeeder.SeedAsync(context, contextFactory, dateTimeProvider, slotAggregation));
 
     // RBAC関連
     await RunSeederAsync("FeatureSeeder", () => FeatureSeeder.SeedAsync(context, dateTimeProvider));

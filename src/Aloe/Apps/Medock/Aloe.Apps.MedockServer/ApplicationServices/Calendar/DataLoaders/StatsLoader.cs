@@ -130,6 +130,57 @@ public class StatsLoader : IStatsLoader
         }
     }
 
+    /// <summary>
+    /// Mainリソースのスロット単位統計データをロードして状態に反映します。
+    /// </summary>
+    public async Task LoadMainStatsSlotsAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
+    {
+        var sw = Stopwatch.StartNew();
+        try
+        {
+            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            this._logger.LogInformation("[TRACE] LoadMainStatsSlotsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
+                viewType, currentDate, startDate, endDate);
+
+            // MainStats から Main リソース ID を抽出（LoadMainStatsAsync で既にロード済み）
+            var mainResourceIds = state.MainStats
+                .SelectMany(kvp => kvp.Value)
+                .Select(s => s.ApptResId)
+                .Distinct()
+                .ToList();
+
+            this._logger.LogInformation("LoadMainStatsSlotsAsync - Main resource IDs: {Count}", mainResourceIds.Count);
+
+            var querySw = Stopwatch.StartNew();
+            // Main リソースのスロットのみを取得
+            var statSlots = await this._appointmentStatsRepository.GetStatSlotsByDateRangeAsync(startDate, endDate, mainResourceIds);
+            querySw.Stop();
+
+            var totalSlotCount = statSlots.Sum(kvp => kvp.Value.Count);
+            this._logger.LogInformation("LoadMainStatsSlotsAsync query: {ElapsedMs}ms, DateCount={DateCount}, TotalSlots={TotalSlots}",
+                querySw.ElapsedMilliseconds, statSlots.Count, totalSlotCount);
+
+            // スロットデータを状態に保存
+            state.MainStatsSlots = statSlots;
+            this._logger.LogInformation("LoadMainStatsSlotsAsync - State updated with {DateCount} dates", statSlots.Count);
+        }
+        catch (Exception ex)
+        {
+            // エラー時は null を設定
+            state.MainStatsSlots = null;
+            this._logger.LogError(ex, "Error loading main stats slots");
+        }
+        finally
+        {
+            sw.Stop();
+            this._logger.LogInformation("LoadMainStatsSlotsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        }
+    }
+
     /// <inheritdoc />
     public async Task LoadEquipmentStatsAsync(
         CalendarState state,

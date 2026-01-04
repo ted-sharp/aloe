@@ -204,6 +204,16 @@ public partial class Calendar : ComponentBase
             mainStatsSw.Stop();
             this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStats: {ElapsedMs}ms", mainStatsSw.ElapsedMilliseconds);
 
+            // Load slot-level statistics for calendar display
+            var mainStatSlotsSw = Stopwatch.StartNew();
+            await this.DataService.LoadMainStatsSlotsAsync(
+                this.State,
+                this.State.CurrentView,
+                this.State.CurrentDate,
+                this.State.WeekDays);
+            mainStatSlotsSw.Stop();
+            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStatsSlots: {ElapsedMs}ms", mainStatSlotsSw.ElapsedMilliseconds);
+
             var equipmentStatsSw = Stopwatch.StartNew();
             await this.DataService.LoadEquipmentStatsAsync(
                 this.State,
@@ -336,6 +346,7 @@ public partial class Calendar : ComponentBase
 
         // 先にターゲットビュー用のデータをロード（CurrentView はまだ変更しない）
         await this.DataService.LoadMainStatsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
+        await this.DataService.LoadMainStatsSlotsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
         await this.DataService.LoadEquipmentStatsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
         await this.DataService.LoadAppointmentsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
         await this.DataService.LoadHolidaysAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
@@ -359,6 +370,11 @@ public partial class Calendar : ComponentBase
     private async Task RefreshCalendarDataAsync()
     {
         await this.DataService.LoadMainStatsAsync(
+            this.State,
+            this.State.CurrentView,
+            this.State.CurrentDate,
+            this.State.WeekDays);
+        await this.DataService.LoadMainStatsSlotsAsync(
             this.State,
             this.State.CurrentView,
             this.State.CurrentDate,

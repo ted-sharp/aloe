@@ -357,7 +357,7 @@ public partial class AppointmentModal : ComponentBase
             {
                 patientId = this.FormModel.PatientId.Value;
             }
-            else if (!string.IsNullOrWhiteSpace(this.FormModel.PatientName))
+            else if (!String.IsNullOrWhiteSpace(this.FormModel.PatientName))
             {
                 // 患者名が入力されている場合のみ患者を作成
                 patientId = await this.GetOrCreatePatientAsync(context, facilityId, this.FormModel.PatientName);
@@ -434,7 +434,7 @@ public partial class AppointmentModal : ComponentBase
     private async Task<Guid> GetOrCreatePatientAsync(MedockDbContext context, Guid facilityId, string patientName)
     {
         // 患者名が指定されている場合は検索
-        if (!string.IsNullOrWhiteSpace(patientName))
+        if (!String.IsNullOrWhiteSpace(patientName))
         {
             // 同じ名前の患者を検索
             var existingPatient = await context.Patients
@@ -454,8 +454,8 @@ public partial class AppointmentModal : ComponentBase
             FacilityId = facilityId,
             CanonicalPtId = Guid.CreateVersion7(),
             PtCode = $"PT{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
-            PtName = patientName ?? string.Empty,
-            PtNameCompat = patientName ?? string.Empty,
+            PtName = patientName ?? String.Empty,
+            PtNameCompat = patientName ?? String.Empty,
             PrimaryOrgId = await this.GetDefaultOrganizationAsync(context, facilityId),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
@@ -464,7 +464,7 @@ public partial class AppointmentModal : ComponentBase
         context.Patients.Add(newPatient);
         await context.SaveChangesAsync();
 
-        this.Logger.LogInformation("Created new patient: {PatientName} ({PatientId})", string.IsNullOrEmpty(patientName) ? "(空欄)" : patientName, newPatient.PtId);
+        this.Logger.LogInformation("Created new patient: {PatientName} ({PatientId})", String.IsNullOrEmpty(patientName) ? "(空欄)" : patientName, newPatient.PtId);
 
         return newPatient.PtId;
     }
@@ -557,7 +557,7 @@ public partial class AppointmentModal : ComponentBase
     public class FilterItem
     {
         public Guid Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public string Name { get; set; } = String.Empty;
     }
 
     /// <summary>

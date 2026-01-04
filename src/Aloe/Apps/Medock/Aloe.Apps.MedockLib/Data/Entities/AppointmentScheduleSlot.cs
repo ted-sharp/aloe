@@ -68,17 +68,17 @@ public class AppointmentScheduleSlot : IAuditableEntity
     [NotMapped]
     public TimeOnly SlotStartTime
     {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(SlotStartMin));
-        set => SlotStartMin = value.Hour * 60 + value.Minute;
+        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotStartMin));
+        set => this.SlotStartMin = value.Hour * 60 + value.Minute;
     }
 
     [NotMapped]
     public TimeOnly SlotEndTime
     {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(SlotEndMin));
-        set => SlotEndMin = value.Hour * 60 + value.Minute;
+        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotEndMin));
+        set => this.SlotEndMin = value.Hour * 60 + value.Minute;
     }
 
     [NotMapped]
-    public int DurationMin => SlotEndMin - SlotStartMin;
+    public int DurationMin => this.SlotEndMin - this.SlotStartMin;
 }

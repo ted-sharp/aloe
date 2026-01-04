@@ -13,7 +13,10 @@ internal static class AppointmentSeeder
 {
     private static readonly Random _random = new Random();
 
-    public static async Task SeedAsync(MedockDbContext context, Guid floorId, IDateTimeProvider dateTimeProvider)
+    // Slot-level aggregation: (ResId, Date, SlotStartMin) -> Count
+    private static Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int> _slotAggregation = new();
+
+    public static async Task<Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int>> SeedAsync(MedockDbContext context, Guid floorId, IDateTimeProvider dateTimeProvider)
     {
         // テーブルが存在するか確認
         try
@@ -22,7 +25,7 @@ internal static class AppointmentSeeder
             if (hasExistingData)
             {
                 Console.WriteLine("[SKIP] Appointments already exist.");
-                return;
+                return new Dictionary<(Guid, DateOnly, int), int>();  // Empty aggregation
             }
         }
         catch (Npgsql.PostgresException ex) when (ex.SqlState == "42P01")
@@ -34,7 +37,7 @@ internal static class AppointmentSeeder
         if (floor == null)
         {
             Console.WriteLine("[SKIP] Appointment: Floor not found.");
-            return;
+            return new Dictionary<(Guid, DateOnly, int), int>();
         }
 
         var patients = await context.Patients
@@ -44,7 +47,7 @@ internal static class AppointmentSeeder
         if (!patients.Any())
         {
             Console.WriteLine("[SKIP] Appointment: No patients found.");
-            return;
+            return new Dictionary<(Guid, DateOnly, int), int>();
         }
 
         var organizations = await context.Organizations
@@ -54,7 +57,7 @@ internal static class AppointmentSeeder
         if (!organizations.Any())
         {
             Console.WriteLine("[SKIP] Appointment: No organizations found.");
-            return;
+            return new Dictionary<(Guid, DateOnly, int), int>();
         }
 
         var holidays = await SeederHelper.LoadHolidaySetAsync(context);
@@ -66,7 +69,7 @@ internal static class AppointmentSeeder
         if (mainResource == null)
         {
             Console.WriteLine("[SKIP] Appointment: Main resource not found.");
-            return;
+            return new Dictionary<(Guid, DateOnly, int), int>();
         }
 
         // Equipment リソースを取得
@@ -86,9 +89,18 @@ internal static class AppointmentSeeder
         Console.WriteLine("[INFO] Creating appointment seed data...");
         var stopwatch = Stopwatch.StartNew();
 
-        // バッチ数を事前に計算（進捗表示用）
-        var totalMonths = (endDate.Year - startDate.Year) * 12 + (endDate.Month - startDate.Month) + 1;
-        var totalBatches = (int)Math.Ceiling(totalMonths / 3.0);
+        // Initialize slot aggregation dictionary
+        _slotAggregation = new Dictionary<(Guid, DateOnly, int), int>();
+
+        // バッチ数を正確に計算（進捗表示用）
+        // 3ヶ月ごとのバッチで何バッチ必要かを実際に数える
+        var totalBatches = 0;
+        var countBatchDate = startDate;
+        while (countBatchDate <= endDate)
+        {
+            totalBatches++;
+            countBatchDate = countBatchDate.AddMonths(3);
+        }
         var currentBatch = 0;
 
         // 3ヶ月ごとにバッチ処理
@@ -97,7 +109,6 @@ internal static class AppointmentSeeder
         if (batchEndDate > endDate) batchEndDate = endDate;
 
         var totalAppointments = 0;
-        var allResourceAssignments = new List<AppointmentResourceAssignment>();
 
         while (batchStartDate <= endDate)
         {
@@ -122,7 +133,7 @@ internal static class AppointmentSeeder
                 // 営業日の場合は予約を生成
                 if (dayContext.IsOpen)
                 {
-                    var (appointmentsForDay, assignmentsForDay) = GenerateAppointmentsForDay(
+                    var (appointmentsForDay, assignmentsForDay, dayAggregation) = GenerateAppointmentsForDay(
                         currentDate,
                         dayContext,
                         floor,
@@ -135,6 +146,7 @@ internal static class AppointmentSeeder
 
                     appointments.AddRange(appointmentsForDay);
                     resourceAssignments.AddRange(assignmentsForDay);
+                    // dayAggregation is already merged into _slotAggregation in GenerateAppointmentsForDay
                 }
 
                 currentDate = currentDate.AddDays(1);
@@ -142,16 +154,30 @@ internal static class AppointmentSeeder
 
             if (appointments.Any())
             {
+                var appointmentSw = Stopwatch.StartNew();
                 await context.BulkInsertAsync(appointments, new BulkConfig
                 {
                     SetOutputIdentity = false,
-                    BatchSize = 1000
+                    BatchSize = 5000  // Increased for better throughput
                 });
+                appointmentSw.Stop();
                 totalAppointments += appointments.Count;
-                allResourceAssignments.AddRange(resourceAssignments);
+
+                // Insert resource assignments immediately after appointments
+                var assignmentSw = Stopwatch.StartNew();
+                if (resourceAssignments.Any())
+                {
+                    await context.BulkInsertAsync(resourceAssignments, new BulkConfig
+                    {
+                        SetOutputIdentity = false,
+                        BatchSize = 5000  // Increased for better throughput
+                    });
+                }
+                assignmentSw.Stop();
+
                 batchStopwatch.Stop();
                 var progressPercent = (int)((double)currentBatch / totalBatches * 100);
-                Console.WriteLine($"  [BATCH] {currentBatch}/{totalBatches} ({progressPercent}%) - Committed {appointments.Count} appointments ({batchStartDate:yyyy-MM-dd} to {batchEndDate:yyyy-MM-dd}) - took {batchStopwatch.Elapsed.TotalSeconds:F2}s");
+                Console.WriteLine($"  [BATCH] {currentBatch}/{totalBatches} ({progressPercent}%) - Appointments: {appointments.Count} ({appointmentSw.Elapsed.TotalSeconds:F2}s), Assignments: {resourceAssignments.Count} ({assignmentSw.Elapsed.TotalSeconds:F2}s)");
             }
 
             // 次のバッチへ
@@ -160,18 +186,11 @@ internal static class AppointmentSeeder
             if (batchEndDate > endDate) batchEndDate = endDate;
         }
 
-        // リソース割り当てをまとめて挿入
-        if (allResourceAssignments.Any())
-        {
-            await context.BulkInsertAsync(allResourceAssignments, new BulkConfig
-            {
-                SetOutputIdentity = false,
-                BatchSize = 1000
-            });
-        }
-
         stopwatch.Stop();
         Console.WriteLine($"  [+] Appointments: {totalAppointments} entries total (from {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}) - took {stopwatch.Elapsed.TotalSeconds:F2}s");
+        Console.WriteLine($"  [+] Aggregated {_slotAggregation.Count} unique slot assignments");
+
+        return _slotAggregation;
     }
 
     /// <summary>
@@ -248,7 +267,7 @@ internal static class AppointmentSeeder
     /// <summary>
     /// 1日分の予約データを生成
     /// </summary>
-    private static (List<Appointment>, List<AppointmentResourceAssignment>) GenerateAppointmentsForDay(
+    private static (List<Appointment>, List<AppointmentResourceAssignment>, Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int>) GenerateAppointmentsForDay(
         DateOnly date,
         AppointmentDayContext dayContext,
         Floor floor,
@@ -261,6 +280,7 @@ internal static class AppointmentSeeder
     {
         var appointments = new List<Appointment>();
         var resourceAssignments = new List<AppointmentResourceAssignment>();
+        var daySlotAggregation = new Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int>();
 
         // その日に該当する曜日のスロット情報をリソース別に取得
         var dayOfWeek = (int)date.DayOfWeek;
@@ -353,6 +373,7 @@ internal static class AppointmentSeeder
 
             // 時間帯を決定（分単位）
             int? startMin = null;
+            int? assignedSlotStartMin = null;  // スロット内の場合、所属スロットの SlotStartMin
 
             // Main リソースのスロット情報がある場合はそれを使用
             if (mainSlots.Count > 0 && slotIndex < mainSlots.Count && slotAppointmentIndex < slotAppointmentCounts[slotIndex])
@@ -362,6 +383,7 @@ internal static class AppointmentSeeder
                 var slotDurationMin = slot.SlotEndMin - slot.SlotStartMin;
                 var randomOffset = _random.Next(0, Math.Max(1, slotDurationMin - 15)); // 最大15分のバッファ
                 startMin = slot.SlotStartMin + randomOffset;
+                assignedSlotStartMin = slot.SlotStartMin;  // このスロットに所属
                 slotAppointmentIndex++;
 
                 // 次のスロットへ
@@ -418,6 +440,18 @@ internal static class AppointmentSeeder
 
             SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
             appointments.Add(appointment);
+
+            // Track aggregation: Use assigned slot if appointment is within configured slot, otherwise use actual startMin
+            int aggregationKey = assignedSlotStartMin ?? startMin.Value;
+            var agg = (mainResource.ApptResId, date, aggregationKey);
+            if (daySlotAggregation.ContainsKey(agg))
+            {
+                daySlotAggregation[agg]++;
+            }
+            else
+            {
+                daySlotAggregation[agg] = 1;
+            }
         }
 
         // 時間外スロットへの予約生成（低確率で生成、グラフには描画されないが赤い縦ラインで存在の有無を表示）
@@ -447,6 +481,17 @@ internal static class AppointmentSeeder
 
                 SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
                 appointments.Add(appointment);
+
+                // Track aggregation for out-of-hours appointment
+                var outOfHoursAgg = (mainResource.ApptResId, date, startMin);
+                if (daySlotAggregation.ContainsKey(outOfHoursAgg))
+                {
+                    daySlotAggregation[outOfHoursAgg]++;
+                }
+                else
+                {
+                    daySlotAggregation[outOfHoursAgg] = 1;
+                }
             }
         }
 
@@ -476,6 +521,17 @@ internal static class AppointmentSeeder
 
                 SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
                 appointments.Add(appointment);
+
+                // Track aggregation for out-of-hours appointment
+                var outOfHoursAgg = (mainResource.ApptResId, date, startMin);
+                if (daySlotAggregation.ContainsKey(outOfHoursAgg))
+                {
+                    daySlotAggregation[outOfHoursAgg]++;
+                }
+                else
+                {
+                    daySlotAggregation[outOfHoursAgg] = 1;
+                }
             }
         }
 
@@ -506,6 +562,17 @@ internal static class AppointmentSeeder
 
                 SeederHelper.InitializeAuditFields(appointment, dateTimeProvider);
                 appointments.Add(appointment);
+
+                // Track aggregation for out-of-hours appointment
+                var outOfHoursAgg = (mainResource.ApptResId, date, startMin);
+                if (daySlotAggregation.ContainsKey(outOfHoursAgg))
+                {
+                    daySlotAggregation[outOfHoursAgg]++;
+                }
+                else
+                {
+                    daySlotAggregation[outOfHoursAgg] = 1;
+                }
             }
         }
 
@@ -563,6 +630,17 @@ internal static class AppointmentSeeder
                                 SeederHelper.InitializeAuditFields(equipmentAssignment, dateTimeProvider);
                                 resourceAssignments.Add(equipmentAssignment);
 
+                                // Track Equipment resource assignment in aggregation
+                                var equipmentAgg = (equipment.ApptResId, appointment.ApptDate!.Value, appointment.ApptStartMin);
+                                if (daySlotAggregation.ContainsKey(equipmentAgg))
+                                {
+                                    daySlotAggregation[equipmentAgg]++;
+                                }
+                                else
+                                {
+                                    daySlotAggregation[equipmentAgg] = 1;
+                                }
+
                                 // カウント加算
                                 equipmentCurrentCounts[equipment.ApptResId]++;
                             }
@@ -572,7 +650,36 @@ internal static class AppointmentSeeder
             }
         }
 
-        return (appointments, resourceAssignments);
+        // Merge day aggregation into global aggregation
+        foreach (var kvp in daySlotAggregation)
+        {
+            if (_slotAggregation.ContainsKey(kvp.Key))
+            {
+                _slotAggregation[kvp.Key] += kvp.Value;
+            }
+            else
+            {
+                _slotAggregation[kvp.Key] = kvp.Value;
+            }
+        }
+
+        return (appointments, resourceAssignments, daySlotAggregation);
+    }
+
+    /// <summary>
+    /// スロット集計にカウントを追加
+    /// </summary>
+    private static void IncrementSlotAggregation(Guid apptResId, DateOnly apptDate, int apptStartMin)
+    {
+        var key = (apptResId, apptDate, apptStartMin);
+        if (_slotAggregation.ContainsKey(key))
+        {
+            _slotAggregation[key]++;
+        }
+        else
+        {
+            _slotAggregation[key] = 1;
+        }
     }
 
     /// <summary>

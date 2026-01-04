@@ -40,6 +40,12 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     public Dictionary<string, List<AppointmentStats>>? MainStats { get; set; }
 
     /// <summary>
+    /// Mainリソーススロット統計データ（日付とリソースIDでグループ化）
+    /// </summary>
+    [Parameter]
+    public Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? MainStatsSlots { get; set; }
+
+    /// <summary>
     /// グレーアウト状態（フィルター用）
     /// </summary>
     [Parameter]
@@ -206,9 +212,10 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     {
         // MainStats が更新されたかチェック（初期化後の更新を検出するため）
         var currentMainStatsCount = this.MainStats?.Count ?? 0;
-        var mainStatsChanged = this._isInitialized && (currentMainStatsCount != this._lastMainStatsCount);
+        var mainStatsChanged = currentMainStatsCount != this._lastMainStatsCount;
 
-        if (mainStatsChanged)
+        // 初期化完了後、またはデータが有効かつ初期化中に MainStats が更新された場合
+        if (mainStatsChanged && (this._isInitialized || currentMainStatsCount > 0))
         {
             this._lastMainStatsCount = currentMainStatsCount;
             try

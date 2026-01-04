@@ -270,6 +270,7 @@
                 <YearView
                     CurrentDate="@CurrentDate"
                     MainStats="@MainStats"
+                    MainStatsSlots="@State.MainStatsSlots"
                     MainStatsGrayedOut="@MainStatsGrayedOut"
                     EquipmentStatsOptimized="@EquipmentStatsOptimized"
                     Holidays="@Holidays"
@@ -296,6 +297,7 @@
                 <MonthView
                     CurrentDate="@CurrentDate"
                     MainStats="@MainStats"
+                    MainStatsSlots="@State.MainStatsSlots"
                     MainStatsGrayedOut="@MainStatsGrayedOut"
                     EquipmentStatsOptimized="@EquipmentStatsOptimized"
                     Holidays="@Holidays"
@@ -320,6 +322,7 @@
                 ShowSlots="@ShowSlots"
                 Appointments="@Appointments"
                 MainStats="@MainStats"
+                MainStatsSlots="@State.MainStatsSlots"
                 MainStatsGrayedOut="@MainStatsGrayedOut"
                 Holidays="@Holidays"
                 StartHour="@StartHour"
@@ -355,6 +358,7 @@
         IsOpen="@IsDayDetailOpen"
         SelectedDate="@DayDetailDate"
         MainStats="@GetDayDetailStats()"
+        MainStatsSlots="@State.MainStatsSlots"
         OnClose="@CloseDayDetail"
         OnGoToWeekView="@HandleDayDetailGoToWeekView"
         OnNavigateToPreviousDay="@HandleDayDetailNavigateToPreviousDay"

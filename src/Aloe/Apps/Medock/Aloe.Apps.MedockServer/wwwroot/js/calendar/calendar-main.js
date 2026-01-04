@@ -326,7 +326,7 @@ function destroy() {
  * @param {string} dateStr - 日付文字列 (YYYY-MM-DD)
  * @param {object} dotNetRef - DayDetailPopupコンポーネントの.NET参照（オプション）
  */
-function renderDayDetailPopup(containerId, dateStr, dotNetRef = null) {
+function renderDayDetailPopup(containerId, dateStr, dotNetRef = null, dateSlots = null) {
     const container = document.getElementById(containerId);
     if (!container) {
         console.error('MedockCalendar: DayDetailPopup container not found:', containerId);
@@ -365,6 +365,12 @@ function renderDayDetailPopup(containerId, dateStr, dotNetRef = null) {
 
     // Equipment統計データを取得
     const equipmentStats = state.equipmentStats.get(dateStr) || null;
+
+    // MainStatSlotsデータを設定（C#から渡されたスロット情報を並列配列形式で保持）
+    if (dateSlots) {
+        // C#から渡されたデータをstateに設定
+        state.mainStats.set(dateStr, dateSlots);
+    }
 
     // ポップアップ専用のローカルRenderStateを作成
     const popupRenderState = new RenderState();

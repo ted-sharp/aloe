@@ -41,6 +41,12 @@ public partial class WeekScheduler : ComponentBase
     public Dictionary<string, List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStats>>? MainStats { get; set; }
 
     /// <summary>
+    /// Mainリソーススロット統計データ（日付とリソースIDでグループ化）
+    /// </summary>
+    [Parameter]
+    public Dictionary<(DateOnly ApptDate, Guid ApptResId), List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStatSlots>>? MainStatsSlots { get; set; }
+
+    /// <summary>
     /// グレーアウト状態（フィルター用）
     /// </summary>
     [Parameter]

@@ -66,6 +66,16 @@ public class CalendarApplicationService
         => this._statsLoader.LoadMainStatsAsync(state, viewType, currentDate, weekDays);
 
     /// <summary>
+    /// Mainリソースのスロット単位統計データをロードして状態に反映します。
+    /// </summary>
+    public Task LoadMainStatsSlotsAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays = 7)
+        => this._statsLoader.LoadMainStatsSlotsAsync(state, viewType, currentDate, weekDays);
+
+    /// <summary>
     /// Equipmentリソースの統計データを日付ごとにグループ化して状態に反映します。
     /// フィルターで選択されたEquipmentリソースのみを取得します。
     /// </summary>

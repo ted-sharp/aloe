@@ -125,9 +125,14 @@ public partial class DayDetailPopup : ComponentBase
             if (isReady)
             {
                 var dateStr = this.SelectedDate.Value.ToString("yyyy-MM-dd");
+
+                // MainStatSlotsデータをJavaScript形式に変換
+                var dayStatsData = this.ConvertMainStatsSlotsToJSFormat(dateStr);
+
                 // DotNetObjectReferenceを作成してJavaScript側に渡す
                 var dotNetRef = DotNetObjectReference.Create(this);
-                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup", this.ChartContainerId, dateStr, dotNetRef);
+                await this.JSRuntime.InvokeVoidAsync("MedockCalendar.renderDayDetailPopup",
+                    this.ChartContainerId, dateStr, dotNetRef, (object)dayStatsData);
                 this._isChartRendered = true;
             }
         }
@@ -214,7 +219,7 @@ public partial class DayDetailPopup : ComponentBase
             return "";
 
         // 祝日は赤
-        if (!string.IsNullOrEmpty(this.HolidayName))
+        if (!String.IsNullOrEmpty(this.HolidayName))
             return "text-red-600";
 
         var date = this.SelectedDate.Value;
@@ -430,5 +435,75 @@ public partial class DayDetailPopup : ComponentBase
         {
             await this.OnSlotClicked.InvokeAsync(this._selectedSlot);
         }
+    }
+
+    /// <summary>
+    /// MainStatsSlotsデータをJavaScript形式に変換
+    /// JavaScriptは並列配列形式を期待しています
+    /// </summary>
+    private object ConvertMainStatsSlotsToJSFormat(string dateStr)
+    {
+        if (this.MainStatsSlots == null || !this.MainStatsSlots.Any())
+        {
+            return new
+            {
+                slotStarts = new int[] { },
+                slotEnds = new int[] { },
+                slotCounts = new int[] { },
+                slotCaps = new int[] { },
+                slotAvailables = new int[] { },
+                isDayGrayedOut = false
+            };
+        }
+
+        // 選択日付のスロットを取得
+        if (!this.SelectedDate.HasValue)
+        {
+            return new
+            {
+                slotStarts = new int[] { },
+                slotEnds = new int[] { },
+                slotCounts = new int[] { },
+                slotCaps = new int[] { },
+                slotAvailables = new int[] { },
+                isDayGrayedOut = false
+            };
+        }
+
+        var dateSlotsData = this.MainStatsSlots
+            .Where(kvp => kvp.Key.ApptDate == this.SelectedDate.Value)
+            .SelectMany(kvp => kvp.Value)
+            .OrderBy(s => s.SlotStart)
+            .ToList();
+
+        if (!dateSlotsData.Any())
+        {
+            return new
+            {
+                slotStarts = new int[] { },
+                slotEnds = new int[] { },
+                slotCounts = new int[] { },
+                slotCaps = new int[] { },
+                slotAvailables = new int[] { },
+                isDayGrayedOut = false
+            };
+        }
+
+        // 並列配列形式に変換
+        var slotStarts = dateSlotsData.Select(s => s.SlotStart).ToArray();
+        var slotEnds = dateSlotsData.Select(s => s.SlotEnd).ToArray();
+        var slotCounts = dateSlotsData.Select(s => s.SlotCount).ToArray();
+        var slotCaps = dateSlotsData.Select(s => s.SlotCap).ToArray();
+        var slotAvailables = dateSlotsData.Select(s => Math.Max(0, s.SlotCap - s.SlotCount)).ToArray();
+
+        return new
+        {
+            slotStarts = slotStarts,
+            slotEnds = slotEnds,
+            slotCounts = slotCounts,
+            slotCaps = slotCaps,
+            slotAvailables = slotAvailables,
+            isDayGrayedOut = false
+        };
     }
 }

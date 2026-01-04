@@ -1,14 +1,20 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
+using EFCore.BulkExtensions;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
+using System.Diagnostics;
 
 namespace Aloe.Apps.MedockSeed.Seeders;
 
 internal static class AppointmentStatsSeeder
 {
-    public static async Task SeedAsync(MedockDbContext context, IDbContextFactory<MedockDbContext> contextFactory, IDateTimeProvider dateTimeProvider)
+    public static async Task SeedAsync(
+        MedockDbContext context,
+        IDbContextFactory<MedockDbContext> contextFactory,
+        IDateTimeProvider dateTimeProvider,
+        Dictionary<(Guid ApptResId, DateOnly ApptDate, int SlotStartMin), int> slotAggregation)
     {
         // テーブルが存在するか確認
         try
@@ -42,60 +48,43 @@ internal static class AppointmentStatsSeeder
             .Where(s => !s.IsDeleted && s.IsActive)
             .ToListAsync();
 
-        // SQL で予約統計を事前集計（メモリ効率化）
-        var appointmentCounts = await context.AppointmentResourceAssignments
-            .AsNoTracking()
-            .Where(a => !a.IsDeleted && a.Appointment.ApptDate >= startDate && a.Appointment.ApptDate <= endDate && !a.Appointment.IsDeleted)
-            .GroupBy(a => new { a.ApptResId, a.Appointment.ApptDate })
-            .Select(g => new { ResId = g.Key.ApptResId, Date = g.Key.ApptDate, Count = g.Count() })
-            .ToListAsync();
-
         // 祝日を取得
         var holidays = await SeederHelper.LoadHolidaySetAsync(context);
 
-        // 予約カウントを辞書に変換（高速参照用）
-        var appointmentCountDict = appointmentCounts.ToDictionary(x => (x.ResId, x.Date), x => x.Count);
+        // In-memory aggregation data received from AppointmentSeeder
+        Console.WriteLine($"[INFO] Processing {slotAggregation.Count} slot aggregations...");
+
+        // Pre-index aggregation by (ResId, Date) for faster out-of-hours lookup
+        var aggregationByResAndDate = slotAggregation
+            .GroupBy(kvp => (kvp.Key.ApptResId, kvp.Key.ApptDate))
+            .ToDictionary(
+                g => g.Key,
+                g => g.ToDictionary(kvp => kvp.Key.SlotStartMin, kvp => kvp.Value));
 
         var stats = new List<AppointmentStats>();
         var statSlots = new List<AppointmentStatSlots>();
 
-        // 各スケジュール（リソース）に対してStats を作成
+        var processSw = Stopwatch.StartNew();
+        // Process each schedule (resource)
         foreach (var schedule in schedules)
         {
             var currentDate = startDate;
             while (currentDate <= endDate)
             {
-                // その日に適用されるスロットを取得
+                // Get applicable slots for this date (from schedule configuration)
                 var applicableSlots = GetApplicableSlotsForDate(schedule, currentDate);
 
                 if (applicableSlots.Any())
                 {
-                    // AppointmentStats レコードを作成
-                    var totalCapacity = applicableSlots.Sum(s => s.SlotCap);
+                    // Create AppointmentStatSlots records (with accurate counts from aggregation)
+                    var slotRecords = new List<AppointmentStatSlots>();
+                    var configuredSlotStarts = new HashSet<int>(applicableSlots.Select(s => s.SlotStartMin));
 
-                    // 当日のこのリソースの予約数を取得（SQL事前集計済み）
-                    var dayCount = appointmentCountDict.TryGetValue((schedule.ApptResId, currentDate), out var count) ? count : 0;
-
-                    var stat = new AppointmentStats
-                    {
-                        ApptStatId = Guid.CreateVersion7(),
-                        ApptDate = currentDate,
-                        ApptResId = schedule.ApptResId,
-                        ApptCap = totalCapacity,
-                        ApptCount = dayCount
-                    };
-
-                    SeederHelper.InitializeAuditFields(stat, dateTimeProvider);
-                    stats.Add(stat);
-
-                    // 各スロットに対して AppointmentStatSlots レコードを作成
                     foreach (var slot in applicableSlots)
                     {
-                        // NOTE: スロット単位のカウントは、より詳細な計算が必要なため、
-                        // 簡易的に日全体のカウントを等分配する（正確な時間マッチングはスキップ）
-                        var slotCount = dayCount > 0 && applicableSlots.Count > 0
-                            ? dayCount / applicableSlots.Count
-                            : 0;
+                        // Lookup actual count from aggregation data
+                        var aggregationKey = (schedule.ApptResId, currentDate, slot.SlotStartMin);
+                        var slotCount = slotAggregation.TryGetValue(aggregationKey, out var count) ? count : 0;
 
                         var statSlot = new AppointmentStatSlots
                         {
@@ -105,36 +94,74 @@ internal static class AppointmentStatsSeeder
                             SlotStart = slot.SlotStartMin,
                             SlotEnd = slot.SlotEndMin,
                             SlotCap = slot.SlotCap,
-                            SlotCount = slotCount
+                            SlotCount = slotCount  // ACCURATE count from aggregation
                         };
 
                         SeederHelper.InitializeAuditFields(statSlot, dateTimeProvider);
-                        statSlots.Add(statSlot);
+                        slotRecords.Add(statSlot);
                     }
+
+                    statSlots.AddRange(slotRecords);
+
+                    // Check for out-of-hours appointments (not matching any configured slot)
+                    // Optimized: Use pre-indexed lookup O(1) instead of full list scan
+                    var outOfHoursCount = 0;
+                    if (aggregationByResAndDate.TryGetValue((schedule.ApptResId, currentDate), out var dayAggregations))
+                    {
+                        outOfHoursCount = dayAggregations
+                            .Where(kvp => !configuredSlotStarts.Contains(kvp.Key))
+                            .Sum(kvp => kvp.Value);
+                    }
+
+                    // Aggregate slot records to create AppointmentStats (daily total)
+                    var totalCapacity = slotRecords.Sum(s => s.SlotCap);
+                    var totalCount = slotRecords.Sum(s => s.SlotCount) + outOfHoursCount;
+
+                    var stat = new AppointmentStats
+                    {
+                        ApptStatId = Guid.CreateVersion7(),
+                        ApptDate = currentDate,
+                        ApptResId = schedule.ApptResId,
+                        ApptCap = totalCapacity,
+                        ApptCount = totalCount  // Includes both slot and out-of-hours appointments
+                    };
+
+                    SeederHelper.InitializeAuditFields(stat, dateTimeProvider);
+                    stats.Add(stat);
                 }
 
                 currentDate = currentDate.AddDays(1);
             }
         }
+        processSw.Stop();
 
-        // データベースに保存
+        // Use BulkInsertAsync for better performance instead of AddRangeAsync + SaveChangesAsync
         if (stats.Any())
         {
-            await context.AppointmentStats.AddRangeAsync(stats);
+            var statInsertSw = Stopwatch.StartNew();
+            await context.BulkInsertAsync(stats, new BulkConfig
+            {
+                SetOutputIdentity = false,
+                BatchSize = 5000
+            });
+            statInsertSw.Stop();
+            Console.WriteLine($"  [BulkInsert] AppointmentStats: {stats.Count} records - took {statInsertSw.Elapsed.TotalSeconds:F2}s");
         }
 
         if (statSlots.Any())
         {
-            await context.AppointmentStatSlots.AddRangeAsync(statSlots);
-        }
-
-        if (stats.Any() || statSlots.Any())
-        {
-            await context.SaveChangesAsync();
+            var slotsInsertSw = Stopwatch.StartNew();
+            await context.BulkInsertAsync(statSlots, new BulkConfig
+            {
+                SetOutputIdentity = false,
+                BatchSize = 5000
+            });
+            slotsInsertSw.Stop();
+            Console.WriteLine($"  [BulkInsert] AppointmentStatSlots: {statSlots.Count} records - took {slotsInsertSw.Elapsed.TotalSeconds:F2}s");
         }
 
         startStopwatch.Stop();
-        Console.WriteLine($"  [+] Created {stats.Count} stats records with {statSlots.Count} slot details - took {startStopwatch.Elapsed.TotalSeconds:F2}s");
+        Console.WriteLine($"  [+] Created {stats.Count} stats records with {statSlots.Count} slot details (from aggregated data) - took {startStopwatch.Elapsed.TotalSeconds:F2}s");
     }
 
     /// <summary>

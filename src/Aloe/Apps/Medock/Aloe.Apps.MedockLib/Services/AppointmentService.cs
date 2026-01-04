@@ -158,7 +158,7 @@ public class AppointmentService : IAppointmentService
                 OrgId = dto.OrganizationId,
                 FloorId = dto.FloorId,
                 ApptStatusCode = dto.Status,
-                ApptMemo = dto.Memo ?? string.Empty,
+                ApptMemo = dto.Memo ?? String.Empty,
                 IsDeleted = false,
                 CreatedAt = now,
                 UpdatedAt = now

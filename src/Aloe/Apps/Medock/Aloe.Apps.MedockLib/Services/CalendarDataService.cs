@@ -94,58 +94,58 @@ public class CalendarDataService : ICalendarDataService
                     slotFilteredCounts = new int[count];
 
                     for (int i = 0; i < count; i++)
+                    {
+                        var statSlot = validSlots[i];
+                        var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                        var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                        var isSlotGrayed = false;
+                        if (filterHours != null && filterHours.Count > 0)
                         {
-                            var statSlot = validSlots[i];
-                            var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                            var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
-                            var isSlotGrayed = false;
-                            if (filterHours != null && filterHours.Count > 0)
+                            isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
+                        }
+
+                        slotStarts[i] = statSlot.SlotStart;
+                        slotEnds[i] = statSlot.SlotEnd;
+                        slotCounts[i] = statSlot.SlotCount;
+                        slotCaps[i] = statSlot.SlotCap;
+                        slotAvailables[i] = statSlot.SlotAvailable;
+
+                        // 業務時間外スロットかどうかを判定
+                        var isOutsideHours = false;
+                        if (businessHours != null)
+                        {
+                            var businessStart = TimeOnly.Parse(businessHours.StartTime);
+                            var businessEnd = TimeOnly.Parse(businessHours.EndTime);
+
+                            // スロットが業務時間外にある場合
+                            if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
                             {
-                                isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
+                                isOutsideHours = true;
                             }
-
-                            slotStarts[i] = statSlot.SlotStart;
-                            slotEnds[i] = statSlot.SlotEnd;
-                            slotCounts[i] = statSlot.SlotCount;
-                            slotCaps[i] = statSlot.SlotCap;
-                            slotAvailables[i] = statSlot.SlotAvailable;
-
-                            // 業務時間外スロットかどうかを判定
-                            var isOutsideHours = false;
-                            if (businessHours != null)
+                            // 昼休み時間帯にある場合
+                            else if (!String.IsNullOrEmpty(businessHours.LunchStartTime) &&
+                                     !String.IsNullOrEmpty(businessHours.LunchEndTime))
                             {
-                                var businessStart = TimeOnly.Parse(businessHours.StartTime);
-                                var businessEnd = TimeOnly.Parse(businessHours.EndTime);
+                                var lunchStart = TimeOnly.Parse(businessHours.LunchStartTime);
+                                var lunchEnd = TimeOnly.Parse(businessHours.LunchEndTime);
 
-                                // スロットが業務時間外にある場合
-                                if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
+                                if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
                                 {
                                     isOutsideHours = true;
                                 }
-                                // 昼休み時間帯にある場合
-                                else if (!String.IsNullOrEmpty(businessHours.LunchStartTime) &&
-                                         !String.IsNullOrEmpty(businessHours.LunchEndTime))
-                                {
-                                    var lunchStart = TimeOnly.Parse(businessHours.LunchStartTime);
-                                    var lunchEnd = TimeOnly.Parse(businessHours.LunchEndTime);
-
-                                    if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
-                                    {
-                                        isOutsideHours = true;
-                                    }
-                                }
                             }
-
-                            // フラグをビット単位で設定
-                            byte flags = 0;
-                            if (isSlotGrayed) flags |= 0b001; // ビット0: IsGrayedOut
-                            if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
-
-                            // ビット2: FilteredCount > 0 は現時点では常にfalse
-                            slotFlags[i] = flags;
-
-                            slotFilteredCounts[i] = 0; // 現時点では常に0
                         }
+
+                        // フラグをビット単位で設定
+                        byte flags = 0;
+                        if (isSlotGrayed) flags |= 0b001; // ビット0: IsGrayedOut
+                        if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
+
+                        // ビット2: FilteredCount > 0 は現時点では常にfalse
+                        slotFlags[i] = flags;
+
+                        slotFilteredCounts[i] = 0; // 現時点では常に0
+                    }
                 }
 
                 var isDayGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;
