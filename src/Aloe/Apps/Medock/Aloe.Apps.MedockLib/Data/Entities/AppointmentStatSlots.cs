@@ -18,11 +18,6 @@ public class AppointmentStatSlots : IAuditableEntity
     [Column("appt_stat_slot_id")]
     public Guid ApptStatSlotId { get; set; }
 
-    /// <summary>予約統計ID (FK)</summary>
-    [Column("appt_stat_id")]
-    [ForeignKey("AppointmentStats")]
-    public Guid ApptStatId { get; set; }
-
     /// <summary>予約日</summary>
     [Column("appt_date")]
     public DateOnly ApptDate { get; set; }
@@ -70,7 +65,6 @@ public class AppointmentStatSlots : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
-    public virtual AppointmentStats AppointmentStats { get; set; } = null!;
     public virtual AppointmentResource? AppointmentResource { get; set; }
 
     // Helper Properties (NotMapped)

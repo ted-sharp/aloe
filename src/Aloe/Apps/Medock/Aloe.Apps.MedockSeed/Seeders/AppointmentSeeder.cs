@@ -265,7 +265,7 @@ internal static class AppointmentSeeder
         // その日に該当する曜日のスロット情報をリソース別に取得
         var dayOfWeek = (int)date.DayOfWeek;
         List<(int SlotStartMin, int SlotEndMin, int SlotCap)> mainSlots = new();
-        var equipmentCapacities = new Dictionary<Guid, int>();
+        var equipmentSlots = new Dictionary<Guid, List<(int SlotStartMin, int SlotEndMin, int SlotCap)>>();
 
         foreach (var schedule in schedules)
         {
@@ -279,8 +279,7 @@ internal static class AppointmentSeeder
             }
             else
             {
-                var slotCapacity = daySlots.Sum(s => s.SlotCap);
-                equipmentCapacities[schedule.ApptResId] = slotCapacity;
+                equipmentSlots[schedule.ApptResId] = daySlots.Select(s => (s.SlotStartMin, s.SlotEndMin, s.SlotCap)).ToList();
             }
         }
 
@@ -289,37 +288,45 @@ internal static class AppointmentSeeder
         {
             1 => 0.25m,   // 1月：閑散期（正月）
             2 => 0.60m,   // 2月：通常期
-            3 => 0.60m,   // 3月：通常期
-            4 => 1.0m,    // 4月：繁忙期（新年度検診）→ 満室
-            5 => 0.65m,   // 5月：通常期
-            6 => 0.60m,   // 6月：通常期
+            3 => 0.65m,   // 3月：入職時検診に向けて増加
+            4 => 0.85m,   // 4月：入職時検診（中程度）
+            5 => 1.0m,    // 5月：入職時検診（ピーク）
+            6 => 0.80m,   // 6月：入職時検診（下降）
             7 => 0.50m,   // 7月：やや閑散期（夏季）
             8 => 0.30m,   // 8月：閑散期（盆休み）
-            9 => 1.0m,    // 9月：繁忙期（秋の検診）→ 満室
-            10 => 0.65m,  // 10月：通常期
-            11 => 0.60m,  // 11月：通常期
-            12 => 0.35m,  // 12月：閑散期（年末）
+            9 => 0.85m,   // 9月：秋の健診（開始、中程度）
+            10 => 1.0m,   // 10月：秋の健診（ピーク）
+            11 => 0.90m,  // 11月：秋の健診（緩やかに下降）
+            12 => 0.70m,  // 12月：秋の健診（更に下降、年末へ）
             _ => 0.60m
         };
 
-        // Main リソース：各スロットごとに予約数を計算（容量 × 占有率 + 超過 0-2）
+        // Main リソース：各スロットごとに予約数を計算（容量 × 占有率 × 時間帯乗数 + 超過 0-2）
         var slotAppointmentCounts = new List<int>();
         foreach (var slot in mainSlots)
         {
-            var baseCount = (int)(slot.SlotCap * occupancyRate);
+            // 時間帯に応じた乗数を適用（9:00-11:00がピーク、昼間は空いている、夕方やや混雑）
+            var timeModifier = GetTimeModifier(slot.SlotStartMin);
+            var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier);
             // 超過を追加（繁忙期は満室狙い、通常期は若干余裕）
             var overage = occupancyRate >= 0.95m ? _random.Next(0, 3) : 0; // 0, 1, 2
-            var slotCount = Math.Min(slot.SlotCap + 2, baseCount + overage); // 上限は capacity + 2
+            var slotCount = baseCount + overage; // 時間帯乗数を正しく反映（上限なし）
             slotAppointmentCounts.Add(slotCount);
         }
         var mainAppointmentCount = slotAppointmentCounts.Sum();
 
-        // Equipment リソースも上限で管理（超過なし）
+        // Equipment リソースも時間帯乗数を考慮して計算（超過なし）
         var equipmentAppointmentCounts = new Dictionary<Guid, int>();
-        foreach (var (resId, capacity) in equipmentCapacities)
+        foreach (var (resId, slots) in equipmentSlots)
         {
-            var equipmentBaseCount = (int)(capacity * occupancyRate);
-            equipmentAppointmentCounts[resId] = Math.Max(0, equipmentBaseCount);
+            var equipmentCount = 0;
+            foreach (var slot in slots)
+            {
+                var timeModifier = GetTimeModifier(slot.SlotStartMin);
+                var slotCount = (int)(slot.SlotCap * occupancyRate * timeModifier);
+                equipmentCount += slotCount;
+            }
+            equipmentAppointmentCounts[resId] = Math.Max(0, equipmentCount);
         }
 
         var appointmentCount = mainAppointmentCount;
@@ -566,6 +573,27 @@ internal static class AppointmentSeeder
         }
 
         return (appointments, resourceAssignments);
+    }
+
+    /// <summary>
+    /// スロット開始時刻に基づいて時間帯の乗数を計算
+    /// 朝（9:00-11:00）：1.2倍（ピーク）
+    /// 昼（11:00-13:00）：0.5倍（空いている）
+    /// 夕方（13:00-17:00）：1.1倍（やや混雑）
+    /// </summary>
+    private static decimal GetTimeModifier(int slotStartMin)
+    {
+        return slotStartMin switch
+        {
+            // 朝のピーク：9:00-11:00（540-660分）
+            >= 540 and < 660 => 1.2m,
+            // 昼間：11:00-13:00（660-780分）
+            >= 660 and < 780 => 0.5m,
+            // 夕方：13:00-17:00（780-1020分）
+            >= 780 and < 1020 => 1.1m,
+            // その他
+            _ => 1.0m
+        };
     }
 
     /// <summary>

@@ -19,6 +19,7 @@ public interface ICalendarDataService
     /// <param name="filterTimeSlots">フィルター用の時間帯リスト（"09:00"形式、nullの場合はフィルターなし）</param>
     /// <param name="equipmentStats">Equipmentリソース統計データ（日付文字列 -> 統計リスト、nullの場合は表示しない）</param>
     /// <param name="businessHours">業務時間情報（時間外スロット判定に使用、nullの場合は判定しない）</param>
+    /// <param name="mainStatsSlots">Mainリソース統計スロットデータ（(日付, リソースID) -> スロットリスト）</param>
     /// <returns>カレンダー表示用データDTO</returns>
     Task<CalendarDataDto> BuildCalendarDataAsync(
         IEnumerable<AppointmentDto> appointments,
@@ -27,6 +28,7 @@ public interface ICalendarDataService
         Dictionary<string, string> holidays,
         List<string>? filterTimeSlots = null,
         Dictionary<string, List<ResourceStatSlotsDto>>? equipmentStats = null,
-        BusinessHoursDto? businessHours = null);
+        BusinessHoursDto? businessHours = null,
+        Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? mainStatsSlots = null);
 }
 

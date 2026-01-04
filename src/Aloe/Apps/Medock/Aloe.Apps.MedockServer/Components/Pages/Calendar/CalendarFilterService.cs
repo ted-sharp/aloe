@@ -22,7 +22,8 @@ public class CalendarFilterService
         Dictionary<string, List<AppointmentStats>> originalMainStats,
         Dictionary<string, bool> mainStatsGrayedOut,
         CalendarViewType currentView,
-        DateOnly currentDate)
+        DateOnly currentDate,
+        Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? mainStatsSlots = null)
     {
         if (!filter.IsActive)
         {
@@ -40,7 +41,7 @@ public class CalendarFilterService
             var date = DateOnly.Parse(dateStr);
 
             var isDateGrayed = this.IsDateGrayed(date, filter);
-            var hasAvailableSlot = this.ProcessSlots(statsList, filter, statsDict, date, isDateGrayed);
+            var hasAvailableSlot = this.ProcessSlots(statsList, filter, statsDict, date, isDateGrayed, mainStatsSlots);
 
             mainStatsGrayedOut[dateStr] = isDateGrayed || !hasAvailableSlot;
         }
@@ -68,7 +69,8 @@ public class CalendarFilterService
         SearchFilterPanel.SearchFilter filter,
         Dictionary<(DateOnly date, string timeSlot), int>? statsDict,
         DateOnly date,
-        bool isDateGrayed)
+        bool isDateGrayed,
+        Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? mainStatsSlots = null)
     {
         var hasAvailableSlot = false;
 
@@ -78,23 +80,31 @@ public class CalendarFilterService
 
         foreach (var stat in statsList)
         {
-            if (stat.AppointmentStatSlots != null)
+            // Get slots for this stat from mainStatsSlots if available
+            var slots = new List<AppointmentStatSlots>();
+            if (mainStatsSlots != null)
             {
-                foreach (var statSlot in stat.AppointmentStatSlots.Where(s => !s.IsDeleted))
+                var key = (stat.ApptDate, stat.ApptResId);
+                if (mainStatsSlots.TryGetValue(key, out var foundSlots))
                 {
-                    var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                    var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
-                    var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+                    slots = foundSlots;
+                }
+            }
 
-                    if (slotMap.ContainsKey(timeRangeKey))
-                    {
-                        var existing = slotMap[timeRangeKey];
-                        slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
-                    }
-                    else
-                    {
-                        slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
-                    }
+            foreach (var statSlot in slots.Where(s => !s.IsDeleted))
+            {
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+
+                if (slotMap.ContainsKey(timeRangeKey))
+                {
+                    var existing = slotMap[timeRangeKey];
+                    slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
+                }
+                else
+                {
+                    slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
                 }
             }
         }

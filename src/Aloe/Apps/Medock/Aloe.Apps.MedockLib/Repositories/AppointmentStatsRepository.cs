@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Common.Exceptions;
 using Aloe.Apps.MedockLib.Data;
+using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Logging;
 using Aloe.Apps.MedockLib.Services;
@@ -72,7 +73,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         return await this._context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
-            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
@@ -98,7 +98,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             .Include(s => s.AppointmentResource)
                 .ThenInclude(r => r.AppointmentResourceGroupMembers)
                     .ThenInclude(m => m.AppointmentResourceGroup)
-            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
@@ -182,7 +181,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         return await this._context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
-            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
@@ -200,7 +198,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         var query = this._context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
-            .Include(s => s.AppointmentStatSlots)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
@@ -313,6 +310,43 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             LogMessages.DiffDataRetrievalError(this._logger, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
+    }
+
+    /// <summary>
+    /// 指定された日付範囲のStatスロットを取得します。
+    /// AppointmentStatsの削除された navigation property に代わるメソッド
+    /// </summary>
+    public async Task<Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>> GetStatSlotsByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? resourceIds = null)
+    {
+        var query = this._context.AppointmentStatSlots
+            .AsNoTracking()
+            .Where(s => !s.IsDeleted &&
+                        s.ApptDate >= startDate &&
+                        s.ApptDate <= endDate);
+
+        if (resourceIds != null && resourceIds.Any())
+        {
+            query = query.Where(s => resourceIds.Contains(s.ApptResId));
+        }
+
+        var slots = await query.OrderBy(s => s.ApptDate).ThenBy(s => s.ApptResId).ThenBy(s => s.SlotStart).ToListAsync();
+
+        // Group by (ApptDate, ApptResId) for easy lookup
+        var result = new Dictionary<(DateOnly, Guid), List<AppointmentStatSlots>>();
+        foreach (var slot in slots)
+        {
+            var key = (slot.ApptDate, slot.ApptResId);
+            if (!result.ContainsKey(key))
+            {
+                result[key] = new List<AppointmentStatSlots>();
+            }
+            result[key].Add(slot);
+        }
+
+        return result;
     }
 
     // FromSql用の中間DTO

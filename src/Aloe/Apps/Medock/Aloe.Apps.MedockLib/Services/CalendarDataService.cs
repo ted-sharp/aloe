@@ -17,7 +17,8 @@ public class CalendarDataService : ICalendarDataService
         Dictionary<string, string> holidays,
         List<string>? filterTimeSlots = null,
         Dictionary<string, List<ResourceStatSlotsDto>>? equipmentStats = null,
-        BusinessHoursDto? businessHours = null)
+        BusinessHoursDto? businessHours = null,
+        Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? mainStatsSlots = null)
     {
         var appointmentArray = appointments?.Select(a => new AppointmentDataDto
         {
@@ -67,25 +68,32 @@ public class CalendarDataService : ICalendarDataService
                 byte[]? slotFlags = null;
                 int[]? slotFilteredCounts = null;
 
-                if (stat != null && stat.AppointmentStatSlots != null)
+                // Try to get slots from the mainStatsSlots dictionary
+                List<AppointmentStatSlots> validSlots = new();
+                if (stat != null && mainStatsSlots != null)
                 {
-                    var validSlots = stat.AppointmentStatSlots
-                        .Where(s => !s.IsDeleted)
-                        .OrderBy(s => s.SlotStart)
-                        .ToList();
-
-                    var count = validSlots.Count;
-                    if (count > 0)
+                    var key = (stat.ApptDate, stat.ApptResId);
+                    if (mainStatsSlots.TryGetValue(key, out var slots))
                     {
-                        slotStarts = new int[count];
-                        slotEnds = new int[count];
-                        slotCounts = new int[count];
-                        slotCaps = new int[count];
-                        slotAvailables = new int[count];
-                        slotFlags = new byte[count];
-                        slotFilteredCounts = new int[count];
+                        validSlots = slots
+                            .Where(s => !s.IsDeleted)
+                            .OrderBy(s => s.SlotStart)
+                            .ToList();
+                    }
+                }
 
-                        for (int i = 0; i < count; i++)
+                if (stat != null && validSlots.Count > 0)
+                {
+                    var count = validSlots.Count;
+                    slotStarts = new int[count];
+                    slotEnds = new int[count];
+                    slotCounts = new int[count];
+                    slotCaps = new int[count];
+                    slotAvailables = new int[count];
+                    slotFlags = new byte[count];
+                    slotFilteredCounts = new int[count];
+
+                    for (int i = 0; i < count; i++)
                         {
                             var statSlot = validSlots[i];
                             var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
@@ -138,7 +146,6 @@ public class CalendarDataService : ICalendarDataService
 
                             slotFilteredCounts[i] = 0; // 現時点では常に0
                         }
-                    }
                 }
 
                 var isDayGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;

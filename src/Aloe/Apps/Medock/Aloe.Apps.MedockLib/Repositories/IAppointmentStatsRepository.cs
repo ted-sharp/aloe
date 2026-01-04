@@ -62,4 +62,13 @@ public interface IAppointmentStatsRepository
         DateOnly startDate,
         DateOnly endDate,
         List<Guid>? equipmentResourceIds);
+
+    /// <summary>
+    /// 指定された日付範囲のStatスロットを取得します。
+    /// AppointmentStatsの削除された navigation property に代わるメソッド
+    /// </summary>
+    Task<Dictionary<(DateOnly ApptDate, Guid ApptResId), List<Data.Entities.AppointmentStatSlots>>> GetStatSlotsByDateRangeAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? resourceIds = null);
 }

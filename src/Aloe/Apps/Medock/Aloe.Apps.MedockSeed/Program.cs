@@ -182,11 +182,10 @@ try
 
     // 予約スケジュール（新システム）
     await RunSeederAsync("AppointmentScheduleSeeder", () => AppointmentScheduleSeeder.SeedAsync(context, dateTimeProvider));
-    await RunSeederAsync("AppointmentScheduleOverrideSeeder", () => AppointmentScheduleOverrideSeeder.SeedAsync(context, dateTimeProvider));
 
     // 予約データと統計
-    // 1. AppointmentSeeder: 実際の appointment レコードを生成
-    // 2. AppointmentStatsSeeder: 生成された appointments から統計情報を集計
+    // 1. AppointmentSeeder: 実際の appointment レコードを生成（月別繁忙度と時間帯による揺らぎを反映）
+    // 2. AppointmentStatsSeeder: 生成された appointments から統計情報を集計（集計結果のみ）
     await RunSeederAsync("AppointmentSeeder", () => AppointmentSeeder.SeedAsync(context, floorId, dateTimeProvider));
     await RunSeederAsync("AppointmentStatsSeeder", () => AppointmentStatsSeeder.SeedAsync(context, contextFactory, dateTimeProvider));
 

@@ -64,11 +64,6 @@ public class AppointmentStatsConfiguration : IEntityTypeConfiguration<Appointmen
             .WithMany(ar => ar.AppointmentStats)
             .HasForeignKey(e => e.ApptResId);
 
-        entity.HasMany(e => e.AppointmentStatSlots)
-            .WithOne(s => s.AppointmentStats)
-            .HasForeignKey(s => s.ApptStatId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         entity.HasIndex(e => new { e.ApptDate, e.ApptResId })
             .IsUnique()
             .HasFilter("[is_deleted] = 0");
@@ -85,7 +80,6 @@ public class AppointmentStatSlotsConfiguration : IEntityTypeConfiguration<Appoin
         entity.ToTable("appointment_stat_slots");
         entity.HasKey(e => e.ApptStatSlotId);
         entity.Property(e => e.ApptStatSlotId).HasColumnName("appt_stat_slot_id");
-        entity.Property(e => e.ApptStatId).HasColumnName("appt_stat_id");
         entity.Property(e => e.ApptDate).HasColumnName("appt_date");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
         entity.Property(e => e.SlotStart).HasColumnName("slot_start_min").HasDefaultValue(0);
@@ -98,17 +92,12 @@ public class AppointmentStatSlotsConfiguration : IEntityTypeConfiguration<Appoin
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         ConfigurationHelper.ConfigureAuditableEntity(entity);
 
-        entity.HasOne(e => e.AppointmentStats)
-            .WithMany(s => s.AppointmentStatSlots)
-            .HasForeignKey(e => e.ApptStatId)
-            .OnDelete(DeleteBehavior.Cascade);
-
         entity.HasOne(e => e.AppointmentResource)
             .WithMany()
             .HasForeignKey(e => e.ApptResId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        entity.HasIndex(e => new { e.ApptStatId, e.ApptDate, e.ApptResId });
+        entity.HasIndex(e => new { e.ApptDate, e.ApptResId });
     }
 }
 

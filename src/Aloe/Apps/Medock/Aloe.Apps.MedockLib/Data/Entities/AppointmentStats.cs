@@ -62,6 +62,5 @@ public class AppointmentStats : IAuditableEntity
 
     // Navigation Properties
     public virtual AppointmentResource AppointmentResource { get; set; } = null!;
-    public virtual ICollection<AppointmentStatSlots> AppointmentStatSlots { get; set; } = new List<AppointmentStatSlots>();
 }
 

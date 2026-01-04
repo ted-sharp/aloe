@@ -71,7 +71,6 @@ internal static class AppointmentStatsSeeder
                 if (applicableSlots.Any())
                 {
                     // AppointmentStats レコードを作成
-                    var statId = Guid.CreateVersion7();
                     var totalCapacity = applicableSlots.Sum(s => s.SlotCap);
 
                     // 当日のこのリソースの予約数を取得（SQL事前集計済み）
@@ -79,7 +78,7 @@ internal static class AppointmentStatsSeeder
 
                     var stat = new AppointmentStats
                     {
-                        ApptStatId = statId,
+                        ApptStatId = Guid.CreateVersion7(),
                         ApptDate = currentDate,
                         ApptResId = schedule.ApptResId,
                         ApptCap = totalCapacity,
@@ -101,7 +100,6 @@ internal static class AppointmentStatsSeeder
                         var statSlot = new AppointmentStatSlots
                         {
                             ApptStatSlotId = Guid.CreateVersion7(),
-                            ApptStatId = statId,
                             ApptDate = currentDate,
                             ApptResId = schedule.ApptResId,
                             SlotStart = slot.SlotStartMin,

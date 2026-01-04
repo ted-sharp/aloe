@@ -30,6 +30,9 @@ public partial class DayDetailPopup : ComponentBase
     public List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStats>? MainStats { get; set; }
 
     [Parameter]
+    public Dictionary<(DateOnly ApptDate, Guid ApptResId), List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStatSlots>>? MainStatsSlots { get; set; }
+
+    [Parameter]
     public EventCallback OnClose { get; set; }
 
     [Parameter]
@@ -159,23 +162,31 @@ public partial class DayDetailPopup : ComponentBase
 
         foreach (var stat in this.MainStats)
         {
-            if (stat.AppointmentStatSlots != null)
+            // Get slots for this stat from MainStatsSlots if available
+            var slots = new List<Aloe.Apps.MedockLib.Data.Entities.AppointmentStatSlots>();
+            if (this.MainStatsSlots != null)
             {
-                foreach (var statSlot in stat.AppointmentStatSlots.Where(s => !s.IsDeleted))
+                var key = (stat.ApptDate, stat.ApptResId);
+                if (this.MainStatsSlots.TryGetValue(key, out var foundSlots))
                 {
-                    var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                    var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
-                    var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+                    slots = foundSlots;
+                }
+            }
 
-                    if (slotMap.ContainsKey(timeRangeKey))
-                    {
-                        var existing = slotMap[timeRangeKey];
-                        slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
-                    }
-                    else
-                    {
-                        slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
-                    }
+            foreach (var statSlot in slots.Where(s => !s.IsDeleted))
+            {
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
+                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+
+                if (slotMap.ContainsKey(timeRangeKey))
+                {
+                    var existing = slotMap[timeRangeKey];
+                    slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
+                }
+                else
+                {
+                    slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
                 }
             }
         }

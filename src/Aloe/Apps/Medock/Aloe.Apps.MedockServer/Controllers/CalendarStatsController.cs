@@ -48,6 +48,12 @@ public class CalendarStatsController : ControllerBase
                 date,
                 resourceIds);
 
+            // Load slots separately
+            var slots = await this._appointmentStatsRepository.GetStatSlotsByDateRangeAsync(
+                date,
+                date,
+                resourceIds);
+
             // DTOに変換（必要に応じて）
             var result = stats.Select(s => new
             {
@@ -63,7 +69,7 @@ public class CalendarStatsController : ControllerBase
                     apptResName = s.AppointmentResource.ApptResName,
                     apptResTypeCode = s.AppointmentResource.ApptResTypeCode
                 },
-                appointmentStatSlots = s.AppointmentStatSlots
+                appointmentStatSlots = (slots.TryGetValue((s.ApptDate, s.ApptResId), out var statSlots) ? statSlots : new List<AppointmentStatSlots>())
                     .Where(slot => !slot.IsDeleted)
                     .Select(slot => new
                     {
