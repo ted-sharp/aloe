@@ -317,16 +317,17 @@ Field="floor_id","floor_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="org_id","org_id","UUID",,,"","",$000099FF,""
 Field="pt_id","pt_id","UUID",,,"","",$000099FF,""
 Field="appt_date","appt_date","@DATE",,,"","未定がある",$000099FF,""
-Field="appt_start_min","appt_start_min","@INT","NOT NULL",,"540","",$FFFFFFFF,""
+Field="appt_start_min","appt_start_min","@INT","NOT NULL",,"540","",$000099FF,""
 Field="appt_status_code","appt_status_code","@INT","NOT NULL",,"0","仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル",$FFFFFFFF,""
 Field="appt_memo","appt_memo","@VARCHAR(1000)","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Index==0,floor_id,appt_date
 Index==0,org_id
 Index==0,pt_id
+Index==0,appt_date,appt_start_min
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20260104012328
+ModifiedDateTime=20260104141922
 Position="APPT",1800,1500
 ZOrder=221
 
@@ -1312,12 +1313,12 @@ Fields1=appt_res_id
 Fields2=appt_res_id
 Cardinarity1=
 Cardinarity2=
-Position="APPT",2,9499,3584,1606,R,R,""
+Position="APPT",2,8996,3584,1606,R,R,""
 Dependence=0
 Caption=
 PName=
 LineMode=2
-Bar1=950
+Bar1=900
 Bar2=358
 Bar3=161
 TermPos1=R
@@ -1337,11 +1338,11 @@ Field="appt_res_assign_id","appt_res_assign_id","UUID","NOT NULL",0,"uuidv7()","
 Field="appt_id","appt_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
 Index==0,appt_id
-Index==0,appt_res_id
+Index==0,appt_res_id,appt_id
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20260103132957
+ModifiedDateTime=20260104141945
 Position="APPT",3000,1500
 ZOrder=357
 
@@ -1980,10 +1981,9 @@ Comment=
 TableInnerOption=
 TableOption=
 Page=APPT
-Left=3000
+Left=2500
 Top=2200
 Field="appt_stat_slot_id","appt_stat_slot_id","UUID","NOT NULL",0,"uuidv7()","",$000028FF,""
-Field="appt_stat_id","appt_stat_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="appt_date","appt_date","@DATE","NOT NULL",,"","",$000099FF,""
 Field="appt_res_id","appt_res_id","UUID","NOT NULL",,"","",$000099FF,""
 Field="slot_start_min","slot_start_min","@INT","NOT NULL",,"0","",$FFFFFFFF,""
@@ -1991,35 +1991,14 @@ Field="slot_end_min","slot_end_min","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="slot_cap","slot_cap","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="slot_count","slot_count","@INT","NOT NULL",,"0","",$FFFFFFFF,""
 Field="slot_available","slot_available","@INT","NOT NULL",,"","",$00FFCC66,"GENERATED ALWAYS AS (slot_cap - slot_count) STORED"
-Index==0,appt_stat_id,appt_date,appt_res_id
+Index==0,appt_date,appt_res_id
 Index==0,appt_date,appt_res_id,updated_at
 EffectMode=None
 Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20260104012111
-Position="APPT",3000,2200
+ModifiedDateTime=20260104135032
+Position="APPT",2500,2200
 ZOrder=393
-
-[Relation]
-Entity1=appointment_stats
-Entity2=appointment_stat_slots
-RelationType1=2
-RelationType2=3
-Fields1=appt_stat_id
-Fields2=appt_stat_id
-Cardinarity1=
-Cardinarity2=
-Position="APPT",0,1606,6699,1071,R,R,""
-Dependence=0
-Caption=
-PName=
-LineMode=0
-Bar1=161
-Bar2=670
-Bar3=107
-TermPos1=R
-TermPos2=R
-ZOrder=394
 
 [Entity]
 PName=facility_holidays
@@ -2326,3 +2305,24 @@ Bar3=196
 TermPos1=R
 TermPos2=R
 ZOrder=409
+
+[Relation]
+Entity1=appointment_resources
+Entity2=appointment_stat_slots
+RelationType1=2
+RelationType2=3
+Fields1=appt_res_id
+Fields2=appt_res_id
+Cardinarity1=
+Cardinarity2=
+Position="APPT",0,9499,1309,8627,R,R,""
+Dependence=0
+Caption=
+PName=
+LineMode=0
+Bar1=950
+Bar2=131
+Bar3=863
+TermPos1=R
+TermPos2=R
+ZOrder=410

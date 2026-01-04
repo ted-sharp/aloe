@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2026/01/04 1:24:47
+-- Date/Time    : 2026/01/04 14:20:10
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -34,7 +34,7 @@ CREATE INDEX "appointment_resource_assignments_IX1"
   ON "appointment_resource_assignments"("appt_id");
 
 CREATE INDEX "appointment_resource_assignments_IX2"
-  ON "appointment_resource_assignments"("appt_res_id");
+  ON "appointment_resource_assignments"("appt_res_id","appt_id");
 
 CREATE UNIQUE INDEX "appointment_resource_assignments_PKI"
   ON "appointment_resource_assignments"("appt_res_assign_id");
@@ -196,7 +196,6 @@ DROP TABLE if exists "appointment_stat_slots" CASCADE;
 -- * RestoreFromTempTable
 CREATE TABLE "appointment_stat_slots" (
   "appt_stat_slot_id" UUID DEFAULT uuidv7() NOT NULL
-  , "appt_stat_id" UUID NOT NULL
   , "appt_date" date NOT NULL
   , "appt_res_id" UUID NOT NULL
   , "slot_start_min" integer DEFAULT 0 NOT NULL
@@ -214,7 +213,7 @@ CREATE TABLE "appointment_stat_slots" (
 ) ;
 
 CREATE INDEX "appointment_stat_slots_IX1"
-  ON "appointment_stat_slots"("appt_stat_id","appt_date","appt_res_id");
+  ON "appointment_stat_slots"("appt_date","appt_res_id");
 
 CREATE INDEX "appointment_stat_slots_IX2"
   ON "appointment_stat_slots"("appt_date","appt_res_id","updated_at");
@@ -289,6 +288,9 @@ CREATE INDEX "appointments_IX2"
 
 CREATE INDEX "appointments_IX3"
   ON "appointments"("pt_id");
+
+CREATE INDEX "appointments_IX4"
+  ON "appointments"("appt_date","appt_start_min");
 
 CREATE UNIQUE INDEX "appointments_PKI"
   ON "appointments"("appt_id");
@@ -1541,7 +1543,7 @@ ALTER TABLE "appointment_schedules"
   ON UPDATE CASCADE;
 
 ALTER TABLE "appointment_stat_slots"
-  ADD CONSTRAINT "appointment_stat_slots_FK1" FOREIGN KEY ("appt_stat_id") REFERENCES "appointment_stats"("appt_stat_id")
+  ADD CONSTRAINT "appointment_stat_slots_FK1" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1813,7 +1815,6 @@ COMMENT ON COLUMN "appointment_schedule_slots"."updated_session_id" IS 'updated_
 
 COMMENT ON TABLE "appointment_stat_slots" IS 'appointment_stat_slots';
 COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_slot_id" IS 'appt_stat_slot_id';
-COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_id" IS 'appt_stat_id';
 COMMENT ON COLUMN "appointment_stat_slots"."appt_date" IS 'appt_date';
 COMMENT ON COLUMN "appointment_stat_slots"."appt_res_id" IS 'appt_res_id';
 COMMENT ON COLUMN "appointment_stat_slots"."slot_start_min" IS 'slot_start_min';
