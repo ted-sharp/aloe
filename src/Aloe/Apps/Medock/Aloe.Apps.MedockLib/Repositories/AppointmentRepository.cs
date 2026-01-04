@@ -68,7 +68,7 @@ public class AppointmentRepository : IAppointmentRepository
                             a.ApptDate >= startDate &&
                             a.ApptDate <= endDate)
                 .OrderBy(a => a.ApptDate)
-                .ThenBy(a => a.ApptStartTime)
+                .ThenBy(a => a.ApptStartMin)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -94,7 +94,7 @@ public class AppointmentRepository : IAppointmentRepository
                 .Where(a => !a.IsDeleted &&
                             a.FloorId == floorId &&
                             a.ApptDate == date)
-                .OrderBy(a => a.ApptStartTime)
+                .OrderBy(a => a.ApptStartMin)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -118,7 +118,7 @@ public class AppointmentRepository : IAppointmentRepository
                 .Include(a => a.Organization)
                 .Where(a => !a.IsDeleted && a.PtId == ptId)
                 .OrderByDescending(a => a.ApptDate)
-                .ThenByDescending(a => a.ApptStartTime)
+                .ThenByDescending(a => a.ApptStartMin)
                 .ToListAsync();
         }
         catch (Exception ex)
@@ -142,7 +142,7 @@ public class AppointmentRepository : IAppointmentRepository
                 .Include(a => a.Patient)
                 .Where(a => !a.IsDeleted && a.OrgId == orgId)
                 .OrderByDescending(a => a.ApptDate)
-                .ThenByDescending(a => a.ApptStartTime)
+                .ThenByDescending(a => a.ApptStartMin)
                 .ToListAsync();
         }
         catch (Exception ex)

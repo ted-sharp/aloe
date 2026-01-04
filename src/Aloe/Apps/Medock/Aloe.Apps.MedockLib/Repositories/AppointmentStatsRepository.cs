@@ -52,7 +52,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     }
 
     /// <inheritdoc />
-    public async Task<List<(DateOnly? ApptDate, TimeOnly? ApptStartTime)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate)
+    public async Task<List<(DateOnly? ApptDate, int ApptStartMin)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate)
     {
         var results = await this._context.Appointments
             .AsNoTracking()
@@ -60,10 +60,10 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                         a.ApptDate.HasValue &&
                         a.ApptDate >= startDate &&
                         a.ApptDate <= endDate)
-            .Select(a => new { a.ApptDate, a.ApptStartTime })
+            .Select(a => new { a.ApptDate, a.ApptStartMin })
             .ToListAsync();
 
-        return results.Select(x => (x.ApptDate, x.ApptStartTime)).ToList();
+        return results.Select(x => (x.ApptDate, x.ApptStartMin)).ToList();
     }
 
     /// <inheritdoc />

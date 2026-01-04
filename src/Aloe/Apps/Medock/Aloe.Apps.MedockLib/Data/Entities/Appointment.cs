@@ -11,8 +11,7 @@ public class Appointment : IAuditableEntity
     [Column("org_id")][ForeignKey("Organization")] public Guid? OrgId { get; set; }
     [Column("pt_id")][ForeignKey("Patient")] public Guid? PtId { get; set; }
     [Column("appt_date")] public DateOnly? ApptDate { get; set; }
-    [Column("appt_start_time")] public TimeOnly? ApptStartTime { get; set; }
-    [Column("appt_duration_min")] public int? ApptDurationMin { get; set; }
+    [Column("appt_start_min")] public int ApptStartMin { get; set; } = 540;
     [Column("appt_status_code")] public int ApptStatusCode { get; set; } = 0;
     [Column("appt_memo")][MaxLength(1000)] public string ApptMemo { get; set; } = String.Empty;
     [Column("is_deleted")] public bool IsDeleted { get; set; }

@@ -18,8 +18,7 @@ public class AppointmentConfiguration : IEntityTypeConfiguration<Appointment>
         entity.Property(e => e.OrgId).HasColumnName("org_id");
         entity.Property(e => e.PtId).HasColumnName("pt_id");
         entity.Property(e => e.ApptDate).HasColumnName("appt_date");
-        entity.Property(e => e.ApptStartTime).HasColumnName("appt_start_time").HasColumnType("time");
-        entity.Property(e => e.ApptDurationMin).HasColumnName("appt_duration_min");
+        entity.Property(e => e.ApptStartMin).HasColumnName("appt_start_min").HasDefaultValue(540);
         entity.Property(e => e.ApptStatusCode).HasColumnName("appt_status_code").HasDefaultValue(0);
         entity.Property(e => e.ApptMemo).HasColumnName("appt_memo").HasMaxLength(1000).HasDefaultValue("");
         entity.Property(e => e.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
@@ -89,8 +88,8 @@ public class AppointmentStatSlotsConfiguration : IEntityTypeConfiguration<Appoin
         entity.Property(e => e.ApptStatId).HasColumnName("appt_stat_id");
         entity.Property(e => e.ApptDate).HasColumnName("appt_date");
         entity.Property(e => e.ApptResId).HasColumnName("appt_res_id");
-        entity.Property(e => e.SlotStart).HasColumnName("slot_start").HasDefaultValue(0);
-        entity.Property(e => e.SlotEnd).HasColumnName("slot_end").HasDefaultValue(0);
+        entity.Property(e => e.SlotStart).HasColumnName("slot_start_min").HasDefaultValue(0);
+        entity.Property(e => e.SlotEnd).HasColumnName("slot_end_min").HasDefaultValue(0);
         entity.Property(e => e.SlotCap).HasColumnName("slot_cap").HasDefaultValue(0);
         entity.Property(e => e.SlotCount).HasColumnName("slot_count").HasDefaultValue(0);
         entity.Property(e => e.SlotAvailable)

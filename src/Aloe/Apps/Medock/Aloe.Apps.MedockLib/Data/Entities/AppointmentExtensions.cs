@@ -6,32 +6,25 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 public static class AppointmentExtensions
 {
     /// <summary>
-    /// 開始時間と継続時間から終了時間を計算
+    /// 分単位から TimeOnly に変換
     /// </summary>
-    /// <param name="appointment">予約エンティティ</param>
-    /// <returns>終了時間。開始時間または継続時間がnullの場合はnull</returns>
-    public static TimeOnly? CalculateEndTime(this Appointment appointment)
+    /// <param name="minutes">分単位（0-1439）</param>
+    /// <returns>TimeOnly。無効な値の場合はnull</returns>
+    public static TimeOnly? MinutesToTimeOnly(int? minutes)
     {
-        if (appointment.ApptStartTime.HasValue && appointment.ApptDurationMin.HasValue)
-        {
-            return appointment.ApptStartTime.Value.AddMinutes(appointment.ApptDurationMin.Value);
-        }
-        return null;
+        if (!minutes.HasValue || minutes.Value < 0 || minutes.Value >= 1440)
+            return null;
+        return TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(minutes.Value));
     }
 
     /// <summary>
-    /// 開始時間と継続時間から終了時間を計算（静的メソッド版）
+    /// TimeOnly から分単位に変換
     /// </summary>
-    /// <param name="startTime">開始時間</param>
-    /// <param name="durationMinutes">継続時間（分）</param>
-    /// <returns>終了時間。開始時間または継続時間がnullの場合はnull</returns>
-    public static TimeOnly? CalculateEndTime(TimeOnly? startTime, int? durationMinutes)
+    /// <param name="time">時刻</param>
+    /// <returns>分単位（0-1439）</returns>
+    public static int TimeOnlyToMinutes(TimeOnly time)
     {
-        if (startTime.HasValue && durationMinutes.HasValue)
-        {
-            return startTime.Value.AddMinutes(durationMinutes.Value);
-        }
-        return null;
+        return time.Hour * 60 + time.Minute;
     }
 }
 

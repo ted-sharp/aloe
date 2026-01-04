@@ -32,11 +32,11 @@ public class AppointmentStatSlots : IAuditableEntity
     public Guid ApptResId { get; set; }
 
     /// <summary>スロット開始時刻（分単位、0:00からの分）</summary>
-    [Column("slot_start")]
+    [Column("slot_start_min")]
     public int SlotStart { get; set; }
 
     /// <summary>スロット終了時刻（分単位、0:00からの分）</summary>
-    [Column("slot_end")]
+    [Column("slot_end_min")]
     public int SlotEnd { get; set; }
 
     /// <summary>スロット容量</summary>

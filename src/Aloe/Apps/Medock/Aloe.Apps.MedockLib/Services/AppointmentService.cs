@@ -151,10 +151,9 @@ public class AppointmentService : IAppointmentService
             {
                 ApptId = Guid.CreateVersion7(),
                 ApptDate = dto.Date,
-                ApptStartTime = dto.StartTime,
-                ApptDurationMin = dto.StartTime.HasValue && dto.EndTime.HasValue
-                    ? (int?)(dto.EndTime.Value - dto.StartTime.Value).TotalMinutes
-                    : null,
+                ApptStartMin = dto.StartTime.HasValue
+                    ? dto.StartTime.Value.Hour * 60 + dto.StartTime.Value.Minute
+                    : 540, // Default: 9:00 AM
                 PtId = dto.PatientId,
                 OrgId = dto.OrganizationId,
                 FloorId = dto.FloorId,
@@ -278,9 +277,8 @@ public class AppointmentService : IAppointmentService
             }
 
             if (dto.Date.HasValue) appointment.ApptDate = dto.Date.Value;
-            if (dto.StartTime.HasValue) appointment.ApptStartTime = dto.StartTime.Value;
-            if (dto.StartTime.HasValue && dto.EndTime.HasValue)
-                appointment.ApptDurationMin = (int)(dto.EndTime.Value - dto.StartTime.Value).TotalMinutes;
+            if (dto.StartTime.HasValue)
+                appointment.ApptStartMin = dto.StartTime.Value.Hour * 60 + dto.StartTime.Value.Minute;
             if (dto.PatientId.HasValue) appointment.PtId = dto.PatientId.Value;
             if (dto.OrganizationId.HasValue) appointment.OrgId = dto.OrganizationId.Value;
             if (dto.FloorId.HasValue) appointment.FloorId = dto.FloorId.Value;
@@ -450,8 +448,8 @@ public class AppointmentService : IAppointmentService
         {
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
-            StartTime = appointment.ApptStartTime,
-            EndTime = appointment.CalculateEndTime(),
+            StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(appointment.ApptStartMin)),
+            EndTime = null,
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,
             OrganizationId = appointment.OrgId,

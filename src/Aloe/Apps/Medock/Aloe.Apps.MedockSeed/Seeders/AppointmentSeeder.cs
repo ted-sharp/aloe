@@ -344,10 +344,8 @@ internal static class AppointmentSeeder
             var patient = patients[_random.Next(patients.Count)];
             var organization = organizations[_random.Next(organizations.Count)];
 
-            // 時間帯を決定
-            TimeOnly? startTime = null;
-            int? durationMin = null;
-            TimeOnly? endTime = null;
+            // 時間帯を決定（分単位）
+            int? startMin = null;
 
             // Main リソースのスロット情報がある場合はそれを使用
             if (mainSlots.Count > 0 && slotIndex < mainSlots.Count && slotAppointmentIndex < slotAppointmentCounts[slotIndex])
@@ -356,10 +354,7 @@ internal static class AppointmentSeeder
                 var slot = mainSlots[slotIndex];
                 var slotDurationMin = slot.SlotEndMin - slot.SlotStartMin;
                 var randomOffset = _random.Next(0, Math.Max(1, slotDurationMin - 15)); // 最大15分のバッファ
-                var startMin = slot.SlotStartMin + randomOffset;
-                startTime = new TimeOnly(startMin / 60, startMin % 60);
-                durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                endTime = startTime.Value.AddMinutes(durationMin.Value);
+                startMin = slot.SlotStartMin + randomOffset;
                 slotAppointmentIndex++;
 
                 // 次のスロットへ
@@ -376,9 +371,7 @@ internal static class AppointmentSeeder
                 var timeStr = morningTimes[_random.Next(morningTimes.Length)];
                 if (TimeOnly.TryParse(timeStr, out var parsedTime))
                 {
-                    startTime = parsedTime;
-                    durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                    endTime = startTime.Value.AddMinutes(durationMin.Value);
+                    startMin = parsedTime.Hour * 60 + parsedTime.Minute;
                 }
             }
             else
@@ -391,13 +384,11 @@ internal static class AppointmentSeeder
                 var timeStr = allTimes[_random.Next(allTimes.Count)];
                 if (TimeOnly.TryParse(timeStr, out var parsedTime))
                 {
-                    startTime = parsedTime;
-                    durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                    endTime = startTime.Value.AddMinutes(durationMin.Value);
+                    startMin = parsedTime.Hour * 60 + parsedTime.Minute;
                 }
             }
 
-            if (!startTime.HasValue)
+            if (!startMin.HasValue)
             {
                 continue;
             }
@@ -412,8 +403,7 @@ internal static class AppointmentSeeder
                 OrgId = organization.OrgId,
                 PtId = patient.PtId,
                 ApptDate = date,
-                ApptStartTime = startTime,
-                ApptDurationMin = durationMin,
+                ApptStartMin = startMin.Value,
                 ApptStatusCode = statusCode,
                 ApptMemo = dayContext.IsIrregular ? "イレギュラー営業" : String.Empty,
                 IsDeleted = false
@@ -433,9 +423,7 @@ internal static class AppointmentSeeder
             var timeStr = earlyMorningTimes[_random.Next(earlyMorningTimes.Length)];
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
-                var startTime = parsedTime;
-                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                var endTime = startTime.AddMinutes(durationMin);
+                var startMin = parsedTime.Hour * 60 + parsedTime.Minute;
 
                 var appointment = new Appointment
                 {
@@ -444,8 +432,7 @@ internal static class AppointmentSeeder
                     OrgId = organization.OrgId,
                     PtId = patient.PtId,
                     ApptDate = date,
-                    ApptStartTime = startTime,
-                    ApptDurationMin = durationMin,
+                    ApptStartMin = startMin,
                     ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
                     ApptMemo = String.Empty,
                     IsDeleted = false
@@ -465,9 +452,7 @@ internal static class AppointmentSeeder
             var timeStr = lunchTimes[_random.Next(lunchTimes.Length)];
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
-                var startTime = parsedTime;
-                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                var endTime = startTime.AddMinutes(durationMin);
+                var startMin = parsedTime.Hour * 60 + parsedTime.Minute;
 
                 var appointment = new Appointment
                 {
@@ -476,8 +461,7 @@ internal static class AppointmentSeeder
                     OrgId = organization.OrgId,
                     PtId = patient.PtId,
                     ApptDate = date,
-                    ApptStartTime = startTime,
-                    ApptDurationMin = durationMin,
+                    ApptStartMin = startMin,
                     ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
                     ApptMemo = String.Empty,
                     IsDeleted = false
@@ -498,9 +482,7 @@ internal static class AppointmentSeeder
             var timeStr = eveningTimeStrs[_random.Next(eveningTimeStrs.Length)];
             if (TimeOnly.TryParse(timeStr, out var parsedTime))
             {
-                var startTime = parsedTime;
-                var durationMin = SeederHelper.GenerateRandomDurationMinutes(_random);
-                var endTime = startTime.AddMinutes(durationMin);
+                var startMin = parsedTime.Hour * 60 + parsedTime.Minute;
 
                 var appointment = new Appointment
                 {
@@ -509,8 +491,7 @@ internal static class AppointmentSeeder
                     OrgId = organization.OrgId,
                     PtId = patient.PtId,
                     ApptDate = date,
-                    ApptStartTime = startTime,
-                    ApptDurationMin = durationMin,
+                    ApptStartMin = startMin,
                     ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5),
                     ApptMemo = String.Empty,
                     IsDeleted = false

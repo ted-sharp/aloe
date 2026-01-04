@@ -46,23 +46,29 @@ public class AppointmentEntityTests
     }
 
     [Fact]
-    public void Appointment_Should_Have_Time_Range()
+    public void Appointment_Should_Have_Start_Time_In_Minutes()
     {
         // Arrange
-        var startTime = new TimeOnly(9, 0);
-        var durationMinutes = 60;
+        var startMin = 540; // 9:00 AM
 
         // Act
         var appointment = new Appointment
         {
-            ApptStartTime = startTime,
-            ApptDurationMin = durationMinutes
+            ApptStartMin = startMin
         };
 
         // Assert
-        appointment.ApptStartTime.Should().Be(startTime);
-        appointment.ApptDurationMin.Should().Be(durationMinutes);
-        // ApptEndTime is a GENERATED column, so it will be calculated by the database
+        appointment.ApptStartMin.Should().Be(startMin);
+    }
+
+    [Fact]
+    public void Appointment_Should_Default_To_9_00_AM()
+    {
+        // Arrange & Act
+        var appointment = new Appointment();
+
+        // Assert
+        appointment.ApptStartMin.Should().Be(540); // Default: 9:00 AM
     }
 }
 
