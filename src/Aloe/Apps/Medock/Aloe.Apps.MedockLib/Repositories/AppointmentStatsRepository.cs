@@ -231,29 +231,28 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
 
         // PostgreSQL の array_agg で SQL側で配列化
         // 注意: SqlQueryRaw では複雑な投影ができないため、raw queryで取得後にクライアント側で処理
+        // appointment_stat_slots テーブルは appt_date と appt_res_id で appointment_stats と関連付けられている
         var sql = @"
             SELECT
-                s.appt_date::text as ""ApptDate"",
-                s.appt_res_id::text as ""ResourceId"",
+                ss.appt_date::text as ""ApptDate"",
+                ss.appt_res_id::text as ""ResourceId"",
                 ar.appt_res_name as ""ResourceName"",
-                COALESCE(SUM(s.appt_cap), 0)::int as ""TotalCapacity"",
-                COALESCE(SUM(s.appt_available), 0)::int as ""TotalAvailable"",
-                array_agg(ss.slot_start ORDER BY ss.slot_start)::int[] as ""SlotStartMinutes"",
-                array_agg(ss.slot_end ORDER BY ss.slot_start)::int[] as ""SlotEndMinutes"",
-                array_agg(ss.slot_cap ORDER BY ss.slot_start)::int[] as ""SlotCaps"",
-                array_agg(ss.slot_available ORDER BY ss.slot_start)::int[] as ""SlotAvailables""
-            FROM appointment_stats s
-            INNER JOIN appointment_resources ar ON s.appt_res_id = ar.appt_res_id
-            INNER JOIN appointment_stat_slots ss ON s.appt_stat_id = ss.appt_stat_id
-            WHERE s.is_deleted = false
+                COALESCE(SUM(ss.slot_cap), 0)::int as ""TotalCapacity"",
+                COALESCE(SUM(ss.slot_available), 0)::int as ""TotalAvailable"",
+                array_agg(ss.slot_start_min ORDER BY ss.slot_start_min)::int[] as ""SlotStartMinutes"",
+                array_agg(ss.slot_end_min ORDER BY ss.slot_start_min)::int[] as ""SlotEndMinutes"",
+                array_agg(ss.slot_cap ORDER BY ss.slot_start_min)::int[] as ""SlotCaps"",
+                array_agg(ss.slot_available ORDER BY ss.slot_start_min)::int[] as ""SlotAvailables""
+            FROM appointment_stat_slots ss
+            INNER JOIN appointment_resources ar ON ss.appt_res_id = ar.appt_res_id
+            WHERE ss.is_deleted = false
                 AND ar.is_deleted = false
-                AND ss.is_deleted = false
                 AND ar.appt_res_type_code = @equipmentTypeCode
-                AND s.appt_date >= @startDate
-                AND s.appt_date <= @endDate
-                AND s.appt_res_id = ANY(@equipmentIds::uuid[])
-            GROUP BY s.appt_date, s.appt_res_id, ar.appt_res_name
-            ORDER BY s.appt_date, ar.appt_res_name";
+                AND ss.appt_date >= @startDate
+                AND ss.appt_date <= @endDate
+                AND ss.appt_res_id = ANY(@equipmentIds::uuid[])
+            GROUP BY ss.appt_date, ss.appt_res_id, ar.appt_res_name
+            ORDER BY ss.appt_date, ar.appt_res_name";
 
         var equipmentTypeCode = new NpgsqlParameter("@equipmentTypeCode", (int)AppointmentResourceType.Equipment);
         var startDateParam = new NpgsqlParameter("@startDate", startDate);
