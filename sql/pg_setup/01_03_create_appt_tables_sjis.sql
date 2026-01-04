@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2026/01/03 22:21:28
+-- Date/Time    : 2026/01/04 1:24:47
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -199,8 +199,8 @@ CREATE TABLE "appointment_stat_slots" (
   , "appt_stat_id" UUID NOT NULL
   , "appt_date" date NOT NULL
   , "appt_res_id" UUID NOT NULL
-  , "slot_start" integer DEFAULT 0 NOT NULL
-  , "slot_end" integer DEFAULT 0 NOT NULL
+  , "slot_start_min" integer DEFAULT 0 NOT NULL
+  , "slot_end_min" integer DEFAULT 0 NOT NULL
   , "slot_cap" integer DEFAULT 0 NOT NULL
   , "slot_count" integer DEFAULT 0 NOT NULL
   , "slot_available" integer NOT NULL GENERATED ALWAYS AS (slot_cap - slot_count) STORED
@@ -269,8 +269,7 @@ CREATE TABLE "appointments" (
   , "org_id" UUID
   , "pt_id" UUID
   , "appt_date" date
-  , "appt_start_time" time
-  , "appt_duration_min" integer
+  , "appt_start_min" integer DEFAULT 540 NOT NULL
   , "appt_status_code" integer DEFAULT 0 NOT NULL
   , "appt_memo" character varying(1000) DEFAULT '' NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
@@ -1817,8 +1816,8 @@ COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_slot_id" IS 'appt_stat_slo
 COMMENT ON COLUMN "appointment_stat_slots"."appt_stat_id" IS 'appt_stat_id';
 COMMENT ON COLUMN "appointment_stat_slots"."appt_date" IS 'appt_date';
 COMMENT ON COLUMN "appointment_stat_slots"."appt_res_id" IS 'appt_res_id';
-COMMENT ON COLUMN "appointment_stat_slots"."slot_start" IS 'slot_start';
-COMMENT ON COLUMN "appointment_stat_slots"."slot_end" IS 'slot_end';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_start_min" IS 'slot_start_min';
+COMMENT ON COLUMN "appointment_stat_slots"."slot_end_min" IS 'slot_end_min';
 COMMENT ON COLUMN "appointment_stat_slots"."slot_cap" IS 'slot_cap';
 COMMENT ON COLUMN "appointment_stat_slots"."slot_count" IS 'slot_count';
 COMMENT ON COLUMN "appointment_stat_slots"."slot_available" IS 'slot_available';
@@ -1851,8 +1850,7 @@ COMMENT ON COLUMN "appointments"."floor_id" IS 'floor_id';
 COMMENT ON COLUMN "appointments"."org_id" IS 'org_id';
 COMMENT ON COLUMN "appointments"."pt_id" IS 'pt_id';
 COMMENT ON COLUMN "appointments"."appt_date" IS 'appt_date:未定がある';
-COMMENT ON COLUMN "appointments"."appt_start_time" IS 'appt_start_time';
-COMMENT ON COLUMN "appointments"."appt_duration_min" IS 'appt_duration_min';
+COMMENT ON COLUMN "appointments"."appt_start_min" IS 'appt_start_min';
 COMMENT ON COLUMN "appointments"."appt_status_code" IS 'appt_status_code:仮押、予約、来院済み、検査完了、キャンセル、無断キャンセル';
 COMMENT ON COLUMN "appointments"."appt_memo" IS 'appt_memo';
 COMMENT ON COLUMN "appointments"."is_deleted" IS 'is_deleted';
