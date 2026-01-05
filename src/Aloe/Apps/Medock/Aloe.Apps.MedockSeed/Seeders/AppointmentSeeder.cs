@@ -303,8 +303,8 @@ internal static class AppointmentSeeder
             }
         }
 
-        // 月による繁忙度調整（占有率）
-        decimal occupancyRate = date.Month switch
+        // 月による繁忙度調整（占有率）- ベース値
+        decimal baseOccupancyRate = date.Month switch
         {
             1 => 0.25m,   // 1月：閑散期（正月）
             2 => 0.60m,   // 2月：通常期
@@ -321,21 +321,72 @@ internal static class AppointmentSeeder
             _ => 0.60m
         };
 
-        // Main リソース：各スロットごとに予約数を計算（容量 × 占有率 × 時間帯乗数 + 超過 0-2）
+        // 曜日による変動（月曜は混雑、金曜はやや空き）
+        decimal dayOfWeekModifier = date.DayOfWeek switch
+        {
+            DayOfWeek.Monday => 1.15m,    // 月曜：週明けで混雑
+            DayOfWeek.Tuesday => 1.05m,   // 火曜：やや混雑
+            DayOfWeek.Wednesday => 0.90m, // 水曜：午前のみなので調整済み
+            DayOfWeek.Thursday => 1.0m,   // 木曜：平均的
+            DayOfWeek.Friday => 0.85m,    // 金曜：週末前で空きやすい
+            DayOfWeek.Saturday => 0.95m,  // 土曜：午前のみだが需要あり
+            _ => 1.0m
+        };
+
+        // 月内の位置による変動（月初・月中・月末）
+        decimal weekOfMonthModifier = date.Day switch
+        {
+            <= 7 => 1.1m,    // 月初：やや混雑
+            <= 14 => 0.95m,  // 第2週：落ち着く
+            <= 21 => 1.05m,  // 第3週：やや回復
+            _ => 0.90m       // 月末：空きやすい
+        };
+
+        // 日ごとのランダム変動（±25%）
+        decimal dailyRandomVariation = 0.75m + (decimal)(_random.NextDouble() * 0.50);
+
+        // 最終的な占有率を計算（上限1.0）
+        decimal occupancyRate = Math.Min(1.0m, baseOccupancyRate * dayOfWeekModifier * weekOfMonthModifier * dailyRandomVariation);
+
+        // Main リソース：各スロットごとに予約数を計算（容量 × 占有率 × 時間帯乗数 + スロット変動 + 超過）
         var slotAppointmentCounts = new List<int>();
         foreach (var slot in mainSlots)
         {
             // 時間帯に応じた乗数を適用（9:00-11:00がピーク、昼間は空いている、夕方やや混雑）
             var timeModifier = GetTimeModifier(slot.SlotStartMin);
-            var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier);
-            // 超過を追加（繁忙期は満室狙い、通常期は若干余裕）
-            var overage = occupancyRate >= 0.95m ? _random.Next(0, 3) : 0; // 0, 1, 2
-            var slotCount = baseCount + overage; // 時間帯乗数を正しく反映（上限なし）
+
+            // スロットごとのランダム変動（±30%）- 各スロットで独立
+            decimal slotRandomVariation = 0.70m + (decimal)(_random.NextDouble() * 0.60);
+
+            var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier * slotRandomVariation);
+
+            // 超過を追加（繁忙期は満室超過あり、通常期は稀に超過）- 最大2件まで
+            int overage = 0;
+            if (occupancyRate >= 0.90m)
+            {
+                // 繁忙期: 30%の確率で1-2件超過
+                overage = _random.Next(100) < 30 ? _random.Next(1, 3) : 0;
+            }
+            else if (occupancyRate >= 0.70m)
+            {
+                // 中程度: 10%の確率で1件超過
+                overage = _random.Next(100) < 10 ? 1 : 0;
+            }
+
+            // 稀に極端に空いているスロット（5%の確率で半減）
+            if (_random.Next(100) < 5)
+            {
+                baseCount = baseCount / 2;
+            }
+
+            // ハードリミット: キャパ+2を超えないように制限
+            var maxAllowed = slot.SlotCap + 2;
+            var slotCount = Math.Clamp(baseCount + overage, 0, maxAllowed);
             slotAppointmentCounts.Add(slotCount);
         }
         var mainAppointmentCount = slotAppointmentCounts.Sum();
 
-        // Equipment リソースも時間帯乗数を考慮して計算（超過なし）
+        // Equipment リソースも時間帯乗数とスロット変動を考慮して計算
         var equipmentAppointmentCounts = new Dictionary<Guid, int>();
         foreach (var (resId, slots) in equipmentSlots)
         {
@@ -343,7 +394,9 @@ internal static class AppointmentSeeder
             foreach (var slot in slots)
             {
                 var timeModifier = GetTimeModifier(slot.SlotStartMin);
-                var slotCount = (int)(slot.SlotCap * occupancyRate * timeModifier);
+                // Equipment もスロットごとに独立した変動（±35%）
+                decimal equipSlotVariation = 0.65m + (decimal)(_random.NextDouble() * 0.70);
+                var slotCount = (int)(slot.SlotCap * occupancyRate * timeModifier * equipSlotVariation);
                 equipmentCount += slotCount;
             }
             equipmentAppointmentCounts[resId] = Math.Max(0, equipmentCount);
@@ -683,14 +736,14 @@ internal static class AppointmentSeeder
     }
 
     /// <summary>
-    /// スロット開始時刻に基づいて時間帯の乗数を計算
+    /// スロット開始時刻に基づいて時間帯の乗数を計算（ベース値±15%の変動あり）
     /// 朝（9:00-11:00）：1.2倍（ピーク）
     /// 昼（11:00-13:00）：0.5倍（空いている）
     /// 夕方（13:00-17:00）：1.1倍（やや混雑）
     /// </summary>
     private static decimal GetTimeModifier(int slotStartMin)
     {
-        return slotStartMin switch
+        decimal baseModifier = slotStartMin switch
         {
             // 朝のピーク：9:00-11:00（540-660分）
             >= 540 and < 660 => 1.2m,
@@ -701,6 +754,10 @@ internal static class AppointmentSeeder
             // その他
             _ => 1.0m
         };
+
+        // 時間帯乗数にも±15%の変動を追加
+        decimal variation = 0.85m + (decimal)(_random.NextDouble() * 0.30);
+        return baseModifier * variation;
     }
 
     /// <summary>
