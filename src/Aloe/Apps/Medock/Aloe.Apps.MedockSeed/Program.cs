@@ -18,9 +18,6 @@ AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 // ホストビルダーを構築
 var builder = Host.CreateApplicationBuilder(args);
 
-// 設定ファイル読み込み
-builder.Configuration.AddJsonFile("appsettings.json", optional: false, reloadOnChange: false);
-
 // 接続文字列取得
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (String.IsNullOrEmpty(connectionString))
