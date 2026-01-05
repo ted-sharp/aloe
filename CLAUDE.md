@@ -81,7 +81,7 @@ This runs:
 
 **PostgreSQL Configuration:**
 - Install PostgreSQL 18+
-- Add bin to PATH: `C:\Program Files\PostgreSQL\17\bin`
+- Add bin to PATH: `C:\Program Files\PostgreSQL\18\bin`
 - Copy `sql\pg_setup\pgpass.conf` to `%APPDATA%\postgresql\`
 - Consider using PGTune for optimization
 
@@ -258,7 +258,7 @@ For closed network deployments, self-host M PLUS 1 Code font:
 
 1. **EF Column Names:** Always specify `.HasColumnName()` - database uses snake_case
 2. **Audit Info:** Call `SetAuditInfo()` before any SaveChanges if you need audit tracking
-3. **Soft Deletes:** Use `is_deleted` flag, never hard delete. Use filtered unique indexes: `.IsUnique().HasFilter("[is_deleted] = 0")`
+3. **Soft Deletes:** Use `is_deleted` flag, never hard delete. Use filtered unique indexes: `.IsUnique().HasFilter("is_deleted = false")`
 4. **Tenant Context:** Always filter by `tenant_id` for multi-tenant queries
 5. **Cookie Configuration:** Ensure `CookieSettings` section exists in `appsettings.json`
 6. **Connection Strings:** Use User Secrets for sensitive config in development
@@ -290,3 +290,27 @@ Test framework: xUnit with Moq, FluentAssertions, and EF InMemory provider.
 ## Debugging
 
 **SQL Logging:** Control via `Features:ShowSqlLogs` in appsettings.json or environment variable `Features__ShowSqlLogs`. Default is false.
+
+## Seed Data Generation Rules
+
+`MedockSeed` generates realistic appointment data with the following rules:
+
+**Occupancy Variation:**
+- Base monthly rates: Jan 25%, Feb 60%, Mar 65%, Apr 85%, May 100%, Jun 80%, Jul 50%, Aug 30%, Sep 85%, Oct 100%, Nov 90%, Dec 70%
+- Day-of-week modifier: Mon +15%, Tue +5%, Wed -10%, Thu ±0%, Fri -15%, Sat -5%
+- Week-of-month modifier: 1st week +10%, 2nd week -5%, 3rd week +5%, 4th week -10%
+- Daily random variation: ±25%
+- Per-slot random variation: ±30%
+
+**Capacity Constraints:**
+- Maximum capacity overage: **2 appointments per slot** (hard limit)
+- Overage probability: 30% in peak periods (≥90% occupancy), 10% in moderate periods (≥70%)
+- 5% chance of extremely low slot (half capacity)
+
+**Time Modifiers:**
+- Morning peak (9:00-11:00): 1.2x
+- Lunch time (11:00-13:00): 0.5x
+- Afternoon (13:00-17:00): 1.1x
+
+**Irregular Days:**
+- ~1% chance of irregular operation (临時営業、臨時休診など)
