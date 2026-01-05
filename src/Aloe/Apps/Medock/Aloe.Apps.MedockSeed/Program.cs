@@ -59,7 +59,7 @@ builder.Services.AddDbContextFactory<MedockDbContext>(options =>
     options.UseNpgsql(optimizedConnectionString);
     // 読み取り専用クエリが多いため、NoTrackingをデフォルトに
     options.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking);
-});
+}, ServiceLifetime.Scoped);
 builder.Services.AddSingleton(_ => PasswordHasher.Default);
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
 
@@ -94,7 +94,7 @@ try
 
     var totalStopwatch = Stopwatch.StartNew();
     var seederCount = 0;
-    var totalSeeders = 21; // 概算値（実際のSeeder数に合わせて調整）
+    var totalSeeders = 28;
 
     // ヘルパー関数：Seeder実行と時間計測
     async Task<T> RunSeederWithResultAsync<T>(string seederName, Func<Task<T>> seederAction)
