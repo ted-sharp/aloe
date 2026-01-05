@@ -94,7 +94,7 @@ try
 
     var totalStopwatch = Stopwatch.StartNew();
     var seederCount = 0;
-    var totalSeeders = 28;
+    var totalSeeders = 29;
 
     // ヘルパー関数：Seeder実行と時間計測
     async Task<T> RunSeederWithResultAsync<T>(string seederName, Func<Task<T>> seederAction)
@@ -179,6 +179,7 @@ try
 
     // 予約スケジュール（新システム）
     await RunSeederAsync("AppointmentScheduleSeeder", () => AppointmentScheduleSeeder.SeedAsync(context, dateTimeProvider));
+    await RunSeederAsync("AppointmentScheduleOverrideSeeder", () => AppointmentScheduleOverrideSeeder.SeedAsync(context, dateTimeProvider));
 
     // 予約データと統計
     // 1. AppointmentSeeder: 実際の appointment レコードを生成（月別繁忙度と時間帯による揺らぎを反映）

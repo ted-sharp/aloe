@@ -67,9 +67,8 @@ internal static class AppointmentScheduleOverrideSeeder
             if (resource == null)
                 continue;
 
-            // 祝日については何もしない（営業日判定はアプリケーション側で実施）
-            // デモ用のオーバーライドを作成
-
+            // 祝日は AppointmentStatsSeeder 側でスキップするためオーバーライド不要
+            // デモ用のオーバーライドを作成（毎月1日・2日）
             if (resource.ApptResTypeCode == (int)AppointmentResourceType.Main)
             {
                 var (skippedOverrides, skippedCapOverrides) = CreateMainResourceOverrides(

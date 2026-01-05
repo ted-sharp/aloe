@@ -71,6 +71,13 @@ internal static class AppointmentStatsSeeder
             var currentDate = startDate;
             while (currentDate <= endDate)
             {
+                // 日曜日・祝日はスキップ（休診日）
+                if (currentDate.DayOfWeek == DayOfWeek.Sunday || holidays.Contains(currentDate))
+                {
+                    currentDate = currentDate.AddDays(1);
+                    continue;
+                }
+
                 // Get applicable slots for this date (from schedule configuration)
                 var applicableSlots = GetApplicableSlotsForDate(schedule, currentDate);
 
