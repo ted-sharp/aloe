@@ -66,28 +66,5 @@ public class AppointmentStatSlots : IAuditableEntity
 
     // Navigation Properties
     public virtual AppointmentResource? AppointmentResource { get; set; }
-
-    // Helper Properties (NotMapped)
-    /// <summary>
-    /// スロット開始時刻（TimeOnly形式）
-    /// SlotStart（分単位）を TimeOnly に変換
-    /// </summary>
-    [NotMapped]
-    public TimeOnly SlotStartTime
-    {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotStart));
-        set => this.SlotStart = value.Hour * 60 + value.Minute;
-    }
-
-    /// <summary>
-    /// スロット終了時刻（TimeOnly形式）
-    /// SlotEnd（分単位）を TimeOnly に変換
-    /// </summary>
-    [NotMapped]
-    public TimeOnly SlotEndTime
-    {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotEnd));
-        set => this.SlotEnd = value.Hour * 60 + value.Minute;
-    }
 }
 

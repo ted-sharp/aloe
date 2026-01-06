@@ -6,8 +6,12 @@ namespace Aloe.Apps.MedockLib.Services.Dtos;
 public class CreateAppointmentDto
 {
     public DateOnly Date { get; set; }
+
+    // TODO: int StartMin に変更予定
     public TimeOnly? StartTime { get; set; }
+    // TODO: 削除予定
     public TimeOnly? EndTime { get; set; }
+
     public Guid? PatientId { get; set; }
     public Guid? OrganizationId { get; set; }
     public Guid FloorId { get; set; }

@@ -2,6 +2,7 @@ using Aloe.Apps.MedockLib.Constants;
 
 namespace Aloe.Apps.MedockLib.Services.Dtos;
 
+// TODO: テーブル定義を分解しておきたい
 /// <summary>
 /// 施設営業時間DTO
 /// </summary>

@@ -54,22 +54,4 @@ public class AppointmentScheduleSlotOverride : IAuditableEntity
 
     // Navigation Properties
     public virtual AppointmentScheduleOverride AppointmentScheduleOverride { get; set; } = null!;
-
-    // Helper Properties
-    [NotMapped]
-    public TimeOnly SlotStartTime
-    {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotStartMin));
-        set => this.SlotStartMin = value.Hour * 60 + value.Minute;
-    }
-
-    [NotMapped]
-    public TimeOnly SlotEndTime
-    {
-        get => TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SlotEndMin));
-        set => this.SlotEndMin = value.Hour * 60 + value.Minute;
-    }
-
-    [NotMapped]
-    public int DurationMin => this.SlotEndMin - this.SlotStartMin;
 }
