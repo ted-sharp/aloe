@@ -8,7 +8,6 @@ using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using static Aloe.Apps.MedockLib.Data.Entities.AppointmentExtensions;
 
 namespace Aloe.Apps.MedockLib.Services;
 

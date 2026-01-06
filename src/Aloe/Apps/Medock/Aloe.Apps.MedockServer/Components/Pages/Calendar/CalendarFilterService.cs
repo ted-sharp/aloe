@@ -150,13 +150,6 @@ public class CalendarFilterService
             if (filter.RequiredCapacity > 1 && availableCapacity < filter.RequiredCapacity)
                 isSlotGrayed = true;
 
-            // 設備条件フィルターのカウントを辞書から取得
-            if (statsDict != null)
-            {
-                var key = (date, timeRangeKey);
-                // statsDictから取得したカウントは使用しない（将来の拡張用）
-            }
-
             if (!isSlotGrayed && !isDateGrayed)
                 hasAvailableSlot = true;
         }
