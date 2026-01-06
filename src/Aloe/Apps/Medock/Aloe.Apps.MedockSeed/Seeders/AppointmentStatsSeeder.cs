@@ -115,9 +115,32 @@ internal static class AppointmentStatsSeeder
                     var outOfHoursCount = 0;
                     if (aggregationByResAndDate.TryGetValue((schedule.ApptResId, currentDate), out var dayAggregations))
                     {
-                        outOfHoursCount = dayAggregations
+                        // 時間外予約のスロットレコードを作成（赤いライン表示用）
+                        var outOfHoursSlots = dayAggregations
                             .Where(kvp => !configuredSlotStarts.Contains(kvp.Key))
-                            .Sum(kvp => kvp.Value);
+                            .ToList();
+
+                        foreach (var outOfHoursSlot in outOfHoursSlots)
+                        {
+                            var slotStartMin = outOfHoursSlot.Key;
+                            var slotCount = outOfHoursSlot.Value;
+                            outOfHoursCount += slotCount;
+
+                            // 時間外スロットのレコードを追加（SlotCap=0で識別可能）
+                            var outOfHoursStatSlot = new AppointmentStatSlots
+                            {
+                                ApptStatSlotId = Guid.CreateVersion7(),
+                                ApptDate = currentDate,
+                                ApptResId = schedule.ApptResId,
+                                SlotStart = slotStartMin,
+                                SlotEnd = slotStartMin + 30, // 30分スロットとして扱う
+                                SlotCap = 0, // 時間外なので容量は0
+                                SlotCount = slotCount
+                            };
+
+                            SeederHelper.InitializeAuditFields(outOfHoursStatSlot, dateTimeProvider);
+                            statSlots.Add(outOfHoursStatSlot);
+                        }
                     }
 
                     // Aggregate slot records to create AppointmentStats (daily total)
