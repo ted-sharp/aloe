@@ -107,19 +107,43 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const endHour = state.options.endHour || 18;
     const totalHours = endHour - startHour;
 
-    // ビジネスアワー内のスロットのインデックスを事前に収集
+    // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
     const validSlotIndices = [];
+    let hasOutsideHoursBefore = false;
+    let hasOutsideHoursAfter = false;
+    let hasOutsideHoursLunch = false;
+
     for (let i = 0; i < slotCount; i++) {
         // ビジネスアワー外のスロットを除外（ビット1: IsOutsideHours）
         const isOutsideHours = slotFlags && (slotFlags[i] & 0b010) !== 0;
-        if (isOutsideHours) continue;
-        
+
+        if (isOutsideHours) {
+            // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
+            const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+            if (count > 0) {
+                const slotStartMin = slotStarts[i];
+                const slotEndMin = slotEnds[i];
+                const slotStartHour = slotStartMin / 60;
+                const slotEndHour = slotEndMin / 60;
+
+                if (slotEndHour <= startHour) {
+                    hasOutsideHoursBefore = true;
+                } else if (slotStartHour >= endHour) {
+                    hasOutsideHoursAfter = true;
+                } else if (lunchStartHour !== null && lunchEndHour !== null &&
+                    slotStartHour >= lunchStartHour && slotEndHour <= lunchEndHour) {
+                    hasOutsideHoursLunch = true;
+                }
+            }
+            continue;
+        }
+
         const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         if (cap <= 0) continue;
-        
+
         validSlotIndices.push(i);
     }
-    
+
     // ビジネスアワー内のスロット数に更新
     const validSlotCount = validSlotIndices.length;
 
@@ -245,11 +269,22 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         strokeWidth: 2
     });
 
-    // Y軸の縦線
+    // Y軸の縦線（業務開始ライン - 時間外予約がある場合は赤）
+    const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#374151';
+    const beforeLineWidth = hasOutsideHoursBefore ? 3 : 2;
     drawLine(gridCtx, {
         points: [yAxisWidth, topPadding, yAxisWidth, baselineY],
-        stroke: '#374151',
-        strokeWidth: 2
+        stroke: beforeLineColor,
+        strokeWidth: beforeLineWidth
+    });
+
+    // 業務終了ライン（右端 - 時間外予約がある場合は赤）
+    const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db';
+    const afterLineWidth = hasOutsideHoursAfter ? 3 : 1;
+    drawLine(gridCtx, {
+        points: [yAxisWidth + graphWidth, topPadding, yAxisWidth + graphWidth, baselineY],
+        stroke: afterLineColor,
+        strokeWidth: afterLineWidth
     });
 
     // 昼休み時間帯の長さを計算（実際の範囲内で）
@@ -401,13 +436,15 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         }
     }
 
-    // 昼休みライン（実際の範囲内の場合のみ描画）
+    // 昼休みライン（実際の範囲内の場合のみ描画 - 時間外予約がある場合は赤）
     if (actualLunchStartHour !== null && actualLunchEndHour !== null) {
         const lunchStartX = timeToX(actualLunchStartHour);
+        const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : '#d1d5db';
+        const lunchLineWidth = hasOutsideHoursLunch ? 3 : 2;
         drawLine(contentCtx, {
             points: [lunchStartX, topPadding, lunchStartX, baselineY],
-            stroke: '#d1d5db',
-            strokeWidth: 2,
+            stroke: lunchLineColor,
+            strokeWidth: lunchLineWidth,
             opacity: 0.8
         });
     }

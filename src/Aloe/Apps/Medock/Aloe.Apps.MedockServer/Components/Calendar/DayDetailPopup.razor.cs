@@ -47,6 +47,9 @@ public partial class DayDetailPopup : ComponentBase
     [Parameter]
     public EventCallback<SlotClickedEventArgs> OnSlotClicked { get; set; }
 
+    [Parameter]
+    public Aloe.Apps.MedockLib.Services.Dtos.BusinessHoursDto? BusinessHours { get; set; }
+
     private string ChartContainerId { get; } = $"day-detail-chart-{Guid.CreateVersion7():N}";
     private bool _isChartRendered;
     private bool _wasOpen;
@@ -452,6 +455,7 @@ public partial class DayDetailPopup : ComponentBase
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
+                slotFlags = (byte[]?)null,
                 isDayGrayedOut = false
             };
         }
@@ -466,6 +470,7 @@ public partial class DayDetailPopup : ComponentBase
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
+                slotFlags = (byte[]?)null,
                 isDayGrayedOut = false
             };
         }
@@ -485,6 +490,7 @@ public partial class DayDetailPopup : ComponentBase
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
+                slotFlags = (byte[]?)null,
                 isDayGrayedOut = false
             };
         }
@@ -496,6 +502,48 @@ public partial class DayDetailPopup : ComponentBase
         var slotCaps = dateSlotsData.Select(s => s.SlotCap).ToArray();
         var slotAvailables = dateSlotsData.Select(s => Math.Max(0, s.SlotCap - s.SlotCount)).ToArray();
 
+        // slotFlags を生成（時間外スロット判定用）
+        var slotFlags = new byte[dateSlotsData.Count];
+        if (this.BusinessHours != null)
+        {
+            var businessStart = TimeOnly.Parse(this.BusinessHours.StartTime);
+            var businessEnd = TimeOnly.Parse(this.BusinessHours.EndTime);
+            TimeOnly? lunchStart = null;
+            TimeOnly? lunchEnd = null;
+
+            if (!String.IsNullOrEmpty(this.BusinessHours.LunchStartTime) &&
+                !String.IsNullOrEmpty(this.BusinessHours.LunchEndTime))
+            {
+                lunchStart = TimeOnly.Parse(this.BusinessHours.LunchStartTime);
+                lunchEnd = TimeOnly.Parse(this.BusinessHours.LunchEndTime);
+            }
+
+            for (int i = 0; i < dateSlotsData.Count; i++)
+            {
+                var slot = dateSlotsData[i];
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotStart));
+                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotEnd));
+
+                var isOutsideHours = false;
+
+                // スロットが業務時間外にある場合
+                if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
+                {
+                    isOutsideHours = true;
+                }
+                // 昼休み時間帯にある場合
+                else if (lunchStart.HasValue && lunchEnd.HasValue &&
+                         slotStartTime >= lunchStart.Value && slotEndTime <= lunchEnd.Value)
+                {
+                    isOutsideHours = true;
+                }
+
+                byte flags = 0;
+                if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
+                slotFlags[i] = flags;
+            }
+        }
+
         return new
         {
             slotStarts = slotStarts,
@@ -503,6 +551,7 @@ public partial class DayDetailPopup : ComponentBase
             slotCounts = slotCounts,
             slotCaps = slotCaps,
             slotAvailables = slotAvailables,
+            slotFlags = slotFlags,
             isDayGrayedOut = false
         };
     }
