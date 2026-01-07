@@ -94,8 +94,8 @@
             </div>
         </div>
 
-        <!-- 第2行: フロア、リソースグループ、プラン、オプション -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+        <!-- 第2行: フロア、リソース、プラン -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
             <!-- フロア選択 -->
             @if (AvailableFloors != null)
             {
@@ -122,46 +122,6 @@
                                            @onchange="() => ToggleFloor(floor.Id)" />
                                     <span class="badge @(SelectedFloorIds.Contains(floor.Id) ? "badge-primary" : "badge-outline")">
                                         @floor.Name
-                                    </span>
-                                </label>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-sm text-base-content/60 py-2">
-                            データがありません
-                        </div>
-                    }
-                </div>
-            }
-
-            <!-- リソースグループ選択 -->
-            @if (AvailableResourceGroups != null)
-            {
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">リソースグループ</span>
-                        @if (AvailableResourceGroups.Any())
-                        {
-                            <div class="flex gap-1">
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllResourceGroups">全選択</button>
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllResourceGroups">全解除</button>
-                            </div>
-                        }
-                    </label>
-                    @if (AvailableResourceGroups.Any())
-                    {
-                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
-                            @foreach (var group in AvailableResourceGroups)
-                            {
-                                <label class="cursor-pointer">
-                                    <input type="checkbox"
-                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                           checked="@SelectedResourceGroupIds.Contains(group.Id)"
-                                           @onchange="() => ToggleResourceGroup(group.Id)" />
-                                    <span class="badge @(SelectedResourceGroupIds.Contains(group.Id) ? "badge-primary" : "badge-outline")">
-                                        @group.Name
                                     </span>
                                 </label>
                             }
@@ -235,53 +195,30 @@
                         <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
                             @foreach (var plan in AvailablePlans)
                             {
-                                <label class="cursor-pointer">
-                                    <input type="checkbox"
-                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                           checked="@SelectedPlanIds.Contains(plan.Id)"
-                                           @onchange="() => TogglePlan(plan.Id)" />
-                                    <span class="badge @(SelectedPlanIds.Contains(plan.Id) ? "badge-primary" : "badge-outline")">
+                                var isSelected = SelectedPlanIds.Contains(plan.Id);
+                                var isSelectable = plan.PlanTypeCode == 1 || IsOptionSelectable(plan);
+                                var badgeClass = GetPlanBadgeClass(plan, isSelected);
+                                <label class="@(isSelectable ? "cursor-pointer" : "cursor-not-allowed opacity-50")">
+                                    @if (plan.PlanTypeCode == 1)
+                                    {
+                                        @* Plan: ラジオボタンのように表示 *@
+                                        <input type="radio"
+                                               name="plan-selection"
+                                               class="radio radio-xs radio-primary hidden peer"
+                                               checked="@isSelected"
+                                               @onchange="() => TogglePlan(plan.Id)" />
+                                    }
+                                    else
+                                    {
+                                        @* Option: チェックボックス *@
+                                        <input type="checkbox"
+                                               class="checkbox checkbox-xs checkbox-secondary hidden peer"
+                                               checked="@isSelected"
+                                               disabled="@(!isSelectable)"
+                                               @onchange="() => TogglePlan(plan.Id)" />
+                                    }
+                                    <span class="badge @badgeClass">
                                         @plan.Name
-                                    </span>
-                                </label>
-                            }
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="text-sm text-base-content/60 py-2">
-                            データがありません
-                        </div>
-                    }
-                </div>
-            }
-
-            <!-- オプション選択 -->
-            @if (AvailableOptions != null)
-            {
-                <div class="form-control">
-                    <label class="label">
-                        <span class="label-text font-semibold">オプション</span>
-                        @if (AvailableOptions.Any())
-                        {
-                            <div class="flex gap-1">
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllOptions">全選択</button>
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllOptions">全解除</button>
-                            </div>
-                        }
-                    </label>
-                    @if (AvailableOptions.Any())
-                    {
-                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
-                            @foreach (var option in AvailableOptions)
-                            {
-                                <label class="cursor-pointer">
-                                    <input type="checkbox"
-                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                           checked="@SelectedOptionPlanIds.Contains(option.Id)"
-                                           @onchange="() => ToggleOption(option.Id)" />
-                                    <span class="badge @(SelectedOptionPlanIds.Contains(option.Id) ? "badge-primary" : "badge-outline")">
-                                        @option.Name
                                     </span>
                                 </label>
                             }

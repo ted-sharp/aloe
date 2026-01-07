@@ -107,48 +107,26 @@ public class MetadataLoader : IMetadataLoader
                 .ToListAsync();
             state.AvailableResources = resources;
 
-            // プランをロード（有効なもののみ）
+            // プランをロード（有効なもののみ、PlanTypeCode=1（Plan）とPlanTypeCode=2（Option）の両方）
             var today = DateOnly.FromDateTime(DateTime.Today);
             var plans = await context.Plans
                 .AsNoTracking()
                 .Where(p => p.FacilityId == facilityId &&
                            !p.IsDeleted &&
                            p.IsActive &&
+                           (p.PlanTypeCode == 1 || p.PlanTypeCode == 2) && // Plan and Option
                            p.ActiveFrom <= today &&
                            p.ActiveTo >= today)
-                .OrderBy(p => p.PlanCode)
+                .OrderBy(p => p.PlanTypeCode) // Plan (1) を先に、Option (2) を後に
+                .ThenBy(p => p.PlanCode)
                 .Select(p => new SearchFilterPanel.FilterItem
                 {
                     Id = p.PlanId,
-                    Name = p.PlanName
+                    Name = p.PlanName,
+                    PlanTypeCode = p.PlanTypeCode
                 })
                 .ToListAsync();
             state.AvailablePlans = plans;
-
-            // オプション（PlanOptionのOptionPlanIdに基づくプラン）をロード
-            var optionPlanIds = await context.PlanOptions
-                .AsNoTracking()
-                .Where(po => !po.IsDeleted)
-                .Select(po => po.OptionPlanId)
-                .Distinct()
-                .ToListAsync();
-
-            var options = await context.Plans
-                .AsNoTracking()
-                .Where(p => optionPlanIds.Contains(p.PlanId) &&
-                           p.FacilityId == facilityId &&
-                           !p.IsDeleted &&
-                           p.IsActive &&
-                           p.ActiveFrom <= today &&
-                           p.ActiveTo >= today)
-                .OrderBy(p => p.PlanCode)
-                .Select(p => new SearchFilterPanel.FilterItem
-                {
-                    Id = p.PlanId,
-                    Name = p.PlanName
-                })
-                .ToListAsync();
-            state.AvailableOptions = options;
         }
         catch (Exception ex)
         {
@@ -156,7 +134,6 @@ public class MetadataLoader : IMetadataLoader
             state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
             state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
-            state.AvailableOptions = new List<SearchFilterPanel.FilterItem>();
         }
     }
 

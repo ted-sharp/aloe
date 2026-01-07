@@ -1577,9 +1577,9 @@ Field="is_active","is_active","@BOOLEAN","NOT NULL",,"FALSE","",$FFFFFFFF,""
 Field="active_from","active_from","@DATE","NOT NULL",,"CURRENT_DATE","",$FFFFFFFF,""
 Field="active_to","active_to","@DATE","NOT NULL",,"\q9999-12-31\q","",$FFFFFFFF,""
 EffectMode=None
-Color=$00FF00
+Color=$000000
 BkColor=$FFFFFF
-ModifiedDateTime=20260107103656
+ModifiedDateTime=20260107223542
 Position="PLAN",100,100
 ZOrder=372
 

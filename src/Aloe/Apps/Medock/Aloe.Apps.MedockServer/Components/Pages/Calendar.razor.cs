@@ -152,10 +152,8 @@ public partial class Calendar : ComponentBase
     private int ActiveFilterCount => this.State.ActiveFilterCount;
     private List<string>? FilterTimeSlots => this.State.CurrentFilter?.TimeSlots;
     private List<SearchFilterPanel.FilterItem> AvailableFloors => this.State.AvailableFloors;
-    private List<SearchFilterPanel.FilterItem> AvailableResourceGroups => this.State.AvailableResourceGroups;
     private List<SearchFilterPanel.FilterItem> AvailableResources => this.State.AvailableResources;
     private List<SearchFilterPanel.FilterItem> AvailablePlans => this.State.AvailablePlans;
-    private List<SearchFilterPanel.FilterItem> AvailableOptions => this.State.AvailableOptions;
 
     protected override async Task OnInitializedAsync()
     {
@@ -548,12 +546,10 @@ public partial class Calendar : ComponentBase
     {
         this.State.CurrentFilter = filter;
 
-        // フロア、リソースグループ、リソース、プラン・オプションのフィルターが変更された場合はデータを再取得
+        // フロア、リソース、プランのフィルターが変更された場合はデータを再取得
         var needsReload = filter.SelectedFloorIds.Any() ||
-                         filter.SelectedResourceGroupIds.Any() ||
                          filter.SelectedResourceIds.Any() ||
-                         filter.SelectedPlanIds.Any() ||
-                         filter.SelectedOptionPlanIds.Any();
+                         filter.SelectedPlanIds.Any();
 
         if (needsReload)
         {

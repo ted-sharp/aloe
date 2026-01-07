@@ -49,22 +49,20 @@ public class StatsLoader : IStatsLoader
             // フィルターを使わずに全てのMainリソースを取得
             var hasNonResourceFilters = (state.CurrentFilter != null) && (
                 state.CurrentFilter.SelectedFloorIds.Any() ||
-                state.CurrentFilter.SelectedResourceGroupIds.Any() ||
-                state.CurrentFilter.SelectedPlanIds.Any() ||
-                state.CurrentFilter.SelectedOptionPlanIds.Any());
+                state.CurrentFilter.SelectedPlanIds.Any());
 
             if (hasNonResourceFilters)
             {
-                // フロア、リソースグループ、プラン・オプションのフィルターが有効な場合のみフィルター付きメソッドを使用
+                // フロア、プランのフィルターが有効な場合のみフィルター付きメソッドを使用
                 // SelectedResourceIdsは渡さない（Mainリソースは常に表示、Equipmentリソースのみフィルタリング）
                 mainStats = await this._appointmentStatsRepository.GetMainResourceStatsByDateRangeWithFiltersAsync(
                     startDate,
                     endDate,
                     state.CurrentFilter!.SelectedFloorIds.Any() ? state.CurrentFilter.SelectedFloorIds : null,
-                    state.CurrentFilter.SelectedResourceGroupIds.Any() ? state.CurrentFilter.SelectedResourceGroupIds : null,
+                    null, // resourceGroupIds - 削除済み
                     null, // SelectedResourceIdsは渡さない（Mainリソースは常に表示）
                     state.CurrentFilter.SelectedPlanIds.Any() ? state.CurrentFilter.SelectedPlanIds : null,
-                    state.CurrentFilter.SelectedOptionPlanIds.Any() ? state.CurrentFilter.SelectedOptionPlanIds : null);
+                    null); // optionPlanIds - 削除済み
             }
             else
             {

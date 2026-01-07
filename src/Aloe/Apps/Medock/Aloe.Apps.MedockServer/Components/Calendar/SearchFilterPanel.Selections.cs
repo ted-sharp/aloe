@@ -53,25 +53,6 @@ public partial class SearchFilterPanel
         this.OnFilterChanged();
     }
 
-    private void SelectAllResourceGroups()
-    {
-        if (this.AvailableResourceGroups != null)
-        {
-            this.CalendarState.FilterSelectedResourceGroupIds.Clear();
-            foreach (var group in this.AvailableResourceGroups)
-            {
-                this.CalendarState.FilterSelectedResourceGroupIds.Add(group.Id);
-            }
-        }
-        this.OnFilterChanged();
-    }
-
-    private void ClearAllResourceGroups()
-    {
-        this.SelectedResourceGroupIds.Clear();
-        this.OnFilterChanged();
-    }
-
     private void SelectAllResources()
     {
         if (this.AvailableResources != null)
@@ -91,41 +72,35 @@ public partial class SearchFilterPanel
         this.OnFilterChanged();
     }
 
-    private void SelectAllPlans()
+    private async void SelectAllPlans()
     {
-        if (this.AvailablePlans != null)
+        if (this.AvailablePlans == null)
         {
-            this.CalendarState.FilterSelectedPlanIds.Clear();
-            foreach (var plan in this.AvailablePlans)
-            {
-                this.CalendarState.FilterSelectedPlanIds.Add(plan.Id);
-            }
+            return;
         }
+
+        this.CalendarState.FilterSelectedPlanIds.Clear();
+        this._relatedOptionIds.Clear();
+
+        // PlanTypeCode=1（Plan）の場合は最初のPlanのみ選択
+        var firstPlan = this.AvailablePlans.FirstOrDefault(p => p.PlanTypeCode == 1);
+        if (firstPlan != null)
+        {
+            this.CalendarState.FilterSelectedPlanIds.Add(firstPlan.Id);
+            // このPlanに関連するオプションIDを取得してキャッシュ
+            var relatedOptionIds = await this.GetRelatedOptionIdsAsync(firstPlan.Id);
+            this._relatedOptionIds = new HashSet<Guid>(relatedOptionIds);
+        }
+
         this.OnFilterChanged();
+        this.StateHasChanged(); // UIを更新してオプションの選択可否状態を反映
     }
 
     private void ClearAllPlans()
     {
         this.SelectedPlanIds.Clear();
+        this._relatedOptionIds.Clear(); // 関連オプションIDのキャッシュをクリア
         this.OnFilterChanged();
-    }
-
-    private void SelectAllOptions()
-    {
-        if (this.AvailableOptions != null)
-        {
-            this.CalendarState.FilterSelectedOptionPlanIds.Clear();
-            foreach (var option in this.AvailableOptions)
-            {
-                this.CalendarState.FilterSelectedOptionPlanIds.Add(option.Id);
-            }
-        }
-        this.OnFilterChanged();
-    }
-
-    private void ClearAllOptions()
-    {
-        this.SelectedOptionPlanIds.Clear();
-        this.OnFilterChanged();
+        this.StateHasChanged(); // UIを更新してオプションの選択可否状態を反映
     }
 }

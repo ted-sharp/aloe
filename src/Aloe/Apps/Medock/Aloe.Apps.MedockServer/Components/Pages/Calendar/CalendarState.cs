@@ -59,20 +59,16 @@ public class CalendarState
     // フィルター
     public SearchFilterPanel.SearchFilter? CurrentFilter { get; set; }
     public List<SearchFilterPanel.FilterItem> AvailableFloors { get; set; } = new();
-    public List<SearchFilterPanel.FilterItem> AvailableResourceGroups { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailableResources { get; set; } = new();
     public List<SearchFilterPanel.FilterItem> AvailablePlans { get; set; } = new();
-    public List<SearchFilterPanel.FilterItem> AvailableOptions { get; set; } = new();
 
     // フィルター選択状態（SearchFilterPanel用 - セッション中保持）
     public HashSet<int> FilterSelectedDays { get; set; } = new();
     public HashSet<string> FilterSelectedTimeSlots { get; set; } = new();
     public int FilterRequiredCapacity { get; set; } = 1;
     public HashSet<Guid> FilterSelectedFloorIds { get; set; } = new();
-    public HashSet<Guid> FilterSelectedResourceGroupIds { get; set; } = new();
     public HashSet<Guid> FilterSelectedResourceIds { get; set; } = new();
     public HashSet<Guid> FilterSelectedPlanIds { get; set; } = new();
-    public HashSet<Guid> FilterSelectedOptionPlanIds { get; set; } = new();
 
     // ローディング状態
     public bool IsLoading { get; set; } = false;
@@ -85,10 +81,8 @@ public class CalendarState
         (this.CurrentFilter?.TimeSlots.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.RequiredCapacity > 1 ? 1 : 0) +
         (this.CurrentFilter?.SelectedFloorIds.Any() == true ? 1 : 0) +
-        (this.CurrentFilter?.SelectedResourceGroupIds.Any() == true ? 1 : 0) +
         (this.CurrentFilter?.SelectedResourceIds.Any() == true ? 1 : 0) +
-        (this.CurrentFilter?.SelectedPlanIds.Any() == true ? 1 : 0) +
-        (this.CurrentFilter?.SelectedOptionPlanIds.Any() == true ? 1 : 0);
+        (this.CurrentFilter?.SelectedPlanIds.Any() == true ? 1 : 0);
 
     /// <summary>
     /// 現在の期間のタイトルを取得
@@ -233,10 +227,8 @@ public class CalendarState
         this.FilterSelectedTimeSlots.Clear();
         this.FilterRequiredCapacity = 1;
         this.FilterSelectedFloorIds.Clear();
-        this.FilterSelectedResourceGroupIds.Clear();
         this.FilterSelectedResourceIds.Clear();
         this.FilterSelectedPlanIds.Clear();
-        this.FilterSelectedOptionPlanIds.Clear();
         this.CurrentFilter = null;
     }
 }

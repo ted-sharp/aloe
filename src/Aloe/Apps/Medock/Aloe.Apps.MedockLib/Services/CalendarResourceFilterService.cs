@@ -24,9 +24,7 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
     /// <inheritdoc />
     public async Task<List<Guid>> GetRelatedResourceIdsAsync(
         IEnumerable<Guid> floorIds,
-        IEnumerable<Guid> resourceGroupIds,
-        IEnumerable<Guid> planIds,
-        IEnumerable<Guid> optionPlanIds)
+        IEnumerable<Guid> planIds)
     {
         var autoResourceIds = new HashSet<Guid>();
 
@@ -35,9 +33,7 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
             await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             var floorIdList = floorIds.ToList();
-            // resourceGroupIds は現在使用しない（AppointmentResourceGroup削除のため）
             var planIdList = planIds.ToList();
-            var optionPlanIdList = optionPlanIds.ToList();
 
             // 選択されているフロアに属するリソース
             if (floorIdList.Any())
@@ -71,25 +67,6 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
                     .ToListAsync();
 
                 foreach (var resourceId in planResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-
-            // 選択されているオプションに関連するリソース
-            if (optionPlanIdList.Any())
-            {
-                var optionResourceIds = await context.PlanResourceRequirements
-                    .AsNoTracking()
-                    .Where(prr => !prr.IsDeleted &&
-                                 optionPlanIdList.Contains(prr.PlanId) &&
-                                 prr.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                                 !prr.AppointmentResource.IsDeleted)
-                    .Select(prr => prr.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in optionResourceIds)
                 {
                     autoResourceIds.Add(resourceId);
                 }

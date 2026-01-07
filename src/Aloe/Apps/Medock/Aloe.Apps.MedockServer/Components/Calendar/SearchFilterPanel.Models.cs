@@ -9,6 +9,10 @@ public partial class SearchFilterPanel
     {
         public Guid Id { get; set; }
         public string Name { get; set; } = String.Empty;
+        /// <summary>
+        /// プランタイプコード (0: None, 1: Plan, 2: Option, 99: Others)
+        /// </summary>
+        public int PlanTypeCode { get; set; }
     }
 
     /// <summary>
@@ -20,10 +24,8 @@ public partial class SearchFilterPanel
         public List<string> TimeSlots { get; set; } = new();
         public int RequiredCapacity { get; set; } = 1;
         public List<Guid> SelectedFloorIds { get; set; } = new();
-        public List<Guid> SelectedResourceGroupIds { get; set; } = new();
         public List<Guid> SelectedResourceIds { get; set; } = new();
         public List<Guid> SelectedPlanIds { get; set; } = new();
-        public List<Guid> SelectedOptionPlanIds { get; set; } = new();
 
         /// <summary>
         /// フィルターが有効かどうか
@@ -33,10 +35,8 @@ public partial class SearchFilterPanel
             this.TimeSlots.Any() ||
             this.RequiredCapacity > 1 ||
             this.SelectedFloorIds.Any() ||
-            this.SelectedResourceGroupIds.Any() ||
             this.SelectedResourceIds.Any() ||
-            this.SelectedPlanIds.Any() ||
-            this.SelectedOptionPlanIds.Any();
+            this.SelectedPlanIds.Any();
     }
 }
 
