@@ -410,7 +410,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             const slotMap = new Map(); // key: "hour-half" -> appointments[]
 
             dayAppointments.forEach(appt => {
-                const startTime = parseTimeToHours(appt.startTime || '09:00');
+                const startTime = (typeof appt.startMin === 'number') ? appt.startMin / 60 : parseTimeToHours(appt.startTime || '09:00');
                 // 拡張された表示範囲内の予約を表示
                 if (startTime < displayStartHour || startTime >= displayEndHour) return;
 
@@ -432,6 +432,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 // スロット内の予約から最長の時間長（分）を計算
                 let maxDurationMinutes = 30; // デフォルト: 30分スロット
+                /* Duration calculation removed as endTime is no longer available in DTO
                 slotAppts.forEach(appt => {
                     if (appt.startTime && appt.endTime) {
                         const startHours = parseTimeToHours(appt.startTime);
@@ -440,6 +441,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         maxDurationMinutes = Math.max(maxDurationMinutes, durationMinutes);
                     }
                 });
+                */
 
                 // 30分スロット高さは固定: hourHeight / 2
                 const baseSlotHeight = hourHeight / 2;

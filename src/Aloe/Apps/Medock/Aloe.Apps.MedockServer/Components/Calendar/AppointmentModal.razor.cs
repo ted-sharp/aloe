@@ -60,7 +60,7 @@ public partial class AppointmentModal : ComponentBase
     /// 選択された時間（新規作成時）
     /// </summary>
     [Parameter]
-    public TimeOnly? SelectedTime { get; set; }
+    public int? SelectedStartMin { get; set; }
 
     /// <summary>
     /// 閉じる時のコールバック
@@ -118,8 +118,12 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = this.SelectedDate ?? DateOnly.FromDateTime(DateTime.Today),
-                StartTimeString = this.SelectedTime?.ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentStartTime,
-                EndTimeString = this.SelectedTime?.AddHours(1).ToString("HH:mm") ?? BusinessHoursConstants.DefaultAppointmentEndTime,
+                StartTimeString = this.SelectedStartMin.HasValue 
+                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value)).ToString("HH:mm") 
+                    : BusinessHoursConstants.DefaultAppointmentStartTime,
+                EndTimeString = this.SelectedStartMin.HasValue
+                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value + 60)).ToString("HH:mm")
+                    : BusinessHoursConstants.DefaultAppointmentEndTime,
                 Status = 0,
                 PatientName = String.Empty,
                 OrganizationName = String.Empty

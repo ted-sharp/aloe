@@ -25,8 +25,7 @@ public class CalendarDataService : ICalendarDataService
         {
             Id = a.Id.ToString(),
             Date = a.Date.ToString("yyyy-MM-dd"),
-            StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(a.StartMin)).ToString("HH:mm"),
-            EndTime = BusinessHoursConstants.DefaultAppointmentEndTime, // Removed from DTO
+            StartMin = a.StartMin,
             PatientName = a.PatientName,
             OrganizationName = a.OrganizationName,
             Status = a.Status,

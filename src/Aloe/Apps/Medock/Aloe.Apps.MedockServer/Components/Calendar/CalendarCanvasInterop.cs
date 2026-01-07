@@ -22,8 +22,7 @@ public static class CalendarCanvasInterop
             {
                 id = a.Id,
                 date = a.Date,
-                startTime = a.StartTime,
-                endTime = a.EndTime,
+                startMin = a.StartMin,
                 patientName = a.PatientName,
                 organizationName = a.OrganizationName,
                 status = a.Status,

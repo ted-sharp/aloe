@@ -99,7 +99,7 @@ public partial class WeekScheduler : ComponentBase
     /// 予約作成リクエスト時のコールバック
     /// </summary>
     [Parameter]
-    public EventCallback<(DateOnly Date, TimeOnly Time)> OnCreateRequested { get; set; }
+    public EventCallback<(DateOnly Date, int StartMin)> OnCreateRequested { get; set; }
 
     /// <summary>
     /// 表示日数変更時のコールバック
@@ -117,7 +117,7 @@ public partial class WeekScheduler : ComponentBase
     /// 予約移動時のコールバック（D&D）
     /// </summary>
     [Parameter]
-    public EventCallback<(Guid ApptId, DateOnly NewDate, TimeOnly NewTime)> OnAppointmentMoved { get; set; }
+    public EventCallback<(Guid ApptId, DateOnly NewDate, int NewStartMin)> OnAppointmentMoved { get; set; }
 
     /// <summary>
     /// 今日ボタンクリック時のコールバック
@@ -159,12 +159,12 @@ public partial class WeekScheduler : ComponentBase
         await this.OnAppointmentClicked.InvokeAsync(apptId);
     }
 
-    private async Task HandleCreateRequested((DateOnly Date, TimeOnly Time) request)
+    private async Task HandleCreateRequested((DateOnly Date, int StartMin) request)
     {
         await this.OnCreateRequested.InvokeAsync(request);
     }
 
-    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
+    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, int NewStartMin) moveInfo)
     {
         await this.OnAppointmentMoved.InvokeAsync(moveInfo);
     }

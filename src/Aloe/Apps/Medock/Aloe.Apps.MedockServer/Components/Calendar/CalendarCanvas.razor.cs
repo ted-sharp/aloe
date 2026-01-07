@@ -137,13 +137,13 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     /// Callback when create is requested (date + time)
     /// </summary>
     [Parameter]
-    public EventCallback<(DateOnly Date, TimeOnly Time)> OnCreateRequested { get; set; }
+    public EventCallback<(DateOnly Date, int StartMin)> OnCreateRequested { get; set; }
 
     /// <summary>
     /// Callback when an appointment is moved via drag and drop (apptId, newDate, newTime)
     /// </summary>
     [Parameter]
-    public EventCallback<(Guid ApptId, DateOnly NewDate, TimeOnly NewTime)> OnAppointmentMoved { get; set; }
+    public EventCallback<(Guid ApptId, DateOnly NewDate, int NewStartMin)> OnAppointmentMoved { get; set; }
 
     /// <summary>
     /// Callback when a month header is clicked (for switching to month view)

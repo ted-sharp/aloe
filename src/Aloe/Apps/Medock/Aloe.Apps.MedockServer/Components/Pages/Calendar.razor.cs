@@ -127,7 +127,7 @@ public partial class Calendar : ComponentBase
     }
 
     private DateOnly? ModalDate => this.State.ModalDate;
-    private TimeOnly? ModalTime => this.State.ModalTime;
+    private int? ModalStartMin => this.State.ModalStartMin;
     private Guid? SelectedAppointmentId => this.State.SelectedAppointmentId;
     private DateOnly? SelectedDate => this.State.SelectedDate;
     private (DateOnly Start, DateOnly End)? SelectedDateRange => this.State.SelectedDateRange;
@@ -569,13 +569,13 @@ public partial class Calendar : ComponentBase
 
     private void HandleAppointmentClick(Guid apptId)
     {
-        this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0), apptId);
+        this.State.OpenModal(this.State.CurrentDate, 540, apptId);
         this.StateHasChanged();
     }
 
-    private void HandleCreateRequest((DateOnly Date, TimeOnly Time) request)
+    private void HandleCreateRequest((DateOnly Date, int StartMin) request)
     {
-        this.State.OpenModal(request.Date, request.Time);
+        this.State.OpenModal(request.Date, request.StartMin);
         this.StateHasChanged();
     }
 
@@ -599,7 +599,7 @@ public partial class Calendar : ComponentBase
 
     private void OpenNewAppointmentModal()
     {
-        this.State.OpenModal(this.State.CurrentDate, new TimeOnly(9, 0));
+        this.State.OpenModal(this.State.CurrentDate, 540);
         this.StateHasChanged();
     }
 
@@ -625,22 +625,19 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, TimeOnly NewTime) moveInfo)
+    private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, int NewStartMin) moveInfo)
     {
         try
         {
             var appt = this.State.Appointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
             if (appt != null)
             {
-                var duration = TimeSpan.FromHours(1); // EndTime removed, default to 1 hour
-                var newEndTime = moveInfo.NewTime.Add(duration);
-
                 var result = await this.AppointmentService.UpdateAppointmentAsync(
                     moveInfo.ApptId,
                     new UpdateAppointmentDto
                     {
                         Date = moveInfo.NewDate,
-                        StartMin = moveInfo.NewTime.Hour * 60 + moveInfo.NewTime.Minute,
+                        StartMin = moveInfo.NewStartMin,
                         // EndTime = newEndTime
                     });
 
@@ -830,13 +827,13 @@ public partial class Calendar : ComponentBase
     private void HandleDayDetailSlotClicked(DayDetailPopup.SlotClickedEventArgs args)
     {
         this.Logger.LogInformation("日詳細スロット選択: Date={Date}, Time={Start}-{End}",
-            args.Date, args.StartTime, args.EndTime);
+            args.Date, args.StartMin, args.EndMin);
 
         // ポップアップを閉じる
         this.CloseDayDetail();
 
         // 予約モーダルを開く
-        this.State.OpenModal(args.Date, args.StartTime);
+        this.State.OpenModal(args.Date, args.StartMin);
         this.StateHasChanged();
     }
 }

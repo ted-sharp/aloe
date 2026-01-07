@@ -35,7 +35,7 @@ public class CalendarState
     // モーダル状態
     public bool IsModalOpen { get; set; }
     public DateOnly? ModalDate { get; set; }
-    public TimeOnly? ModalTime { get; set; }
+    public int? ModalStartMin { get; set; }
     public Guid? SelectedAppointmentId { get; set; }
 
     // 選択状態
@@ -205,11 +205,11 @@ public class CalendarState
     /// <summary>
     /// モーダルを開く
     /// </summary>
-    public void OpenModal(DateOnly date, TimeOnly time, Guid? appointmentId = null)
+    public void OpenModal(DateOnly date, int startMin, Guid? appointmentId = null)
     {
         this.SelectedAppointmentId = appointmentId;
         this.ModalDate = date;
-        this.ModalTime = time;
+        this.ModalStartMin = startMin;
         this.IsModalOpen = true;
     }
 
@@ -221,7 +221,7 @@ public class CalendarState
         this.IsModalOpen = false;
         this.SelectedAppointmentId = null;
         this.ModalDate = null;
-        this.ModalTime = null;
+        this.ModalStartMin = null;
     }
 
     /// <summary>

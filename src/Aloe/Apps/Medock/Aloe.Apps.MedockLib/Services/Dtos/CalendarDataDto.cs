@@ -20,8 +20,7 @@ public class AppointmentDataDto
 {
     public string Id { get; set; } = String.Empty;
     public string Date { get; set; } = String.Empty;
-    public string StartTime { get; set; } = String.Empty;
-    public string EndTime { get; set; } = String.Empty;
+    public int StartMin { get; set; }
     public string? PatientName { get; set; }
     public Guid? PatientId { get; set; }
     public string? OrganizationName { get; set; }

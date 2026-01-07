@@ -11,8 +11,8 @@ public partial class DayDetailPopup : ComponentBase
     public class SlotClickedEventArgs
     {
         public DateOnly Date { get; set; }
-        public TimeOnly StartTime { get; set; }
-        public TimeOnly EndTime { get; set; }
+        public int StartMin { get; set; }
+        public int EndMin { get; set; }
         public int Capacity { get; set; }
         public int Count { get; set; }
     }
@@ -343,14 +343,11 @@ public partial class DayDetailPopup : ComponentBase
                 return Task.CompletedTask;
             }
 
-            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
-            var endTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(endMinutes));
-
             this._selectedSlot = new SlotClickedEventArgs
             {
                 Date = date,
-                StartTime = startTime,
-                EndTime = endTime,
+                StartMin = startMinutes,
+                EndMin = endMinutes,
                 Capacity = capacity,
                 Count = count
             };
@@ -397,14 +394,11 @@ public partial class DayDetailPopup : ComponentBase
                 return;
             }
 
-            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
-            var endTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(endMinutes));
-
             var args = new SlotClickedEventArgs
             {
                 Date = date,
-                StartTime = startTime,
-                EndTime = endTime,
+                StartMin = startMinutes,
+                EndMin = endMinutes,
                 Capacity = capacity,
                 Count = count
             };

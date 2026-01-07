@@ -37,23 +37,21 @@ public partial class CalendarCanvas
     }
 
     [JSInvokable("OnCreateRequested")]
-    public async Task OnCreateRequestedFromJs(string dateStr, string timeStr)
+    public async Task OnCreateRequestedFromJs(string dateStr, int startMin)
     {
-        if (DateOnly.TryParse(dateStr, out var date) &&
-            TimeOnly.TryParse(timeStr, out var time))
+        if (DateOnly.TryParse(dateStr, out var date))
         {
-            await this.OnCreateRequested.InvokeAsync((date, time));
+            await this.OnCreateRequested.InvokeAsync((date, startMin));
         }
     }
 
     [JSInvokable("OnAppointmentMoved")]
-    public async Task OnAppointmentMovedFromJs(string apptId, string dateStr, string timeStr)
+    public async Task OnAppointmentMovedFromJs(string apptId, string dateStr, int startMin)
     {
         if (Guid.TryParse(apptId, out var id) &&
-            DateOnly.TryParse(dateStr, out var date) &&
-            TimeOnly.TryParse(timeStr, out var time))
+            DateOnly.TryParse(dateStr, out var date))
         {
-            await this.OnAppointmentMoved.InvokeAsync((id, date, time));
+            await this.OnAppointmentMoved.InvokeAsync((id, date, startMin));
         }
     }
 
@@ -110,10 +108,8 @@ public partial class CalendarCanvas
                 return;
             }
 
-            var startTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(startMinutes));
-
             // 予約作成リクエストとして発火（容量チェックなし）
-            await this.OnCreateRequested.InvokeAsync((date, startTime));
+            await this.OnCreateRequested.InvokeAsync((date, startMinutes));
         }
         catch (Exception ex)
         {
