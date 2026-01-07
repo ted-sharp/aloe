@@ -94,7 +94,7 @@ try
 
     var totalStopwatch = Stopwatch.StartNew();
     var seederCount = 0;
-    var totalSeeders = 29;
+    var totalSeeders = 27;
 
     // ヘルパー関数：Seeder実行と時間計測
     async Task<T> RunSeederWithResultAsync<T>(string seederName, Func<Task<T>> seederAction)
@@ -140,7 +140,6 @@ try
     var tenantId = await RunSeederWithResultAsync<Guid>("TenantSeeder", () => TenantSeeder.SeedAsync(context, dateTimeProvider));
     var (facilityId, floorId) = await RunSeederWithResultAsync<(Guid, Guid)>("FacilitySeeder", () => FacilitySeeder.SeedAsync(context, tenantId, dateTimeProvider));
     await RunSeederAsync("FacilityBusinessHoursSeeder", () => FacilityBusinessHoursSeeder.SeedAsync(context, facilityId, dateTimeProvider));
-    await RunSeederAsync("FacilityAddressSeeder", () => FacilityAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
     await RunSeederAsync("FacilityHolidaySeeder", () => FacilityHolidaySeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // ユーザー関連（施設が存在する状態で実行）
@@ -150,7 +149,6 @@ try
     await RunSeederAsync("HolidaySeeder", () => HolidaySeeder.SeedAsync(context));
 
     // マスタデータ（独立）
-    await RunSeederAsync("InsuranceProviderSeeder", () => InsuranceProviderSeeder.SeedAsync(context, dateTimeProvider));
     await RunSeederAsync("PlanConditionSeeder", () => PlanConditionSeeder.SeedAsync(context, dateTimeProvider));
 
     // 団体・患者関連
@@ -158,10 +156,6 @@ try
     await RunSeederAsync("PatientSeeder", () => PatientSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // 団体・患者の関連データ
-    await RunSeederAsync("OrganizationAddressSeeder", () => OrganizationAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
-    await RunSeederAsync("OrganizationInsuranceSeeder", () => OrganizationInsuranceSeeder.SeedAsync(context, facilityId, dateTimeProvider));
-    await RunSeederAsync("PatientAddressSeeder", () => PatientAddressSeeder.SeedAsync(context, facilityId, dateTimeProvider));
-    await RunSeederAsync("PatientInsuranceCardSeeder", () => PatientInsuranceCardSeeder.SeedAsync(context, facilityId, dateTimeProvider));
     await RunSeederAsync("OrganizationMemberSeeder", () => OrganizationMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // プラン関連
@@ -171,8 +165,6 @@ try
 
     // 予約リソース関連（施設・フロアの後）
     var resourceIds = await RunSeederWithResultAsync<Dictionary<string, Guid>>("AppointmentResourceSeeder", () => AppointmentResourceSeeder.SeedAsync(context, floorId, dateTimeProvider));
-    await RunSeederAsync("AppointmentResourceGroupSeeder", () => AppointmentResourceGroupSeeder.SeedAsync(context, facilityId, dateTimeProvider));
-    await RunSeederAsync("AppointmentResourceGroupMemberSeeder", () => AppointmentResourceGroupMemberSeeder.SeedAsync(context, facilityId, dateTimeProvider));
 
     // プランリソース要件（プラン・リソースの後）
     await RunSeederAsync("PlanResourceRequirementSeeder", () => PlanResourceRequirementSeeder.SeedAsync(context, facilityId, dateTimeProvider));

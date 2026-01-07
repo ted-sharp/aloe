@@ -1,4 +1,3 @@
-using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
@@ -25,16 +24,10 @@ internal static class FacilityBusinessHoursSeeder
         {
             FacilityBusinessHoursId = Guid.CreateVersion7(),
             FacilityId = facilityId,
-            BusinessHoursData = new FacilityBusinessHoursRoot
-            {
-                Start = BusinessHoursConstants.DefaultStartTime,
-                End = BusinessHoursConstants.DefaultEndTime,
-                Lunch = new LunchHoursItem
-                {
-                    Start = BusinessHoursConstants.DefaultLunchStartTime,
-                    End = BusinessHoursConstants.DefaultLunchEndTime
-                }
-            },
+            WorkStartMin = 540,   // 09:00
+            WorkEndMin = 1080,    // 18:00
+            LunchStartMin = 720,  // 12:00
+            LunchEndMin = 780,    // 13:00
             IsActive = true,
             ActiveFrom = DateOnly.FromDateTime(dateTimeProvider.Today),
             ActiveTo = new DateOnly(9999, 12, 31),
@@ -56,4 +49,3 @@ internal static class FacilityBusinessHoursSeeder
         }
     }
 }
-

@@ -53,6 +53,7 @@ public class FacilityUser : IAuditableEntity
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
     public virtual User User { get; set; } = null!;
+    [InverseProperty("FacilityUser")]
     public virtual ICollection<FacilityUserRole> FacilityUserRoles { get; set; } = new List<FacilityUserRole>();
     public virtual FacilityUserPermissionsCache? FacilityUserPermissionsCache { get; set; }
 }

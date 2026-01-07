@@ -101,8 +101,6 @@ public class Patient : IAuditableEntity
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
-    public virtual ICollection<PatientAddress> PatientAddresses { get; set; } = new List<PatientAddress>();
-    public virtual ICollection<PatientInsuranceCard> PatientInsuranceCards { get; set; } = new List<PatientInsuranceCard>();
 }
 
 

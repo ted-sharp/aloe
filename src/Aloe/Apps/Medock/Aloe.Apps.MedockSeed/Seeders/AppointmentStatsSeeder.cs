@@ -172,7 +172,8 @@ internal static class AppointmentStatsSeeder
             await context.BulkInsertAsync(stats, new BulkConfig
             {
                 SetOutputIdentity = false,
-                BatchSize = 5000
+                BatchSize = 5000,
+                PropertiesToExclude = new List<string> { nameof(AppointmentStats.ApptAvailable) }
             });
             statInsertSw.Stop();
             Console.WriteLine($"  [BulkInsert] AppointmentStats: {stats.Count} records - took {statInsertSw.Elapsed.TotalSeconds:F2}s");
@@ -184,7 +185,8 @@ internal static class AppointmentStatsSeeder
             await context.BulkInsertAsync(statSlots, new BulkConfig
             {
                 SetOutputIdentity = false,
-                BatchSize = 5000
+                BatchSize = 5000,
+                PropertiesToExclude = new List<string> { nameof(AppointmentStatSlots.SlotAvailable) }
             });
             slotsInsertSw.Stop();
             Console.WriteLine($"  [BulkInsert] AppointmentStatSlots: {statSlots.Count} records - took {slotsInsertSw.Elapsed.TotalSeconds:F2}s");

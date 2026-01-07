@@ -91,20 +91,6 @@ public class MetadataLoader : IMetadataLoader
                 .ToListAsync();
             state.AvailableFloors = floors;
 
-            // リソースグループをロード
-            var resourceGroups = await context.AppointmentResourceGroups
-                .AsNoTracking()
-                .Where(rg => rg.FacilityId == facilityId && !rg.IsDeleted)
-                .OrderBy(rg => rg.ResGroupSeq)
-                .ThenBy(rg => rg.ResGroupCode)
-                .Select(rg => new SearchFilterPanel.FilterItem
-                {
-                    Id = rg.ApptResGroupId,
-                    Name = rg.ResGroupName
-                })
-                .ToListAsync();
-            state.AvailableResourceGroups = resourceGroups;
-
             // リソースをロード（Equipmentリソースのみ）
             var resources = await context.AppointmentResources
                 .AsNoTracking()
@@ -168,7 +154,6 @@ public class MetadataLoader : IMetadataLoader
         {
             this._logger.LogError(ex, "Error loading filter options");
             state.AvailableFloors = new List<SearchFilterPanel.FilterItem>();
-            state.AvailableResourceGroups = new List<SearchFilterPanel.FilterItem>();
             state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
             state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
             state.AvailableOptions = new List<SearchFilterPanel.FilterItem>();

@@ -38,7 +38,6 @@ public class MedockDbContext : DbContext
     public DbSet<Facility> Facilities => this.Set<Facility>();
     public DbSet<FacilityUser> FacilityUsers => this.Set<FacilityUser>();
     public DbSet<FacilityBusinessHours> FacilityBusinessHours => this.Set<FacilityBusinessHours>();
-    public DbSet<FacilityAddress> FacilityAddresses => this.Set<FacilityAddress>();
     public DbSet<FacilityPolicy> FacilityPolicies => this.Set<FacilityPolicy>();
     public DbSet<FacilityHoliday> FacilityHolidays => this.Set<FacilityHoliday>();
     public DbSet<FacilityUserPermissionsCache> FacilityUserPermissionsCaches => this.Set<FacilityUserPermissionsCache>();
@@ -46,16 +45,11 @@ public class MedockDbContext : DbContext
 
     // 業務系
     public DbSet<Patient> Patients => this.Set<Patient>();
-    public DbSet<PatientAddress> PatientAddresses => this.Set<PatientAddress>();
-    public DbSet<PatientInsuranceCard> PatientInsuranceCards => this.Set<PatientInsuranceCard>();
     public DbSet<Organization> Organizations => this.Set<Organization>();
-    public DbSet<OrganizationAddress> OrganizationAddresses => this.Set<OrganizationAddress>();
-    public DbSet<OrganizationInsurance> OrganizationInsurances => this.Set<OrganizationInsurance>();
     public DbSet<OrganizationMember> OrganizationMembers => this.Set<OrganizationMember>();
     public DbSet<Appointment> Appointments => this.Set<Appointment>();
     public DbSet<AppointmentResource> AppointmentResources => this.Set<AppointmentResource>();
-    public DbSet<AppointmentResourceGroup> AppointmentResourceGroups => this.Set<AppointmentResourceGroup>();
-    public DbSet<AppointmentResourceGroupMember> AppointmentResourceGroupMembers => this.Set<AppointmentResourceGroupMember>();
+    public DbSet<AppointmentResourceMember> AppointmentResourceMembers => this.Set<AppointmentResourceMember>();
     public DbSet<AppointmentSchedule> AppointmentSchedules => this.Set<AppointmentSchedule>();
     public DbSet<AppointmentScheduleSlot> AppointmentScheduleSlots => this.Set<AppointmentScheduleSlot>();
     public DbSet<AppointmentScheduleOverride> AppointmentScheduleOverrides => this.Set<AppointmentScheduleOverride>();
@@ -72,7 +66,6 @@ public class MedockDbContext : DbContext
 
     // マスタ系
     public DbSet<Holiday> Holidays => this.Set<Holiday>();
-    public DbSet<InsuranceProvider> InsuranceProviders => this.Set<InsuranceProvider>();
     public DbSet<Policy> Policies => this.Set<Policy>();
     public DbSet<Preference> Preferences => this.Set<Preference>();
     public DbSet<UserPreference> UserPreferences => this.Set<UserPreference>();

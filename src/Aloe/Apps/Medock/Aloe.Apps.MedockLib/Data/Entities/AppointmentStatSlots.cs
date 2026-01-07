@@ -24,6 +24,7 @@ public class AppointmentStatSlots : IAuditableEntity
 
     /// <summary>予約リソースID</summary>
     [Column("appt_res_id")]
+    [ForeignKey("AppointmentResource")]
     public Guid ApptResId { get; set; }
 
     /// <summary>スロット開始時刻（分単位、0:00からの分）</summary>
@@ -44,6 +45,7 @@ public class AppointmentStatSlots : IAuditableEntity
 
     /// <summary>利用可能数（GENERATEDカラム、読み取り専用）</summary>
     [Column("slot_available")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public int SlotAvailable { get; set; }
 
     /// <summary>削除フラグ</summary>

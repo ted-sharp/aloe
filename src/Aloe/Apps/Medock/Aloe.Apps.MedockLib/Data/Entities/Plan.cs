@@ -19,6 +19,10 @@ public class Plan : IAuditableEntity
     [ForeignKey("Facility")]
     public Guid FacilityId { get; set; }
 
+    /// <summary>プランタイプコード (0: None, 1: Plan, 2: Option, 99: Others)</summary>
+    [Column("plan_type_code")]
+    public int PlanTypeCode { get; set; }
+
     /// <summary>プランコード</summary>
     [Column("plan_code")]
     [MaxLength(20)]
@@ -81,6 +85,7 @@ public class Plan : IAuditableEntity
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<PlanConditionMember> PlanConditionMembers { get; set; } = new List<PlanConditionMember>();
+    [InverseProperty("Plan")]
     public virtual ICollection<PlanOption> PlanOptions { get; set; } = new List<PlanOption>();
     public virtual ICollection<PlanResourceRequirement> PlanResourceRequirements { get; set; } = new List<PlanResourceRequirement>();
 }

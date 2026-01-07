@@ -71,9 +71,7 @@ public class Facility : IAuditableEntity
     public virtual ICollection<Patient> Patients { get; set; } = new List<Patient>();
     public virtual ICollection<Organization> Organizations { get; set; } = new List<Organization>();
     public virtual ICollection<FacilityBusinessHours> FacilityBusinessHours { get; set; } = new List<FacilityBusinessHours>();
-    public virtual ICollection<FacilityAddress> FacilityAddresses { get; set; } = new List<FacilityAddress>();
     public virtual ICollection<FacilityPolicy> FacilityPolicies { get; set; } = new List<FacilityPolicy>();
-    public virtual ICollection<AppointmentResourceGroup> AppointmentResourceGroups { get; set; } = new List<AppointmentResourceGroup>();
     public virtual ICollection<FacilityHoliday> FacilityHolidays { get; set; } = new List<FacilityHoliday>();
 }
 

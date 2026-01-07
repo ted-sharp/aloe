@@ -35,7 +35,7 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
             await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             var floorIdList = floorIds.ToList();
-            var resourceGroupIdList = resourceGroupIds.ToList();
+            // resourceGroupIds は現在使用しない（AppointmentResourceGroup削除のため）
             var planIdList = planIds.ToList();
             var optionPlanIdList = optionPlanIds.ToList();
 
@@ -52,25 +52,6 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
                     .ToListAsync();
 
                 foreach (var resourceId in floorResourceIds)
-                {
-                    autoResourceIds.Add(resourceId);
-                }
-            }
-
-            // 選択されているリソースグループに関連するリソース
-            if (resourceGroupIdList.Any())
-            {
-                var groupResourceIds = await context.AppointmentResourceGroupMembers
-                    .AsNoTracking()
-                    .Where(m => !m.IsDeleted &&
-                               resourceGroupIdList.Contains(m.ApptResGroupId) &&
-                               m.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                               !m.AppointmentResource.IsDeleted)
-                    .Select(m => m.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-
-                foreach (var resourceId in groupResourceIds)
                 {
                     autoResourceIds.Add(resourceId);
                 }

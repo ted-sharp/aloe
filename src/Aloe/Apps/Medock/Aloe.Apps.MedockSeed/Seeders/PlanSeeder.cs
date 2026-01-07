@@ -26,6 +26,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "BASIC",
                 PlanName = "基本健診",
                 PlanShortName = "基本健診",
@@ -42,6 +43,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "DOCK",
                 PlanName = "人間ドック",
                 PlanShortName = "人間ドック",
@@ -58,6 +60,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "SPECIFIC",
                 PlanName = "特定健診",
                 PlanShortName = "特定健診",
@@ -74,6 +77,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 2, // Option
                 PlanCode = "OPT_CT",
                 PlanName = "CT検査オプション",
                 PlanShortName = "CTオプション",
@@ -89,6 +93,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 2, // Option
                 PlanCode = "OPT_MR",
                 PlanName = "MR検査オプション",
                 PlanShortName = "MRオプション",
@@ -104,6 +109,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 2, // Option
                 PlanCode = "OPT_ENDOSCOPE",
                 PlanName = "内視鏡検査オプション",
                 PlanShortName = "内視鏡オプション",
@@ -119,6 +125,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 2, // Option
                 PlanCode = "OPT_ECHO",
                 PlanName = "エコー検査オプション",
                 PlanShortName = "エコーオプション",
@@ -135,6 +142,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "WOMAN",
                 PlanName = "女性健診プラン",
                 PlanShortName = "女性健診",
@@ -151,6 +159,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "SENIOR",
                 PlanName = "高齢者健診プラン",
                 PlanShortName = "高齢者健診",
@@ -167,6 +176,7 @@ internal static class PlanSeeder
             {
                 PlanId = Guid.CreateVersion7(),
                 FacilityId = facilityId,
+                PlanTypeCode = 1, // Plan
                 PlanCode = "PREMIUM",
                 PlanName = "プレミアム健診プラン",
                 PlanShortName = "プレミアム",

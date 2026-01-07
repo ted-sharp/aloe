@@ -46,7 +46,7 @@ public class FacilityService : IFacilityService
                 .OrderByDescending(fbh => fbh.ActiveFrom) // 最新の設定を優先
                 .FirstOrDefaultAsync();
 
-            if (businessHours == null || businessHours.BusinessHoursData == null)
+            if (businessHours == null)
             {
                 // No business hours found, return default values - this is a normal condition, not an error
                 this._logger.LogDebug("No business hours found for facility {FacilityId} on date {Date:yyyy-MM-dd}, using defaults",
@@ -54,13 +54,12 @@ public class FacilityService : IFacilityService
                 return Result<BusinessHoursDto>.Success(GetDefaultBusinessHoursDto());
             }
 
-            var businessHoursData = businessHours.BusinessHoursData;
             var dto = new BusinessHoursDto
             {
-                StartTime = businessHoursData.Start ?? BusinessHoursConstants.DefaultStartTime,
-                EndTime = businessHoursData.End ?? BusinessHoursConstants.DefaultEndTime,
-                LunchStartTime = businessHoursData.Lunch?.Start ?? BusinessHoursConstants.DefaultLunchStartTime,
-                LunchEndTime = businessHoursData.Lunch?.End ?? BusinessHoursConstants.DefaultLunchEndTime
+                StartTime = FacilityBusinessHours.MinutesToTimeString(businessHours.WorkStartMin),
+                EndTime = FacilityBusinessHours.MinutesToTimeString(businessHours.WorkEndMin),
+                LunchStartTime = FacilityBusinessHours.MinutesToTimeString(businessHours.LunchStartMin),
+                LunchEndTime = FacilityBusinessHours.MinutesToTimeString(businessHours.LunchEndMin)
             };
             return Result<BusinessHoursDto>.Success(dto);
         }

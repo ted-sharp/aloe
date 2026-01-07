@@ -79,6 +79,5 @@ public class AppointmentResource : IAuditableEntity
     public virtual ICollection<AppointmentSchedule> AppointmentSchedules { get; set; } = new List<AppointmentSchedule>();
     public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
     public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
-    public virtual ICollection<AppointmentResourceGroupMember> AppointmentResourceGroupMembers { get; set; } = new List<AppointmentResourceGroupMember>();
 }
 

@@ -2,11 +2,10 @@ namespace Aloe.Apps.MedockLib.Data.Entities;
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json;
 
 /// <summary>
 /// 施設営業時間エンティティ
-/// 施設ごとの営業時間をJSONBで保持
+/// 施設ごとの営業時間を保持
 /// </summary>
 [Table("facility_business_hours")]
 public class FacilityBusinessHours : IAuditableEntity
@@ -21,40 +20,21 @@ public class FacilityBusinessHours : IAuditableEntity
     [ForeignKey("Facility")]
     public Guid FacilityId { get; set; }
 
-    /// <summary>
-    /// 営業時間定義（JSONB）
-    /// 例: { "start": "09:00", "end": "18:00", "lunch": { "start": "12:00", "end": "13:00" } }
-    /// </summary>
-    [Column("business_hours")]
-    public string BusinessHours { get; set; } = "{}";
+    /// <summary>始業時間（0時からの分数、例: 09:00 = 540）</summary>
+    [Column("work_start_min")]
+    public int WorkStartMin { get; set; }
 
-    /// <summary>
-    /// 営業時間定義（型安全なアクセサー）
-    /// BusinessHours の JSONB データを型安全にアクセスするためのプロパティ
-    /// </summary>
-    [NotMapped]
-    public FacilityBusinessHoursRoot? BusinessHoursData
-    {
-        get
-        {
-            if (String.IsNullOrWhiteSpace(this.BusinessHours) || this.BusinessHours == "{}")
-                return null;
-            try
-            {
-                return JsonSerializer.Deserialize<FacilityBusinessHoursRoot>(this.BusinessHours);
-            }
-            catch (JsonException)
-            {
-                return null;
-            }
-        }
-        set
-        {
-            this.BusinessHours = value != null
-                ? JsonSerializer.Serialize(value)
-                : "{}";
-        }
-    }
+    /// <summary>終業時間（0時からの分数、例: 18:00 = 1080）</summary>
+    [Column("work_end_min")]
+    public int WorkEndMin { get; set; }
+
+    /// <summary>昼休み開始時間（0時からの分数、例: 12:00 = 720）</summary>
+    [Column("lunch_start_min")]
+    public int LunchStartMin { get; set; }
+
+    /// <summary>昼休み終了時間（0時からの分数、例: 13:00 = 780）</summary>
+    [Column("lunch_end_min")]
+    public int LunchEndMin { get; set; }
 
     /// <summary>有効フラグ</summary>
     [Column("is_active")]
@@ -88,4 +68,26 @@ public class FacilityBusinessHours : IAuditableEntity
 
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
+
+    /// <summary>
+    /// 分数から "HH:mm" 形式の文字列に変換
+    /// </summary>
+    public static string MinutesToTimeString(int minutes)
+    {
+        var hours = minutes / 60;
+        var mins = minutes % 60;
+        return $"{hours:D2}:{mins:D2}";
+    }
+
+    /// <summary>
+    /// "HH:mm" 形式の文字列から分数に変換
+    /// </summary>
+    public static int TimeStringToMinutes(string timeString)
+    {
+        var parts = timeString.Split(':');
+        if (parts.Length != 2) return 0;
+        if (!int.TryParse(parts[0], out var hours)) return 0;
+        if (!int.TryParse(parts[1], out var mins)) return 0;
+        return hours * 60 + mins;
+    }
 }

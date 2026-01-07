@@ -95,9 +95,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
                 .ThenInclude(r => r.Floor)
-            .Include(s => s.AppointmentResource)
-                .ThenInclude(r => r.AppointmentResourceGroupMembers)
-                    .ThenInclude(m => m.AppointmentResourceGroup)
             .Where(s => !s.IsDeleted &&
                         !s.AppointmentResource.IsDeleted &&
                         s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
@@ -108,13 +105,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         if (floorIds != null && floorIds.Any())
         {
             query = query.Where(s => floorIds.Contains(s.AppointmentResource.FloorId));
-        }
-
-        // リソースグループフィルター
-        if (resourceGroupIds != null && resourceGroupIds.Any())
-        {
-            query = query.Where(s => s.AppointmentResource.AppointmentResourceGroupMembers
-                .Any(m => !m.IsDeleted && resourceGroupIds.Contains(m.AppointmentResourceGroup.ApptResGroupId)));
         }
 
         // リソースフィルター

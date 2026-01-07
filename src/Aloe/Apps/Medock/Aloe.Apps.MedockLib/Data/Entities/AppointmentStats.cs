@@ -40,6 +40,7 @@ public class AppointmentStats : IAuditableEntity
 
     /// <summary>利用可能数（GENERATEDカラム、読み取り専用）</summary>
     [Column("appt_available")]
+    [DatabaseGenerated(DatabaseGeneratedOption.Computed)]
     public int ApptAvailable { get; set; }
 
     /// <summary>削除フラグ</summary>

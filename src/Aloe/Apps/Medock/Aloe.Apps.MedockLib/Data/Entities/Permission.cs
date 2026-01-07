@@ -46,6 +46,8 @@ public class Permission : IAuditableEntity
     public Guid UpdatedSessionId { get; set; }
 
     // Navigation Properties
+    public virtual Feature Feature { get; set; } = null!;
+    public virtual Operation Operation { get; set; } = null!;
     public virtual ICollection<RolePermission> RolePermissions { get; set; } = new List<RolePermission>();
 }
 
