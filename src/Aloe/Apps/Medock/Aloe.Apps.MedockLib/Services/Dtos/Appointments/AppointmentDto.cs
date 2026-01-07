@@ -1,6 +1,4 @@
-namespace Aloe.Apps.MedockLib.Services.Dtos;
-
-// TODO: AppointmentDts, CreateAppointmentAtd, UpdateAppointmentDto をAppointmentDtosフォルダにまとめたい
+namespace Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 /// <summary>
 /// 予約DTO
 /// </summary>
@@ -8,12 +6,7 @@ public class AppointmentDto
 {
     public Guid Id { get; set; }
     public DateOnly Date { get; set; }
-
-    // TODO: int StartMin に変更予定
-    public TimeOnly? StartTime { get; set; }
-    // TODO: 削除予定
-    public TimeOnly? EndTime { get; set; }
-
+    public int StartMin { get; set; }
     public string? PatientName { get; set; }
     public Guid? PatientId { get; set; }
     public string? OrganizationName { get; set; }

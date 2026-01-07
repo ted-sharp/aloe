@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Microsoft.AspNetCore.Components;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
@@ -28,10 +29,10 @@ public partial class DayView : ComponentBase
         foreach (var appt in this.Appointments)
         {
             if (appt.Date != this.CurrentDate) continue;
-            if (appt.StartTime == null) continue;
+            // if (appt.StartTime == null) continue; // StartMin is int, always valid
 
             // 予約の開始時間がこの時間帯に含まれるか、または予約がこの時間帯と重なる場合
-            if (appt.StartTime.Value >= hourStart && appt.StartTime.Value < hourEnd)
+            if (appt.StartMin >= hourStart.Hour * 60 && appt.StartMin < (hour + 1) * 60)
             {
                 yield return (
                     appt.PatientName ?? "未設定",

@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;

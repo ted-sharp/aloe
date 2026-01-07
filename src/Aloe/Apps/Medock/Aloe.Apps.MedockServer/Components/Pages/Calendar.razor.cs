@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Layout;
 using Aloe.Apps.MedockServer.Components.FAB;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
+using Microsoft.JSInterop;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -45,6 +47,9 @@ public partial class Calendar : ComponentBase
 
     [Inject]
     private ILogger<Calendar> Logger { get; set; } = default!;
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
 
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
@@ -627,9 +632,7 @@ public partial class Calendar : ComponentBase
             var appt = this.State.Appointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
             if (appt != null)
             {
-                var duration = appt.EndTime.HasValue && appt.StartTime.HasValue
-                    ? appt.EndTime.Value - appt.StartTime.Value
-                    : TimeSpan.FromHours(1);
+                var duration = TimeSpan.FromHours(1); // EndTime removed, default to 1 hour
                 var newEndTime = moveInfo.NewTime.Add(duration);
 
                 var result = await this.AppointmentService.UpdateAppointmentAsync(
@@ -637,14 +640,14 @@ public partial class Calendar : ComponentBase
                     new UpdateAppointmentDto
                     {
                         Date = moveInfo.NewDate,
-                        StartTime = moveInfo.NewTime,
-                        EndTime = newEndTime
+                        StartMin = moveInfo.NewTime.Hour * 60 + moveInfo.NewTime.Minute,
+                        // EndTime = newEndTime
                     });
 
                 if (!result.IsSuccess)
                 {
                     this.Logger.LogWarning("Failed to move appointment {ApptId}: {ErrorMessage}", moveInfo.ApptId, result.ErrorMessage);
-                    // TODO: ユーザーにエラー表示（ToastやSnackbar等）
+                    await this.JSRuntime.InvokeVoidAsync("alert", $"予約の移動に失敗しました: {result.ErrorMessage}");
                     return;
                 }
 

@@ -38,7 +38,13 @@ public partial class Home : ComponentBase
                     var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(userId);
                     if (facilities.Count > 1)
                     {
-                        // TODO: 施設選択済みであれば、カレンダーへ移動したい
+                        // 施設選択済みであれば、カレンダーへ移動
+                        var facilityIdClaim = authState.User.FindFirst("facility_id")?.Value;
+                        if (!String.IsNullOrEmpty(facilityIdClaim))
+                        {
+                            this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+                            return;
+                        }
 
                         // 複数施設がある場合は施設選択画面へ
                         this.NavigationManager.NavigateTo("/facility-select", forceLoad: true);

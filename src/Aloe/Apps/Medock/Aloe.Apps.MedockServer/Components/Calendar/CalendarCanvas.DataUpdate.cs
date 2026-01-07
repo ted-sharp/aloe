@@ -1,6 +1,7 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Microsoft.JSInterop;
 using System.Diagnostics;
 using System.Text.Json;

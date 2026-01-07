@@ -6,6 +6,7 @@ using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Logging;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -150,8 +151,8 @@ public class AppointmentService : IAppointmentService
             {
                 ApptId = Guid.CreateVersion7(),
                 ApptDate = dto.Date,
-                ApptStartMin = dto.StartTime.HasValue
-                    ? dto.StartTime.Value.Hour * 60 + dto.StartTime.Value.Minute
+                ApptStartMin = dto.StartMin.HasValue
+                    ? dto.StartMin.Value
                     : 540, // Default: 9:00 AM
                 PtId = dto.PatientId,
                 OrgId = dto.OrganizationId,
@@ -276,8 +277,8 @@ public class AppointmentService : IAppointmentService
             }
 
             if (dto.Date.HasValue) appointment.ApptDate = dto.Date.Value;
-            if (dto.StartTime.HasValue)
-                appointment.ApptStartMin = dto.StartTime.Value.Hour * 60 + dto.StartTime.Value.Minute;
+            if (dto.StartMin.HasValue)
+                appointment.ApptStartMin = dto.StartMin.Value;
             if (dto.PatientId.HasValue) appointment.PtId = dto.PatientId.Value;
             if (dto.OrganizationId.HasValue) appointment.OrgId = dto.OrganizationId.Value;
             if (dto.FloorId.HasValue) appointment.FloorId = dto.FloorId.Value;
@@ -447,8 +448,7 @@ public class AppointmentService : IAppointmentService
         {
             Id = appointment.ApptId,
             Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
-            StartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(appointment.ApptStartMin)),
-            EndTime = null,
+            StartMin = appointment.ApptStartMin,
             PatientId = appointment.PtId,
             PatientName = appointment.Patient?.PtName,
             OrganizationId = appointment.OrgId,

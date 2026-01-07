@@ -3,6 +3,7 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -156,10 +157,8 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = dto.Date,
-                StartTimeString = dto.StartTime?.ToString("HH:mm")
-                    ?? BusinessHoursConstants.DefaultAppointmentStartTime,
-                EndTimeString = dto.EndTime?.ToString("HH:mm")
-                    ?? BusinessHoursConstants.DefaultAppointmentEndTime,
+                StartTimeString = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(dto.StartMin)).ToString("HH:mm"),
+                EndTimeString = BusinessHoursConstants.DefaultAppointmentEndTime, // EndTime removed from DTO
                 Status = dto.Status,
                 PatientName = dto.PatientName ?? String.Empty,
                 OrganizationName = dto.OrganizationName ?? String.Empty,
@@ -306,8 +305,10 @@ public partial class AppointmentModal : ComponentBase
         var dto = new UpdateAppointmentDto
         {
             Date = this.FormModel.Date,
-            StartTime = this.FormModel.StartTime,
-            EndTime = this.FormModel.EndTime,
+            StartMin = this.FormModel.StartTime.HasValue
+                ? this.FormModel.StartTime.Value.Hour * 60 + this.FormModel.StartTime.Value.Minute
+                : null,
+            // EndTime = this.FormModel.EndTime, // Removed from DTO
             Status = this.FormModel.Status,
             PatientId = this.FormModel.PatientId,
             OrganizationId = this.FormModel.OrganizationId,
@@ -401,8 +402,10 @@ public partial class AppointmentModal : ComponentBase
             var dto = new CreateAppointmentDto
             {
                 Date = this.FormModel.Date,
-                StartTime = this.FormModel.StartTime,
-                EndTime = this.FormModel.EndTime,
+                StartMin = this.FormModel.StartTime.HasValue
+                    ? this.FormModel.StartTime.Value.Hour * 60 + this.FormModel.StartTime.Value.Minute
+                    : null,
+                // EndTime = this.FormModel.EndTime, // Removed from DTO
                 Status = this.FormModel.Status,
                 PatientId = patientId,
                 OrganizationId = organizationId,

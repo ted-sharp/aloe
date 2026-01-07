@@ -352,7 +352,9 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             // バーがクリックされた
             const bar = hitResult.data;
             console.log('Bar clicked:', bar);
-            // TODO: バーの詳細を表示
+            if (state.dotNetRef && bar.data && bar.data.id) {
+                state.dotNetRef.invokeMethodAsync('OnAppointmentClicked', bar.data.id);
+            }
             return;
         }
 
@@ -508,7 +510,11 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             // 月ヘッダーがクリックされた（年間ビュー用）
             const month = hitResult.data;
             console.log('Month header clicked:', month);
-            // TODO: 月ヘッダーのクリック処理
+            if (state.dotNetRef) {
+                const year = state.currentDate.getFullYear();
+                const monthIndex = typeof month === 'object' ? month.index : month;
+                state.dotNetRef.invokeMethodAsync('OnMonthClicked', year, monthIndex + 1);
+            }
         }
     });
 
