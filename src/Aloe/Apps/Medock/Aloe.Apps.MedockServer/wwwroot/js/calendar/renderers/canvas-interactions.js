@@ -364,8 +364,8 @@ export function setupCanvasInteractions(canvasManager, state, setState, render) 
             const { dateStr, slotIndex, stats, appointment } = slot;
 
             // スロットデータを取得
-            const startMinutes = stats.slotStarts[slotIndex];
-            const endMinutes = stats.slotEnds[slotIndex];
+            const startMinutes = stats.slotStartMins[slotIndex];
+            const endMinutes = stats.slotEndMins[slotIndex];
             const cap = stats.slotCaps[slotIndex];
             const count = stats.slotCounts[slotIndex];
             const flags = stats.slotFlags ? stats.slotFlags[slotIndex] : 0;

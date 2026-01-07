@@ -73,8 +73,8 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
 
     // 時間帯枠データを取得（並列配列形式）
     const stats = state.mainStats.get(dateStr);
-    const slotStarts = stats?.slotStarts || [];
-    const slotEnds = stats?.slotEnds || [];
+    const slotStarts = stats?.slotStartMins || [];
+    const slotEnds = stats?.slotEndMins || [];
     const slotCounts = stats?.slotCounts || [];
     const slotCaps = stats?.slotCaps || [];
     const slotAvailables = stats?.slotAvailables || [];

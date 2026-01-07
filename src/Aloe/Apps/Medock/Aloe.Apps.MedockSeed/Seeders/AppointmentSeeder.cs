@@ -672,6 +672,7 @@ internal static class AppointmentSeeder
                             .Take(equipmentCount)
                             .ToList();
 
+
                         foreach (var equipment in selectedEquipments)
                         {
                             // 上限チェック（念のため）
@@ -689,7 +690,27 @@ internal static class AppointmentSeeder
                                 resourceAssignments.Add(equipmentAssignment);
 
                                 // Track Equipment resource assignment in aggregation
-                                var equipmentAgg = (equipment.ApptResId, appointment.ApptDate!.Value, appointment.ApptStartMin);
+                                // Determine the correct slot start time (aggregation key) based on equipment's schedule
+                                // This matches the logic used for Main resources (line 500): use slot start time if within a configured slot,
+                                // otherwise use the actual appointment start time (for out-of-hours appointments)
+                                var aggTime = appointment.ApptStartMin;
+                                if (equipmentSlots.TryGetValue(equipment.ApptResId, out var slots) && slots.Any())
+                                {
+                                    // Find if this appointment time falls into any configured slot for this equipment
+                                    // Match logic: appointment time >= slot start AND < slot end
+                                    var matchedSlot = slots.FirstOrDefault(s => aggTime >= s.SlotStartMin && aggTime < s.SlotEndMin);
+                                    
+                                    // Check if a valid slot was matched (not default tuple value)
+                                    // Default tuple is (0, 0, 0), but we also need to handle edge case where 0:00 might be a valid slot
+                                    // More robust check: ensure both SlotStartMin and SlotEndMin are set (SlotEndMin > SlotStartMin)
+                                    if (matchedSlot.SlotEndMin > matchedSlot.SlotStartMin)
+                                    {
+                                        aggTime = matchedSlot.SlotStartMin;
+                                    }
+                                    // If no slot matched, aggTime remains as appointment.ApptStartMin (out-of-hours appointment)
+                                }
+
+                                var equipmentAgg = (equipment.ApptResId, appointment.ApptDate!.Value, aggTime);
                                 if (daySlotAggregation.ContainsKey(equipmentAgg))
                                 {
                                     daySlotAggregation[equipmentAgg]++;
@@ -703,6 +724,7 @@ internal static class AppointmentSeeder
                                 equipmentCurrentCounts[equipment.ApptResId]++;
                             }
                         }
+
                     }
                 }
             }

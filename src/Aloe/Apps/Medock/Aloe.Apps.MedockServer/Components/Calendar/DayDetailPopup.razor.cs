@@ -444,8 +444,8 @@ public partial class DayDetailPopup : ComponentBase
         {
             return new
             {
-                slotStarts = new int[] { },
-                slotEnds = new int[] { },
+                slotStartMins = new int[] { },
+                slotEndMins = new int[] { },
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
@@ -459,8 +459,8 @@ public partial class DayDetailPopup : ComponentBase
         {
             return new
             {
-                slotStarts = new int[] { },
-                slotEnds = new int[] { },
+                slotStartMins = new int[] { },
+                slotEndMins = new int[] { },
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
@@ -479,8 +479,8 @@ public partial class DayDetailPopup : ComponentBase
         {
             return new
             {
-                slotStarts = new int[] { },
-                slotEnds = new int[] { },
+                slotStartMins = new int[] { },
+                slotEndMins = new int[] { },
                 slotCounts = new int[] { },
                 slotCaps = new int[] { },
                 slotAvailables = new int[] { },
@@ -540,8 +540,8 @@ public partial class DayDetailPopup : ComponentBase
 
         return new
         {
-            slotStarts = slotStarts,
-            slotEnds = slotEnds,
+            slotStartMins = slotStarts,
+            slotEndMins = slotEnds,
             slotCounts = slotCounts,
             slotCaps = slotCaps,
             slotAvailables = slotAvailables,

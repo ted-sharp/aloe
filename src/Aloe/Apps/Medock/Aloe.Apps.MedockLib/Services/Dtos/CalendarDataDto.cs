@@ -60,12 +60,12 @@ public class ResourceStatSlotsDto
     /// <summary>
     /// スロット開始時刻の配列（分単位、0:00からの分数）
     /// </summary>
-    public int[] SlotStarts { get; set; } = Array.Empty<int>();
+    public int[] SlotStartMins { get; set; } = Array.Empty<int>();
 
     /// <summary>
     /// スロット終了時刻の配列（分単位、0:00からの分数）
     /// </summary>
-    public int[] SlotEnds { get; set; } = Array.Empty<int>();
+    public int[] SlotEndMins { get; set; } = Array.Empty<int>();
 
     /// <summary>
     /// スロット使用数の配列（Main用、Equipmentの場合は空配列）

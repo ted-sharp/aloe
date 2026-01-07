@@ -156,8 +156,8 @@ public class CalendarDataService : ICalendarDataService
                     ResourceName = null, // Mainでは使用しない
                     TotalAvailable = 0, // Mainでは使用しない
                     TotalCapacity = 0, // Mainでは使用しない
-                    SlotStarts = slotStarts,
-                    SlotEnds = slotEnds,
+                    SlotStartMins = slotStarts,
+                    SlotEndMins = slotEnds,
                     SlotCounts = slotCounts,
                     SlotCaps = slotCaps,
                     SlotAvailables = slotAvailables,

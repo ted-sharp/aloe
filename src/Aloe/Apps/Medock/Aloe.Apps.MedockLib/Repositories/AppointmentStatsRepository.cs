@@ -280,8 +280,8 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                     ResourceName = item.ResourceName ?? String.Empty,
                     TotalCapacity = item.TotalCapacity,
                     TotalAvailable = item.TotalAvailable,
-                    SlotStarts = slotStartMinutes,
-                    SlotEnds = slotEndMinutes,
+                    SlotStartMins = slotStartMinutes,
+                    SlotEndMins = slotEndMinutes,
                     SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
                     SlotCaps = item.SlotCaps ?? Array.Empty<int>(), // 空き率計算用
                     SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),

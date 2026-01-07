@@ -61,23 +61,24 @@ function computeAndCompositeSlots(resources) {
     // 単一リソースの場合はそのまま空き率を計算
     if (resources.length === 1) {
         const resource = resources[0];
-        const { slotStarts, slotEnds, slotAvailables, slotCaps } = resource;
-        if (!slotStarts || slotStarts.length === 0) {
+        // NOTE: DTO uses slotStartMins, slotEndMins (integers)
+        const { slotStartMins, slotEndMins, slotAvailables, slotCaps } = resource;
+        if (!slotStartMins || slotStartMins.length === 0) {
             return [];
         }
 
         const result = [];
-        for (let i = 0; i < slotStarts.length; i++) {
-            const startMinutes = slotStarts[i];  // 既にint（分）
-            const endMinutes = slotEnds[i];      // 既にint（分）
+        for (let i = 0; i < slotStartMins.length; i++) {
+            const startMin = slotStartMins[i];
+            const endMin = slotEndMins[i];
             const available = slotAvailables[i] || 0;
             const capacity = slotCaps[i] || 0;
-            // 空き率を計算（オーバーブッキング時は負の値になり、下に突き抜けて表示される）
+            // 空き率を計算
             const availabilityRate = capacity > 0 ? (available / capacity) * 100 : 0;
 
             result.push({
-                startHours: startMinutes / 60,
-                endHours: endMinutes / 60,
+                startHours: startMin / 60,
+                endHours: endMin / 60,
                 availabilityRate: availabilityRate
             });
         }
@@ -88,13 +89,11 @@ function computeAndCompositeSlots(resources) {
     // 全リソースの時間帯境界を収集
     const timePoints = new Set();
     resources.forEach(resource => {
-        const { slotStarts, slotEnds } = resource;
-        if (!slotStarts) return;
-        for (let i = 0; i < slotStarts.length; i++) {
-            const startMinutes = slotStarts[i];  // 既にint（分）
-            const endMinutes = slotEnds[i];      // 既にint（分）
-            timePoints.add(startMinutes);
-            timePoints.add(endMinutes);
+        const { slotStartMins, slotEndMins } = resource;
+        if (!slotStartMins) return;
+        for (let i = 0; i < slotStartMins.length; i++) {
+            timePoints.add(slotStartMins[i]);
+            timePoints.add(slotEndMins[i]);
         }
     });
 
@@ -112,26 +111,33 @@ function computeAndCompositeSlots(resources) {
         const segmentMid = (segmentStart + segmentEnd) / 2;
 
         // この時間区間に含まれる各リソースの空き率を計算
-        let minAvailabilityRate = 100; // 最大値から開始
+        let minAvailabilityRate = 100; // 最良の状態（空き100%）からスタート
         let hasData = false;
 
-        resources.forEach(resource => {
-            const { slotStarts, slotEnds, slotAvailables, slotCaps } = resource;
-            if (!slotStarts) return;
+        // AND合成: 全リソースが利用可能である必要がある
+        // 空き率 = min(各リソースの空き率)
+        // ただし、もしあるリソースにその時間帯のスロットが存在しない(=休み？)場合はどうする？
+        // ここでは「スロットが定義されているリソース」の間でのANDをとる
+        // （スロットがない=利用不可なら0%になるが、ここではスロットリストに含まれるかチェックしている）
 
-            for (let j = 0; j < slotStarts.length; j++) {
-                const slotStartMinutes = slotStarts[j].split(':').map(Number).reduce((h, m) => h * 60 + m);
-                const slotEndMinutes = slotEnds[j].split(':').map(Number).reduce((h, m) => h * 60 + m);
+        resources.forEach(resource => {
+            const { slotStartMins, slotEndMins, slotAvailables, slotCaps } = resource;
+            if (!slotStartMins) return;
+
+            for (let j = 0; j < slotStartMins.length; j++) {
+                const startMin = slotStartMins[j];
+                const endMin = slotEndMins[j];
 
                 // この区間がスロットに含まれるかチェック
-                if (segmentMid >= slotStartMinutes && segmentMid < slotEndMinutes) {
+                if (segmentMid >= startMin && segmentMid < endMin) {
                     const available = slotAvailables[j] || 0;
                     const capacity = slotCaps[j] || 0;
-                    // 空き率を計算（オーバーブッキング時は負の値になり、下に突き抜けて表示される）
                     const rate = capacity > 0 ? (available / capacity) * 100 : 0;
+
                     minAvailabilityRate = Math.min(minAvailabilityRate, rate);
                     hasData = true;
-                    break; // このリソースでは1つのスロットのみ
+                    // このリソースについてはこの時間帯の有効なスロットが見つかったのでbreak
+                    break;
                 }
             }
         });
@@ -182,7 +188,7 @@ export function renderCanvasLineChart(contentCtx, params) {
     const baselineY = barAreaTop + barAreaHeight;
 
     // 折れ線の色（単一色、Equipment用）
-    const lineColor = '#f59e0b'; // amber-500
+    const lineColor = '#fbbf24'; // amber-400 (少し明るく)
 
     // データポイントを生成（プラトー形状）
     const dataPoints = [];
@@ -201,8 +207,9 @@ export function renderCanvasLineChart(contentCtx, params) {
         // Y座標: 0-100%スケール（0%が下、100%が上）
         const y = baselineY - (slot.availabilityRate / 100) * barAreaHeight;
 
-        dataPoints.push({ x: startX, y: y });
-        dataPoints.push({ x: endX, y: y });
+        // timeプロパティを追加（ギャップ検知用）
+        dataPoints.push({ x: startX, y: y, time: slot.startHours });
+        dataPoints.push({ x: endX, y: y, time: slot.endHours });
     });
 
     // 折れ線を描画
@@ -211,16 +218,30 @@ export function renderCanvasLineChart(contentCtx, params) {
             const p1 = dataPoints[i];
             const p2 = dataPoints[i + 1];
 
-            drawLine(contentCtx, {
-                points: [p1.x, p1.y, p2.x, p2.y],
-                stroke: lineColor,
-                strokeWidth: 2,
-                opacity: 0.8
-            });
+            // 接続チェック
+            let isConnected = true;
+
+            // 奇数インデックス（p1=End, p2=Start）はスロット間の接続
+            // 時間差がある場合（ギャップ）は接続しない
+            if (i % 2 === 1) {
+                // 許容誤差 0.01時間 = 36秒
+                if (Math.abs(p2.time - p1.time) > 0.01) {
+                    isConnected = false;
+                }
+            }
+
+            if (isConnected) {
+                drawLine(contentCtx, {
+                    points: [p1.x, p1.y, p2.x, p2.y],
+                    stroke: lineColor,
+                    strokeWidth: 2,
+                    opacity: 0.8
+                });
+            }
         }
     }
 
-    // データポイントを描画（年間ビューでは小さく）
+    // データポイントを描画
     dataPoints.forEach(point => {
         drawCircle(contentCtx, {
             x: point.x,

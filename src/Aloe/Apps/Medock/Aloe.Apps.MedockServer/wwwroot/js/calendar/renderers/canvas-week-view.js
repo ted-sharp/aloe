@@ -289,9 +289,9 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         if (showSlots) {
             // 簡易表示モード: mainStatsの各スロットごとに記号を描画（月間ビューの棒グラフと同じロジック）
             const stats = state.mainStats?.get(dateStr);
-            if (stats && stats.slotStarts && stats.slotCaps && stats.slotCounts) {
-                const slotStarts = stats.slotStarts || [];
-                const slotEnds = stats.slotEnds || [];
+            if (stats && stats.slotStartMins && stats.slotCaps && stats.slotCounts) {
+                const slotStarts = stats.slotStartMins || [];
+                const slotEnds = stats.slotEndMins || [];
                 const slotCounts = stats.slotCounts || [];
                 const slotCaps = stats.slotCaps || [];
                 const slotFlags = stats.slotFlags || null;
@@ -457,7 +457,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
 
                 // スロット開始時刻（分）を計算してslotIndexを特定
                 const slotStartMinutes = hourNum * 60 + half * 30;
-                const slotIndex = stats?.slotStarts?.findIndex(start => start === slotStartMinutes) ?? -1;
+                const slotIndex = stats?.slotStartMins?.findIndex(start => start === slotStartMinutes) ?? -1;
 
                 // スロット枠の描画位置
                 const slotLeft = cellLeft + 2;

@@ -80,13 +80,13 @@ export function renderCanvasBarChart(contentCtx, params) {
     const {
         cellLeft, cellTop, cellWidth, cellHeight,
         dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
-        isDateGrayed, slotStarts, slotEnds, slotCounts, slotCaps, slotAvailables, slotFlags,
+        isDateGrayed, slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
         startHour, endHour,
         lunchStartHour, lunchEndHour, isYearView
     } = params;
 
     const renderState = getRenderState();
-    const slotCount = slotStarts.length;
+    const slotCount = slotStartMins.length;
 
     // データがない場合は描画しない
     const validIndices = [];
@@ -144,8 +144,8 @@ export function renderCanvasBarChart(contentCtx, params) {
     let hasOutsideHoursLunch = false;
 
     for (const idx of validIndices) {
-        const slotStart = slotStarts[idx];
-        const slotEnd = slotEnds[idx];
+        const slotStart = slotStartMins[idx];
+        const slotEnd = slotEndMins[idx];
         const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
 
         // フラグからisOutsideHoursを取得（ビット1）
@@ -209,8 +209,8 @@ export function renderCanvasBarChart(contentCtx, params) {
         // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
         const isSlotGrayed = (slotFlags && (slotFlags[idx] & 0b001) !== 0) || isDateGrayed;
 
-        const slotStartStr = slotStarts[idx];
-        const slotEndStr = slotEnds[idx];
+        const slotStartStr = slotStartMins[idx];
+        const slotEndStr = slotEndMins[idx];
         const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
         let slotStart = Math.max(startHour, timeRange.start);
         let slotEnd = Math.min(endHour, timeRange.end);
@@ -433,13 +433,13 @@ export function renderCanvasDayBarChart(contexts, state, params) {
 
     // 時間帯枠データを取得（並列配列形式）
     const stats = state.mainStats.get(dateStr);
-    const slotStarts = stats?.slotStarts || [];
-    const slotEnds = stats?.slotEnds || [];
+    const slotStartMins = stats?.slotStartMins || [];
+    const slotEndMins = stats?.slotEndMins || [];
     const slotCounts = stats?.slotCounts || [];
     const slotCaps = stats?.slotCaps || [];
     const slotAvailables = stats?.slotAvailables || [];
     const slotFlags = stats?.slotFlags || null;
-    const slotCount = slotStarts.length;
+    const slotCount = slotStartMins.length;
     // 営業時間情報を取得
     const businessHours = state.options?.businessHours;
 
@@ -564,7 +564,7 @@ export function renderCanvasDayBarChart(contexts, state, params) {
             cellLeft, cellTop, cellWidth, cellHeight,
             dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
             isDateGrayed,
-            slotStarts, slotEnds, slotCounts, slotCaps, slotAvailables, slotFlags,
+            slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
             startHour, endHour,
             lunchStartHour, lunchEndHour, isYearView
         });
