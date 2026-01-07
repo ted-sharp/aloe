@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2026/01/04 14:20:10
+-- Date/Time    : 2026/01/07 20:29:59
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -42,15 +42,15 @@ CREATE UNIQUE INDEX "appointment_resource_assignments_PKI"
 ALTER TABLE "appointment_resource_assignments"
   ADD CONSTRAINT "appointment_resource_assignments_PKC" PRIMARY KEY ("appt_res_assign_id");
 
--- appointment_resource_group_members
+-- appointment_resource_members
 -- * BackupToTempTable
-DROP TABLE if exists "appointment_resource_group_members" CASCADE;
+DROP TABLE if exists "appointment_resource_members" CASCADE;
 
 -- * RestoreFromTempTable
-CREATE TABLE "appointment_resource_group_members" (
-  "appt_res_group_member_id" UUID DEFAULT uuidv7() NOT NULL
+CREATE TABLE "appointment_resource_members" (
+  "appt_res_member_id" UUID DEFAULT uuidv7() NOT NULL
   , "appt_res_id" UUID NOT NULL
-  , "appt_res_group_id" UUID NOT NULL
+  , "member_appt_res_id" UUID NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
   , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
   , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
@@ -60,47 +60,14 @@ CREATE TABLE "appointment_resource_group_members" (
   , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
 ) ;
 
-CREATE INDEX "appointment_resource_group_members_IX1"
-  ON "appointment_resource_group_members"("appt_res_id");
+CREATE INDEX "appointment_resource_members_IX1"
+  ON "appointment_resource_members"("appt_res_id");
 
-CREATE INDEX "appointment_resource_group_members_IX2"
-  ON "appointment_resource_group_members"("appt_res_group_id");
+CREATE UNIQUE INDEX "appointment_resource_members_PKI"
+  ON "appointment_resource_members"("appt_res_member_id");
 
-CREATE UNIQUE INDEX "appointment_resource_group_members_PKI"
-  ON "appointment_resource_group_members"("appt_res_group_member_id");
-
-ALTER TABLE "appointment_resource_group_members"
-  ADD CONSTRAINT "appointment_resource_group_members_PKC" PRIMARY KEY ("appt_res_group_member_id");
-
--- appointment_resource_groups
--- * BackupToTempTable
-DROP TABLE if exists "appointment_resource_groups" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "appointment_resource_groups" (
-  "appt_res_group_id" UUID DEFAULT uuidv7() NOT NULL
-  , "facility_id" UUID NOT NULL
-  , "res_group_code" character varying(20) DEFAULT '' NOT NULL
-  , "res_group_name" character varying(100) DEFAULT '' NOT NULL
-  , "res_group_desc" character varying(1000) DEFAULT '' NOT NULL
-  , "res_group_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "appointment_resource_groups_IX1"
-  ON "appointment_resource_groups"("facility_id");
-
-CREATE UNIQUE INDEX "appointment_resource_groups_PKI"
-  ON "appointment_resource_groups"("appt_res_group_id");
-
-ALTER TABLE "appointment_resource_groups"
-  ADD CONSTRAINT "appointment_resource_groups_PKC" PRIMARY KEY ("appt_res_group_id");
+ALTER TABLE "appointment_resource_members"
+  ADD CONSTRAINT "appointment_resource_members_PKC" PRIMARY KEY ("appt_res_member_id");
 
 -- appointment_schedule_slot_cap_overrides
 -- * BackupToTempTable
@@ -298,53 +265,6 @@ CREATE UNIQUE INDEX "appointments_PKI"
 ALTER TABLE "appointments"
   ADD CONSTRAINT "appointments_PKC" PRIMARY KEY ("appt_id");
 
--- facility_addresses
--- * BackupToTempTable
-DROP TABLE if exists "facility_addresses" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "facility_addresses" (
-  "facility_adr_id" UUID DEFAULT uuidv7() NOT NULL
-  , "facility_id" UUID NOT NULL
-  , "adr_type_code" integer DEFAULT 0 NOT NULL
-  , "postal_code" character varying(7) DEFAULT '' NOT NULL
-  , "adr1" character varying(100) DEFAULT '' NOT NULL
-  , "adr2" character varying(100) DEFAULT '' NOT NULL
-  , "adr3" character varying(100) DEFAULT '' NOT NULL
-  , "attention_name" character varying(100) DEFAULT '' NOT NULL
-  , "tel" character varying(20) DEFAULT '' NOT NULL
-  , "tel2" character varying(20) DEFAULT '' NOT NULL
-  , "fax" character varying(20) DEFAULT '' NOT NULL
-  , "email" character varying(255) DEFAULT '' NOT NULL
-  , "adr_memo" character varying(1000) DEFAULT '' NOT NULL
-  , "adr_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "facility_addresses_IX1"
-  ON "facility_addresses"("facility_id");
-
-CREATE INDEX "facility_addresses_IX2"
-  ON "facility_addresses"("tel") WHERE tel <> '';
-
-CREATE INDEX "facility_addresses_IX3"
-  ON "facility_addresses"("tel2") WHERE tel2 <> '';
-
-CREATE INDEX "facility_addresses_IX4"
-  ON "facility_addresses"("email") WHERE email <> '';
-
-CREATE UNIQUE INDEX "facility_addresses_PKI"
-  ON "facility_addresses"("facility_adr_id");
-
-ALTER TABLE "facility_addresses"
-  ADD CONSTRAINT "facility_addresses_PKC" PRIMARY KEY ("facility_adr_id");
-
 -- facility_business_hours
 -- * BackupToTempTable
 DROP TABLE if exists "facility_business_hours" CASCADE;
@@ -353,7 +273,10 @@ DROP TABLE if exists "facility_business_hours" CASCADE;
 CREATE TABLE "facility_business_hours" (
   "facility_business_hours_id" UUID DEFAULT uuidv7() NOT NULL
   , "facility_id" UUID NOT NULL
-  , "business_hours" JSONB DEFAULT '{}' NOT NULL
+  , "work_start_min" integer DEFAULT 0 NOT NULL
+  , "work_end_min" integer DEFAULT 0 NOT NULL
+  , "lunch_start_min" integer DEFAULT 0 NOT NULL
+  , "lunch_end_min" integer DEFAULT 0 NOT NULL
   , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
   , "active_from" date DEFAULT CURRENT_DATE NOT NULL
   , "active_to" date DEFAULT '9999-12-31' NOT NULL
@@ -455,7 +378,7 @@ DROP TABLE if exists "facility_user_roles" CASCADE;
 
 -- * RestoreFromTempTable
 CREATE TABLE "facility_user_roles" (
-  "user_role_id" UUID DEFAULT uuidv7() NOT NULL
+  "facility_user_role_id" UUID DEFAULT uuidv7() NOT NULL
   , "facility_user_id" UUID NOT NULL
   , "role_code" character varying(10) NOT NULL
   , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
@@ -474,10 +397,10 @@ CREATE INDEX "facility_user_roles_IX2"
   ON "facility_user_roles"("role_code");
 
 CREATE UNIQUE INDEX "facility_user_roles_PKI"
-  ON "facility_user_roles"("user_role_id");
+  ON "facility_user_roles"("facility_user_role_id");
 
 ALTER TABLE "facility_user_roles"
-  ADD CONSTRAINT "facility_user_roles_PKC" PRIMARY KEY ("user_role_id");
+  ADD CONSTRAINT "facility_user_roles_PKC" PRIMARY KEY ("facility_user_role_id");
 
 -- facility_users
 -- * BackupToTempTable
@@ -533,118 +456,6 @@ CREATE UNIQUE INDEX "holidays_PKI"
 
 ALTER TABLE "holidays"
   ADD CONSTRAINT "holidays_PKC" PRIMARY KEY ("holiday_date");
-
--- insurance_providers
--- * BackupToTempTable
-DROP TABLE if exists "insurance_providers" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "insurance_providers" (
-  "insurer_id" UUID NOT NULL
-  , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
-  , "insurer_name" character varying(100) DEFAULT '' NOT NULL
-  , "insurer_short_name" character varying(100) DEFAULT '' NOT NULL
-  , "insurer_desc" character varying(1000) DEFAULT '' NOT NULL
-  , "insurer_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE UNIQUE INDEX "insurance_providers_PKI"
-  ON "insurance_providers"("insurer_id");
-
-ALTER TABLE "insurance_providers"
-  ADD CONSTRAINT "insurance_providers_PKC" PRIMARY KEY ("insurer_id");
-
--- organization_addresses
--- * BackupToTempTable
-DROP TABLE if exists "organization_addresses" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "organization_addresses" (
-  "org_adr_id" UUID DEFAULT uuidv7() NOT NULL
-  , "org_id" UUID NOT NULL
-  , "adr_type_code" integer DEFAULT 0 NOT NULL
-  , "postal_code" character varying(7) DEFAULT '' NOT NULL
-  , "adr1" character varying(100) DEFAULT '' NOT NULL
-  , "adr2" character varying(100) DEFAULT '' NOT NULL
-  , "adr3" character varying(100) DEFAULT '' NOT NULL
-  , "attention_name" character varying(100) DEFAULT '' NOT NULL
-  , "tel" character varying(20) DEFAULT '' NOT NULL
-  , "tel2" character varying(20) DEFAULT '' NOT NULL
-  , "fax" character varying(20) DEFAULT '' NOT NULL
-  , "email" character varying(255) DEFAULT '' NOT NULL
-  , "adr_memo" character varying(1000) DEFAULT '' NOT NULL
-  , "adr_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "organization_addresses_IX1"
-  ON "organization_addresses"("org_id");
-
-CREATE INDEX "organization_addresses_IX2"
-  ON "organization_addresses"("tel") WHERE tel <> '';
-
-CREATE INDEX "organization_addresses_IX3"
-  ON "organization_addresses"("tel2") WHERE tel2 <> '';
-
-CREATE INDEX "organization_addresses_IX4"
-  ON "organization_addresses"("email") WHERE email <> '';
-
-CREATE UNIQUE INDEX "organization_addresses_PKI"
-  ON "organization_addresses"("org_adr_id");
-
-ALTER TABLE "organization_addresses"
-  ADD CONSTRAINT "organization_addresses_PKC" PRIMARY KEY ("org_adr_id");
-
--- organization_insurances
--- * BackupToTempTable
-DROP TABLE if exists "organization_insurances" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "organization_insurances" (
-  "org_insurance_id" UUID DEFAULT uuidv7() NOT NULL
-  , "org_id" UUID NOT NULL
-  , "is_primary" BOOLEAN DEFAULT FALSE NOT NULL
-  , "insurer_id" UUID
-  , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
-  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
-  , "deactivated_on" date
-  , "org_insurance_memo" character varying(1000) DEFAULT '' NOT NULL
-  , "org_insurance_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "organization_insurances_IX1"
-  ON "organization_insurances"("org_id");
-
-CREATE INDEX "organization_insurances_IX2"
-  ON "organization_insurances"("insurer_id");
-
-CREATE UNIQUE INDEX "organization_insurances_PKI"
-  ON "organization_insurances"("org_insurance_id");
-
-ALTER TABLE "organization_insurances"
-  ADD CONSTRAINT "organization_insurances_PKC" PRIMARY KEY ("org_insurance_id");
 
 -- organization_members
 -- * BackupToTempTable
@@ -714,99 +525,6 @@ CREATE UNIQUE INDEX "organizations_PKI"
 
 ALTER TABLE "organizations"
   ADD CONSTRAINT "organizations_PKC" PRIMARY KEY ("org_id");
-
--- patient_addresses
--- * BackupToTempTable
-DROP TABLE if exists "patient_addresses" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "patient_addresses" (
-  "pt_adr_id" UUID DEFAULT uuidv7() NOT NULL
-  , "pt_id" UUID NOT NULL
-  , "adr_type_code" integer DEFAULT 0 NOT NULL
-  , "postal_code" character varying(7) DEFAULT '' NOT NULL
-  , "adr1" character varying(100) DEFAULT '' NOT NULL
-  , "adr2" character varying(100) DEFAULT '' NOT NULL
-  , "adr3" character varying(100) DEFAULT '' NOT NULL
-  , "attention_name" character varying(100) DEFAULT '' NOT NULL
-  , "tel" character varying(20) DEFAULT '' NOT NULL
-  , "tel2" character varying(20) DEFAULT '' NOT NULL
-  , "fax" character varying(20) DEFAULT '' NOT NULL
-  , "email" character varying(255) DEFAULT '' NOT NULL
-  , "adr_memo" character varying(1000) DEFAULT '' NOT NULL
-  , "adr_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "patient_addresses_IX1"
-  ON "patient_addresses"("pt_id");
-
-CREATE INDEX "patient_addresses_IX2"
-  ON "patient_addresses"("tel") WHERE tel <> '';
-
-CREATE INDEX "patient_addresses_IX3"
-  ON "patient_addresses"("tel2") WHERE tel2 <> '';
-
-CREATE INDEX "patient_addresses_IX4"
-  ON "patient_addresses"("email") WHERE email <> '';
-
-CREATE UNIQUE INDEX "patient_addresses_PKI"
-  ON "patient_addresses"("pt_adr_id");
-
-ALTER TABLE "patient_addresses"
-  ADD CONSTRAINT "patient_addresses_PKC" PRIMARY KEY ("pt_adr_id");
-
--- patient_insurance_cards
--- * BackupToTempTable
-DROP TABLE if exists "patient_insurance_cards" CASCADE;
-
--- * RestoreFromTempTable
-CREATE TABLE "patient_insurance_cards" (
-  "pt_insur_card_id" UUID DEFAULT uuidv7() NOT NULL
-  , "pt_id" UUID NOT NULL
-  , "is_primary" BOOLEAN DEFAULT FALSE NOT NULL
-  , "insurer_id" UUID
-  , "insurer_type_code" integer DEFAULT 0 NOT NULL
-  , "insurer_code" character varying(20) DEFAULT '' NOT NULL
-  , "insurer_name" character varying(100) DEFAULT '' NOT NULL
-  , "insured_code" character varying(20) DEFAULT '' NOT NULL
-  , "insured_code_symbol" character varying(100) DEFAULT '' NOT NULL
-  , "insured_code_number" character varying(20) DEFAULT '' NOT NULL
-  , "insured_code_branch_number" character varying(20) DEFAULT '' NOT NULL
-  , "insured_person_name" character varying(100) DEFAULT '' NOT NULL
-  , "self_family_relationship_code" integer DEFAULT 0 NOT NULL
-  , "assistance_code" integer DEFAULT 0 NOT NULL
-  , "continuation_code" integer DEFAULT 0 NOT NULL
-  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
-  , "deactivated_on" date
-  , "pt_insure_card_memo" character varying(1000) DEFAULT '' NOT NULL
-  , "pt_insure_card_seq" integer DEFAULT 0 NOT NULL
-  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
-  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
-  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
-) ;
-
-CREATE INDEX "patient_insurance_cards_IX1"
-  ON "patient_insurance_cards"("pt_id");
-
-CREATE INDEX "patient_insurance_cards_IX2"
-  ON "patient_insurance_cards"("insurer_id");
-
-CREATE UNIQUE INDEX "patient_insurance_cards_PKI"
-  ON "patient_insurance_cards"("pt_insur_card_id");
-
-ALTER TABLE "patient_insurance_cards"
-  ADD CONSTRAINT "patient_insurance_cards_PKC" PRIMARY KEY ("pt_insur_card_id");
 
 -- patients
 -- * BackupToTempTable
@@ -977,6 +695,7 @@ DROP TABLE if exists "plans" CASCADE;
 CREATE TABLE "plans" (
   "plan_id" UUID DEFAULT uuidv7() NOT NULL
   , "facility_id" UUID NOT NULL
+  , "plan_type_code" integer DEFAULT 0 NOT NULL
   , "plan_code" character varying(20) DEFAULT '' NOT NULL
   , "plan_name" character varying(100) DEFAULT '' NOT NULL
   , "plan_short_name" character varying(100) DEFAULT '' NOT NULL
@@ -1497,18 +1216,13 @@ ALTER TABLE "appointment_resource_assignments"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "appointment_resource_group_members"
-  ADD CONSTRAINT "appointment_resource_group_members_FK1" FOREIGN KEY ("appt_res_group_id") REFERENCES "appointment_resource_groups"("appt_res_group_id")
+ALTER TABLE "appointment_resource_members"
+  ADD CONSTRAINT "appointment_resource_members_FK1" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "appointment_resource_group_members"
-  ADD CONSTRAINT "appointment_resource_group_members_FK2" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "appointment_resource_groups"
-  ADD CONSTRAINT "appointment_resource_groups_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
+ALTER TABLE "appointment_resource_members"
+  ADD CONSTRAINT "appointment_resource_members_FK2" FOREIGN KEY ("member_appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1572,11 +1286,6 @@ ALTER TABLE "facilities"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "facility_addresses"
-  ADD CONSTRAINT "facility_addresses_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
 ALTER TABLE "facility_business_hours"
   ADD CONSTRAINT "facility_business_hours_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
   ON DELETE CASCADE
@@ -1622,16 +1331,6 @@ ALTER TABLE "floors"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
-ALTER TABLE "organization_addresses"
-  ADD CONSTRAINT "organization_addresses_FK1" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "organization_insurances"
-  ADD CONSTRAINT "organization_insurances_FK1" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
 ALTER TABLE "organization_members"
   ADD CONSTRAINT "organization_members_FK1" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
   ON DELETE CASCADE
@@ -1644,16 +1343,6 @@ ALTER TABLE "organization_members"
 
 ALTER TABLE "organizations"
   ADD CONSTRAINT "organizations_FK1" FOREIGN KEY ("facility_id") REFERENCES "facilities"("facility_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "patient_addresses"
-  ADD CONSTRAINT "patient_addresses_FK1" FOREIGN KEY ("pt_id") REFERENCES "patients"("pt_id")
-  ON DELETE CASCADE
-  ON UPDATE CASCADE;
-
-ALTER TABLE "patient_insurance_cards"
-  ADD CONSTRAINT "patient_insurance_cards_FK1" FOREIGN KEY ("pt_id") REFERENCES "patients"("pt_id")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1744,32 +1433,17 @@ COMMENT ON COLUMN "appointment_resource_assignments"."updated_at" IS 'updated_at
 COMMENT ON COLUMN "appointment_resource_assignments"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_resource_assignments"."updated_session_id" IS 'updated_session_id';
 
-COMMENT ON TABLE "appointment_resource_group_members" IS 'appointment_resource_group_members';
-COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_group_member_id" IS 'appt_res_group_member_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_id" IS 'appt_res_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."appt_res_group_id" IS 'appt_res_group_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "appointment_resource_group_members"."created_at" IS 'created_at';
-COMMENT ON COLUMN "appointment_resource_group_members"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "appointment_resource_group_members"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "appointment_resource_group_members"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "appointment_resource_groups" IS 'appointment_resource_groups';
-COMMENT ON COLUMN "appointment_resource_groups"."appt_res_group_id" IS 'appt_res_group_id';
-COMMENT ON COLUMN "appointment_resource_groups"."facility_id" IS 'facility_id';
-COMMENT ON COLUMN "appointment_resource_groups"."res_group_code" IS 'res_group_code';
-COMMENT ON COLUMN "appointment_resource_groups"."res_group_name" IS 'res_group_name';
-COMMENT ON COLUMN "appointment_resource_groups"."res_group_desc" IS 'res_group_desc';
-COMMENT ON COLUMN "appointment_resource_groups"."res_group_seq" IS 'res_group_seq';
-COMMENT ON COLUMN "appointment_resource_groups"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "appointment_resource_groups"."created_at" IS 'created_at';
-COMMENT ON COLUMN "appointment_resource_groups"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "appointment_resource_groups"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "appointment_resource_groups"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "appointment_resource_groups"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "appointment_resource_groups"."updated_session_id" IS 'updated_session_id';
+COMMENT ON TABLE "appointment_resource_members" IS 'appointment_resource_members:appt_res_type_code = EquipmentGroup の時に含まれるリソースを関連付けます。';
+COMMENT ON COLUMN "appointment_resource_members"."appt_res_member_id" IS 'appt_res_member_id';
+COMMENT ON COLUMN "appointment_resource_members"."appt_res_id" IS 'appt_res_id';
+COMMENT ON COLUMN "appointment_resource_members"."member_appt_res_id" IS 'member_appt_res_id';
+COMMENT ON COLUMN "appointment_resource_members"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "appointment_resource_members"."created_at" IS 'created_at';
+COMMENT ON COLUMN "appointment_resource_members"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "appointment_resource_members"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "appointment_resource_members"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "appointment_resource_members"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "appointment_resource_members"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "appointment_schedule_slot_cap_overrides" IS 'appointment_schedule_slot_cap_overrides';
 COMMENT ON COLUMN "appointment_schedule_slot_cap_overrides"."appt_schedule_slot_cap_override_id" IS 'appt_schedule_slot_cap_override_id';
@@ -1862,33 +1536,13 @@ COMMENT ON COLUMN "appointments"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointments"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointments"."updated_session_id" IS 'updated_session_id';
 
-COMMENT ON TABLE "facility_addresses" IS 'facility_addresses';
-COMMENT ON COLUMN "facility_addresses"."facility_adr_id" IS 'facility_adr_id';
-COMMENT ON COLUMN "facility_addresses"."facility_id" IS 'facility_id';
-COMMENT ON COLUMN "facility_addresses"."adr_type_code" IS 'adr_type_code';
-COMMENT ON COLUMN "facility_addresses"."postal_code" IS 'postal_code';
-COMMENT ON COLUMN "facility_addresses"."adr1" IS 'adr1';
-COMMENT ON COLUMN "facility_addresses"."adr2" IS 'adr2';
-COMMENT ON COLUMN "facility_addresses"."adr3" IS 'adr3';
-COMMENT ON COLUMN "facility_addresses"."attention_name" IS 'attention_name';
-COMMENT ON COLUMN "facility_addresses"."tel" IS 'tel';
-COMMENT ON COLUMN "facility_addresses"."tel2" IS 'tel2';
-COMMENT ON COLUMN "facility_addresses"."fax" IS 'fax';
-COMMENT ON COLUMN "facility_addresses"."email" IS 'email';
-COMMENT ON COLUMN "facility_addresses"."adr_memo" IS 'adr_memo';
-COMMENT ON COLUMN "facility_addresses"."adr_seq" IS 'adr_seq';
-COMMENT ON COLUMN "facility_addresses"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "facility_addresses"."created_at" IS 'created_at';
-COMMENT ON COLUMN "facility_addresses"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "facility_addresses"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "facility_addresses"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "facility_addresses"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "facility_addresses"."updated_session_id" IS 'updated_session_id';
-
 COMMENT ON TABLE "facility_business_hours" IS 'facility_business_hours';
 COMMENT ON COLUMN "facility_business_hours"."facility_business_hours_id" IS 'facility_business_hours_id';
 COMMENT ON COLUMN "facility_business_hours"."facility_id" IS 'facility_id';
-COMMENT ON COLUMN "facility_business_hours"."business_hours" IS 'business_hours';
+COMMENT ON COLUMN "facility_business_hours"."work_start_min" IS 'work_start_min';
+COMMENT ON COLUMN "facility_business_hours"."work_end_min" IS 'work_end_min';
+COMMENT ON COLUMN "facility_business_hours"."lunch_start_min" IS 'lunch_start_min';
+COMMENT ON COLUMN "facility_business_hours"."lunch_end_min" IS 'lunch_end_min';
 COMMENT ON COLUMN "facility_business_hours"."is_active" IS 'is_active';
 COMMENT ON COLUMN "facility_business_hours"."active_from" IS 'active_from:期限内の古い方から順に適用していく';
 COMMENT ON COLUMN "facility_business_hours"."active_to" IS 'active_to:排他';
@@ -1933,7 +1587,7 @@ COMMENT ON COLUMN "facility_user_permissions_cache"."permission_codes" IS 'permi
 COMMENT ON COLUMN "facility_user_permissions_cache"."expires_at" IS 'expires_at';
 
 COMMENT ON TABLE "facility_user_roles" IS 'facility_user_roles';
-COMMENT ON COLUMN "facility_user_roles"."user_role_id" IS 'user_role_id';
+COMMENT ON COLUMN "facility_user_roles"."facility_user_role_id" IS 'facility_user_role_id';
 COMMENT ON COLUMN "facility_user_roles"."facility_user_id" IS 'facility_user_id';
 COMMENT ON COLUMN "facility_user_roles"."role_code" IS 'role_code';
 COMMENT ON COLUMN "facility_user_roles"."is_deleted" IS 'is_deleted';
@@ -1968,64 +1622,6 @@ COMMENT ON COLUMN "holidays"."created_session_id" IS 'created_session_id';
 COMMENT ON COLUMN "holidays"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "holidays"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "holidays"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "insurance_providers" IS 'insurance_providers:テーブル名を insurers としないのは、保険者と被保険者の区別を明確にするために provider という表現を優先したためです。';
-COMMENT ON COLUMN "insurance_providers"."insurer_id" IS 'insurer_id';
-COMMENT ON COLUMN "insurance_providers"."insurer_type_code" IS 'insurer_type_code:0=None, 1=協会けんぽ, 2=代行機関, 3=健康保険組合, 4=国保, 5=その他';
-COMMENT ON COLUMN "insurance_providers"."insurer_code" IS 'insurer_code:可能であれば保険者番号';
-COMMENT ON COLUMN "insurance_providers"."insurer_name" IS 'insurer_name';
-COMMENT ON COLUMN "insurance_providers"."insurer_short_name" IS 'insurer_short_name';
-COMMENT ON COLUMN "insurance_providers"."insurer_desc" IS 'insurer_desc';
-COMMENT ON COLUMN "insurance_providers"."insurer_seq" IS 'insurer_seq';
-COMMENT ON COLUMN "insurance_providers"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "insurance_providers"."created_at" IS 'created_at';
-COMMENT ON COLUMN "insurance_providers"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "insurance_providers"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "insurance_providers"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "insurance_providers"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "insurance_providers"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "organization_addresses" IS 'organization_addresses';
-COMMENT ON COLUMN "organization_addresses"."org_adr_id" IS 'org_adr_id';
-COMMENT ON COLUMN "organization_addresses"."org_id" IS 'org_id';
-COMMENT ON COLUMN "organization_addresses"."adr_type_code" IS 'adr_type_code';
-COMMENT ON COLUMN "organization_addresses"."postal_code" IS 'postal_code';
-COMMENT ON COLUMN "organization_addresses"."adr1" IS 'adr1';
-COMMENT ON COLUMN "organization_addresses"."adr2" IS 'adr2';
-COMMENT ON COLUMN "organization_addresses"."adr3" IS 'adr3';
-COMMENT ON COLUMN "organization_addresses"."attention_name" IS 'attention_name';
-COMMENT ON COLUMN "organization_addresses"."tel" IS 'tel';
-COMMENT ON COLUMN "organization_addresses"."tel2" IS 'tel2';
-COMMENT ON COLUMN "organization_addresses"."fax" IS 'fax';
-COMMENT ON COLUMN "organization_addresses"."email" IS 'email';
-COMMENT ON COLUMN "organization_addresses"."adr_memo" IS 'adr_memo';
-COMMENT ON COLUMN "organization_addresses"."adr_seq" IS 'adr_seq';
-COMMENT ON COLUMN "organization_addresses"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "organization_addresses"."created_at" IS 'created_at';
-COMMENT ON COLUMN "organization_addresses"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "organization_addresses"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "organization_addresses"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "organization_addresses"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "organization_addresses"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "organization_insurances" IS 'organization_insurances';
-COMMENT ON COLUMN "organization_insurances"."org_insurance_id" IS 'org_insurance_id';
-COMMENT ON COLUMN "organization_insurances"."org_id" IS 'org_id';
-COMMENT ON COLUMN "organization_insurances"."is_primary" IS 'is_primary:主保険';
-COMMENT ON COLUMN "organization_insurances"."insurer_id" IS 'insurer_id:あれば';
-COMMENT ON COLUMN "organization_insurances"."insurer_type_code" IS 'insurer_type_code:0=None, 1=協会けんぽ, 2=代行機関, 3=健康保険組合, 4=国保, 5=その他';
-COMMENT ON COLUMN "organization_insurances"."insurer_code" IS 'insurer_code';
-COMMENT ON COLUMN "organization_insurances"."is_active" IS 'is_active';
-COMMENT ON COLUMN "organization_insurances"."deactivated_on" IS 'deactivated_on:無効日';
-COMMENT ON COLUMN "organization_insurances"."org_insurance_memo" IS 'org_insurance_memo';
-COMMENT ON COLUMN "organization_insurances"."org_insurance_seq" IS 'org_insurance_seq';
-COMMENT ON COLUMN "organization_insurances"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "organization_insurances"."created_at" IS 'created_at';
-COMMENT ON COLUMN "organization_insurances"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "organization_insurances"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "organization_insurances"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "organization_insurances"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "organization_insurances"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "organization_members" IS 'organization_members';
 COMMENT ON COLUMN "organization_members"."org_member_id" IS 'org_member_id';
@@ -2062,57 +1658,6 @@ COMMENT ON COLUMN "organizations"."created_session_id" IS 'created_session_id';
 COMMENT ON COLUMN "organizations"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "organizations"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "organizations"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "patient_addresses" IS 'patient_addresses';
-COMMENT ON COLUMN "patient_addresses"."pt_adr_id" IS 'pt_adr_id';
-COMMENT ON COLUMN "patient_addresses"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "patient_addresses"."adr_type_code" IS 'adr_type_code';
-COMMENT ON COLUMN "patient_addresses"."postal_code" IS 'postal_code';
-COMMENT ON COLUMN "patient_addresses"."adr1" IS 'adr1';
-COMMENT ON COLUMN "patient_addresses"."adr2" IS 'adr2';
-COMMENT ON COLUMN "patient_addresses"."adr3" IS 'adr3';
-COMMENT ON COLUMN "patient_addresses"."attention_name" IS 'attention_name';
-COMMENT ON COLUMN "patient_addresses"."tel" IS 'tel';
-COMMENT ON COLUMN "patient_addresses"."tel2" IS 'tel2';
-COMMENT ON COLUMN "patient_addresses"."fax" IS 'fax';
-COMMENT ON COLUMN "patient_addresses"."email" IS 'email';
-COMMENT ON COLUMN "patient_addresses"."adr_memo" IS 'adr_memo';
-COMMENT ON COLUMN "patient_addresses"."adr_seq" IS 'adr_seq';
-COMMENT ON COLUMN "patient_addresses"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "patient_addresses"."created_at" IS 'created_at';
-COMMENT ON COLUMN "patient_addresses"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "patient_addresses"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "patient_addresses"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "patient_addresses"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "patient_addresses"."updated_session_id" IS 'updated_session_id';
-
-COMMENT ON TABLE "patient_insurance_cards" IS 'patient_insurance_cards';
-COMMENT ON COLUMN "patient_insurance_cards"."pt_insur_card_id" IS 'pt_insur_card_id';
-COMMENT ON COLUMN "patient_insurance_cards"."pt_id" IS 'pt_id';
-COMMENT ON COLUMN "patient_insurance_cards"."is_primary" IS 'is_primary:主保険';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_id" IS 'insurer_id:あれば';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_type_code" IS 'insurer_type_code:0=None, 1=協会けんぽ, 2=代行機関, 3=健康保険組合, 4=国保, 5=その他';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_code" IS 'insurer_code';
-COMMENT ON COLUMN "patient_insurance_cards"."insurer_name" IS 'insurer_name:保険者名';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code" IS 'insured_code:記号、番号、枝番';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_symbol" IS 'insured_code_symbol:記号';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_number" IS 'insured_code_number:番号';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_code_branch_number" IS 'insured_code_branch_number:枝番';
-COMMENT ON COLUMN "patient_insurance_cards"."insured_person_name" IS 'insured_person_name:被保険者名';
-COMMENT ON COLUMN "patient_insurance_cards"."self_family_relationship_code" IS 'self_family_relationship_code:本人家族区分(1=Self[本人], 2=Dependents[家族])';
-COMMENT ON COLUMN "patient_insurance_cards"."assistance_code" IS 'assistance_code:補助区分(0=国保0割,A船員1割)';
-COMMENT ON COLUMN "patient_insurance_cards"."continuation_code" IS 'continuation_code:任意継続(0=None, 1=ExtendedCare[継続療養], 2=VoluntaryContinuation[任意継続])';
-COMMENT ON COLUMN "patient_insurance_cards"."is_active" IS 'is_active';
-COMMENT ON COLUMN "patient_insurance_cards"."deactivated_on" IS 'deactivated_on:無効日';
-COMMENT ON COLUMN "patient_insurance_cards"."pt_insure_card_memo" IS 'pt_insure_card_memo';
-COMMENT ON COLUMN "patient_insurance_cards"."pt_insure_card_seq" IS 'pt_insure_card_seq';
-COMMENT ON COLUMN "patient_insurance_cards"."is_deleted" IS 'is_deleted';
-COMMENT ON COLUMN "patient_insurance_cards"."created_at" IS 'created_at';
-COMMENT ON COLUMN "patient_insurance_cards"."created_user_id" IS 'created_user_id';
-COMMENT ON COLUMN "patient_insurance_cards"."created_session_id" IS 'created_session_id';
-COMMENT ON COLUMN "patient_insurance_cards"."updated_at" IS 'updated_at';
-COMMENT ON COLUMN "patient_insurance_cards"."updated_user_id" IS 'updated_user_id';
-COMMENT ON COLUMN "patient_insurance_cards"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "patients" IS 'patients';
 COMMENT ON COLUMN "patients"."pt_id" IS 'pt_id';
@@ -2188,6 +1733,7 @@ COMMENT ON COLUMN "plan_resource_requirements"."updated_session_id" IS 'updated_
 COMMENT ON TABLE "plans" IS 'plans';
 COMMENT ON COLUMN "plans"."plan_id" IS 'plan_id';
 COMMENT ON COLUMN "plans"."facility_id" IS 'facility_id';
+COMMENT ON COLUMN "plans"."plan_type_code" IS 'plan_type_code:0: None, 1: Plan, 2: Option, 99: Others';
 COMMENT ON COLUMN "plans"."plan_code" IS 'plan_code';
 COMMENT ON COLUMN "plans"."plan_name" IS 'plan_name';
 COMMENT ON COLUMN "plans"."plan_short_name" IS 'plan_short_name';
@@ -2364,7 +1910,7 @@ COMMENT ON COLUMN "preferences"."updated_session_id" IS 'updated_session_id';
 COMMENT ON TABLE "appointment_resources" IS 'appointment_resources';
 COMMENT ON COLUMN "appointment_resources"."appt_res_id" IS 'appt_res_id';
 COMMENT ON COLUMN "appointment_resources"."floor_id" IS 'floor_id';
-COMMENT ON COLUMN "appointment_resources"."appt_res_type_code" IS 'appt_res_type_code:0: None, 1: Main, 2: Equipment, 3: Environment, 99: Others';
+COMMENT ON COLUMN "appointment_resources"."appt_res_type_code" IS 'appt_res_type_code:0: None, 1: Main, 2: Equipment, 3: EquipmentGroup, 99: Others';
 COMMENT ON COLUMN "appointment_resources"."appt_res_name" IS 'appt_res_name';
 COMMENT ON COLUMN "appointment_resources"."appt_res_desc" IS 'appt_res_desc';
 COMMENT ON COLUMN "appointment_resources"."appt_res_seq" IS 'appt_res_seq';
