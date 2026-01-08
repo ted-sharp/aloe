@@ -490,6 +490,9 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
 
     // Equipment折れ線グラフを描画（棒グラフの上に重ねて表示）
     if (hasEquipmentData) {
+        // Mainリソース統計データを取得
+        const mainStats = state.mainStats.get(dateStr);
+        
         renderCanvasLineChart(contentCtx, {
             cellLeft: yAxisWidth,
             cellTop: topPadding,
@@ -499,6 +502,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             barAreaTop: topPadding,
             barAreaHeight: graphHeight,
             equipmentStats,
+            mainStats,
             startHour: actualStartHour,
             endHour: actualEndHour,
             lunchStartHour: actualLunchStartHour,

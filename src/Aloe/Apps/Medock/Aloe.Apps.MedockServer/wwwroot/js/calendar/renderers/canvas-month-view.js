@@ -111,6 +111,9 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
             // Equipment折れ線グラフを描画（各セル内、時間軸に沿って）
             const equipmentStats = state.equipmentStats.get(dateStr);
             if (equipmentStats) {
+                // Mainリソース統計データを取得
+                const mainStats = state.mainStats.get(dateStr);
+                
                 // 日付テキストの高さを計算（バーチャートと同じ）
                 const dateFontSize = 12;
                 const dayTextHeight = dateFontSize + 4;
@@ -127,6 +130,7 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
                     barAreaTop,
                     barAreaHeight,
                     equipmentStats,
+                    mainStats,
                     startHour,
                     endHour,
                     lunchStartHour,
