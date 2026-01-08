@@ -180,33 +180,110 @@ public partial class SearchFilterPanel : ComponentBase
     }
 
     /// <summary>
-    /// プランのバッジクラスを取得
+    /// プランのバッジクラスを取得（タイプ別の色分け）
     /// </summary>
     private string GetPlanBadgeClass(FilterItem plan, bool isSelected)
     {
         if (plan.PlanTypeCode == 1)
         {
-            // Plan: 選択時はprimary、未選択時はoutline
-            return isSelected ? "badge-primary" : "badge-outline";
+            // Plan: タイプ1（Plan）は紫系
+            if (isSelected)
+            {
+                return "badge badge-primary"; // 選択時はprimary（紫）
+            }
+            else
+            {
+                return "badge badge-outline"; // 未選択時はアウトライン（色はCSSで制御）
+            }
         }
         else if (plan.PlanTypeCode == 2)
         {
-            // Option: 選択時はsecondary、未選択時はoutline
+            // Option: タイプ2（Option）はピンク系
             if (isSelected)
             {
-                return "badge-secondary";
+                return "badge badge-secondary"; // 選択時はsecondary（ピンク）
             }
             else
             {
                 // 選択不可の場合はghost
                 if (!this.IsOptionSelectable(plan))
                 {
-                    return "badge-ghost opacity-50";
+                    return "badge badge-ghost opacity-50";
                 }
-                return "badge-outline";
+                return "badge badge-outline"; // 未選択時はアウトライン（色はCSSで制御）
             }
         }
-        return "badge-outline";
+        return "badge badge-outline";
+    }
+
+    /// <summary>
+    /// リソースのバッジクラスを取得（タイプ別の色分け）
+    /// </summary>
+    private string GetResourceBadgeClass(FilterItem resource, bool isSelected)
+    {
+        // リソースタイプに応じた色分け
+        // 1: Main (青), 2: Equipment (オレンジ), 3: Environment (緑)
+        var typeCode = resource.ResourceTypeCode;
+        
+        if (isSelected)
+        {
+            // 選択時はタイプに応じた色
+            return typeCode switch
+            {
+                1 => "badge badge-info",      // Main: 青
+                2 => "badge badge-warning",   // Equipment: オレンジ
+                3 => "badge badge-success",   // Environment: 緑
+                _ => "badge badge-primary"     // その他: デフォルト
+            };
+        }
+        else
+        {
+            // 未選択時はタイプに応じたアウトライン
+            return typeCode switch
+            {
+                1 => "badge badge-outline badge-info",      // Main: 青のアウトライン
+                2 => "badge badge-outline badge-warning",   // Equipment: オレンジのアウトライン
+                3 => "badge badge-outline badge-success",   // Environment: 緑のアウトライン
+                _ => "badge badge-outline"                  // その他: デフォルトのアウトライン
+            };
+        }
+    }
+
+    /// <summary>
+    /// プランのバッジスタイルを取得（タイプ別の色分け、グレーアウト対応）
+    /// </summary>
+    private string GetPlanBadgeStyle(FilterItem plan, bool isSelected)
+    {
+        if (!isSelected && plan.PlanTypeCode == 1)
+        {
+            // Plan未選択時: 紫のアウトライン
+            return "border-color: rgb(168, 85, 247); color: rgb(168, 85, 247);";
+        }
+        else if (!isSelected && plan.PlanTypeCode == 2)
+        {
+            // Option未選択時: ピンクのアウトライン
+            return "border-color: rgb(236, 72, 153); color: rgb(236, 72, 153);";
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// リソースのバッジスタイルを取得（タイプ別の色分け、グレーアウト対応）
+    /// </summary>
+    private string GetResourceBadgeStyle(FilterItem resource, bool isSelected)
+    {
+        if (!isSelected)
+        {
+            // 未選択時はタイプに応じたアウトライン色
+            return resource.ResourceTypeCode switch
+            {
+                1 => "border-color: rgb(59, 130, 246); color: rgb(59, 130, 246);",      // Main: 青
+                2 => "border-color: rgb(245, 158, 11); color: rgb(245, 158, 11);",      // Equipment: オレンジ
+                3 => "border-color: rgb(16, 185, 129); color: rgb(16, 185, 129);",       // Environment: 緑
+                _ => string.Empty
+            };
+        }
+        return string.Empty;
     }
 
     // SelectAllEquipments/ClearAllEquipmentsメソッドは削除されました（EquipmentはAppointmentResourceに統合）

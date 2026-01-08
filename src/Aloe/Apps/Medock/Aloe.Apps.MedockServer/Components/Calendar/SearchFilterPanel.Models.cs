@@ -13,6 +13,10 @@ public partial class SearchFilterPanel
         /// プランタイプコード (0: None, 1: Plan, 2: Option, 99: Others)
         /// </summary>
         public int PlanTypeCode { get; set; }
+        /// <summary>
+        /// リソースタイプコード (0: None, 1: Main, 2: Equipment, 3: Environment, 99: Others)
+        /// </summary>
+        public int ResourceTypeCode { get; set; }
     }
 
     /// <summary>

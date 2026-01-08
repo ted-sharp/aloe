@@ -9,7 +9,7 @@ import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle } from '../utils/canvas-utils.js';
 import { dateToString, getStartOfWeek, isToday, parseDate } from '../utils/date-utils.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
-import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
+import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
 import {
     getSymbolFromVacancyRatio,
     calculateVacancyRatio,
@@ -363,7 +363,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const slotWidth = cellWidth - 4;
 
                     // スロットブロックを描画（薄い背景 + 枠線で範囲を表示）
-                    const slotColor = getWinterColorFromAvailable(available, cap);
+                    // タイプ情報を使用した色計算
+                    const resourceTypeCode = stats?.resourceTypeCode ?? 0;
+                    const planTypeCode = stats?.planTypeCode ?? null;
+                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, false);
                     drawRect(contentCtx, {
                         x: slotLeft,
                         y: slotTop,
@@ -472,7 +475,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const cap = (stats.slotCaps && stats.slotCaps[slotIndex] !== undefined && stats.slotCaps[slotIndex] !== null && stats.slotCaps[slotIndex] > 0) ? stats.slotCaps[slotIndex] : 0;
                     const available = cap - count;
 
-                    const slotColor = getWinterColorFromAvailable(available, cap);
+                    // タイプ情報を使用した色計算
+                    const resourceTypeCode = stats?.resourceTypeCode ?? 0;
+                    const planTypeCode = stats?.planTypeCode ?? null;
+                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, false);
                     drawRect(contentCtx, {
                         x: slotLeft,
                         y: slotTop,

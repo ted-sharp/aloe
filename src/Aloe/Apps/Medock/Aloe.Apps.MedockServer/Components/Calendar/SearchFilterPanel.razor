@@ -155,12 +155,15 @@
                         <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
                             @foreach (var resource in AvailableResources)
                             {
+                                var isResourceSelected = SelectedResourceIds.Contains(resource.Id);
+                                var resourceBadgeClass = GetResourceBadgeClass(resource, isResourceSelected);
+                                var resourceBadgeStyle = GetResourceBadgeStyle(resource, isResourceSelected);
                                 <label class="cursor-pointer">
                                     <input type="checkbox"
                                            class="checkbox checkbox-xs checkbox-primary hidden peer"
-                                           checked="@SelectedResourceIds.Contains(resource.Id)"
+                                           checked="@isResourceSelected"
                                            @onchange="() => ToggleResource(resource.Id)" />
-                                    <span class="badge @(SelectedResourceIds.Contains(resource.Id) ? "badge-primary" : "badge-outline")">
+                                    <span class="badge @resourceBadgeClass" style="@resourceBadgeStyle">
                                         @resource.Name
                                     </span>
                                 </label>
@@ -198,7 +201,9 @@
                                 var isSelected = SelectedPlanIds.Contains(plan.Id);
                                 var isSelectable = plan.PlanTypeCode == 1 || IsOptionSelectable(plan);
                                 var badgeClass = GetPlanBadgeClass(plan, isSelected);
-                                <label class="@(isSelectable ? "cursor-pointer" : "cursor-not-allowed opacity-50")">
+                                var badgeStyle = GetPlanBadgeStyle(plan, isSelected);
+                                var opacityClass = !isSelectable ? "opacity-50" : "";
+                                <label class="@(isSelectable ? "cursor-pointer" : "cursor-not-allowed") @opacityClass">
                                     @if (plan.PlanTypeCode == 1)
                                     {
                                         @* Plan: ラジオボタンのように表示 *@
@@ -217,7 +222,7 @@
                                                disabled="@(!isSelectable)"
                                                @onchange="() => TogglePlan(plan.Id)" />
                                     }
-                                    <span class="badge @badgeClass">
+                                    <span class="badge @badgeClass" style="@badgeStyle">
                                         @plan.Name
                                     </span>
                                 </label>

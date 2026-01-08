@@ -102,7 +102,8 @@ public class MetadataLoader : IMetadataLoader
                 .Select(r => new SearchFilterPanel.FilterItem
                 {
                     Id = r.ApptResId,
-                    Name = r.ApptResName
+                    Name = r.ApptResName,
+                    ResourceTypeCode = r.ApptResTypeCode
                 })
                 .ToListAsync();
             state.AvailableResources = resources;

@@ -227,6 +227,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 ss.appt_date::text as ""ApptDate"",
                 ss.appt_res_id::text as ""ResourceId"",
                 ar.appt_res_name as ""ResourceName"",
+                ar.appt_res_type_code::int as ""ResourceTypeCode"",
                 COALESCE(SUM(ss.slot_cap), 0)::int as ""TotalCapacity"",
                 COALESCE(SUM(ss.slot_available), 0)::int as ""TotalAvailable"",
                 array_agg(ss.slot_start_min ORDER BY ss.slot_start_min)::int[] as ""SlotStartMinutes"",
@@ -241,7 +242,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                 AND ss.appt_date >= @startDate
                 AND ss.appt_date <= @endDate
                 AND ss.appt_res_id = ANY(@equipmentIds::uuid[])
-            GROUP BY ss.appt_date, ss.appt_res_id, ar.appt_res_name
+            GROUP BY ss.appt_date, ss.appt_res_id, ar.appt_res_name, ar.appt_res_type_code
             ORDER BY ss.appt_date, ar.appt_res_name";
 
         var equipmentTypeCode = new NpgsqlParameter("@equipmentTypeCode", (int)AppointmentResourceType.Equipment);
@@ -287,7 +288,9 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
                     SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
                     SlotFlags = null, // 将来的にIsOutsideHoursなどを設定
                     SlotFilteredCounts = null, // 現時点では使用しない
-                    IsDayGrayedOut = false // Equipmentでは使用しない
+                    IsDayGrayedOut = false, // Equipmentでは使用しない
+                    ResourceTypeCode = item.ResourceTypeCode,
+                    PlanTypeCode = null // プランタイプは現時点では未対応
                 });
             }
 
@@ -344,6 +347,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         public string ApptDate { get; set; } = String.Empty;
         public string ResourceId { get; set; } = String.Empty;
         public string ResourceName { get; set; } = String.Empty;
+        public int ResourceTypeCode { get; set; }
         public int TotalCapacity { get; set; }
         public int TotalAvailable { get; set; }
         public int[]? SlotStartMinutes { get; set; }

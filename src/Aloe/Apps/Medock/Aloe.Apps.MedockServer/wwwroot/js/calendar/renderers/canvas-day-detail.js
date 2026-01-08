@@ -7,7 +7,7 @@
 
 import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText } from '../utils/canvas-utils.js';
-import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
+import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
 import { isDateInRange } from '../utils/date-utils.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
 
@@ -363,7 +363,10 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         if (available > 0) {
             const barHeight = (available / maxValue) * graphHeight;
             const barY = baselineY - barHeight;
-            const slotColor = isSlotGrayed ? '#9ca3af' : getWinterColorFromAvailable(available, cap);
+            // タイプ情報を使用した色計算（グレーアウト時もタイプの色を保つ）
+            const resourceTypeCode = stats?.resourceTypeCode ?? 0;
+            const planTypeCode = stats?.planTypeCode ?? null;
+            const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isSlotGrayed);
 
             drawRect(contentCtx, {
                 x: barX,

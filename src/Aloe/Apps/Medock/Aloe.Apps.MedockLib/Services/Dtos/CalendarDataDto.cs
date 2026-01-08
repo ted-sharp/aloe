@@ -28,6 +28,12 @@ public class AppointmentDataDto
     public string? FloorName { get; set; }
     public Guid? FloorId { get; set; }
     public int Status { get; set; }
+
+    /// <summary>
+    /// プランタイプコード（オプション、予約に関連するプランがある場合）
+    /// 1: Plan, 2: Option, 99: Others
+    /// </summary>
+    public int? PlanTypeCode { get; set; }
 }
 
 /// <summary>
@@ -97,5 +103,17 @@ public class ResourceStatSlotsDto
     /// 日付全体がグレーアウトされているか（Main用、Equipmentの場合はfalse）
     /// </summary>
     public bool IsDayGrayedOut { get; set; }
+
+    /// <summary>
+    /// リソースタイプコード（ApptResTypeCode）
+    /// 1: Main, 2: Equipment, 3: Environment, 99: Others
+    /// </summary>
+    public int ResourceTypeCode { get; set; }
+
+    /// <summary>
+    /// プランタイプコード（オプション、予約データから取得可能な場合）
+    /// 1: Plan, 2: Option, 99: Others
+    /// </summary>
+    public int? PlanTypeCode { get; set; }
 }
 

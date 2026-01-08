@@ -150,6 +150,9 @@ public class CalendarDataService : ICalendarDataService
 
                 var isDayGrayedOut = mainStatsGrayedOut?.TryGetValue(dateStr, out var grayed) == true && grayed;
 
+                // リソースタイプコードを取得（statからAppointmentResource経由で取得）
+                var resourceTypeCode = stat?.AppointmentResource?.ApptResTypeCode ?? 0;
+
                 mainStatsDict[dateStr] = new ResourceStatSlotsDto
                 {
                     ResourceId = null, // Mainでは使用しない
@@ -163,7 +166,9 @@ public class CalendarDataService : ICalendarDataService
                     SlotAvailables = slotAvailables,
                     SlotFlags = slotFlags,
                     SlotFilteredCounts = slotFilteredCounts,
-                    IsDayGrayedOut = isDayGrayedOut
+                    IsDayGrayedOut = isDayGrayedOut,
+                    ResourceTypeCode = resourceTypeCode,
+                    PlanTypeCode = null // プランタイプは現時点では未対応
                 };
             }
         }

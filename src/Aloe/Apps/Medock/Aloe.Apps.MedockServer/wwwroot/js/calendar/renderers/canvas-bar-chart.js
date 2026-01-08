@@ -7,7 +7,7 @@
 
 import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle, drawPolygon } from '../utils/canvas-utils.js';
-import { getWinterColorFromAvailable } from '../utils/winter-colormap.js';
+import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
 import { getRenderState } from './canvas-render-state.js';
 import { isDateInRange } from '../utils/date-utils.js';
 import {
@@ -82,7 +82,8 @@ export function renderCanvasBarChart(contentCtx, params) {
         dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
         isDateGrayed, slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
         startHour, endHour,
-        lunchStartHour, lunchEndHour, isYearView
+        lunchStartHour, lunchEndHour, isYearView,
+        resourceTypeCode = 0, planTypeCode = null
     } = params;
 
     const renderState = getRenderState();
@@ -248,7 +249,8 @@ export function renderCanvasBarChart(contentCtx, params) {
         if (available > 0) {
             const barHeight = (available / maxValue) * barAreaHeight;
             const barY = baselineY - barHeight;
-            const slotColor = isSlotGrayed ? '#9ca3af' : getWinterColorFromAvailable(available, cap);
+            // タイプ情報を使用した色計算（グレーアウト時もタイプの色を保つ）
+            const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isSlotGrayed);
 
             drawRect(contentCtx, {
                 x: barX,
@@ -560,13 +562,18 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         const startHour = state.options.startHour || 8;
         const endHour = state.options.endHour || 18;
 
+        // タイプ情報を取得
+        const resourceTypeCode = stats?.resourceTypeCode ?? 0;
+        const planTypeCode = stats?.planTypeCode ?? null;
+
         renderCanvasBarChart(contentCtx, {
             cellLeft, cellTop, cellWidth, cellHeight,
             dateStr, barAreaTop, barAreaHeight, labelAreaHeight,
             isDateGrayed,
             slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
             startHour, endHour,
-            lunchStartHour, lunchEndHour, isYearView
+            lunchStartHour, lunchEndHour, isYearView,
+            resourceTypeCode, planTypeCode
         });
     }
 }

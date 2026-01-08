@@ -10,6 +10,8 @@
  * matplotlibの標準的なWinterカラーマップの実装に基づいています。
  */
 
+import { getTypeBaseColor, adjustColorByAvailability } from './type-colormap.js';
+
 /**
  * Winterカラーマップの256色RGBルックアップテーブル
  * 値は0.0（青）から1.0（緑）への連続的な色変化を提供
@@ -109,3 +111,29 @@ export function getWinterColorFromUsageRatio(usageRatio) {
     return getWinterColor(usageRatio);
 }
 
+/**
+ * タイプ情報と利用可能数から色を取得
+ * タイプの基本色をベースに、利用可能数に応じた色調整を適用
+ * グレーアウト時はタイプの色を保ったまま透明度を下げる（色は変更しない）
+ * @param {number} resourceTypeCode - リソースタイプコード
+ * @param {number|null} planTypeCode - プランタイプコード（オプション）
+ * @param {number} available - 空き数（負の値も許容：オーバーキャパシティ）
+ * @param {number} cap - キャパシティ
+ * @param {boolean} isGrayed - グレーアウト中かどうか
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isGrayed) {
+    // タイプ情報が存在しない場合は従来のWinterカラーマップを使用（後方互換性）
+    if (!resourceTypeCode || resourceTypeCode === 0) {
+        return getWinterColorFromAvailable(available, cap);
+    }
+    
+    // タイプの基本色を取得
+    const baseColor = getTypeBaseColor(resourceTypeCode, planTypeCode);
+    
+    // 利用可能数に応じて色を調整
+    const adjustedColor = adjustColorByAvailability(baseColor, available, cap);
+    
+    // グレーアウト時は色を変更せず、そのまま返す（透明度は呼び出し側で制御）
+    return adjustedColor;
+}
