@@ -215,7 +215,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
         // MainStats が更新されたかチェック（初期化後の更新を検出するため）
         var currentMainStatsCount = this.MainStats?.Count ?? 0;
         var mainStatsChanged = currentMainStatsCount != this._lastMainStatsCount;
-        
+
         // MainStatsSlots が更新されたかチェック
         var currentMainStatsSlotsCount = this.MainStatsSlots?.Count ?? 0;
         var mainStatsSlotsChanged = currentMainStatsSlotsCount != this._lastMainStatsSlotsCount;

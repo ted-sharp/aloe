@@ -118,8 +118,8 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = this.SelectedDate ?? DateOnly.FromDateTime(DateTime.Today),
-                StartTimeString = this.SelectedStartMin.HasValue 
-                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value)).ToString("HH:mm") 
+                StartTimeString = this.SelectedStartMin.HasValue
+                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value)).ToString("HH:mm")
                     : BusinessHoursConstants.DefaultAppointmentStartTime,
                 EndTimeString = this.SelectedStartMin.HasValue
                     ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value + 60)).ToString("HH:mm")

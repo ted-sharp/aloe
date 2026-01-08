@@ -699,7 +699,7 @@ internal static class AppointmentSeeder
                                     // Find if this appointment time falls into any configured slot for this equipment
                                     // Match logic: appointment time >= slot start AND < slot end
                                     var matchedSlot = slots.FirstOrDefault(s => aggTime >= s.SlotStartMin && aggTime < s.SlotEndMin);
-                                    
+
                                     // Check if a valid slot was matched (not default tuple value)
                                     // Default tuple is (0, 0, 0), but we also need to handle edge case where 0:00 might be a valid slot
                                     // More robust check: ensure both SlotStartMin and SlotEndMin are set (SlotEndMin > SlotStartMin)
@@ -798,9 +798,9 @@ internal static class AppointmentSeeder
     }
     private static int? ParseTimeToInt(string timeStr)
     {
-        if (string.IsNullOrEmpty(timeStr)) return null;
+        if (String.IsNullOrEmpty(timeStr)) return null;
         var parts = timeStr.Split(':');
-        if (parts.Length == 2 && int.TryParse(parts[0], out var h) && int.TryParse(parts[1], out var m))
+        if (parts.Length == 2 && Int32.TryParse(parts[0], out var h) && Int32.TryParse(parts[1], out var m))
         {
             return h * 60 + m;
         }

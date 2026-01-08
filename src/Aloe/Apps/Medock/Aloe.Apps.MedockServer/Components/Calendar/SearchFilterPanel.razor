@@ -102,13 +102,6 @@
                 <div class="form-control">
                     <label class="label">
                         <span class="label-text font-semibold">フロア</span>
-                        @if (AvailableFloors.Any())
-                        {
-                            <div class="flex gap-1">
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllFloors">全選択</button>
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllFloors">全解除</button>
-                            </div>
-                        }
                     </label>
                     @if (AvailableFloors.Any())
                     {
@@ -145,7 +138,6 @@
                         @if (AvailableResources.Any())
                         {
                             <div class="flex gap-1">
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllResources">全選択</button>
                                 <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllResources">全解除</button>
                             </div>
                         }
@@ -203,7 +195,6 @@
                         @if (AvailablePlans.Any())
                         {
                             <div class="flex gap-1">
-                                <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllPlans">全選択</button>
                                 <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllPlans">全解除</button>
                             </div>
                         }
@@ -226,7 +217,7 @@
                                                name="plan-selection"
                                                class="radio radio-xs radio-primary hidden peer"
                                                checked="@isSelected"
-                                               @onchange="() => TogglePlan(plan.Id)" />
+                                               @onclick="() => TogglePlan(plan.Id)" />
                                     }
                                     else
                                     {

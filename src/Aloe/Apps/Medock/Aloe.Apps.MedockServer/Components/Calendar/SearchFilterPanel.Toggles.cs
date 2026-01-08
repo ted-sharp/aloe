@@ -101,9 +101,9 @@ public partial class SearchFilterPanel
         else
         {
             // アクティブなORグループが設定されていない場合は従来の動作
-            if (isInAnyOrGroup)
+            if (this.SelectedResourceIds.Contains(resourceId))
             {
-                // ORグループから削除
+                // 選択解除
                 this.CalendarState.FilterSelectedResourceIdsOr1.Remove(resourceId);
                 this.CalendarState.FilterSelectedResourceIdsOr2.Remove(resourceId);
                 this.SelectedResourceIds.Remove(resourceId);

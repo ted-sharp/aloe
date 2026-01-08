@@ -86,8 +86,8 @@ public class FacilityBusinessHours : IAuditableEntity
     {
         var parts = timeString.Split(':');
         if (parts.Length != 2) return 0;
-        if (!int.TryParse(parts[0], out var hours)) return 0;
-        if (!int.TryParse(parts[1], out var mins)) return 0;
+        if (!Int32.TryParse(parts[0], out var hours)) return 0;
+        if (!Int32.TryParse(parts[1], out var mins)) return 0;
         return hours * 60 + mins;
     }
 }
