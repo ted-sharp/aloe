@@ -150,6 +150,21 @@
                             </div>
                         }
                     </label>
+                    <!-- ORグループ選択ボタン -->
+                    <div class="flex gap-2 mb-2">
+                        <button type="button" 
+                                class="btn btn-xs @(CalendarState.ActiveOrGroup == 1 ? "btn-info" : "btn-outline btn-info")"
+                                @onclick="() => SetActiveOrGroup(1)"
+                                title="OR1グループを選択">
+                            OR1
+                        </button>
+                        <button type="button" 
+                                class="btn btn-xs @(CalendarState.ActiveOrGroup == 2 ? "btn-success" : "btn-outline btn-success")"
+                                @onclick="() => SetActiveOrGroup(2)"
+                                title="OR2グループを選択">
+                            OR2
+                        </button>
+                    </div>
                     @if (AvailableResources.Any())
                     {
                         <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">

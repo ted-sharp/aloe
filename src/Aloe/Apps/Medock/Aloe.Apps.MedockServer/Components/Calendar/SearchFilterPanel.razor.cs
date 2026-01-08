@@ -91,6 +91,23 @@ public partial class SearchFilterPanel : ComponentBase
         this.StateHasChanged(); // UIを更新してオプションの選択可否状態を反映
     }
 
+    /// <summary>
+    /// アクティブなORグループを設定
+    /// </summary>
+    private void SetActiveOrGroup(int? orGroup)
+    {
+        // 同じグループをクリックした場合は解除
+        if (this.CalendarState.ActiveOrGroup == orGroup)
+        {
+            this.CalendarState.ActiveOrGroup = null;
+        }
+        else
+        {
+            this.CalendarState.ActiveOrGroup = orGroup;
+        }
+        this.StateHasChanged();
+    }
+
     private async void OnFilterChanged()
     {
         // リアルタイム検索
@@ -116,7 +133,9 @@ public partial class SearchFilterPanel : ComponentBase
             RequiredCapacity = this.RequiredCapacity,
             SelectedFloorIds = this.SelectedFloorIds.ToList(),
             SelectedResourceIds = allResourceIds,
-            SelectedPlanIds = this.SelectedPlanIds.ToList()
+            SelectedPlanIds = this.SelectedPlanIds.ToList(),
+            SelectedResourceIdsOr1 = this.CalendarState.FilterSelectedResourceIdsOr1.ToList(),
+            SelectedResourceIdsOr2 = this.CalendarState.FilterSelectedResourceIdsOr2.ToList()
         };
     }
 
@@ -169,7 +188,7 @@ public partial class SearchFilterPanel : ComponentBase
 
         var selectedPlan = this.AvailablePlans
             .FirstOrDefault(p => p.PlanTypeCode == 1 && this.SelectedPlanIds.Contains(p.Id));
-        
+
         if (selectedPlan == null)
         {
             return false; // Planが選択されていない場合は選択不可
@@ -217,17 +236,27 @@ public partial class SearchFilterPanel : ComponentBase
     }
 
     /// <summary>
-    /// リソースのバッジクラスを取得（タイプ別の色分け）
+    /// リソースのバッジクラスを取得（ORグループ別の色分け）
     /// </summary>
     private string GetResourceBadgeClass(FilterItem resource, bool isSelected)
     {
-        // リソースタイプに応じた色分け
-        // 1: Main (青), 2: Equipment (オレンジ), 3: Environment (緑)
-        var typeCode = resource.ResourceTypeCode;
-        
+        var isOr1 = this.CalendarState.FilterSelectedResourceIdsOr1.Contains(resource.Id);
+        var isOr2 = this.CalendarState.FilterSelectedResourceIdsOr2.Contains(resource.Id);
+
         if (isSelected)
         {
-            // 選択時はタイプに応じた色
+            // ORグループに応じた色分けを優先
+            if (isOr1)
+            {
+                return "badge badge-info"; // OR1: 青
+            }
+            else if (isOr2)
+            {
+                return "badge badge-success"; // OR2: 緑
+            }
+
+            // ORグループに含まれていない場合はタイプに応じた色
+            var typeCode = resource.ResourceTypeCode;
             return typeCode switch
             {
                 1 => "badge badge-info",      // Main: 青
@@ -239,6 +268,7 @@ public partial class SearchFilterPanel : ComponentBase
         else
         {
             // 未選択時はタイプに応じたアウトライン
+            var typeCode = resource.ResourceTypeCode;
             return typeCode switch
             {
                 1 => "badge badge-outline badge-info",      // Main: 青のアウトライン
@@ -264,14 +294,17 @@ public partial class SearchFilterPanel : ComponentBase
             // Option未選択時: ピンクのアウトライン
             return "border-color: rgb(236, 72, 153); color: rgb(236, 72, 153);";
         }
-        return string.Empty;
+        return String.Empty;
     }
 
     /// <summary>
-    /// リソースのバッジスタイルを取得（タイプ別の色分け、グレーアウト対応）
+    /// リソースのバッジスタイルを取得（ORグループ別の色分け、グレーアウト対応）
     /// </summary>
     private string GetResourceBadgeStyle(FilterItem resource, bool isSelected)
     {
+        var isOr1 = this.CalendarState.FilterSelectedResourceIdsOr1.Contains(resource.Id);
+        var isOr2 = this.CalendarState.FilterSelectedResourceIdsOr2.Contains(resource.Id);
+
         if (!isSelected)
         {
             // 未選択時はタイプに応じたアウトライン色
@@ -280,10 +313,20 @@ public partial class SearchFilterPanel : ComponentBase
                 1 => "border-color: rgb(59, 130, 246); color: rgb(59, 130, 246);",      // Main: 青
                 2 => "border-color: rgb(245, 158, 11); color: rgb(245, 158, 11);",      // Equipment: オレンジ
                 3 => "border-color: rgb(16, 185, 129); color: rgb(16, 185, 129);",       // Environment: 緑
-                _ => string.Empty
+                _ => String.Empty
             };
         }
-        return string.Empty;
+        else if (isOr1)
+        {
+            // OR1グループ: 青系の強調
+            return "background-color: rgb(59, 130, 246); border-color: rgb(59, 130, 246);";
+        }
+        else if (isOr2)
+        {
+            // OR2グループ: 緑系の強調
+            return "background-color: rgb(16, 185, 129); border-color: rgb(16, 185, 129);";
+        }
+        return String.Empty;
     }
 
     // SelectAllEquipments/ClearAllEquipmentsメソッドは削除されました（EquipmentはAppointmentResourceに統合）

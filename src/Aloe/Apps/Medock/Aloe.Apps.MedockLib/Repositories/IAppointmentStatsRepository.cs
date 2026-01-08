@@ -1,3 +1,5 @@
+using Aloe.Apps.MedockLib.Services.Dtos;
+
 namespace Aloe.Apps.MedockLib.Repositories;
 
 /// <summary>
@@ -58,10 +60,22 @@ public interface IAppointmentStatsRepository
     /// 日付ごとにグループ化された辞書形式で返します。
     /// equipmentResourceIds が null または空の場合は全 Equipment リソースを取得します。
     /// </summary>
-    Task<Dictionary<string, List<Services.Dtos.ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
+    Task<Dictionary<string, List<ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateAsync(
         DateOnly startDate,
         DateOnly endDate,
         List<Guid>? equipmentResourceIds);
+
+    /// <summary>
+    /// 指定日付範囲のEquipmentリソースのスロット情報を配列として最適化されたSQLで取得します（ORグループ条件対応版）。
+    /// パフォーマンス最適化用：array_agg() で SQL側で配列化。
+    /// 日付ごとにグループ化された辞書形式で返します。
+    /// ORグループ条件: AND(OR1(A, B), OR2(C, D))形式の条件を適用します。
+    /// </summary>
+    Task<Dictionary<string, List<ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? or1ResourceIds,
+        List<Guid>? or2ResourceIds);
 
     /// <summary>
     /// 指定された日付範囲のStatスロットを取得します。

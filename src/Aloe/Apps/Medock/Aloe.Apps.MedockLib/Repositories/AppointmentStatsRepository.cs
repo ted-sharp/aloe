@@ -304,6 +304,45 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
     }
 
+    /// <inheritdoc />
+    public async Task<Dictionary<string, List<ResourceStatSlotsDto>>> GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync(
+        DateOnly startDate,
+        DateOnly endDate,
+        List<Guid>? or1ResourceIds,
+        List<Guid>? or2ResourceIds)
+    {
+        // 両方のORグループが空の場合は空の辞書を返す
+        if ((or1ResourceIds == null || !or1ResourceIds.Any()) &&
+            (or2ResourceIds == null || !or2ResourceIds.Any()))
+        {
+            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: both OR groups are empty, returning empty dict");
+            return new Dictionary<string, List<ResourceStatSlotsDto>>();
+        }
+
+        this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, OR1 count={Or1Count}, OR2 count={Or2Count}",
+            startDate, endDate, or1ResourceIds?.Count ?? 0, or2ResourceIds?.Count ?? 0);
+
+        // ORグループ条件を構築
+        // 注意: appointment_stat_slotsは統計データなので、実際にはリソースIDのフィルタリングのみ
+        // AND(OR1, OR2)の条件は、予約リソース要件テーブルとのJOINが必要だが、
+        // 統計データのフィルタリングとしては、OR1またはOR2のいずれかに一致するリソースを返す
+        var allResourceIds = new List<Guid>();
+        if (or1ResourceIds != null && or1ResourceIds.Any())
+        {
+            allResourceIds.AddRange(or1ResourceIds);
+        }
+        if (or2ResourceIds != null && or2ResourceIds.Any())
+        {
+            allResourceIds.AddRange(or2ResourceIds);
+        }
+
+        // 重複を除去
+        allResourceIds = allResourceIds.Distinct().ToList();
+
+        // 既存のメソッドを呼び出して結果を取得
+        return await this.GetEquipmentResourceSlotsAsArraysByDateAsync(startDate, endDate, allResourceIds);
+    }
+
     /// <summary>
     /// 指定された日付範囲のStatスロットを取得します。
     /// AppointmentStatsの削除された navigation property に代わるメソッド

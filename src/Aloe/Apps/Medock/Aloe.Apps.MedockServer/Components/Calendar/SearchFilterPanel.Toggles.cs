@@ -46,14 +46,75 @@ public partial class SearchFilterPanel
 
     private void ToggleResource(Guid resourceId)
     {
-        if (this.SelectedResourceIds.Contains(resourceId))
+        var or1Contains = this.CalendarState.FilterSelectedResourceIdsOr1.Contains(resourceId);
+        var or2Contains = this.CalendarState.FilterSelectedResourceIdsOr2.Contains(resourceId);
+        var isInAnyOrGroup = or1Contains || or2Contains;
+
+        // アクティブなORグループが設定されている場合
+        if (this.CalendarState.ActiveOrGroup.HasValue)
         {
-            this.SelectedResourceIds.Remove(resourceId);
+            var activeGroup = this.CalendarState.ActiveOrGroup.Value;
+
+            if (activeGroup == 1)
+            {
+                // OR1グループの処理
+                if (or1Contains)
+                {
+                    // OR1から削除
+                    this.CalendarState.FilterSelectedResourceIdsOr1.Remove(resourceId);
+                    this.SelectedResourceIds.Remove(resourceId);
+                }
+                else
+                {
+                    // OR2から削除（既に含まれている場合）
+                    if (or2Contains)
+                    {
+                        this.CalendarState.FilterSelectedResourceIdsOr2.Remove(resourceId);
+                    }
+                    // OR1に追加
+                    this.CalendarState.FilterSelectedResourceIdsOr1.Add(resourceId);
+                    this.SelectedResourceIds.Add(resourceId);
+                }
+            }
+            else if (activeGroup == 2)
+            {
+                // OR2グループの処理
+                if (or2Contains)
+                {
+                    // OR2から削除
+                    this.CalendarState.FilterSelectedResourceIdsOr2.Remove(resourceId);
+                    this.SelectedResourceIds.Remove(resourceId);
+                }
+                else
+                {
+                    // OR1から削除（既に含まれている場合）
+                    if (or1Contains)
+                    {
+                        this.CalendarState.FilterSelectedResourceIdsOr1.Remove(resourceId);
+                    }
+                    // OR2に追加
+                    this.CalendarState.FilterSelectedResourceIdsOr2.Add(resourceId);
+                    this.SelectedResourceIds.Add(resourceId);
+                }
+            }
         }
         else
         {
-            this.SelectedResourceIds.Add(resourceId);
+            // アクティブなORグループが設定されていない場合は従来の動作
+            if (isInAnyOrGroup)
+            {
+                // ORグループから削除
+                this.CalendarState.FilterSelectedResourceIdsOr1.Remove(resourceId);
+                this.CalendarState.FilterSelectedResourceIdsOr2.Remove(resourceId);
+                this.SelectedResourceIds.Remove(resourceId);
+            }
+            else
+            {
+                // 通常の選択として追加（ORグループには含めない）
+                this.SelectedResourceIds.Add(resourceId);
+            }
         }
+
         this.OnFilterChanged();
     }
 

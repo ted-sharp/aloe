@@ -70,6 +70,11 @@ public class CalendarState
     public HashSet<Guid> FilterSelectedResourceIds { get; set; } = new();
     public HashSet<Guid> FilterSelectedPlanIds { get; set; } = new();
 
+    // ORグループ状態（リソースフィルター用）
+    public HashSet<Guid> FilterSelectedResourceIdsOr1 { get; set; } = new();
+    public HashSet<Guid> FilterSelectedResourceIdsOr2 { get; set; } = new();
+    public int? ActiveOrGroup { get; set; } // 1または2、nullは未選択
+
     // ローディング状態
     public bool IsLoading { get; set; } = false;
 
@@ -229,6 +234,9 @@ public class CalendarState
         this.FilterSelectedFloorIds.Clear();
         this.FilterSelectedResourceIds.Clear();
         this.FilterSelectedPlanIds.Clear();
+        this.FilterSelectedResourceIdsOr1.Clear();
+        this.FilterSelectedResourceIdsOr2.Clear();
+        this.ActiveOrGroup = null;
         this.CurrentFilter = null;
     }
 }

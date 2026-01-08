@@ -1,6 +1,7 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Repositories;
+using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -189,16 +190,26 @@ public class StatsLoader : IStatsLoader
         var sw = Stopwatch.StartNew();
         try
         {
-            // フィルターが有効でない場合、またはEquipmentリソースが選択されていない場合は空を設定
-            if (state.CurrentFilter == null || !state.CurrentFilter.SelectedResourceIds.Any())
+            // フィルターが有効でない場合は空を設定
+            if (state.CurrentFilter == null)
             {
                 state.EquipmentStatsOptimized = null;
-                var msg = state.CurrentFilter == null ? "CurrentFilter is null" : "SelectedResourceIds is empty";
-                this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: {Message}", msg);
+                this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: CurrentFilter is null");
                 return;
             }
 
-            this._logger.LogDebug("LoadEquipmentStatsAsync: SelectedResourceIds count = {Count}", state.CurrentFilter.SelectedResourceIds.Count);
+            // ORグループ条件のチェック
+            var hasOr1 = state.CurrentFilter.SelectedResourceIdsOr1 != null && state.CurrentFilter.SelectedResourceIdsOr1.Any();
+            var hasOr2 = state.CurrentFilter.SelectedResourceIdsOr2 != null && state.CurrentFilter.SelectedResourceIdsOr2.Any();
+            var hasRegularResources = state.CurrentFilter.SelectedResourceIds != null && state.CurrentFilter.SelectedResourceIds.Any();
+
+            // ORグループも通常のリソース選択もない場合は空を設定
+            if (!hasOr1 && !hasOr2 && !hasRegularResources)
+            {
+                state.EquipmentStatsOptimized = null;
+                this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync: No resource IDs selected");
+                return;
+            }
 
             var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
             this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
@@ -207,11 +218,29 @@ public class StatsLoader : IStatsLoader
             // 【最適化版】FromSql + array_agg で SQL側で配列化
             // 既に日付ごと・リソースごとにグループ化されて返される
             var querySw = Stopwatch.StartNew();
-            this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
-            var equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
-                startDate,
-                endDate,
-                state.CurrentFilter.SelectedResourceIds);
+            Dictionary<string, List<ResourceStatSlotsDto>> equipmentStatsOptimized;
+
+            // ORグループ条件が設定されている場合はORグループ対応メソッドを使用
+            if (hasOr1 || hasOr2)
+            {
+                this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync with OR1 count={Or1Count}, OR2 count={Or2Count}",
+                    state.CurrentFilter.SelectedResourceIdsOr1?.Count ?? 0,
+                    state.CurrentFilter.SelectedResourceIdsOr2?.Count ?? 0);
+                equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync(
+                    startDate,
+                    endDate,
+                    state.CurrentFilter.SelectedResourceIdsOr1,
+                    state.CurrentFilter.SelectedResourceIdsOr2);
+            }
+            else
+            {
+                // 通常のリソース選択の場合
+                this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
+                equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
+                    startDate,
+                    endDate,
+                    state.CurrentFilter.SelectedResourceIds);
+            }
             querySw.Stop();
             this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {DateCount} dates", equipmentStatsOptimized.Count);
 

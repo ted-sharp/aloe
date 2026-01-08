@@ -32,6 +32,16 @@ public partial class SearchFilterPanel
         public List<Guid> SelectedPlanIds { get; set; } = new();
 
         /// <summary>
+        /// OR1グループのリソースIDリスト
+        /// </summary>
+        public List<Guid> SelectedResourceIdsOr1 { get; set; } = new();
+
+        /// <summary>
+        /// OR2グループのリソースIDリスト
+        /// </summary>
+        public List<Guid> SelectedResourceIdsOr2 { get; set; } = new();
+
+        /// <summary>
         /// フィルターが有効かどうか
         /// </summary>
         public bool IsActive =>
@@ -40,7 +50,9 @@ public partial class SearchFilterPanel
             this.RequiredCapacity > 1 ||
             this.SelectedFloorIds.Any() ||
             this.SelectedResourceIds.Any() ||
-            this.SelectedPlanIds.Any();
+            this.SelectedPlanIds.Any() ||
+            this.SelectedResourceIdsOr1.Any() ||
+            this.SelectedResourceIdsOr2.Any();
     }
 }
 
