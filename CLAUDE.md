@@ -160,6 +160,26 @@ All entities implementing `IAuditableEntity` automatically track:
 
 Set audit context via `MedockDbContext.SetAuditInfo(userId, sessionId)` before `SaveChanges()`.
 
+### Appointment Scheduling
+
+**Slot Definition:**
+- Appointment schedule slots are defined as **half-open intervals `[SlotStartMin, SlotEndMin)`**
+- Start time is **inclusive**, end time is **exclusive**
+- All times are in minutes from 00:00 (e.g., 540 = 09:00, 1020 = 17:00)
+- Time matching logic: `appointment_time >= SlotStartMin && appointment_time < SlotEndMin`
+
+**Business Hours:**
+- Default facility business hours: 09:00～17:00
+- Lunch break: 12:00～13:00
+- Main resource slots: Mon/Tue/Thu/Fri 09:00-17:00 (30min intervals), Wed/Sat 09:00-12:30
+- Equipment resource slots: 09:00-12:00 (1hr intervals) and 13:00-17:00 (1hr intervals)
+
+**Out-of-Hours Appointments:**
+- 07:00-09:00 (early morning): ~10% probability per day
+- 12:00-13:00 (lunch break): ~10% probability per day
+- 17:00-18:00 (evening): ~10% probability per day
+- These are visualized as red vertical lines in the calendar (exist but not in normal slots)
+
 ### Multi-Tenant Design
 
 - Users belong to tenants via `tenant_users` table
@@ -269,7 +289,7 @@ For closed network deployments, self-host M PLUS 1 Code font:
 For local development with sensitive data:
 ```bash
 dotnet user-secrets init --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Database=medock;..." --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Host=localhost;Database=aloedb;..." --project src/Aloe/Apps/Medock/Aloe.Apps.MedockServer
 ```
 
 ## Test-Driven Development Approach

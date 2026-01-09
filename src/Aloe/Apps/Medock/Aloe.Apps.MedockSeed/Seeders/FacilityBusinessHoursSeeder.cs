@@ -25,7 +25,7 @@ internal static class FacilityBusinessHoursSeeder
             FacilityBusinessHoursId = Guid.CreateVersion7(),
             FacilityId = facilityId,
             WorkStartMin = 540,   // 09:00
-            WorkEndMin = 1080,    // 18:00
+            WorkEndMin = 1020,    // 17:00
             LunchStartMin = 720,  // 12:00
             LunchEndMin = 780,    // 13:00
             IsActive = true,
@@ -41,7 +41,7 @@ internal static class FacilityBusinessHoursSeeder
         };
 
         context.FacilityBusinessHours.Add(facilityBusinessHours);
-        Console.WriteLine($"  [+] FacilityBusinessHours: Start 09:00, End 18:00, Lunch 12:00-13:00");
+        Console.WriteLine($"  [+] FacilityBusinessHours: Start 09:00, End 17:00, Lunch 12:00-13:00");
 
         if (context.ChangeTracker.HasChanges())
         {

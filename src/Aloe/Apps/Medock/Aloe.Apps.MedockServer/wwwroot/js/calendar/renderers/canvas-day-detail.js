@@ -104,7 +104,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     }
 
     const startHour = state.options.startHour || 8;
-    const endHour = state.options.endHour || 18;
+    const endHour = state.options.endHour || 17;
     const totalHours = endHour - startHour;
 
     // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出

@@ -593,7 +593,8 @@ internal static class AppointmentSeeder
         }
 
         // 夕方スロット（17:00-18:00）：約10%の確率で1件生成
-        if (_random.Next(100) < 10)
+        // ただし、午前のみの日（水曜・土曜）は除外（営業時間が17:00までに満たない）
+        if (!dayContext.IsMorningOnly && _random.Next(100) < 10)
         {
             var patient = patients[_random.Next(patients.Count)];
             var organization = organizations[_random.Next(organizations.Count)];

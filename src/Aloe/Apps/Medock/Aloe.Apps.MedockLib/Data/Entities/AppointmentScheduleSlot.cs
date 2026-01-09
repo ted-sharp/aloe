@@ -26,11 +26,17 @@ public class AppointmentScheduleSlot : IAuditableEntity
     [Column("days_of_week")]
     public int[] DaysOfWeek { get; set; } = Array.Empty<int>();
 
-    /// <summary>スロット開始時刻（分単位、0:00からの分数）</summary>
+    /// <summary>
+    /// スロット開始時刻（分単位、0:00からの分数）
+    /// スロットは [SlotStartMin, SlotEndMin) の半開区間で定義（開始は包含、終了は排他）
+    /// </summary>
     [Column("slot_start_min")]
     public int SlotStartMin { get; set; } = 540; // 9:00 = 540 minutes
 
-    /// <summary>スロット終了時刻（分単位、0:00からの分数）</summary>
+    /// <summary>
+    /// スロット終了時刻（分単位、0:00からの分数）
+    /// スロットは [SlotStartMin, SlotEndMin) の半開区間で定義（開始は包含、終了は排他）
+    /// </summary>
     [Column("slot_end_min")]
     public int SlotEndMin { get; set; } = 570; // 9:30 = 570 minutes
 
