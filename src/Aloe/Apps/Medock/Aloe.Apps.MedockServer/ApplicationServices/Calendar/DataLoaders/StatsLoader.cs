@@ -2,6 +2,7 @@ using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services.Dtos;
+using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -35,10 +36,10 @@ public class StatsLoader : IStatsLoader
         DateOnly currentDate,
         int weekDays = 7)
     {
-        var sw = Stopwatch.StartNew();
+            var sw = Stopwatch.StartNew();
         try
         {
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);
             this._logger.LogInformation("[TRACE] LoadMainStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
@@ -141,7 +142,7 @@ public class StatsLoader : IStatsLoader
         var sw = Stopwatch.StartNew();
         try
         {
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);
             this._logger.LogInformation("[TRACE] LoadMainStatsSlotsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
@@ -211,7 +212,7 @@ public class StatsLoader : IStatsLoader
                 return;
             }
 
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);
             this._logger.LogInformation("[TRACE] LoadEquipmentStatsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
@@ -235,11 +236,12 @@ public class StatsLoader : IStatsLoader
             else
             {
                 // 通常のリソース選択の場合
-                this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", state.CurrentFilter.SelectedResourceIds.Count);
+                var resourceIds = state.CurrentFilter.SelectedResourceIds ?? new List<Guid>();
+                this._logger.LogDebug("About to call GetEquipmentResourceSlotsAsArraysByDateAsync with {Count} resource IDs", resourceIds.Count);
                 equipmentStatsOptimized = await this._appointmentStatsRepository.GetEquipmentResourceSlotsAsArraysByDateAsync(
                     startDate,
                     endDate,
-                    state.CurrentFilter.SelectedResourceIds);
+                    resourceIds);
             }
             querySw.Stop();
             this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync returned successfully with {DateCount} dates", equipmentStatsOptimized.Count);
@@ -265,31 +267,4 @@ public class StatsLoader : IStatsLoader
             this._logger.LogInformation("LoadEquipmentStatsAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
     }
-
-    /// <summary>
-    /// ビューと日付に基づいて取得期間を計算します。
-    /// </summary>
-    private static (DateOnly StartDate, DateOnly EndDate) GetDateRange(
-        CalendarViewType viewType,
-        DateOnly currentDate,
-        int weekDays)
-    {
-        return viewType switch
-        {
-            CalendarViewType.Year => (
-                new DateOnly(currentDate.Year, 1, 1),
-                new DateOnly(currentDate.Year, 12, 31)
-            ),
-            CalendarViewType.Month => (
-                new DateOnly(currentDate.Year, currentDate.Month, 1),
-                new DateOnly(currentDate.Year, currentDate.Month, DateTime.DaysInMonth(currentDate.Year, currentDate.Month))
-            ),
-            CalendarViewType.Week => (
-                currentDate,
-                currentDate.AddDays(weekDays - 1)
-            ),
-            _ => (currentDate, currentDate)
-        };
-    }
-
 }

@@ -32,42 +32,6 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
     }
 
     /// <inheritdoc />
-    public async Task<int> GetCountByDateAsync(DateOnly date)
-    {
-        return await this._context.Appointments
-            .AsNoTracking()
-            .CountAsync(a => !a.IsDeleted && a.ApptDate == date);
-    }
-
-    /// <inheritdoc />
-    public async Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date)
-    {
-        return await this._context.Appointments
-            .AsNoTracking()
-            .Where(a => !a.IsDeleted &&
-                        a.FloorId == floorId &&
-                        a.ApptDate == date)
-            .GroupBy(a => a.ApptStatusCode)
-            .Select(g => new { StatusCode = g.Key, Count = g.Count() })
-            .ToDictionaryAsync(x => x.StatusCode, x => x.Count);
-    }
-
-    /// <inheritdoc />
-    public async Task<List<(DateOnly? ApptDate, int ApptStartMin)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate)
-    {
-        var results = await this._context.Appointments
-            .AsNoTracking()
-            .Where(a => !a.IsDeleted &&
-                        a.ApptDate.HasValue &&
-                        a.ApptDate >= startDate &&
-                        a.ApptDate <= endDate)
-            .Select(a => new { a.ApptDate, a.ApptStartMin })
-            .ToListAsync();
-
-        return results.Select(x => (x.ApptDate, x.ApptStartMin)).ToList();
-    }
-
-    /// <inheritdoc />
     public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
         return await this._context.AppointmentStats

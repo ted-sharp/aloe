@@ -1,6 +1,7 @@
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
+using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Microsoft.Extensions.Logging;
 using System.Diagnostics;
@@ -85,7 +86,7 @@ public class AppointmentLoader : IAppointmentLoader
 
             this._logger.LogInformation("[TRACE] LoadAppointmentsAsync: {ViewType} ビューなのでデータをロードします", viewType);
 
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);
             this._logger.LogInformation("[TRACE] LoadAppointmentsAsync start: ViewType={ViewType}, CurrentDate={CurrentDate}, DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}",
                 viewType, currentDate, startDate, endDate);
 
@@ -135,31 +136,5 @@ public class AppointmentLoader : IAppointmentLoader
             sw.Stop();
             this._logger.LogInformation("[PERF] LoadAppointmentsAsync - Total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
         }
-    }
-
-    /// <summary>
-    /// ビューと日付に基づいて取得期間を計算します。
-    /// </summary>
-    private static (DateOnly StartDate, DateOnly EndDate) GetDateRange(
-        CalendarViewType viewType,
-        DateOnly currentDate,
-        int weekDays)
-    {
-        return viewType switch
-        {
-            CalendarViewType.Year => (
-                new DateOnly(currentDate.Year, 1, 1),
-                new DateOnly(currentDate.Year, 12, 31)
-            ),
-            CalendarViewType.Month => (
-                new DateOnly(currentDate.Year, currentDate.Month, 1),
-                new DateOnly(currentDate.Year, currentDate.Month, DateTime.DaysInMonth(currentDate.Year, currentDate.Month))
-            ),
-            CalendarViewType.Week => (
-                currentDate,
-                currentDate.AddDays(weekDays - 1)
-            ),
-            _ => (currentDate, currentDate)
-        };
     }
 }

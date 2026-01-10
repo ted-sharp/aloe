@@ -8,21 +8,6 @@ namespace Aloe.Apps.MedockLib.Repositories;
 public interface IAppointmentStatsRepository
 {
     /// <summary>
-    /// 指定日の予約件数を取得します。
-    /// </summary>
-    Task<int> GetCountByDateAsync(DateOnly date);
-
-    /// <summary>
-    /// 指定フロア・日付のステータス別予約件数を取得します。
-    /// </summary>
-    Task<Dictionary<int, int>> GetStatusCountByFloorAndDateAsync(Guid floorId, DateOnly date);
-
-    /// <summary>
-    /// Mainリソース統計用の予約データ（日付と開始時刻（分単位）のみ）を取得します。
-    /// </summary>
-    Task<List<(DateOnly? ApptDate, int ApptStartMin)>> GetForMainStatsAsync(DateOnly startDate, DateOnly endDate);
-
-    /// <summary>
     /// 指定日付範囲のMainリソース（AppointmentResourceType.Main）のAppointmentStatsを取得します。
     /// </summary>
     Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate);

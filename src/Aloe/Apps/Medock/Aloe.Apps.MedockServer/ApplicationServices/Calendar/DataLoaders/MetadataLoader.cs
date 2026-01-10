@@ -1,5 +1,6 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
@@ -37,7 +38,7 @@ public class MetadataLoader : IMetadataLoader
         try
         {
             // 表示範囲に基づいて祝日を取得
-            var (startDate, endDate) = GetDateRange(viewType, currentDate, weekDays);
+            var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);
             var result = await this._appointmentService.GetHolidaysAsync(startDate, endDate);
 
             // 既存の祝日をクリアしてから新しいデータを設定
@@ -136,31 +137,5 @@ public class MetadataLoader : IMetadataLoader
             state.AvailableResources = new List<SearchFilterPanel.FilterItem>();
             state.AvailablePlans = new List<SearchFilterPanel.FilterItem>();
         }
-    }
-
-    /// <summary>
-    /// ビューと日付に基づいて取得期間を計算します。
-    /// </summary>
-    private static (DateOnly StartDate, DateOnly EndDate) GetDateRange(
-        CalendarViewType viewType,
-        DateOnly currentDate,
-        int weekDays)
-    {
-        return viewType switch
-        {
-            CalendarViewType.Year => (
-                new DateOnly(currentDate.Year, 1, 1),
-                new DateOnly(currentDate.Year, 12, 31)
-            ),
-            CalendarViewType.Month => (
-                new DateOnly(currentDate.Year, currentDate.Month, 1),
-                new DateOnly(currentDate.Year, currentDate.Month, DateTime.DaysInMonth(currentDate.Year, currentDate.Month))
-            ),
-            CalendarViewType.Week => (
-                currentDate,
-                currentDate.AddDays(weekDays - 1)
-            ),
-            _ => (currentDate, currentDate)
-        };
     }
 }
