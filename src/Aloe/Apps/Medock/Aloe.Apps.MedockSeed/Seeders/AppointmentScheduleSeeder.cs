@@ -97,12 +97,31 @@ internal static class AppointmentScheduleSeeder
         const int slotDurationMin = 30;    // 30分単位
         const int capacity = 20;            // 1スロットあたり20件
 
-        // 月火木金：9:00-17:00（通常営業日）
+        // 月火木金：9:00-17:00（通常営業日、ランチタイム12:00-13:00除外）
         const int businessStartMin = 540;  // 9:00
+        const int lunchStartMin = 720;    // 12:00
+        const int lunchEndMin = 780;      // 13:00
         const int businessEndMin = 1020;   // 17:00
         var normalDays = new[] { 1, 2, 4, 5 }; // 月火木金
 
-        for (int min = businessStartMin; min < businessEndMin; min += slotDurationMin)
+        // 午前：9:00-12:00
+        for (int min = businessStartMin; min < lunchStartMin; min += slotDurationMin)
+        {
+            scheduleSlots.Add(new AppointmentScheduleSlot
+            {
+                ApptScheduleSlotId = Guid.CreateVersion7(),
+                ApptScheduleId = schedule.ApptScheduleId,
+                DaysOfWeek = normalDays,
+                SlotStartMin = min,
+                SlotEndMin = min + slotDurationMin,
+                SlotCap = capacity
+            });
+
+            SeederHelper.InitializeAuditFields(scheduleSlots.Last(), dateTimeProvider);
+        }
+
+        // 午後：13:00-17:00
+        for (int min = lunchEndMin; min < businessEndMin; min += slotDurationMin)
         {
             scheduleSlots.Add(new AppointmentScheduleSlot
             {

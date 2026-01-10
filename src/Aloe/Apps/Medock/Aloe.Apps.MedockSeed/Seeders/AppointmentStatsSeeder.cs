@@ -127,13 +127,31 @@ internal static class AppointmentStatsSeeder
                             outOfHoursCount += slotCount;
 
                             // 時間外スロットのレコードを追加（SlotCap=0で識別可能）
+                            // 昼休み時間（12:00-13:00 = 720-780分）を越えないようにスロット終了時刻を調整
+                            const int lunchStartMin = 720;   // 12:00
+                            const int lunchEndMin = 780;     // 13:00
+                            const int slotDurationMin = 30;  // 30分単位
+
+                            int slotEndMin = slotStartMin + slotDurationMin;
+
+                            // スロットが昼休み時間を越える場合、昼休み開始時刻で打ち切る
+                            if (slotStartMin < lunchStartMin && slotEndMin > lunchStartMin)
+                            {
+                                slotEndMin = lunchStartMin;  // 昼休み開始で終了
+                            }
+                            // スロットが昼休み時間を越える場合（開始が昼休み中の場合）、昼休み終了時刻で打ち切る
+                            else if (slotStartMin >= lunchStartMin && slotStartMin < lunchEndMin && slotEndMin > lunchEndMin)
+                            {
+                                slotEndMin = lunchEndMin;  // 昼休み終了で終了
+                            }
+
                             var outOfHoursStatSlot = new AppointmentStatSlots
                             {
                                 ApptStatSlotId = Guid.CreateVersion7(),
                                 ApptDate = currentDate,
                                 ApptResId = schedule.ApptResId,
                                 SlotStart = slotStartMin,
-                                SlotEnd = slotStartMin + 30, // 30分スロットとして扱う
+                                SlotEnd = slotEndMin,
                                 SlotCap = 0, // 時間外なので容量は0
                                 SlotCount = slotCount
                             };

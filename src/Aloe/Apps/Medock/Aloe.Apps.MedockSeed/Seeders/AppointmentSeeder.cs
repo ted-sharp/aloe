@@ -203,17 +203,17 @@ internal static class AppointmentSeeder
     {
         var isHoliday = holidays.Contains(date);
 
-        // 今日の場合は強制的に営業日として返す（オーバーライドで詳細設定）
+        // 今日の場合は強制的に営業日として返す（デフォルトは通常営業、但し日曜・祝日は午前のみ）
         if (isToday)
         {
-            // 今日が水曜・土曜または日曜・祝日の場合は、午前のみとして返す
+            // 今日が日曜・祝日の場合は、午前のみとして返す
+            // 水曜・土曜でも全日営業に変更（オーバーライド）
             bool isTodayHolidayOrSunday = SeederHelper.IsSunday(date) || isHoliday;
-            bool isTodayWednesdayOrSaturday = SeederHelper.IsHalfDay(date);
 
             return new AppointmentDayContext
             {
                 IsOpen = true,
-                IsMorningOnly = isTodayHolidayOrSunday || isTodayWednesdayOrSaturday,  // オーバーライドで時短営業
+                IsMorningOnly = isTodayHolidayOrSunday,  // 日曜・祝日のみ午前のみ、他は全日営業
                 IsIrregular = false
             };
         }
