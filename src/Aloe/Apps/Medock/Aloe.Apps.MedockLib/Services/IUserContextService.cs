@@ -30,7 +30,8 @@ public interface IUserContextService
     /// ログインスキップ（前回のセッションが維持されている場合）でも正しく動作するよう、
     /// Cookieにfacility_idが含まれていない場合は、DBからアクセス可能な施設を取得してフォールバックします。
     /// </remarks>
-    Task InitializeFromClaimsAsync(ClaimsPrincipal principal);
+    /// <returns>初期化が成功した場合はtrue、再ログインが必要な場合はfalse</returns>
+    Task<bool> InitializeFromClaimsAsync(ClaimsPrincipal principal);
 
     /// <summary>
     /// セッションIDを設定します（ログイン時に呼び出し）。

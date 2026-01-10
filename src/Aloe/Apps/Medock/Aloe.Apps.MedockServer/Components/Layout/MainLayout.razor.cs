@@ -34,7 +34,14 @@ public partial class MainLayout : LayoutComponentBase
 
         if (user.Identity?.IsAuthenticated == true)
         {
-            await this.UserContextService.InitializeFromClaimsAsync(user);
+            var isValid = await this.UserContextService.InitializeFromClaimsAsync(user);
+            if (!isValid)
+            {
+                // 施設が存在しない、またはアクセス権がない場合はログインページにリダイレクト
+                this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
+                return;
+            }
+
             this.userContext = this.UserContextService.CurrentUser;
 
             // アクセス可能な施設一覧を取得

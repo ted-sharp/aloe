@@ -64,7 +64,7 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
         lunchStartHour = parseTime(businessHours.lunchStartTime);
         lunchEndHour = parseTime(businessHours.lunchEndTime);
     }
-    const startHour = state.options.startHour || 8;
+    const startHour = state.options.startHour || 9;
     const endHour = state.options.endHour || 17;
 
     // 週行の bounds 情報を保存する配列（月↔週トランジション用）

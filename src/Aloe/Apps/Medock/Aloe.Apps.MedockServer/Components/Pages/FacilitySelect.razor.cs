@@ -36,7 +36,13 @@ public partial class FacilitySelect : ComponentBase
         var httpContext = this.HttpContextAccessor.HttpContext;
         if (httpContext?.User != null)
         {
-            await this.UserContextService.InitializeFromClaimsAsync(httpContext.User);
+            var isValid = await this.UserContextService.InitializeFromClaimsAsync(httpContext.User);
+            if (!isValid)
+            {
+                // ユーザーが無効、またはアクセス可能な施設がない場合はログインページにリダイレクト
+                this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
+                return;
+            }
             this.userContext = this.UserContextService.CurrentUser;
         }
 

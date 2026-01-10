@@ -106,8 +106,8 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
             lunchStartHour = parseTime(businessHours.lunchStartTime);
             lunchEndHour = parseTime(businessHours.lunchEndTime);
         }
-        const startHour = state.options.startHour || 8;
-        const endHour = state.options.endHour || 18;
+        const startHour = state.options.startHour || 9;
+        const endHour = state.options.endHour || 17;
 
         // 各日付セルのバーチャートを描画
         let day = 1;

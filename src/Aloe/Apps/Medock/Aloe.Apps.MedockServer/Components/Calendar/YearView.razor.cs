@@ -69,6 +69,18 @@ public partial class YearView : ComponentBase
     public List<string>? FilterTimeSlots { get; set; }
 
     /// <summary>
+    /// 開始時刻（時間単位、例: 9）
+    /// </summary>
+    [Parameter]
+    public int StartHour { get; set; } = 8;
+
+    /// <summary>
+    /// 終了時刻（時間単位、例: 17）
+    /// </summary>
+    [Parameter]
+    public int EndHour { get; set; } = 18;
+
+    /// <summary>
     /// カレンダーの高さ
     /// </summary>
     [Parameter]

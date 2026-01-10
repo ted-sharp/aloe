@@ -169,7 +169,15 @@ public partial class Calendar : ComponentBase
             if (user.Identity?.IsAuthenticated == true)
             {
                 // IUserContextServiceを初期化（フォールバック処理込み：Cookieにfacility_idがない場合はDBから取得）
-                await this.UserContextService.InitializeFromClaimsAsync(user);
+                var isValid = await this.UserContextService.InitializeFromClaimsAsync(user);
+                if (!isValid)
+                {
+                    // 施設が存在しない、またはアクセス権がない場合はログインページにリダイレクト
+                    this.Logger.LogWarning("Calendar.OnInitializedAsync: Facility validation failed, redirecting to login");
+                    this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
+                    return;
+                }
+
                 var currentUser = this.UserContextService.CurrentUser;
                 if (currentUser != null)
                 {

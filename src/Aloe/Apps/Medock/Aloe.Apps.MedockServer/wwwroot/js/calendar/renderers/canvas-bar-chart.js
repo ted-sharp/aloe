@@ -83,7 +83,8 @@ export function renderCanvasBarChart(contentCtx, params) {
         isDateGrayed, slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
         startHour, endHour,
         lunchStartHour, lunchEndHour, isYearView,
-        resourceTypeCode = 0, planTypeCode = null
+        resourceTypeCode = 0, planTypeCode = null,
+        businessStartHour = null, businessEndHour = null
     } = params;
 
     const renderState = getRenderState();
@@ -307,19 +308,25 @@ export function renderCanvasBarChart(contentCtx, params) {
     }
 
     // 業務時間の縦ライン
+    // businessHours から取得した時刻を使用、ない場合は startHour / endHour を使用
+    const actualBusinessStart = businessStartHour !== null ? businessStartHour : startHour;
+    const actualBusinessEnd = businessEndHour !== null ? businessEndHour : endHour;
+
+    const beforeLineX = timeToX(actualBusinessStart);
     const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#d1d5db';
     const beforeLineWidth = hasOutsideHoursBefore ? CONFIG.stroke.alert : CONFIG.stroke.normal;
     drawLine(contentCtx, {
-        points: [businessStartX, barAreaTop, businessStartX, barAreaTop + barAreaHeight],
+        points: [beforeLineX, barAreaTop, beforeLineX, barAreaTop + barAreaHeight],
         stroke: beforeLineColor,
         strokeWidth: beforeLineWidth,
         opacity: 0.8
     });
 
+    const afterLineX = timeToX(actualBusinessEnd);
     const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db';
     const afterLineWidth = hasOutsideHoursAfter ? CONFIG.stroke.alert : CONFIG.stroke.normal;
     drawLine(contentCtx, {
-        points: [businessEndX, barAreaTop, businessEndX, barAreaTop + barAreaHeight],
+        points: [afterLineX, barAreaTop, afterLineX, barAreaTop + barAreaHeight],
         stroke: afterLineColor,
         strokeWidth: afterLineWidth,
         opacity: 0.8
@@ -420,13 +427,23 @@ export function renderCanvasDayBarChart(contexts, state, params) {
 
     let lunchStartHour = null;
     let lunchEndHour = null;
-    if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
-        const parseTime = (timeStr) => {
-            const parts = timeStr.split(':');
-            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-        };
-        lunchStartHour = parseTime(businessHours.lunchStartTime);
-        lunchEndHour = parseTime(businessHours.lunchEndTime);
+    let businessStartHour = null;
+    let businessEndHour = null;
+    const parseTime = (timeStr) => {
+        const parts = timeStr.split(':');
+        return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
+    };
+    if (businessHours) {
+        if (businessHours.lunchStartTime && businessHours.lunchEndTime) {
+            lunchStartHour = parseTime(businessHours.lunchStartTime);
+            lunchEndHour = parseTime(businessHours.lunchEndTime);
+        }
+        if (businessHours.startTime) {
+            businessStartHour = parseTime(businessHours.startTime);
+        }
+        if (businessHours.endTime) {
+            businessEndHour = parseTime(businessHours.endTime);
+        }
     }
 
     // グレーアウト判定
@@ -532,8 +549,8 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         });
     } else if (slotCount > 0) {
         // 詳細表示モード
-        const startHour = state.options.startHour || 8;
-        const endHour = state.options.endHour || 18;
+        const startHour = state.options.startHour || 9;
+        const endHour = state.options.endHour || 17;
 
         // タイプ情報を取得
         const resourceTypeCode = stats?.resourceTypeCode ?? 0;
@@ -546,7 +563,8 @@ export function renderCanvasDayBarChart(contexts, state, params) {
             slotStartMins, slotEndMins, slotCounts, slotCaps, slotAvailables, slotFlags,
             startHour, endHour,
             lunchStartHour, lunchEndHour, isYearView,
-            resourceTypeCode, planTypeCode
+            resourceTypeCode, planTypeCode,
+            businessStartHour, businessEndHour
         });
     }
 }
