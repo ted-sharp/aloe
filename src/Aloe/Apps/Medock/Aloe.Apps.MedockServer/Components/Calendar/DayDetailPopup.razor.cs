@@ -130,7 +130,7 @@ public partial class DayDetailPopup : ComponentBase
                 var dateStr = this.SelectedDate.Value.ToString("yyyy-MM-dd");
 
                 // MainStatSlotsデータをJavaScript形式に変換
-                var dayStatsData = this.ConvertMainStatsSlotsToJSFormat(dateStr);
+                var dayStatsData = await this.ConvertMainStatsSlotsToJSFormatAsync(dateStr);
 
                 // DotNetObjectReferenceを作成してJavaScript側に渡す
                 var dotNetRef = DotNetObjectReference.Create(this);
@@ -438,7 +438,7 @@ public partial class DayDetailPopup : ComponentBase
     /// MainStatsSlotsデータをJavaScript形式に変換
     /// JavaScriptは並列配列形式を期待しています
     /// </summary>
-    private object ConvertMainStatsSlotsToJSFormat(string dateStr)
+    private async Task<object> ConvertMainStatsSlotsToJSFormatAsync(string dateStr)
     {
         if (this.MainStatsSlots == null || !this.MainStatsSlots.Any())
         {
@@ -518,22 +518,31 @@ public partial class DayDetailPopup : ComponentBase
                 var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotStart));
                 var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotEnd));
 
-                var isOutsideHours = false;
+                var isOutsideHoursBefore = false;
+                var isOutsideHoursAfter = false;
+                var isOutsideHoursLunch = false;
 
-                // スロットが業務時間外にある場合
-                if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
+                // 朝の時間外: スロットが業務開始時刻より前に終わる
+                if (slotEndTime <= businessStart)
                 {
-                    isOutsideHours = true;
+                    isOutsideHoursBefore = true;
+                }
+                // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
+                else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
+                {
+                    isOutsideHoursAfter = true;
                 }
                 // 昼休み時間帯にある場合
                 else if (lunchStart.HasValue && lunchEnd.HasValue &&
                          slotStartTime >= lunchStart.Value && slotEndTime <= lunchEnd.Value)
                 {
-                    isOutsideHours = true;
+                    isOutsideHoursLunch = true;
                 }
 
                 byte flags = 0;
-                if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
+                if (isOutsideHoursBefore) flags |= 0b0010;  // ビット1: IsOutsideHoursBefore（朝）
+                if (isOutsideHoursAfter) flags |= 0b0100;   // ビット2: IsOutsideHoursAfter（夕方）
+                if (isOutsideHoursLunch) flags |= 0b1000;   // ビット3: IsOutsideHoursLunch（昼休み）
                 slotFlags[i] = flags;
             }
         }

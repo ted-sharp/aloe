@@ -108,32 +108,30 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const totalHours = endHour - startHour;
 
     // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
+    // フラグのビット割り当て:
+    // ビット0 (0b0001): IsGrayedOut
+    // ビット1 (0b0010): IsOutsideHoursBefore（朝）
+    // ビット2 (0b0100): IsOutsideHoursAfter（夕方）
+    // ビット3 (0b1000): IsOutsideHoursLunch（昼休み）
     const validSlotIndices = [];
     let hasOutsideHoursBefore = false;
     let hasOutsideHoursAfter = false;
     let hasOutsideHoursLunch = false;
 
     for (let i = 0; i < slotCount; i++) {
-        // ビジネスアワー外のスロットを除外（ビット1: IsOutsideHours）
-        const isOutsideHours = slotFlags && (slotFlags[i] & 0b010) !== 0;
+        // ビジネスアワー外のスロットをフラグから判定
+        const flagsBefore = slotFlags && (slotFlags[i] & 0b0010) !== 0;
+        const flagsAfter = slotFlags && (slotFlags[i] & 0b0100) !== 0;
+        const flagsLunch = slotFlags && (slotFlags[i] & 0b1000) !== 0;
+        const isOutsideHours = flagsBefore || flagsAfter || flagsLunch;
 
         if (isOutsideHours) {
             // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
             const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
             if (count > 0) {
-                const slotStartMin = slotStarts[i];
-                const slotEndMin = slotEnds[i];
-                const slotStartHour = slotStartMin / 60;
-                const slotEndHour = slotEndMin / 60;
-
-                if (slotEndHour <= startHour) {
-                    hasOutsideHoursBefore = true;
-                } else if (slotStartHour >= endHour) {
-                    hasOutsideHoursAfter = true;
-                } else if (lunchStartHour !== null && lunchEndHour !== null &&
-                    slotStartHour >= lunchStartHour && slotEndHour <= lunchEndHour) {
-                    hasOutsideHoursLunch = true;
-                }
+                if (flagsBefore) hasOutsideHoursBefore = true;
+                if (flagsAfter) hasOutsideHoursAfter = true;
+                if (flagsLunch) hasOutsideHoursLunch = true;
             }
             continue;
         }

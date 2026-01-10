@@ -104,10 +104,10 @@ export function renderCanvasBarChart(contentCtx, params) {
     }
 
     const totalHours = endHour - startHour;
-    const barAreaWidth = cellWidth - 4;
+    const barAreaWidth = cellWidth - CONFIG.spacing.barHPadding;
 
-    const businessStartX = cellLeft + 2;
-    const businessEndX = cellLeft + 2 + barAreaWidth;
+    const businessStartX = cellLeft + CONFIG.spacing.barXOffset;
+    const businessEndX = cellLeft + CONFIG.spacing.barXOffset + barAreaWidth;
 
     // 昼休み時間帯の長さを計算
     const lunchDuration = (lunchStartHour !== null && lunchEndHour !== null)
@@ -138,54 +138,40 @@ export function renderCanvasBarChart(contentCtx, params) {
         return businessStartX + relativePosition * barAreaWidth;
     };
 
-    // スロットを分類
+    // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
+    // フラグのビット割り当て:
+    // ビット0 (0b0001): IsGrayedOut
+    // ビット1 (0b0010): IsOutsideHoursBefore（朝）
+    // ビット2 (0b0100): IsOutsideHoursAfter（夕方）
+    // ビット3 (0b1000): IsOutsideHoursLunch（昼休み）
     const slotsInBusiness = [];
     let hasOutsideHoursBefore = false;
     let hasOutsideHoursAfter = false;
     let hasOutsideHoursLunch = false;
 
     for (const idx of validIndices) {
-        const slotStart = slotStartMins[idx];
-        const slotEnd = slotEndMins[idx];
-        const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
-
-        // フラグからisOutsideHoursを取得（ビット1）
-        const isOutsideHours = slotFlags ? (slotFlags[idx] & 0b010) !== 0 : false;
-
-        // 時間範囲を解析
-        const timeRange = parseSlotTimeRangeFromStrings(slotStart, slotEnd, startHour, endHour);
-        const slotStartHour = timeRange.start;
-        const slotEndHour = timeRange.end;
+        // ビジネスアワー外のスロットをフラグから判定
+        const flagsBefore = slotFlags ? (slotFlags[idx] & 0b0010) !== 0 : false;
+        const flagsAfter = slotFlags ? (slotFlags[idx] & 0b0100) !== 0 : false;
+        const flagsLunch = slotFlags ? (slotFlags[idx] & 0b1000) !== 0 : false;
+        const isOutsideHours = flagsBefore || flagsAfter || flagsLunch;
 
         if (isOutsideHours) {
+            // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
+            const count = (slotCounts[idx] !== undefined && slotCounts[idx] !== null) ? slotCounts[idx] : 0;
             if (count > 0) {
-                if (slotEndHour <= startHour) {
-                    hasOutsideHoursBefore = true;
-                } else if (slotStartHour >= endHour) {
-                    hasOutsideHoursAfter = true;
-                } else if (lunchStartHour !== null && lunchEndHour !== null &&
-                    slotStartHour >= lunchStartHour && slotEndHour <= lunchEndHour) {
-                    hasOutsideHoursLunch = true;
-                }
+                if (flagsBefore) hasOutsideHoursBefore = true;
+                if (flagsAfter) hasOutsideHoursAfter = true;
+                if (flagsLunch) hasOutsideHoursLunch = true;
             }
-            continue;
+            continue;  // 時間外スロットは描画対象から完全に除外
         }
 
-        // 昼休み時間帯かどうかを判定
-        const isInLunchTime = lunchStartHour !== null && lunchEndHour !== null &&
-            ((slotStartHour >= lunchStartHour && slotStartHour < lunchEndHour) ||
-                (slotEndHour > lunchStartHour && slotEndHour <= lunchEndHour) ||
-                (slotStartHour <= lunchStartHour && slotEndHour >= lunchEndHour));
+        // キャパシティがある場合のみ有効スロットに追加
+        const cap = (slotCaps[idx] !== undefined && slotCaps[idx] !== null && slotCaps[idx] > 0) ? slotCaps[idx] : 0;
+        if (cap <= 0) continue;
 
-        if (slotEndHour < startHour || slotStartHour < startHour) {
-            // ビジネスアワー前
-        } else if (slotStartHour >= endHour) {
-            // ビジネスアワー後
-        } else if (isInLunchTime) {
-            // 昼休み時間帯
-        } else {
-            slotsInBusiness.push(idx);
-        }
+        slotsInBusiness.push(idx);
     }
 
     // 最大値を計算
@@ -213,21 +199,8 @@ export function renderCanvasBarChart(contentCtx, params) {
         const slotStartStr = slotStartMins[idx];
         const slotEndStr = slotEndMins[idx];
         const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
-        let slotStart = Math.max(startHour, timeRange.start);
-        let slotEnd = Math.min(endHour, timeRange.end);
-
-        // 昼休み時間帯と重なる場合は調整
-        if (lunchStartHour !== null && lunchEndHour !== null) {
-            if (slotStart < lunchStartHour && slotEnd > lunchEndHour) {
-                slotEnd = lunchStartHour;
-            } else if (slotStart >= lunchStartHour && slotEnd <= lunchEndHour) {
-                return;
-            } else if (slotStart < lunchStartHour && slotEnd > lunchStartHour) {
-                slotEnd = lunchStartHour;
-            } else if (slotStart < lunchEndHour && slotEnd > lunchEndHour) {
-                slotStart = lunchEndHour;
-            }
-        }
+        const slotStart = Math.max(startHour, timeRange.start);
+        const slotEnd = Math.min(endHour, timeRange.end);
 
         const slotStartX = timeToX(slotStart);
         const slotEndX = timeToX(slotEnd);
@@ -240,7 +213,7 @@ export function renderCanvasBarChart(contentCtx, params) {
             drawLine(contentCtx, {
                 points: [barX, capacityY, barX + barWidth, capacityY],
                 stroke: '#3b82f6',
-                strokeWidth: 1,
+                strokeWidth: CONFIG.stroke.normal,
                 opacity: isSlotGrayed ? 0.4 : 0.8
             });
         }
@@ -311,7 +284,7 @@ export function renderCanvasBarChart(contentCtx, params) {
 
             if (shouldShowLabel) {
                 const hourValue = Math.floor(timeRange.start);
-                const labelFontSize = isYearView ? 6 : 7;
+                const labelFontSize = isYearView ? CONFIG.font.labelYear : CONFIG.font.labelMonth;
                 // barWidthが10px以上の場合は2桁/1桁を判定、10px未満は必ず2桁表示
                 const canShowTwoDigits = barWidth >= 15 || (barWidth < 10 && (isFirstSlot || isLastSlot));
                 const labelText = canShowTwoDigits ? String(hourValue) : String(hourValue % 10);
@@ -335,7 +308,7 @@ export function renderCanvasBarChart(contentCtx, params) {
 
     // 業務時間の縦ライン
     const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#d1d5db';
-    const beforeLineWidth = hasOutsideHoursBefore ? 2 : 1;
+    const beforeLineWidth = hasOutsideHoursBefore ? CONFIG.stroke.alert : CONFIG.stroke.normal;
     drawLine(contentCtx, {
         points: [businessStartX, barAreaTop, businessStartX, barAreaTop + barAreaHeight],
         stroke: beforeLineColor,
@@ -344,7 +317,7 @@ export function renderCanvasBarChart(contentCtx, params) {
     });
 
     const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db';
-    const afterLineWidth = hasOutsideHoursAfter ? 2 : 1;
+    const afterLineWidth = hasOutsideHoursAfter ? CONFIG.stroke.alert : CONFIG.stroke.normal;
     drawLine(contentCtx, {
         points: [businessEndX, barAreaTop, businessEndX, barAreaTop + barAreaHeight],
         stroke: afterLineColor,
@@ -356,7 +329,7 @@ export function renderCanvasBarChart(contentCtx, params) {
     if (lunchStartHour !== null && lunchEndHour !== null) {
         const lunchStartX = timeToX(lunchStartHour);
         const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : '#d1d5db';
-        const lunchLineWidth = hasOutsideHoursLunch ? 2 : 1;
+        const lunchLineWidth = hasOutsideHoursLunch ? CONFIG.stroke.alert : CONFIG.stroke.normal;
 
         drawLine(contentCtx, {
             points: [lunchStartX, barAreaTop, lunchStartX, barAreaTop + barAreaHeight],
@@ -467,10 +440,10 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     // ラベル表示用のスペースを確保
     const isYearView = state.currentView === 'year';
     const dateFontSize = isYearView ? CONFIG.font.sizeDateYear : CONFIG.font.sizeDateMonth;
-    const dayTextHeight = dateFontSize + 4;
+    const dayTextHeight = dateFontSize + CONFIG.spacing.dayTextMargin;
     const barAreaTop = cellTop + dayTextHeight;
     const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? (isYearView ? 10 : 12) : 0;
-    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight);
+    const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - CONFIG.spacing.dayTextMargin - labelAreaHeight);
 
     // 背景矩形
     const bgWidth = Math.max(0, cellWidth - 2);

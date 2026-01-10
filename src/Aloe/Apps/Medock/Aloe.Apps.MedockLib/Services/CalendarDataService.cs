@@ -11,7 +11,7 @@ namespace Aloe.Apps.MedockLib.Services;
 public class CalendarDataService : ICalendarDataService
 {
     /// <inheritdoc />
-    public Task<CalendarDataDto> BuildCalendarDataAsync(
+    public async Task<CalendarDataDto> BuildCalendarDataAsync(
         IEnumerable<AppointmentDto> appointments,
         Dictionary<string, List<AppointmentStats>> mainStats,
         Dictionary<string, bool> mainStatsGrayedOut,
@@ -110,17 +110,24 @@ public class CalendarDataService : ICalendarDataService
                         slotCaps[i] = statSlot.SlotCap;
                         slotAvailables[i] = statSlot.SlotAvailable;
 
-                        // 業務時間外スロットかどうかを判定
-                        var isOutsideHours = false;
+                        // 業務時間外スロットの種類を判定（Before/After/Lunch）
+                        var isOutsideHoursBefore = false;
+                        var isOutsideHoursAfter = false;
+                        var isOutsideHoursLunch = false;
                         if (businessHours != null)
                         {
                             var businessStart = TimeOnly.Parse(businessHours.StartTime);
                             var businessEnd = TimeOnly.Parse(businessHours.EndTime);
 
-                            // スロットが業務時間外にある場合
-                            if (slotEndTime <= businessStart || slotStartTime >= businessEnd)
+                            // 朝の時間外: スロットが業務開始時刻より前に終わる
+                            if (slotEndTime <= businessStart)
                             {
-                                isOutsideHours = true;
+                                isOutsideHoursBefore = true;
+                            }
+                            // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
+                            else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
+                            {
+                                isOutsideHoursAfter = true;
                             }
                             // 昼休み時間帯にある場合
                             else if (!String.IsNullOrEmpty(businessHours.LunchStartTime) &&
@@ -131,17 +138,17 @@ public class CalendarDataService : ICalendarDataService
 
                                 if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
                                 {
-                                    isOutsideHours = true;
+                                    isOutsideHoursLunch = true;
                                 }
                             }
                         }
 
                         // フラグをビット単位で設定
                         byte flags = 0;
-                        if (isSlotGrayed) flags |= 0b001; // ビット0: IsGrayedOut
-                        if (isOutsideHours) flags |= 0b010; // ビット1: IsOutsideHours
-
-                        // ビット2: FilteredCount > 0 は現時点では常にfalse
+                        if (isSlotGrayed) flags |= 0b0001;          // ビット0: IsGrayedOut
+                        if (isOutsideHoursBefore) flags |= 0b0010;  // ビット1: IsOutsideHoursBefore（朝）
+                        if (isOutsideHoursAfter) flags |= 0b0100;   // ビット2: IsOutsideHoursAfter（夕方）
+                        if (isOutsideHoursLunch) flags |= 0b1000;   // ビット3: IsOutsideHoursLunch（昼休み）
                         slotFlags[i] = flags;
 
                         slotFilteredCounts[i] = 0; // 現時点では常に0
@@ -204,7 +211,7 @@ public class CalendarDataService : ICalendarDataService
             Holidays = holidaysDict
         };
 
-        return Task.FromResult(result);
+        return result;
     }
 }
 

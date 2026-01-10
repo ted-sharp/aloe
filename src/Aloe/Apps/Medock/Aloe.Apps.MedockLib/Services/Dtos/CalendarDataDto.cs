@@ -90,7 +90,10 @@ public class ResourceStatSlotsDto
 
     /// <summary>
     /// スロットフラグ配列
-    /// ビット0: IsGrayedOut, ビット1: IsOutsideHours, ビット2: FilteredCount > 0
+    /// ビット0: IsGrayedOut（フィルターで非表示）
+    /// ビット1: IsOutsideHoursBefore（朝の時間外）
+    /// ビット2: IsOutsideHoursAfter（夕方の時間外）
+    /// ビット3: IsOutsideHoursLunch（昼休みの時間外）
     /// </summary>
     public byte[]? SlotFlags { get; set; }
 

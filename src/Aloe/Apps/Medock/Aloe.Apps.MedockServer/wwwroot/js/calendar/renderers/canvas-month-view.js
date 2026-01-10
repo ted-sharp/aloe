@@ -5,6 +5,7 @@
  * 1ヶ月全体を7列グリッドで表示
  */
 
+import { CONFIG } from '../config.js';
 import { clearCanvas } from '../utils/canvas-utils.js';
 import { renderCanvasMonthCalendar } from './canvas-month-calendar.js';
 import { renderCanvasDayBarChart } from './canvas-bar-chart.js';
@@ -115,11 +116,11 @@ export function renderCanvasMonthView(canvasManager, state, fadeMode = 'crossfad
                 const mainStats = state.mainStats.get(dateStr);
                 
                 // 日付テキストの高さを計算（バーチャートと同じ）
-                const dateFontSize = 12;
-                const dayTextHeight = dateFontSize + 4;
+                const dateFontSize = CONFIG.font.sizeDateMonth;
+                const dayTextHeight = dateFontSize + CONFIG.spacing.dayTextMargin;
                 const barAreaTop = cellTop + dayTextHeight;
                 const labelAreaHeight = (cellWidth >= 40 && cellHeight >= 50) ? 12 : 0;
-                const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - 4 - labelAreaHeight);
+                const barAreaHeight = Math.max(0, cellHeight - dayTextHeight - CONFIG.spacing.dayTextMargin - labelAreaHeight);
 
                 renderCanvasLineChart(contexts.get('content'), {
                     cellLeft,
