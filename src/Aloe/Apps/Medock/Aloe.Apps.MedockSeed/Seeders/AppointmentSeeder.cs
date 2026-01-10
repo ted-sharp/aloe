@@ -109,6 +109,7 @@ internal static class AppointmentSeeder
         if (batchEndDate > endDate) batchEndDate = endDate;
 
         var totalAppointments = 0;
+        var today = dateTimeProvider.TodayDateOnly;
 
         while (batchStartDate <= endDate)
         {
@@ -120,7 +121,8 @@ internal static class AppointmentSeeder
 
             while (currentDate <= batchEndDate && currentDate <= endDate)
             {
-                var dayContext = GetDayContext(currentDate, holidays);
+                var isToday = currentDate == today;
+                var dayContext = GetDayContext(currentDate, holidays, isToday);
 
                 // イレギュラーチェック（約1%の確率で例外）
                 var isIrregular = _random.Next(100) < 1;
@@ -142,7 +144,8 @@ internal static class AppointmentSeeder
                         mainResource,
                         equipmentResources,
                         schedules,
-                        dateTimeProvider);
+                        dateTimeProvider,
+                        isToday);
 
                     appointments.AddRange(appointmentsForDay);
                     resourceAssignments.AddRange(assignmentsForDay);
@@ -196,9 +199,24 @@ internal static class AppointmentSeeder
     /// <summary>
     /// 日付の営業コンテキストを取得
     /// </summary>
-    private static AppointmentDayContext GetDayContext(DateOnly date, HashSet<DateOnly> holidays)
+    private static AppointmentDayContext GetDayContext(DateOnly date, HashSet<DateOnly> holidays, bool isToday = false)
     {
         var isHoliday = holidays.Contains(date);
+
+        // 今日の場合は強制的に営業日として返す（オーバーライドで詳細設定）
+        if (isToday)
+        {
+            // 今日が水曜・土曜または日曜・祝日の場合は、午前のみとして返す
+            bool isTodayHolidayOrSunday = SeederHelper.IsSunday(date) || isHoliday;
+            bool isTodayWednesdayOrSaturday = SeederHelper.IsHalfDay(date);
+
+            return new AppointmentDayContext
+            {
+                IsOpen = true,
+                IsMorningOnly = isTodayHolidayOrSunday || isTodayWednesdayOrSaturday,  // オーバーライドで時短営業
+                IsIrregular = false
+            };
+        }
 
         // 日曜または祝日は休み
         if (SeederHelper.IsSunday(date) || isHoliday)
@@ -276,7 +294,8 @@ internal static class AppointmentSeeder
         AppointmentResource mainResource,
         List<AppointmentResource> equipmentResources,
         List<AppointmentSchedule> schedules,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider,
+        bool isToday = false)
     {
         var appointments = new List<Appointment>();
         var resourceAssignments = new List<AppointmentResourceAssignment>();
@@ -350,38 +369,93 @@ internal static class AppointmentSeeder
 
         // Main リソース：各スロットごとに予約数を計算（容量 × 占有率 × 時間帯乗数 + スロット変動 + 超過）
         var slotAppointmentCounts = new List<int>();
-        foreach (var slot in mainSlots)
+        bool hasFullSlot = false;
+        bool hasEmptySlot = false;
+        bool hasOvercapacitySlot = false;
+
+        for (int i = 0; i < mainSlots.Count; i++)
         {
-            // 時間帯に応じた乗数を適用（9:00-11:00がピーク、昼間は空いている、夕方やや混雑）
-            var timeModifier = GetTimeModifier(slot.SlotStartMin);
+            var slot = mainSlots[i];
+            int slotCount;
 
-            // スロットごとのランダム変動（±30%）- 各スロットで独立
-            decimal slotRandomVariation = 0.70m + (decimal)(_random.NextDouble() * 0.60);
-
-            var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier * slotRandomVariation);
-
-            // 超過を追加（繁忙期は満室超過あり、通常期は稀に超過）- 最大2件まで
-            int overage = 0;
-            if (occupancyRate >= 0.90m)
+            // 今日の場合、特別な処理
+            if (isToday)
             {
-                // 繁忙期: 30%の確率で1-2件超過
-                overage = _random.Next(100) < 30 ? _random.Next(1, 3) : 0;
+                if (!hasFullSlot)
+                {
+                    // 最初のスロット → 満杯
+                    slotCount = slot.SlotCap;
+                    hasFullSlot = true;
+                }
+                else if (!hasEmptySlot)
+                {
+                    // 2番目のスロット → 空き
+                    slotCount = 0;
+                    hasEmptySlot = true;
+                }
+                else if (!hasOvercapacitySlot)
+                {
+                    // 3番目のスロット → キャパオーバー
+                    slotCount = slot.SlotCap + 2;
+                    hasOvercapacitySlot = true;
+                }
+                else
+                {
+                    // 4番目以降 → 通常の計算
+                    var timeModifier = GetTimeModifier(slot.SlotStartMin);
+                    decimal slotRandomVariation = 0.70m + (decimal)(_random.NextDouble() * 0.60);
+                    var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier * slotRandomVariation);
+                    int overage = 0;
+                    if (occupancyRate >= 0.90m)
+                    {
+                        overage = _random.Next(100) < 30 ? _random.Next(1, 3) : 0;
+                    }
+                    else if (occupancyRate >= 0.70m)
+                    {
+                        overage = _random.Next(100) < 10 ? 1 : 0;
+                    }
+                    if (_random.Next(100) < 5)
+                    {
+                        baseCount = baseCount / 2;
+                    }
+                    var maxAllowed = slot.SlotCap + 2;
+                    slotCount = Math.Clamp(baseCount + overage, 0, maxAllowed);
+                }
             }
-            else if (occupancyRate >= 0.70m)
+            else
             {
-                // 中程度: 10%の確率で1件超過
-                overage = _random.Next(100) < 10 ? 1 : 0;
+                // 通常の処理
+                var timeModifier = GetTimeModifier(slot.SlotStartMin);
+
+                // スロットごとのランダム変動（±30%）- 各スロットで独立
+                decimal slotRandomVariation = 0.70m + (decimal)(_random.NextDouble() * 0.60);
+
+                var baseCount = (int)(slot.SlotCap * occupancyRate * timeModifier * slotRandomVariation);
+
+                // 超過を追加（繁忙期は満室超過あり、通常期は稀に超過）- 最大2件まで
+                int overage = 0;
+                if (occupancyRate >= 0.90m)
+                {
+                    // 繁忙期: 30%の確率で1-2件超過
+                    overage = _random.Next(100) < 30 ? _random.Next(1, 3) : 0;
+                }
+                else if (occupancyRate >= 0.70m)
+                {
+                    // 中程度: 10%の確率で1件超過
+                    overage = _random.Next(100) < 10 ? 1 : 0;
+                }
+
+                // 稀に極端に空いているスロット（5%の確率で半減）
+                if (_random.Next(100) < 5)
+                {
+                    baseCount = baseCount / 2;
+                }
+
+                // ハードリミット: キャパ+2を超えないように制限
+                var maxAllowed = slot.SlotCap + 2;
+                slotCount = Math.Clamp(baseCount + overage, 0, maxAllowed);
             }
 
-            // 稀に極端に空いているスロット（5%の確率で半減）
-            if (_random.Next(100) < 5)
-            {
-                baseCount = baseCount / 2;
-            }
-
-            // ハードリミット: キャパ+2を超えないように制限
-            var maxAllowed = slot.SlotCap + 2;
-            var slotCount = Math.Clamp(baseCount + overage, 0, maxAllowed);
             slotAppointmentCounts.Add(slotCount);
         }
         var mainAppointmentCount = slotAppointmentCounts.Sum();
@@ -510,8 +584,10 @@ internal static class AppointmentSeeder
         }
 
         // 時間外スロットへの予約生成（低確率で生成、グラフには描画されないが赤い縦ラインで存在の有無を表示）
-        // 早朝スロット（07:00-09:00）：約10%の確率で1件生成
-        if (_random.Next(100) < 10)
+        // 今日の場合は必ず生成、それ以外は約10%の確率で生成
+
+        // 早朝スロット（07:00-09:00）
+        if (isToday || _random.Next(100) < 10)
         {
             var patient = patients[_random.Next(patients.Count)];
             var organization = organizations[_random.Next(organizations.Count)];
@@ -551,8 +627,8 @@ internal static class AppointmentSeeder
             }
         }
 
-        // 昼休みスロット（12:00-13:00）：約10%の確率で1件生成
-        if (_random.Next(100) < 10)
+        // 昼休みスロット（12:00-13:00）
+        if (isToday || _random.Next(100) < 10)
         {
             var patient = patients[_random.Next(patients.Count)];
             var organization = organizations[_random.Next(organizations.Count)];
@@ -592,9 +668,9 @@ internal static class AppointmentSeeder
             }
         }
 
-        // 夕方スロット（17:00-18:00）：約10%の確率で1件生成
+        // 夕方スロット（17:00-18:00）
         // ただし、午前のみの日（水曜・土曜）は除外（営業時間が17:00までに満たない）
-        if (!dayContext.IsMorningOnly && _random.Next(100) < 10)
+        if (!dayContext.IsMorningOnly && (isToday || _random.Next(100) < 10))
         {
             var patient = patients[_random.Next(patients.Count)];
             var organization = organizations[_random.Next(organizations.Count)];

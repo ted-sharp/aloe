@@ -85,6 +85,18 @@ internal static class AppointmentScheduleOverrideSeeder
                     newCapOverrideSet);
                 skippedOverrideCount += skippedOverrides;
                 skippedCapOverrideCount += skippedCapOverrides;
+
+                // 今日用のオーバーライドを作成
+                var (skippedTodayOverrides, skippedTodayCapOverrides) = CreateTodayOverride(
+                    schedule,
+                    dateTimeProvider,
+                    holidays,
+                    overrides,
+                    overrideSlots,
+                    existingOverrideSet,
+                    newOverrideSet);
+                skippedOverrideCount += skippedTodayOverrides;
+                skippedCapOverrideCount += skippedTodayCapOverrides;
             }
         }
 
@@ -223,6 +235,86 @@ internal static class AppointmentScheduleOverrideSeeder
             }
 
             currentDate = currentDate.AddDays(1);
+        }
+
+        return (skippedOverrideCount, skippedCapOverrideCount);
+    }
+
+    /// <summary>
+    /// 今日用のオーバーライドを作成
+    /// 水曜・土曜・日曜・祝日の場合、朝から夕方まで営業（09:00-17:00）するようにオーバーライドを作成
+    /// </summary>
+    private static (int SkippedOverrides, int SkippedCapOverrides) CreateTodayOverride(
+        AppointmentSchedule schedule,
+        IDateTimeProvider dateTimeProvider,
+        HashSet<DateOnly> holidays,
+        List<AppointmentScheduleOverride> overrides,
+        List<AppointmentScheduleSlotOverride> overrideSlots,
+        HashSet<(Guid ApptScheduleId, DateOnly ApptDate)> existingOverrideSet,
+        HashSet<(Guid ApptScheduleId, DateOnly ApptDate)> newOverrideSet)
+    {
+        var skippedOverrideCount = 0;
+        var skippedCapOverrideCount = 0;
+        var today = dateTimeProvider.TodayDateOnly;
+
+        // 今日が既に登録されているかチェック
+        var overrideKey = (schedule.ApptScheduleId, today);
+        if (existingOverrideSet.Contains(overrideKey) || newOverrideSet.Contains(overrideKey))
+        {
+            return (1, 0);
+        }
+
+        var todayDayOfWeek = today.DayOfWeek;
+        bool isHolidayOrSunday = todayDayOfWeek == DayOfWeek.Sunday || holidays.Contains(today);
+        bool isWednesdayOrSaturday = todayDayOfWeek == DayOfWeek.Wednesday || todayDayOfWeek == DayOfWeek.Saturday;
+
+        // 今日が営業日でない場合（日曜・祝日・水曜・土曜）はオーバーライドが必要
+        if (isHolidayOrSunday || isWednesdayOrSaturday)
+        {
+            // オーバーライド親レコードを作成
+            var @override = new AppointmentScheduleOverride
+            {
+                ApptScheduleOverrideId = Guid.CreateVersion7(),
+                ApptScheduleId = schedule.ApptScheduleId,
+                ApptDate = today
+            };
+
+            SeederHelper.InitializeAuditFields(@override, dateTimeProvider);
+            overrides.Add(@override);
+            newOverrideSet.Add(overrideKey);
+
+            // 平日（月火木金）のスロット定義を取得して、それを今日に適用
+            // これにより、朝から夕方まで（09:00-17:00）営業させる
+            var normalDayOfWeekSlots = schedule.AppointmentScheduleSlots
+                .Where(s => !s.IsDeleted && s.DaysOfWeek.Contains((int)DayOfWeek.Monday))
+                .ToList();
+
+            // 月曜日のスロットが見つからない場合は、他の営業日を試す
+            if (!normalDayOfWeekSlots.Any())
+            {
+                normalDayOfWeekSlots = schedule.AppointmentScheduleSlots
+                    .Where(s => !s.IsDeleted && (
+                        s.DaysOfWeek.Contains((int)DayOfWeek.Tuesday) ||
+                        s.DaysOfWeek.Contains((int)DayOfWeek.Thursday) ||
+                        s.DaysOfWeek.Contains((int)DayOfWeek.Friday)))
+                    .ToList();
+            }
+
+            // 平日のスロット定義を使用してオーバーライドを作成
+            foreach (var slot in normalDayOfWeekSlots)
+            {
+                var slotOverride = new AppointmentScheduleSlotOverride
+                {
+                    ApptScheduleSlotOverrideId = Guid.CreateVersion7(),
+                    ApptScheduleOverrideId = @override.ApptScheduleOverrideId,
+                    SlotStartMin = slot.SlotStartMin,
+                    SlotEndMin = slot.SlotEndMin,
+                    SlotCap = slot.SlotCap
+                };
+
+                SeederHelper.InitializeAuditFields(slotOverride, dateTimeProvider);
+                overrideSlots.Add(slotOverride);
+            }
         }
 
         return (skippedOverrideCount, skippedCapOverrideCount);
