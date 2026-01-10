@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
 
@@ -125,10 +124,10 @@ public partial class AppointmentModal : ComponentBase
             {
                 Date = this.SelectedDate ?? this.DateTimeProvider.TodayDateOnly,
                 StartTimeString = this.SelectedStartMin.HasValue
-                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value)).ToString("HH:mm")
+                    ? FacilityBusinessHours.MinutesToTimeString(this.SelectedStartMin.Value)
                     : BusinessHoursConstants.DefaultAppointmentStartTime,
                 EndTimeString = this.SelectedStartMin.HasValue
-                    ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value + 60)).ToString("HH:mm")
+                    ? FacilityBusinessHours.MinutesToTimeString(this.SelectedStartMin.Value + 60)
                     : BusinessHoursConstants.DefaultAppointmentEndTime,
                 Status = 0,
                 PatientName = String.Empty,
@@ -167,7 +166,7 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = dto.Date,
-                StartTimeString = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(dto.StartMin)).ToString("HH:mm"),
+                StartTimeString = FacilityBusinessHours.MinutesToTimeString(dto.StartMin),
                 EndTimeString = BusinessHoursConstants.DefaultAppointmentEndTime, // EndTime removed from DTO
                 Status = dto.Status,
                 PatientName = dto.PatientName ?? String.Empty,
@@ -315,9 +314,7 @@ public partial class AppointmentModal : ComponentBase
         var dto = new UpdateAppointmentDto
         {
             Date = this.FormModel.Date,
-            StartMin = this.FormModel.StartTime.HasValue
-                ? this.FormModel.StartTime.Value.Hour * 60 + this.FormModel.StartTime.Value.Minute
-                : null,
+            StartMin = GetStartMinFromTimeString(this.FormModel.StartTimeString),
             // EndTime = this.FormModel.EndTime, // Removed from DTO
             Status = this.FormModel.Status,
             PatientId = this.FormModel.PatientId,
@@ -412,9 +409,7 @@ public partial class AppointmentModal : ComponentBase
             var dto = new CreateAppointmentDto
             {
                 Date = this.FormModel.Date,
-                StartMin = this.FormModel.StartTime.HasValue
-                    ? this.FormModel.StartTime.Value.Hour * 60 + this.FormModel.StartTime.Value.Minute
-                    : null,
+                StartMin = GetStartMinFromTimeString(this.FormModel.StartTimeString),
                 // EndTime = this.FormModel.EndTime, // Removed from DTO
                 Status = this.FormModel.Status,
                 PatientId = patientId,
@@ -573,10 +568,15 @@ public partial class AppointmentModal : ComponentBase
         public Guid Id { get; set; }
         public string Name { get; set; } = String.Empty;
     }
-
     /// <summary>
-    /// フォームモデル
+    /// 時刻文字列（"HH:mm"）から分単位の int に変換
     /// </summary>
+    private static int? GetStartMinFromTimeString(string timeStr)
+    {
+        if (string.IsNullOrEmpty(timeStr)) return null;
+        return FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+    }
+
     public class AppointmentFormModel
     {
         public DateOnly Date { get; set; }
@@ -597,9 +597,6 @@ public partial class AppointmentModal : ComponentBase
 
         // 選択した機器リソースID
         public List<Guid> SelectedEquipmentResourceIds { get; set; } = new();
-
-        public TimeOnly? StartTime => TimeOnly.TryParse(this.StartTimeString, out var t) ? t : null;
-        public TimeOnly? EndTime => TimeOnly.TryParse(this.EndTimeString, out var t) ? t : null;
     }
 }
 

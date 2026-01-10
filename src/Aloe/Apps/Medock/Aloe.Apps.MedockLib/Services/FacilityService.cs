@@ -58,10 +58,10 @@ public class FacilityService : IFacilityService
 
             var dto = new BusinessHoursDto
             {
-                StartTime = FacilityBusinessHours.MinutesToTimeString(businessHours.WorkStartMin),
-                EndTime = FacilityBusinessHours.MinutesToTimeString(businessHours.WorkEndMin),
-                LunchStartTime = FacilityBusinessHours.MinutesToTimeString(businessHours.LunchStartMin),
-                LunchEndTime = FacilityBusinessHours.MinutesToTimeString(businessHours.LunchEndMin)
+                WorkStartMin = businessHours.WorkStartMin,
+                WorkEndMin = businessHours.WorkEndMin,
+                LunchStartMin = businessHours.LunchStartMin,
+                LunchEndMin = businessHours.LunchEndMin
             };
             return Result<BusinessHoursDto>.Success(dto);
         }
@@ -81,10 +81,10 @@ public class FacilityService : IFacilityService
     {
         return new BusinessHoursDto
         {
-            StartTime = BusinessHoursConstants.DefaultStartTime,
-            EndTime = BusinessHoursConstants.DefaultEndTime,
-            LunchStartTime = BusinessHoursConstants.DefaultLunchStartTime,
-            LunchEndTime = BusinessHoursConstants.DefaultLunchEndTime
+            WorkStartMin = FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultStartTime),
+            WorkEndMin = FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultEndTime),
+            LunchStartMin = FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultLunchStartTime),
+            LunchEndMin = FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultLunchEndTime)
         };
     }
 }

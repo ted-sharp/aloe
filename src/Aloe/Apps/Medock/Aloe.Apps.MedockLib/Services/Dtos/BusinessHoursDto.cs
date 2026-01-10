@@ -1,99 +1,110 @@
-using Aloe.Apps.MedockLib.Constants;
+using System.Text.Json.Serialization;
+using Aloe.Apps.MedockLib.Data.Entities;
 
 namespace Aloe.Apps.MedockLib.Services.Dtos;
 
-// TODO: テーブル定義を分解しておきたい
 /// <summary>
 /// 施設営業時間DTO
+/// 内部的には int（分単位）で処理、JSON シリアライズ時のみ文字列に変換
 /// </summary>
 public class BusinessHoursDto
 {
-    /// <summary>始業時間（例: "09:00"）</summary>
-    public string StartTime { get; set; } = BusinessHoursConstants.DefaultStartTime;
+    /// <summary>始業時間（分単位、例: 540 = 09:00）</summary>
+    [JsonIgnore]
+    public int WorkStartMin { get; set; } = 540;
 
-    /// <summary>就業時間（例: "18:00"）</summary>
-    public string EndTime { get; set; } = BusinessHoursConstants.DefaultEndTime;
+    /// <summary>終業時間（分単位、例: 1080 = 18:00）</summary>
+    [JsonIgnore]
+    public int WorkEndMin { get; set; } = 1080;
 
-    /// <summary>昼休み開始時間（例: "12:00"）</summary>
-    public string LunchStartTime { get; set; } = BusinessHoursConstants.DefaultLunchStartTime;
+    /// <summary>昼休み開始時間（分単位、例: 720 = 12:00）</summary>
+    [JsonIgnore]
+    public int LunchStartMin { get; set; } = 720;
 
-    /// <summary>昼休み終了時間（例: "13:00"）</summary>
-    public string LunchEndTime { get; set; } = BusinessHoursConstants.DefaultLunchEndTime;
+    /// <summary>昼休み終了時間（分単位、例: 780 = 13:00）</summary>
+    [JsonIgnore]
+    public int LunchEndMin { get; set; } = 780;
 
-    /// <summary>
-    /// 始業時間をTimeOnlyに変換
-    /// </summary>
-    public TimeOnly GetStartTimeOnly() => TimeOnly.Parse(this.StartTime);
+    // === JSON シリアライズ用プロパティ ===
 
-    /// <summary>
-    /// 就業時間をTimeOnlyに変換
-    /// </summary>
-    public TimeOnly GetEndTimeOnly() => TimeOnly.Parse(this.EndTime);
+    /// <summary>始業時間（JSON シリアライズ用、例: "09:00"）</summary>
+    [JsonPropertyName("startTime")]
+    public string StartTime
+    {
+        get => FacilityBusinessHours.MinutesToTimeString(this.WorkStartMin);
+        set => this.WorkStartMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 540;
+    }
 
-    /// <summary>
-    /// 昼休み開始時間をTimeOnlyに変換
-    /// </summary>
-    public TimeOnly GetLunchStartTimeOnly() => TimeOnly.Parse(this.LunchStartTime);
+    /// <summary>終業時間（JSON シリアライズ用、例: "18:00"）</summary>
+    [JsonPropertyName("endTime")]
+    public string EndTime
+    {
+        get => FacilityBusinessHours.MinutesToTimeString(this.WorkEndMin);
+        set => this.WorkEndMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 1080;
+    }
 
-    /// <summary>
-    /// 昼休み終了時間をTimeOnlyに変換
-    /// </summary>
-    public TimeOnly GetLunchEndTimeOnly() => TimeOnly.Parse(this.LunchEndTime);
+    /// <summary>昼休み開始時間（JSON シリアライズ用、例: "12:00"）</summary>
+    [JsonPropertyName("lunchStartTime")]
+    public string LunchStartTime
+    {
+        get => FacilityBusinessHours.MinutesToTimeString(this.LunchStartMin);
+        set => this.LunchStartMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 720;
+    }
+
+    /// <summary>昼休み終了時間（JSON シリアライズ用、例: "13:00"）</summary>
+    [JsonPropertyName("lunchEndTime")]
+    public string LunchEndTime
+    {
+        get => FacilityBusinessHours.MinutesToTimeString(this.LunchEndMin);
+        set => this.LunchEndMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 780;
+    }
 
     /// <summary>
     /// 始業時間の時（Hour）を取得
     /// </summary>
-    public int StartHour => this.GetStartTimeOnly().Hour;
+    public int StartHour => this.WorkStartMin / 60;
 
     /// <summary>
-    /// 就業時間の時（Hour）を取得
+    /// 終業時間の時（Hour）を取得
     /// </summary>
-    public int EndHour => this.GetEndTimeOnly().Hour;
+    public int EndHour => this.WorkEndMin / 60;
 
     /// <summary>
     /// 昼休み開始時間の時（Hour）を取得
     /// </summary>
-    public int LunchStartHour => this.GetLunchStartTimeOnly().Hour;
+    public int LunchStartHour => this.LunchStartMin / 60;
 
     /// <summary>
     /// 昼休み終了時間の時（Hour）を取得
     /// </summary>
-    public int LunchEndHour => this.GetLunchEndTimeOnly().Hour;
+    public int LunchEndHour => this.LunchEndMin / 60;
 
     /// <summary>
-    /// スロットが業務時間外かどうかを判定します（分単位）
+    /// スロットが業務時間外かどうかを判定します（int計算のみ）
     /// </summary>
     /// <param name="slotStartMinutes">スロット開始時刻（分単位）</param>
     /// <param name="slotEndMinutes">スロット終了時刻（分単位）</param>
     /// <returns>業務時間外判定結果（Before/After/Lunchのフラグ）</returns>
     public (bool IsOutsideHoursBefore, bool IsOutsideHoursAfter, bool IsOutsideHoursLunch) CheckSlotOutsideHours(int slotStartMinutes, int slotEndMinutes)
     {
-        var businessStart = this.GetStartTimeOnly();
-        var businessEnd = this.GetEndTimeOnly();
-        var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotStartMinutes));
-        var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotEndMinutes));
-
         var isOutsideHoursBefore = false;
         var isOutsideHoursAfter = false;
         var isOutsideHoursLunch = false;
 
         // 朝の時間外: スロットが業務開始時刻より前に終わる
-        if (slotEndTime <= businessStart)
+        if (slotEndMinutes <= this.WorkStartMin)
         {
             isOutsideHoursBefore = true;
         }
-        // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
-        else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
+        // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻を超える
+        else if (slotStartMinutes >= this.WorkEndMin || slotEndMinutes > this.WorkEndMin)
         {
             isOutsideHoursAfter = true;
         }
         // 昼休み時間帯にある場合
-        else if (!String.IsNullOrEmpty(this.LunchStartTime) && !String.IsNullOrEmpty(this.LunchEndTime))
+        else if (this.LunchStartMin > 0 && this.LunchEndMin > 0)
         {
-            var lunchStart = this.GetLunchStartTimeOnly();
-            var lunchEnd = this.GetLunchEndTimeOnly();
-
-            if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
+            if (slotStartMinutes >= this.LunchStartMin && slotEndMinutes <= this.LunchEndMin)
             {
                 isOutsideHoursLunch = true;
             }

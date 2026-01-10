@@ -42,9 +42,10 @@ public class CalendarDataService : ICalendarDataService
             filterHours = new HashSet<int>();
             foreach (var timeSlot in filterTimeSlots)
             {
-                if (TimeOnly.TryParse(timeSlot, out var time))
+                var parts = timeSlot.Split(':');
+                if (parts.Length >= 1 && int.TryParse(parts[0], out var hour))
                 {
-                    filterHours.Add(time.Hour);
+                    filterHours.Add(hour);
                 }
             }
         }
@@ -96,12 +97,11 @@ public class CalendarDataService : ICalendarDataService
                     for (int i = 0; i < count; i++)
                     {
                         var statSlot = validSlots[i];
-                        var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                        var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                        int slotStartHour = statSlot.SlotStart / 60;
                         var isSlotGrayed = false;
                         if (filterHours != null && filterHours.Count > 0)
                         {
-                            isSlotGrayed = !filterHours.Contains(slotStartTime.Hour);
+                            isSlotGrayed = !filterHours.Contains(slotStartHour);
                         }
 
                         slotStarts[i] = statSlot.SlotStart;
