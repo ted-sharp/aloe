@@ -30,6 +30,20 @@ public class AppointmentRepositoryTests
     {
         var mock = new Mock<IUserContextService>();
         mock.Setup(x => x.CurrentUser).Returns((UserContextInfo?)null);
+        mock.Setup(x => x.GetTenantContext()).Returns((null, null, null));
+        return mock.Object;
+    }
+
+    private static IDateTimeProvider CreateMockDateTimeProvider()
+    {
+        var mock = new Mock<IDateTimeProvider>();
+        mock.Setup(x => x.Now).Returns(DateTime.Now);
+        mock.Setup(x => x.UtcNow).Returns(DateTime.UtcNow);
+        mock.Setup(x => x.Today).Returns(DateTime.Today);
+        mock.Setup(x => x.TodayDateOnly).Returns(DateOnly.FromDateTime(DateTime.Today));
+        mock.Setup(x => x.TimeZone).Returns(TimeZoneInfo.Utc);
+        mock.Setup(x => x.NowRoundedToSeconds).Returns(DateTime.Now);
+        mock.Setup(x => x.RoundToSeconds(It.IsAny<DateTime>())).Returns<DateTime>(dt => new DateTime(dt.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond));
         return mock.Object;
     }
 
@@ -112,7 +126,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             var result = await repository.GetByIdAsync(apptId);
 
             // Assert
@@ -130,7 +144,7 @@ public class AppointmentRepositoryTests
 
         // Act
         await using var context = new MedockDbContext(options);
-        var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+        var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
         var result = await repository.GetByIdAsync(nonExistentId);
 
         // Assert
@@ -181,7 +195,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             var startDate = new DateOnly(2025, 12, 1);
             var endDate = new DateOnly(2025, 12, 20);
             var result = await repository.GetByDateRangeAsync(startDate, endDate);
@@ -240,7 +254,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             var result = await repository.GetByFloorAndDateAsync(targetFloorId, targetDate);
 
             // Assert
@@ -265,7 +279,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             var appointment = new Appointment
             {
                 ApptId = apptId,
@@ -312,7 +326,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             var appointment = await context.Appointments.FindAsync(apptId);
             appointment!.ApptStatusCode = 2;
             await repository.UpdateAsync(appointment);
@@ -351,7 +365,7 @@ public class AppointmentRepositoryTests
         // Act
         await using (var context = new MedockDbContext(options))
         {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService());
+            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
             await repository.DeleteAsync(apptId);
         }
 

@@ -42,10 +42,18 @@ public class HolidayRepository : IHolidayRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+            var (tenantId, facilityId, userId) = this.GetContext();
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve holidays for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
+    }
+
+    /// <summary>
+    /// ユーザーコンテキスト情報を取得します。
+    /// </summary>
+    private (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetContext()
+    {
+        return this._userContextService.GetTenantContext();
     }
 }
 

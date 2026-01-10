@@ -42,4 +42,12 @@ public interface IDateTimeProvider
     /// 楽観的ロックやタイムスタンプ比較で使用する。
     /// </summary>
     DateTime NowRoundedToSeconds { get; }
+
+    /// <summary>
+    /// DateTime値を秒単位で丸めます（マイクロ秒以下を切り捨て）。
+    /// 楽観的ロックやタイムスタンプ比較で使用します。
+    /// </summary>
+    /// <param name="dateTime">丸めるDateTime値</param>
+    /// <returns>秒単位で丸められたDateTime値</returns>
+    DateTime RoundToSeconds(DateTime dateTime);
 }

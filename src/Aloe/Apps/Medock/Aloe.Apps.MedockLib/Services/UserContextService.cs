@@ -169,6 +169,17 @@ public class UserContextService : IUserContextService
         var facilities = await this.GetAccessibleFacilitiesAsync();
         return facilities.Count > 1;
     }
+
+    /// <inheritdoc />
+    public (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetTenantContext()
+    {
+        if (this.CurrentUser == null)
+        {
+            return (null, null, null);
+        }
+
+        return (this.CurrentUser.TenantId, this.CurrentUser.FacilityId, this.CurrentUser.UserId);
+    }
 }
 
 /// <summary>

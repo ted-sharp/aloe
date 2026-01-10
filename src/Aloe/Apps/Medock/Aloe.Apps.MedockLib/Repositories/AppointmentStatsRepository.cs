@@ -298,7 +298,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+            var (tenantId, facilityId, userId) = this.GetContext();
             LogMessages.DiffDataRetrievalError(this._logger, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
@@ -393,5 +393,13 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         public int[]? SlotEndMinutes { get; set; }
         public int[]? SlotCaps { get; set; }
         public int[]? SlotAvailables { get; set; }
+    }
+
+    /// <summary>
+    /// ユーザーコンテキスト情報を取得します。
+    /// </summary>
+    private (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetContext()
+    {
+        return this._userContextService.GetTenantContext();
     }
 }

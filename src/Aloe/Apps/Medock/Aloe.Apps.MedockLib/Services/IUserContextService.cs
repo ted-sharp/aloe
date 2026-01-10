@@ -47,5 +47,11 @@ public interface IUserContextService
     /// ユーザーが複数の施設にアクセス可能かどうかを取得します。
     /// </summary>
     Task<bool> HasMultipleFacilitiesAsync();
+
+    /// <summary>
+    /// 現在のユーザーのテナント、施設、ユーザーIDを取得します。
+    /// </summary>
+    /// <returns>(TenantId, FacilityId, UserId) のタプル</returns>
+    (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetTenantContext();
 }
 

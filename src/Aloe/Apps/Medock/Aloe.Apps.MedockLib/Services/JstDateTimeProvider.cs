@@ -56,6 +56,11 @@ public sealed class JstDateTimeProvider : IDateTimeProvider
         }
     }
 
+    public DateTime RoundToSeconds(DateTime dateTime)
+    {
+        return new DateTime(dateTime.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+    }
+
     private static TimeZoneInfo GetDefaultTimeZone()
     {
         // 環境に応じて JST を取得

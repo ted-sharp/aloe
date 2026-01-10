@@ -67,7 +67,7 @@ public class FacilityService : IFacilityService
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId_ctx, userId) = this._userContextService.GetTenantContext();
+            var (tenantId, _, userId) = this.GetContext();
             LogMessages.BusinessHoursRetrievalError(this._logger, facilityId, targetDate ?? this._dateTimeProvider.TodayDateOnly, tenantId, userId, ex);
             // Return default hours on error to prevent system failure
             return Result<BusinessHoursDto>.Success(GetDefaultBusinessHoursDto());
@@ -86,6 +86,14 @@ public class FacilityService : IFacilityService
             LunchStartTime = BusinessHoursConstants.DefaultLunchStartTime,
             LunchEndTime = BusinessHoursConstants.DefaultLunchEndTime
         };
+    }
+
+    /// <summary>
+    /// ユーザーコンテキスト情報を取得します。
+    /// </summary>
+    private (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetContext()
+    {
+        return this._userContextService.GetTenantContext();
     }
 }
 
