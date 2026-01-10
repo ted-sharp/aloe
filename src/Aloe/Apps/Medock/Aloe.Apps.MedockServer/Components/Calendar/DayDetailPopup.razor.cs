@@ -500,44 +500,11 @@ public partial class DayDetailPopup : ComponentBase
         var slotFlags = new byte[dateSlotsData.Count];
         if (this.BusinessHours != null)
         {
-            var businessStart = TimeOnly.Parse(this.BusinessHours.StartTime);
-            var businessEnd = TimeOnly.Parse(this.BusinessHours.EndTime);
-            TimeOnly? lunchStart = null;
-            TimeOnly? lunchEnd = null;
-
-            if (!String.IsNullOrEmpty(this.BusinessHours.LunchStartTime) &&
-                !String.IsNullOrEmpty(this.BusinessHours.LunchEndTime))
-            {
-                lunchStart = TimeOnly.Parse(this.BusinessHours.LunchStartTime);
-                lunchEnd = TimeOnly.Parse(this.BusinessHours.LunchEndTime);
-            }
-
             for (int i = 0; i < dateSlotsData.Count; i++)
             {
                 var slot = dateSlotsData[i];
-                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotStart));
-                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slot.SlotEnd));
-
-                var isOutsideHoursBefore = false;
-                var isOutsideHoursAfter = false;
-                var isOutsideHoursLunch = false;
-
-                // 朝の時間外: スロットが業務開始時刻より前に終わる
-                if (slotEndTime <= businessStart)
-                {
-                    isOutsideHoursBefore = true;
-                }
-                // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
-                else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
-                {
-                    isOutsideHoursAfter = true;
-                }
-                // 昼休み時間帯にある場合
-                else if (lunchStart.HasValue && lunchEnd.HasValue &&
-                         slotStartTime >= lunchStart.Value && slotEndTime <= lunchEnd.Value)
-                {
-                    isOutsideHoursLunch = true;
-                }
+                var (isOutsideHoursBefore, isOutsideHoursAfter, isOutsideHoursLunch) =
+                    this.BusinessHours.CheckSlotOutsideHours(slot.SlotStart, slot.SlotEnd);
 
                 byte flags = 0;
                 if (isOutsideHoursBefore) flags |= 0b0010;  // ビット1: IsOutsideHoursBefore（朝）

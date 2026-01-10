@@ -111,37 +111,9 @@ public class CalendarDataService : ICalendarDataService
                         slotAvailables[i] = statSlot.SlotAvailable;
 
                         // 業務時間外スロットの種類を判定（Before/After/Lunch）
-                        var isOutsideHoursBefore = false;
-                        var isOutsideHoursAfter = false;
-                        var isOutsideHoursLunch = false;
-                        if (businessHours != null)
-                        {
-                            var businessStart = TimeOnly.Parse(businessHours.StartTime);
-                            var businessEnd = TimeOnly.Parse(businessHours.EndTime);
-
-                            // 朝の時間外: スロットが業務開始時刻より前に終わる
-                            if (slotEndTime <= businessStart)
-                            {
-                                isOutsideHoursBefore = true;
-                            }
-                            // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
-                            else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
-                            {
-                                isOutsideHoursAfter = true;
-                            }
-                            // 昼休み時間帯にある場合
-                            else if (!String.IsNullOrEmpty(businessHours.LunchStartTime) &&
-                                     !String.IsNullOrEmpty(businessHours.LunchEndTime))
-                            {
-                                var lunchStart = TimeOnly.Parse(businessHours.LunchStartTime);
-                                var lunchEnd = TimeOnly.Parse(businessHours.LunchEndTime);
-
-                                if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
-                                {
-                                    isOutsideHoursLunch = true;
-                                }
-                            }
-                        }
+                        var (isOutsideHoursBefore, isOutsideHoursAfter, isOutsideHoursLunch) = businessHours != null
+                            ? businessHours.CheckSlotOutsideHours(statSlot.SlotStart, statSlot.SlotEnd)
+                            : (false, false, false);
 
                         // フラグをビット単位で設定
                         byte flags = 0;

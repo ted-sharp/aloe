@@ -59,5 +59,47 @@ public class BusinessHoursDto
     /// 昼休み終了時間の時（Hour）を取得
     /// </summary>
     public int LunchEndHour => this.GetLunchEndTimeOnly().Hour;
+
+    /// <summary>
+    /// スロットが業務時間外かどうかを判定します（分単位）
+    /// </summary>
+    /// <param name="slotStartMinutes">スロット開始時刻（分単位）</param>
+    /// <param name="slotEndMinutes">スロット終了時刻（分単位）</param>
+    /// <returns>業務時間外判定結果（Before/After/Lunchのフラグ）</returns>
+    public (bool IsOutsideHoursBefore, bool IsOutsideHoursAfter, bool IsOutsideHoursLunch) CheckSlotOutsideHours(int slotStartMinutes, int slotEndMinutes)
+    {
+        var businessStart = this.GetStartTimeOnly();
+        var businessEnd = this.GetEndTimeOnly();
+        var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotStartMinutes));
+        var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(slotEndMinutes));
+
+        var isOutsideHoursBefore = false;
+        var isOutsideHoursAfter = false;
+        var isOutsideHoursLunch = false;
+
+        // 朝の時間外: スロットが業務開始時刻より前に終わる
+        if (slotEndTime <= businessStart)
+        {
+            isOutsideHoursBefore = true;
+        }
+        // 夕方の時間外: スロットが業務終了時刻以降に開始する、または業務終了時刻以降で終わる
+        else if (slotStartTime >= businessEnd || slotEndTime > businessEnd)
+        {
+            isOutsideHoursAfter = true;
+        }
+        // 昼休み時間帯にある場合
+        else if (!String.IsNullOrEmpty(this.LunchStartTime) && !String.IsNullOrEmpty(this.LunchEndTime))
+        {
+            var lunchStart = this.GetLunchStartTimeOnly();
+            var lunchEnd = this.GetLunchEndTimeOnly();
+
+            if (slotStartTime >= lunchStart && slotEndTime <= lunchEnd)
+            {
+                isOutsideHoursLunch = true;
+            }
+        }
+
+        return (isOutsideHoursBefore, isOutsideHoursAfter, isOutsideHoursLunch);
+    }
 }
 

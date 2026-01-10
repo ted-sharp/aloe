@@ -525,7 +525,7 @@ internal static class AppointmentSeeder
                 // 午前のみ（09:00-12:00）
                 var morningTimes = SeederHelper.TimeSlots.MorningSlots;
                 var timeStr = morningTimes[_random.Next(morningTimes.Length)];
-                var parsedMin = ParseTimeToInt(timeStr);
+                var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
                 if (parsedMin.HasValue)
                 {
                     startMin = parsedMin.Value;
@@ -539,7 +539,7 @@ internal static class AppointmentSeeder
                 allTimes.AddRange(SeederHelper.TimeSlots.AfternoonSlots);
 
                 var timeStr = allTimes[_random.Next(allTimes.Count)];
-                var parsedMin = ParseTimeToInt(timeStr);
+                var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
                 if (parsedMin.HasValue)
                 {
                     startMin = parsedMin.Value;
@@ -593,7 +593,7 @@ internal static class AppointmentSeeder
             var organization = organizations[_random.Next(organizations.Count)];
             var earlyMorningTimes = SeederHelper.TimeSlots.EarlyMorningSlots;
             var timeStr = earlyMorningTimes[_random.Next(earlyMorningTimes.Length)];
-            var parsedMin = ParseTimeToInt(timeStr);
+            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;
@@ -634,7 +634,7 @@ internal static class AppointmentSeeder
             var organization = organizations[_random.Next(organizations.Count)];
             var lunchTimes = SeederHelper.TimeSlots.LunchSlots;
             var timeStr = lunchTimes[_random.Next(lunchTimes.Length)];
-            var parsedMin = ParseTimeToInt(timeStr);
+            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;
@@ -677,7 +677,7 @@ internal static class AppointmentSeeder
             // 17:00-17:45の範囲で生成（15分単位）
             var eveningTimeStrs = new[] { "17:00", "17:15", "17:30", "17:45" };
             var timeStr = eveningTimeStrs[_random.Next(eveningTimeStrs.Length)];
-            var parsedMin = ParseTimeToInt(timeStr);
+            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;
@@ -872,16 +872,6 @@ internal static class AppointmentSeeder
         public bool IsOpen { get; set; }
         public bool IsMorningOnly { get; set; }
         public bool IsIrregular { get; set; }
-    }
-    private static int? ParseTimeToInt(string timeStr)
-    {
-        if (String.IsNullOrEmpty(timeStr)) return null;
-        var parts = timeStr.Split(':');
-        if (parts.Length == 2 && Int32.TryParse(parts[0], out var h) && Int32.TryParse(parts[1], out var m))
-        {
-            return h * 60 + m;
-        }
-        return null;
     }
 }
 
