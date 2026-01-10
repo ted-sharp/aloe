@@ -19,7 +19,7 @@ public class AppointmentScheduleSlotCapOverride : IAuditableEntity
     public Guid ApptScheduleSlotId { get; set; }
 
     [Column("appt_date")]
-    public DateOnly ApptDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly ApptDate { get; set; } = DateOnly.MinValue;
 
     [Column("slot_cap")]
     public int SlotCap { get; set; } = 0;

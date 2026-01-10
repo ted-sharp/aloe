@@ -78,6 +78,6 @@ public class AppointmentResource : IAuditableEntity
     public virtual Floor Floor { get; set; } = null!;
     public virtual ICollection<AppointmentSchedule> AppointmentSchedules { get; set; } = new List<AppointmentSchedule>();
     public virtual ICollection<AppointmentStats> AppointmentStats { get; set; } = new List<AppointmentStats>();
-    public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
+    public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceAssignments { get; set; } = new List<AppointmentResourceAssignment>();
 }
 

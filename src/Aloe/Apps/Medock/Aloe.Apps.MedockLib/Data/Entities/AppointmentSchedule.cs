@@ -22,7 +22,7 @@ public class AppointmentSchedule : IAuditableEntity
     public bool IsActive { get; set; } = false;
 
     [Column("active_from")]
-    public DateOnly ActiveFrom { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly ActiveFrom { get; set; } = DateOnly.MinValue;
 
     [Column("active_to")]
     public DateOnly ActiveTo { get; set; } = new DateOnly(9999, 12, 31);

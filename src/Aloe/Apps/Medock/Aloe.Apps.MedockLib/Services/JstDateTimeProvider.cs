@@ -47,6 +47,15 @@ public sealed class JstDateTimeProvider : IDateTimeProvider
 
     public DateOnly TodayDateOnly => DateOnly.FromDateTime(this.Now);
 
+    public DateTime NowRoundedToSeconds
+    {
+        get
+        {
+            var now = this.Now;
+            return new DateTime(now.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+        }
+    }
+
     private static TimeZoneInfo GetDefaultTimeZone()
     {
         // 環境に応じて JST を取得

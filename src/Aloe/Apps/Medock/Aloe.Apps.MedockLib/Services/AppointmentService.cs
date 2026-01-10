@@ -146,7 +146,7 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
-            var now = new DateTime(this._dateTimeProvider.Now.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+            var now = this._dateTimeProvider.NowRoundedToSeconds;
             var appointment = new Appointment
             {
                 ApptId = Guid.CreateVersion7(),
@@ -221,8 +221,8 @@ public class AppointmentService : IAppointmentService
             if (dto.ExpectedUpdatedAt.HasValue)
             {
                 // 秒単位で比較（マイクロ秒の差を無視）
-                var expectedSeconds = new DateTime(dto.ExpectedUpdatedAt.Value.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
-                var actualSeconds = new DateTime(appointment.UpdatedAt.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+                var expectedSeconds = DateTimeHelper.RoundToSeconds(dto.ExpectedUpdatedAt.Value);
+                var actualSeconds = DateTimeHelper.RoundToSeconds(appointment.UpdatedAt);
 
                 if (actualSeconds != expectedSeconds)
                 {
@@ -246,7 +246,7 @@ public class AppointmentService : IAppointmentService
             if (dto.Memo != null) appointment.ApptMemo = dto.Memo;
 
             // 秒単位で丸める（マイクロ秒の差を排除）
-            appointment.UpdatedAt = new DateTime(this._dateTimeProvider.Now.Ticks / TimeSpan.TicksPerSecond * TimeSpan.TicksPerSecond);
+            appointment.UpdatedAt = this._dateTimeProvider.NowRoundedToSeconds;
 
             await this._appointmentRepository.UpdateAsync(appointment);
 
@@ -288,13 +288,13 @@ public class AppointmentService : IAppointmentService
         catch (DatabaseException ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentUpdateError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("Database error while updating appointment", "APPT_UPDATE_ERROR");
         }
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentRetrievalError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentUpdateError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("An unexpected error occurred while updating appointment", "APPT_UPDATE_ERROR");
         }
     }
@@ -324,13 +324,13 @@ public class AppointmentService : IAppointmentService
         catch (DatabaseException ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result.Failure("Database error while deleting appointment", "APPT_DELETE_ERROR");
         }
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentRetrievalError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result.Failure("An unexpected error occurred while deleting appointment", "APPT_DELETE_ERROR");
         }
     }

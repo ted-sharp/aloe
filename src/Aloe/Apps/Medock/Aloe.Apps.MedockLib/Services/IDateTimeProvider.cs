@@ -36,4 +36,10 @@ public interface IDateTimeProvider
     /// EF Core + PostgreSQL の date 型マッピング用。
     /// </summary>
     DateOnly TodayDateOnly { get; }
+
+    /// <summary>
+    /// アプリ標準のローカル現在時刻を秒単位で丸めた値（マイクロ秒以下を切り捨て）。
+    /// 楽観的ロックやタイムスタンプ比較で使用する。
+    /// </summary>
+    DateTime NowRoundedToSeconds { get; }
 }

@@ -16,15 +16,18 @@ public class AppointmentRepository : IAppointmentRepository
     private readonly MedockDbContext _context;
     private readonly ILogger<AppointmentRepository> _logger;
     private readonly IUserContextService _userContextService;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
     public AppointmentRepository(
         MedockDbContext context,
         ILogger<AppointmentRepository> logger,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IDateTimeProvider dateTimeProvider)
     {
         this._context = context;
         this._logger = logger;
         this._userContextService = userContextService;
+        this._dateTimeProvider = dateTimeProvider;
     }
 
     /// <summary>
@@ -39,7 +42,7 @@ public class AppointmentRepository : IAppointmentRepository
                 .Include(a => a.Floor)
                 .Include(a => a.Organization)
                 .Include(a => a.Patient)
-                .Include(a => a.AppointmentResourceReservations)
+                .Include(a => a.AppointmentResourceAssignments)
                     .ThenInclude(r => r.AppointmentResource)
                 .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
         }
@@ -124,7 +127,7 @@ public class AppointmentRepository : IAppointmentRepository
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateFailed(this._logger, ptId, DateOnly.FromDateTime(DateTime.Now), tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentCreateFailed(this._logger, ptId, this._dateTimeProvider.TodayDateOnly, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve appointments for patient {ptId}", ex);
         }
     }
@@ -148,7 +151,7 @@ public class AppointmentRepository : IAppointmentRepository
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateFailed(this._logger, null, DateOnly.FromDateTime(DateTime.Now), tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentCreateFailed(this._logger, null, this._dateTimeProvider.TodayDateOnly, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve appointments for organization {orgId}", ex);
         }
     }
@@ -202,13 +205,13 @@ public class AppointmentRepository : IAppointmentRepository
         catch (DbUpdateException ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, appointment.ApptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentUpdateError(this._logger, appointment.ApptId, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Database error while updating appointment {appointment.ApptId}", ex);
         }
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, appointment.ApptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentUpdateError(this._logger, appointment.ApptId, tenantId, facilityId, userId, ex);
             throw;
         }
     }
@@ -220,10 +223,10 @@ public class AppointmentRepository : IAppointmentRepository
     {
         try
         {
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             var appointment = await this._context.Appointments.FindAsync(apptId);
             if (appointment == null)
             {
-                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                 LogMessages.AppointmentNotFoundForDeletion(this._logger, apptId, tenantId, facilityId, userId);
                 throw new NotFoundException("Appointment", apptId);
             }
@@ -231,8 +234,7 @@ public class AppointmentRepository : IAppointmentRepository
             appointment.IsDeleted = true;
             await this._context.SaveChangesAsync();
 
-            var (tenantId2, facilityId2, userId2) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentDeleted(this._logger, apptId, tenantId2, facilityId2, userId2);
+            LogMessages.AppointmentDeleted(this._logger, apptId, tenantId, facilityId, userId);
         }
         catch (NotFoundException)
         {
@@ -241,13 +243,13 @@ public class AppointmentRepository : IAppointmentRepository
         catch (DbUpdateException ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Database error while deleting appointment {apptId}", ex);
         }
         catch (Exception ex)
         {
             var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentCreateError(this._logger, apptId, tenantId, facilityId, userId, ex);
+            LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             throw;
         }
     }

@@ -56,9 +56,12 @@ public class AuthService : IAuthService
 
         if (!this._passwordHasher.VerifyPassword(password, user.PasswordHash, user.PasswordSalt))
         {
+            // 連続失敗回数をインクリメント（ロック判定用）
             user.LoginFailureAttempts++;
+            // 累積失敗回数をインクリメント（履歴用、リセットされない）
             user.LoginFailureCount++;
 
+            // 連続5回失敗でアカウントをロック
             if (user.LoginFailureAttempts >= 5)
             {
                 user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(15);
@@ -68,6 +71,7 @@ public class AuthService : IAuthService
             return AuthResult.Failed("Invalid credentials");
         }
 
+        // ログイン成功時は連続失敗回数をリセット（累積失敗回数はリセットしない）
         user.LoginFailureAttempts = 0;
         user.LoginSuccessCount++;
         user.LastLoginAt = this._dateTimeProvider.UtcNow;

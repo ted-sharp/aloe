@@ -18,12 +18,14 @@ public class FacilityService : IFacilityService
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
     private readonly ILogger<FacilityService> _logger;
     private readonly IUserContextService _userContextService;
+    private readonly IDateTimeProvider _dateTimeProvider;
 
-    public FacilityService(IDbContextFactory<MedockDbContext> contextFactory, ILogger<FacilityService> logger, IUserContextService userContextService)
+    public FacilityService(IDbContextFactory<MedockDbContext> contextFactory, ILogger<FacilityService> logger, IUserContextService userContextService, IDateTimeProvider dateTimeProvider)
     {
         this._contextFactory = contextFactory;
         this._logger = logger;
         this._userContextService = userContextService;
+        this._dateTimeProvider = dateTimeProvider;
     }
 
     /// <inheritdoc />
@@ -33,7 +35,7 @@ public class FacilityService : IFacilityService
         {
             using var context = this._contextFactory.CreateDbContext();
 
-            var date = targetDate ?? DateOnly.FromDateTime(DateTime.Today);
+            var date = targetDate ?? this._dateTimeProvider.TodayDateOnly;
 
             // 該当日付で有効な営業時間レコードを取得
             // active_from <= date <= active_to かつ is_active = true かつ is_deleted = false
@@ -66,7 +68,7 @@ public class FacilityService : IFacilityService
         catch (Exception ex)
         {
             var (tenantId, facilityId_ctx, userId) = this._userContextService.GetTenantContext();
-            LogMessages.BusinessHoursRetrievalError(this._logger, facilityId, targetDate ?? DateOnly.FromDateTime(DateTime.Today), tenantId, userId, ex);
+            LogMessages.BusinessHoursRetrievalError(this._logger, facilityId, targetDate ?? this._dateTimeProvider.TodayDateOnly, tenantId, userId, ex);
             // Return default hours on error to prevent system failure
             return Result<BusinessHoursDto>.Success(GetDefaultBusinessHoursDto());
         }

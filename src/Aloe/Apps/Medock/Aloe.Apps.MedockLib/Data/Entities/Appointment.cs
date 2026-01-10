@@ -24,7 +24,7 @@ public class Appointment : IAuditableEntity
     public virtual Floor Floor { get; set; } = null!;
     public virtual Organization Organization { get; set; } = null!;
     public virtual Patient Patient { get; set; } = null!;
-    public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceReservations { get; set; } = new List<AppointmentResourceAssignment>();
+    public virtual ICollection<AppointmentResourceAssignment> AppointmentResourceAssignments { get; set; } = new List<AppointmentResourceAssignment>();
 }
 
 

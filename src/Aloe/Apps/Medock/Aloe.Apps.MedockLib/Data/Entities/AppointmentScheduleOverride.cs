@@ -19,7 +19,7 @@ public class AppointmentScheduleOverride : IAuditableEntity
     public Guid ApptScheduleId { get; set; }
 
     [Column("appt_date")]
-    public DateOnly ApptDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly ApptDate { get; set; } = DateOnly.MinValue;
 
     [Column("is_deleted")]
     public bool IsDeleted { get; set; }

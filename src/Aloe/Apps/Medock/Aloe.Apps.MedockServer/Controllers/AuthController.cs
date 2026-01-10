@@ -50,48 +50,7 @@ public class AuthController : ControllerBase
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
-            // クレームを作成
-            var claims = new List<Claim>
-            {
-                new Claim("sub", result.UserId!.Value.ToString()),
-                new Claim("user_code", result.UserCode!),
-                new Claim("email", result.Email!),
-                new Claim("preferred_username", result.UserCode!),
-                new Claim(ClaimTypes.Name, result.UserCode!),
-                new Claim(ClaimTypes.Email, result.Email!),
-                new Claim("user_display_name", result.DisplayName ?? ""),
-                new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
-                new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
-            };
-
-            if (result.SessionId.HasValue)
-            {
-                claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
-            }
-
-            if (result.TenantId.HasValue)
-            {
-                claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
-                claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
-            }
-
-            if (result.FacilityId.HasValue)
-            {
-                claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
-                claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
-            }
-
-            if (result.Roles != null)
-            {
-                foreach (var role in result.Roles)
-                {
-                    claims.Add(new Claim("roles", role));
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
-            }
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result);
 
             // KeepSessionフラグに基づいて認証プロパティを設定
             var authProperties = new AuthenticationProperties
@@ -150,48 +109,7 @@ public class AuthController : ControllerBase
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
-            // クレームを作成
-            var claims = new List<Claim>
-            {
-                new Claim("sub", request.UserId.ToString()),
-                new Claim("user_code", result.UserCode ?? ""),
-                new Claim("email", result.Email ?? ""),
-                new Claim("preferred_username", result.UserCode ?? ""),
-                new Claim(ClaimTypes.Name, result.UserCode ?? ""),
-                new Claim(ClaimTypes.Email, result.Email ?? ""),
-                new Claim("user_display_name", result.DisplayName ?? ""),
-                new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
-                new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
-            };
-
-            if (result.SessionId.HasValue)
-            {
-                claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
-            }
-
-            if (result.TenantId.HasValue)
-            {
-                claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
-                claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
-            }
-
-            if (result.FacilityId.HasValue)
-            {
-                claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
-                claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
-            }
-
-            if (result.Roles != null)
-            {
-                foreach (var role in result.Roles)
-                {
-                    claims.Add(new Claim("roles", role));
-                    claims.Add(new Claim(ClaimTypes.Role, role));
-                }
-            }
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result);
 
             var authProperties = new AuthenticationProperties
             {
@@ -386,6 +304,61 @@ public class AuthController : ControllerBase
             this._logger.LogError(ex, "Error during logout");
             return this.StatusCode(500, new { message = "An error occurred during logout" });
         }
+    }
+
+    /// <summary>
+    /// AuthResultからクレームを作成します
+    /// </summary>
+    private (ClaimsIdentity ClaimsIdentity, ClaimsPrincipal ClaimsPrincipal) CreateClaimsFromAuthResult(AuthResult result)
+    {
+        if (result.UserId == null)
+        {
+            throw new InvalidOperationException("Cannot create claims from AuthResult with null UserId");
+        }
+
+        var claims = new List<Claim>
+        {
+            new Claim("sub", result.UserId.Value.ToString()),
+            new Claim("user_code", result.UserCode ?? ""),
+            new Claim("email", result.Email ?? ""),
+            new Claim("preferred_username", result.UserCode ?? ""),
+            new Claim(ClaimTypes.Name, result.UserCode ?? ""),
+            new Claim(ClaimTypes.Email, result.Email ?? ""),
+            new Claim("user_display_name", result.DisplayName ?? ""),
+            new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
+            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
+        };
+
+        if (result.SessionId.HasValue)
+        {
+            claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
+        }
+
+        if (result.TenantId.HasValue)
+        {
+            claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
+            claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
+        }
+
+        if (result.FacilityId.HasValue)
+        {
+            claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
+            claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
+        }
+
+        if (result.Roles != null)
+        {
+            foreach (var role in result.Roles)
+            {
+                claims.Add(new Claim("roles", role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
+            }
+        }
+
+        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        return (claimsIdentity, claimsPrincipal);
     }
 }
 

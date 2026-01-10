@@ -91,6 +91,30 @@ public static partial class LogMessages
         Guid? facilityId,
         Guid? userId);
 
+    [LoggerMessage(
+        EventId = 1008,
+        Level = LogLevel.Error,
+        Message = "Database error while updating appointment {AppointmentId} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void AppointmentUpdateError(
+        ILogger logger,
+        Guid appointmentId,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1009,
+        Level = LogLevel.Error,
+        Message = "Database error while deleting appointment {AppointmentId} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void AppointmentDeleteError(
+        ILogger logger,
+        Guid appointmentId,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
     // ========================================
     // Service層: 予約サービス
     // ========================================
