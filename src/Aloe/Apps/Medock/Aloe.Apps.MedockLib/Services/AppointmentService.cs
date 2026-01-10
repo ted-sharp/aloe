@@ -149,9 +149,7 @@ public class AppointmentService : IAppointmentService
             {
                 ApptId = Guid.CreateVersion7(),
                 ApptDate = dto.Date,
-                ApptStartMin = dto.StartMin.HasValue
-                    ? dto.StartMin.Value
-                    : FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultAppointmentStartTime),
+                ApptStartMin = dto.StartMin ?? BusinessHoursConstants.DefaultAppointmentStartMin,
                 PtId = dto.PatientId,
                 OrgId = dto.OrganizationId,
                 FloorId = dto.FloorId,

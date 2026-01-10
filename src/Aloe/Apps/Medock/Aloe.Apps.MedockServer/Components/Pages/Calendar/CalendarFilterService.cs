@@ -31,9 +31,6 @@ public class CalendarFilterService
             return;
         }
 
-        // 設備条件フィルターは削除されました（AppointmentResourceに統合）
-        Dictionary<(DateOnly date, string timeSlot), int>? statsDict = null;
-
         foreach (var kvp in mainStats)
         {
             var dateStr = kvp.Key;
@@ -41,7 +38,7 @@ public class CalendarFilterService
             var date = DateOnly.Parse(dateStr);
 
             var isDateGrayed = this.IsDateGrayed(date, filter);
-            var hasAvailableSlot = this.ProcessSlots(statsList, filter, statsDict, date, isDateGrayed, mainStatsSlots);
+            var hasAvailableSlot = this.ProcessSlots(statsList, filter, date, isDateGrayed, mainStatsSlots);
 
             mainStatsGrayedOut[dateStr] = isDateGrayed || !hasAvailableSlot;
         }
@@ -64,10 +61,42 @@ public class CalendarFilterService
         return filter.SelectedDays.Any() && !filter.SelectedDays.Contains(dayOfWeek);
     }
 
+    /// <summary>
+    /// 分から"HH:mm"形式の文字列を生成します（表示用）
+    /// </summary>
+    private static string FormatMinutesToTimeString(int minutes)
+    {
+        var hours = minutes / 60;
+        var mins = minutes % 60;
+        return $"{hours:D2}:{mins:D2}";
+    }
+
+    /// <summary>
+    /// "HH:mm"形式の文字列から分に変換します
+    /// </summary>
+    private static bool TryParseTimeStringToMinutes(string timeString, out int minutes)
+    {
+        minutes = 0;
+        if (string.IsNullOrWhiteSpace(timeString))
+            return false;
+
+        var parts = timeString.Split(':');
+        if (parts.Length != 2)
+            return false;
+
+        if (!int.TryParse(parts[0], out var hours) || !int.TryParse(parts[1], out var mins))
+            return false;
+
+        if (hours < 0 || hours >= 24 || mins < 0 || mins >= 60)
+            return false;
+
+        minutes = hours * 60 + mins;
+        return true;
+    }
+
     private bool ProcessSlots(
         List<AppointmentStats> statsList,
         SearchFilterPanel.SearchFilter filter,
-        Dictionary<(DateOnly date, string timeSlot), int>? statsDict,
         DateOnly date,
         bool isDateGrayed,
         Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? mainStatsSlots = null)
@@ -75,8 +104,8 @@ public class CalendarFilterService
         var hasAvailableSlot = false;
 
         // 全てのMainリソースのAppointmentStatSlotsを取得してスロットを合算
-        // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）
-        var slotMap = new Dictionary<string, (TimeOnly Start, TimeOnly End, int Count, int Cap)>();
+        // 時間範囲をキーとして使用（"HH:mm-HH:mm"形式）で、内部はint（分）で管理
+        var slotMap = new Dictionary<string, (int StartMinutes, int EndMinutes, int Count, int Cap)>();
 
         foreach (var stat in statsList)
         {
@@ -93,18 +122,18 @@ public class CalendarFilterService
 
             foreach (var statSlot in slots.Where(s => !s.IsDeleted))
             {
-                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStartMin));
-                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEndMin));
-                var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
+                var slotStartMinutes = statSlot.SlotStartMin;
+                var slotEndMinutes = statSlot.SlotEndMin;
+                var timeRangeKey = $"{FormatMinutesToTimeString(slotStartMinutes)}-{FormatMinutesToTimeString(slotEndMinutes)}";
 
                 if (slotMap.ContainsKey(timeRangeKey))
                 {
                     var existing = slotMap[timeRangeKey];
-                    slotMap[timeRangeKey] = (existing.Start, existing.End, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
+                    slotMap[timeRangeKey] = (existing.StartMinutes, existing.EndMinutes, existing.Count + statSlot.SlotCount, existing.Cap + statSlot.SlotCap);
                 }
                 else
                 {
-                    slotMap[timeRangeKey] = (slotStartTime, slotEndTime, statSlot.SlotCount, statSlot.SlotCap);
+                    slotMap[timeRangeKey] = (slotStartMinutes, slotEndMinutes, statSlot.SlotCount, statSlot.SlotCap);
                 }
             }
         }
@@ -113,7 +142,7 @@ public class CalendarFilterService
         foreach (var kvp in slotMap)
         {
             var timeRangeKey = kvp.Key;
-            var (start, end, count, cap) = kvp.Value;
+            var (startMinutes, endMinutes, count, cap) = kvp.Value;
             var isSlotGrayed = false;
 
             // 時間スロットフィルター: 時間範囲が選択された時間スロットと一致するかチェック
@@ -131,9 +160,11 @@ public class CalendarFilterService
 
                     // selectedTimeSlotが時刻形式（"HH:mm"）の場合、1時間範囲として比較
                     // 例: "09:00"が選択されている場合、スロットの開始時刻が9時台（9:00〜9:59）ならマッチ
-                    if (TimeOnly.TryParse(selectedTimeSlot, out var selectedTime))
+                    if (TryParseTimeStringToMinutes(selectedTimeSlot, out var selectedMinutes))
                     {
-                        if (start.Hour == selectedTime.Hour)
+                        var selectedHour = selectedMinutes / 60;
+                        var slotStartHour = startMinutes / 60;
+                        if (slotStartHour == selectedHour)
                         {
                             matchesTimeSlot = true;
                             break;

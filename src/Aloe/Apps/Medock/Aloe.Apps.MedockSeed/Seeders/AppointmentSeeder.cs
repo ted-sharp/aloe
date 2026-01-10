@@ -525,7 +525,7 @@ internal static class AppointmentSeeder
                 // 午前のみ（09:00-12:00）
                 var morningTimes = SeederHelper.TimeSlots.MorningSlots;
                 var timeStr = morningTimes[_random.Next(morningTimes.Length)];
-                var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+                var parsedMin = TimeConstants.TryTimeStringToMinutes(timeStr);
                 if (parsedMin.HasValue)
                 {
                     startMin = parsedMin.Value;
@@ -539,7 +539,7 @@ internal static class AppointmentSeeder
                 allTimes.AddRange(SeederHelper.TimeSlots.AfternoonSlots);
 
                 var timeStr = allTimes[_random.Next(allTimes.Count)];
-                var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+                var parsedMin = TimeConstants.TryTimeStringToMinutes(timeStr);
                 if (parsedMin.HasValue)
                 {
                     startMin = parsedMin.Value;

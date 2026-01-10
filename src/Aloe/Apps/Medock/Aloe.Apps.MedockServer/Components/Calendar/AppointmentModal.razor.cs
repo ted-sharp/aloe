@@ -120,15 +120,12 @@ public partial class AppointmentModal : ComponentBase
         else
         {
             // 新規作成モード
+            var startMin = this.SelectedStartMin ?? BusinessHoursConstants.DefaultAppointmentStartMin;
             this.FormModel = new AppointmentFormModel
             {
                 Date = this.SelectedDate ?? this.DateTimeProvider.TodayDateOnly,
-                StartTimeString = this.SelectedStartMin.HasValue
-                    ? FacilityBusinessHours.MinutesToTimeString(this.SelectedStartMin.Value)
-                    : BusinessHoursConstants.DefaultAppointmentStartTime,
-                EndTimeString = this.SelectedStartMin.HasValue
-                    ? FacilityBusinessHours.MinutesToTimeString(this.SelectedStartMin.Value + 60)
-                    : BusinessHoursConstants.DefaultAppointmentEndTime,
+                StartTimeString = TimeConstants.MinutesToTimeString(startMin),
+                EndTimeString = TimeConstants.MinutesToTimeString(startMin + 60),
                 Status = 0,
                 PatientName = String.Empty,
                 OrganizationName = String.Empty
@@ -166,8 +163,8 @@ public partial class AppointmentModal : ComponentBase
             this.FormModel = new AppointmentFormModel
             {
                 Date = dto.Date,
-                StartTimeString = FacilityBusinessHours.MinutesToTimeString(dto.StartMin),
-                EndTimeString = BusinessHoursConstants.DefaultAppointmentEndTime, // EndTime removed from DTO
+                StartTimeString = TimeConstants.MinutesToTimeString(dto.StartMin),
+                EndTimeString = TimeConstants.MinutesToTimeString(dto.StartMin + 60), // EndTime removed from DTO, default 1 hour duration
                 Status = dto.Status,
                 PatientName = dto.PatientName ?? String.Empty,
                 OrganizationName = dto.OrganizationName ?? String.Empty,
@@ -573,15 +570,14 @@ public partial class AppointmentModal : ComponentBase
     /// </summary>
     private static int? GetStartMinFromTimeString(string timeStr)
     {
-        if (string.IsNullOrEmpty(timeStr)) return null;
-        return FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+        return TimeConstants.TryTimeStringToMinutes(timeStr);
     }
 
     public class AppointmentFormModel
     {
         public DateOnly Date { get; set; }
-        public string StartTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentStartTime;
-        public string EndTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentEndTime;
+        public string StartTimeString { get; set; } = TimeConstants.MinutesToTimeString(BusinessHoursConstants.DefaultAppointmentStartMin);
+        public string EndTimeString { get; set; } = TimeConstants.MinutesToTimeString(BusinessHoursConstants.DefaultAppointmentEndMin);
         public int Status { get; set; } = 0;
         public string PatientName { get; set; } = String.Empty;
         public string? OrganizationName { get; set; }

@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
@@ -24,62 +25,22 @@ public partial class DayView : ComponentBase
     /// </summary>
     private IEnumerable<(string Name, string Org, int Status)> GetHourAppointments(int hour)
     {
-        if (this.Appointments == null) yield break;
-
-        var hourStart = new TimeOnly(hour, 0);
-        var hourEnd = new TimeOnly(hour + 1, 0);
-
-        foreach (var appt in this.Appointments)
-        {
-            if (appt.Date != this.CurrentDate) continue;
-            // if (appt.StartTime == null) continue; // StartMin is int, always valid
-
-            // 予約の開始時間がこの時間帯に含まれるか、または予約がこの時間帯と重なる場合
-            if (appt.StartMin >= hourStart.Hour * 60 && appt.StartMin < (hour + 1) * 60)
-            {
-                yield return (
-                    appt.PatientName ?? "未設定",
-                    appt.OrganizationName ?? "",
-                    appt.Status
-                );
-            }
-        }
+        return AppointmentFilterHelper.GetHourAppointments(this.Appointments, this.CurrentDate, hour);
     }
 
     private string GetStatusBorderClass(int status)
     {
-        return status switch
-        {
-            0 => "border-l-4 border-warning",
-            1 => "border-l-4 border-info",
-            2 => "border-l-4 border-success",
-            3 => "border-l-4 border-error",
-            _ => ""
-        };
+        return AppointmentStatusHelper.GetBorderClass(status);
     }
 
     private string GetStatusBadgeClass(int status)
     {
-        return status switch
-        {
-            0 => "badge-warning",
-            1 => "badge-info",
-            2 => "badge-success",
-            3 => "badge-error",
-            _ => ""
-        };
+        return AppointmentStatusHelper.GetBadgeClass(status);
     }
 
     private string GetStatusText(int status)
     {
-        return status switch
-        {
-            0 => "予約",
-            1 => "待機中",
-            2 => "来院済み",
-            3 => "キャンセル",
-            _ => "不明"
-        };
+        return AppointmentStatusHelper.GetStatusText(status);
     }
 }
 

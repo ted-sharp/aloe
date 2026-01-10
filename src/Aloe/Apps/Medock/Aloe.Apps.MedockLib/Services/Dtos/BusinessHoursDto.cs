@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data.Entities;
 
 namespace Aloe.Apps.MedockLib.Services.Dtos;
@@ -31,32 +32,32 @@ public class BusinessHoursDto
     [JsonPropertyName("startTime")]
     public string StartTime
     {
-        get => FacilityBusinessHours.MinutesToTimeString(this.WorkStartMin);
-        set => this.WorkStartMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 540;
+        get => TimeConstants.MinutesToTimeString(this.WorkStartMin);
+        set => this.WorkStartMin = TimeConstants.TryTimeStringToMinutes(value) ?? 540;
     }
 
     /// <summary>終業時間（JSON シリアライズ用、例: "18:00"）</summary>
     [JsonPropertyName("endTime")]
     public string EndTime
     {
-        get => FacilityBusinessHours.MinutesToTimeString(this.WorkEndMin);
-        set => this.WorkEndMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 1080;
+        get => TimeConstants.MinutesToTimeString(this.WorkEndMin);
+        set => this.WorkEndMin = TimeConstants.TryTimeStringToMinutes(value) ?? 1080;
     }
 
     /// <summary>昼休み開始時間（JSON シリアライズ用、例: "12:00"）</summary>
     [JsonPropertyName("lunchStartTime")]
     public string LunchStartTime
     {
-        get => FacilityBusinessHours.MinutesToTimeString(this.LunchStartMin);
-        set => this.LunchStartMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 720;
+        get => TimeConstants.MinutesToTimeString(this.LunchStartMin);
+        set => this.LunchStartMin = TimeConstants.TryTimeStringToMinutes(value) ?? 720;
     }
 
     /// <summary>昼休み終了時間（JSON シリアライズ用、例: "13:00"）</summary>
     [JsonPropertyName("lunchEndTime")]
     public string LunchEndTime
     {
-        get => FacilityBusinessHours.MinutesToTimeString(this.LunchEndMin);
-        set => this.LunchEndMin = FacilityBusinessHours.TryTimeStringToMinutes(value) ?? 780;
+        get => TimeConstants.MinutesToTimeString(this.LunchEndMin);
+        set => this.LunchEndMin = TimeConstants.TryTimeStringToMinutes(value) ?? 780;
     }
 
     /// <summary>

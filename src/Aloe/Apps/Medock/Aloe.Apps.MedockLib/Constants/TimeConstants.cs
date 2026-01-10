@@ -112,4 +112,23 @@ public static class TimeConstants
 
         return hours * 60 + minutes;
     }
+
+    /// <summary>
+    /// "HH:mm" または "H:mm" 形式の文字列を分数に変換します（null許可版）
+    /// 変換できない場合はnullを返します
+    /// </summary>
+    /// <param name="timeString">"HH:mm" または "H:mm" 形式の時間文字列</param>
+    /// <returns>真夜中からの経過分数、変換できない場合はnull</returns>
+    public static int? TryTimeStringToMinutes(string? timeString)
+    {
+        if (string.IsNullOrEmpty(timeString)) return null;
+        try
+        {
+            return TimeStringToMinutes(timeString);
+        }
+        catch (FormatException)
+        {
+            return null;
+        }
+    }
 }
