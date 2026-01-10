@@ -72,16 +72,18 @@ export function createTimeToXConverter(startHour, endHour, lunchStartHour, lunch
             // 昼休み時間が定義されている場合、詰め込み処理を行う
             const morningHours = lunchStartHour - startHour;
             const afternoonHours = endHour - lunchEndHour;
+            const morningRatio = morningHours / effectiveTotalHours;
+            const afternoonRatio = afternoonHours / effectiveTotalHours;
 
             if (timeInHours < lunchStartHour) {
                 // 昼休み前
                 const relativePosition = (timeInHours - startHour) / morningHours;
-                return businessStartX + (relativePosition * barAreaWidth);
+                return businessStartX + (relativePosition * barAreaWidth * morningRatio);
             } else if (timeInHours >= lunchEndHour) {
                 // 昼休み後
-                const afternoonOffset = (barAreaWidth * morningHours) / effectiveTotalHours;
+                const afternoonOffset = barAreaWidth * morningRatio;
                 const relativePosition = (timeInHours - lunchEndHour) / afternoonHours;
-                return businessStartX + afternoonOffset + (relativePosition * barAreaWidth * (afternoonHours / effectiveTotalHours));
+                return businessStartX + afternoonOffset + (relativePosition * barAreaWidth * afternoonRatio);
             } else {
                 // 昼休み時間内
                 return null; // 昼休み時間はバーを描画しない
