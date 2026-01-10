@@ -5,7 +5,7 @@
 TRUNCATE TABLE appointment_schedule_slot_cap_overrides CASCADE;
 TRUNCATE TABLE appointment_schedule_slot_overrides CASCADE;
 TRUNCATE TABLE appointment_resource_assignments CASCADE;
-TRUNCATE TABLE appointment_resource_group_members CASCADE;
+TRUNCATE TABLE appointment_resource_members CASCADE;
 TRUNCATE TABLE plan_condition_members CASCADE;
 TRUNCATE TABLE plan_options CASCADE;
 TRUNCATE TABLE plan_resource_requirements CASCADE;
@@ -19,20 +19,14 @@ TRUNCATE TABLE organization_members CASCADE;
 TRUNCATE TABLE appointment_schedule_overrides CASCADE;
 TRUNCATE TABLE appointment_stat_slots CASCADE;
 TRUNCATE TABLE appointment_stats CASCADE;
-TRUNCATE TABLE facility_addresses CASCADE;
 TRUNCATE TABLE facility_business_hours CASCADE;
 TRUNCATE TABLE facility_user_permissions_cache CASCADE;
-TRUNCATE TABLE organization_addresses CASCADE;
-TRUNCATE TABLE organization_insurances CASCADE;
-TRUNCATE TABLE patient_addresses CASCADE;
-TRUNCATE TABLE patient_insurance_cards CASCADE;
 
 -- 上位層: 他のテーブルを参照しているが、さらに参照されているテーブル
 TRUNCATE TABLE appointments CASCADE;
 TRUNCATE TABLE appointment_schedule_slots CASCADE;
 TRUNCATE TABLE appointment_schedules CASCADE;
 TRUNCATE TABLE appointment_resources CASCADE;
-TRUNCATE TABLE appointment_resource_groups CASCADE;
 TRUNCATE TABLE facility_users CASCADE;
 TRUNCATE TABLE organizations CASCADE;
 TRUNCATE TABLE patients CASCADE;
@@ -51,7 +45,6 @@ TRUNCATE TABLE policies CASCADE;
 TRUNCATE TABLE roles CASCADE;
 TRUNCATE TABLE preferences CASCADE;
 TRUNCATE TABLE holidays CASCADE;
-TRUNCATE TABLE insurance_providers CASCADE;
 TRUNCATE TABLE tenants CASCADE;
 TRUNCATE TABLE features CASCADE;
 TRUNCATE TABLE operations CASCADE;
