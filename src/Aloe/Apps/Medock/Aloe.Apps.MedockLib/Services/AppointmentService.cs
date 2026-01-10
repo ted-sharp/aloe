@@ -153,7 +153,7 @@ public class AppointmentService : IAppointmentService
                 ApptDate = dto.Date,
                 ApptStartMin = dto.StartMin.HasValue
                     ? dto.StartMin.Value
-                    : 540, // Default: 9:00 AM
+                    : FacilityBusinessHours.TimeStringToMinutes(BusinessHoursConstants.DefaultAppointmentStartTime),
                 PtId = dto.PatientId,
                 OrgId = dto.OrganizationId,
                 FloorId = dto.FloorId,
@@ -170,52 +170,12 @@ public class AppointmentService : IAppointmentService
             await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             // Mainリソースを自動的に割り当て
-            var mainResources = await context.AppointmentResources
-                .AsNoTracking()
-                .Where(r => r.FloorId == dto.FloorId &&
-                           !r.IsDeleted &&
-                           r.ApptResTypeCode == (int)AppointmentResourceType.Main)
-                .OrderBy(r => r.ApptResSeq)
-                .ToListAsync();
-
-            foreach (var mainResource in mainResources)
-            {
-                var assignment = new AppointmentResourceAssignment
-                {
-                    ApptResAssignId = Guid.CreateVersion7(),
-                    ApptId = appointment.ApptId,
-                    ApptResId = mainResource.ApptResId,
-                    IsDeleted = false,
-                    CreatedAt = now,
-                    UpdatedAt = now
-                };
-
-                await context.AppointmentResourceAssignments.AddAsync(assignment);
-            }
-
-            this._logger.LogDebug("Created {Count} main resource assignments for appointment {ApptId}",
-                mainResources.Count, appointment.ApptId);
+            await this.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
 
             // 選択された機器リソースを割り当て
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                foreach (var resourceId in dto.EquipmentResourceIds)
-                {
-                    var assignment = new AppointmentResourceAssignment
-                    {
-                        ApptResAssignId = Guid.CreateVersion7(),
-                        ApptId = appointment.ApptId,
-                        ApptResId = resourceId,
-                        IsDeleted = false,
-                        CreatedAt = now,
-                        UpdatedAt = now
-                    };
-
-                    await context.AppointmentResourceAssignments.AddAsync(assignment);
-                }
-
-                this._logger.LogDebug("Created {Count} equipment resource assignments for appointment {ApptId}",
-                    dto.EquipmentResourceIds.Count, appointment.ApptId);
+                await this.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
             }
 
             await context.SaveChangesAsync();
@@ -305,52 +265,12 @@ public class AppointmentService : IAppointmentService
             }
 
             // Mainリソースを自動的に割り当て
-            var mainResources = await context.AppointmentResources
-                .AsNoTracking()
-                .Where(r => r.FloorId == appointment.FloorId &&
-                           !r.IsDeleted &&
-                           r.ApptResTypeCode == (int)AppointmentResourceType.Main)
-                .OrderBy(r => r.ApptResSeq)
-                .ToListAsync();
-
-            foreach (var mainResource in mainResources)
-            {
-                var assignment = new AppointmentResourceAssignment
-                {
-                    ApptResAssignId = Guid.CreateVersion7(),
-                    ApptId = apptId,
-                    ApptResId = mainResource.ApptResId,
-                    IsDeleted = false,
-                    CreatedAt = appointment.UpdatedAt,
-                    UpdatedAt = appointment.UpdatedAt
-                };
-
-                await context.AppointmentResourceAssignments.AddAsync(assignment);
-            }
-
-            this._logger.LogDebug("Created {Count} main resource assignments for appointment {ApptId}",
-                mainResources.Count, apptId);
+            await this.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
 
             // 選択された機器リソースを割り当て
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                foreach (var resourceId in dto.EquipmentResourceIds)
-                {
-                    var assignment = new AppointmentResourceAssignment
-                    {
-                        ApptResAssignId = Guid.CreateVersion7(),
-                        ApptId = apptId,
-                        ApptResId = resourceId,
-                        IsDeleted = false,
-                        CreatedAt = appointment.UpdatedAt,
-                        UpdatedAt = appointment.UpdatedAt
-                    };
-
-                    await context.AppointmentResourceAssignments.AddAsync(assignment);
-                }
-
-                this._logger.LogDebug("Created {Count} equipment resource assignments for appointment {ApptId}",
-                    dto.EquipmentResourceIds.Count, apptId);
+                await this.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
             }
 
             await context.SaveChangesAsync();
@@ -440,6 +360,62 @@ public class AppointmentService : IAppointmentService
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             return Result<List<HolidayDto>>.Failure("An unexpected error occurred while retrieving holidays", "HOLIDAY_RETRIEVAL_ERROR");
         }
+    }
+
+    /// <summary>
+    /// Mainリソースを予約に自動的に割り当てます
+    /// </summary>
+    private async Task AssignMainResourcesAsync(MedockDbContext context, Guid apptId, Guid floorId, DateTime timestamp)
+    {
+        var mainResources = await context.AppointmentResources
+            .AsNoTracking()
+            .Where(r => r.FloorId == floorId &&
+                       !r.IsDeleted &&
+                       r.ApptResTypeCode == (int)AppointmentResourceType.Main)
+            .OrderBy(r => r.ApptResSeq)
+            .ToListAsync();
+
+        foreach (var mainResource in mainResources)
+        {
+            var assignment = new AppointmentResourceAssignment
+            {
+                ApptResAssignId = Guid.CreateVersion7(),
+                ApptId = apptId,
+                ApptResId = mainResource.ApptResId,
+                IsDeleted = false,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp
+            };
+
+            await context.AppointmentResourceAssignments.AddAsync(assignment);
+        }
+
+        this._logger.LogDebug("Created {Count} main resource assignments for appointment {ApptId}",
+            mainResources.Count, apptId);
+    }
+
+    /// <summary>
+    /// 機器リソースを予約に割り当てます
+    /// </summary>
+    private async Task AssignEquipmentResourcesAsync(MedockDbContext context, Guid apptId, IEnumerable<Guid> equipmentResourceIds, DateTime timestamp)
+    {
+        foreach (var resourceId in equipmentResourceIds)
+        {
+            var assignment = new AppointmentResourceAssignment
+            {
+                ApptResAssignId = Guid.CreateVersion7(),
+                ApptId = apptId,
+                ApptResId = resourceId,
+                IsDeleted = false,
+                CreatedAt = timestamp,
+                UpdatedAt = timestamp
+            };
+
+            await context.AppointmentResourceAssignments.AddAsync(assignment);
+        }
+
+        this._logger.LogDebug("Created {Count} equipment resource assignments for appointment {ApptId}",
+            equipmentResourceIds.Count(), apptId);
     }
 
     private AppointmentDto MapToDto(Appointment appointment)

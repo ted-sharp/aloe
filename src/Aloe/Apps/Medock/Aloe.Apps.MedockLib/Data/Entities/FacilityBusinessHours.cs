@@ -90,4 +90,18 @@ public class FacilityBusinessHours : IAuditableEntity
         if (!Int32.TryParse(parts[1], out var mins)) return 0;
         return hours * 60 + mins;
     }
+
+    /// <summary>
+    /// "HH:mm" 形式の文字列から分数に変換（null許可版）
+    /// 変換できない場合はnullを返します
+    /// </summary>
+    public static int? TryTimeStringToMinutes(string? timeString)
+    {
+        if (String.IsNullOrEmpty(timeString)) return null;
+        var parts = timeString.Split(':');
+        if (parts.Length != 2) return null;
+        if (!Int32.TryParse(parts[0], out var hours)) return null;
+        if (!Int32.TryParse(parts[1], out var mins)) return null;
+        return hours * 60 + mins;
+    }
 }
