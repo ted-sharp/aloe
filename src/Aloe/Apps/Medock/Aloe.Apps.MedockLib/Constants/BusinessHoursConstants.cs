@@ -11,9 +11,9 @@ public static class BusinessHoursConstants
     public const string DefaultStartTime = "09:00";
 
     /// <summary>
-    /// デフォルトの就業時間（"18:00"）
+    /// デフォルトの就業時間（"17:00"）
     /// </summary>
-    public const string DefaultEndTime = "18:00";
+    public const string DefaultEndTime = "17:00";
 
     /// <summary>
     /// デフォルトの昼休み開始時間（"12:00"）

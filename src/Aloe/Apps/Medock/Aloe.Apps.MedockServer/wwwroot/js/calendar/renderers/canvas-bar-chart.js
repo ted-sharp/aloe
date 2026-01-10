@@ -17,6 +17,19 @@ import {
     drawSlotInfoText,
     drawNoDataDash
 } from '../utils/slot-display-utils.js';
+import {
+    createTimeToXConverter,
+    calculateLunchDuration
+} from '../utils/time-conversion-utils.js';
+import {
+    parseSlotFlags,
+    getValidSlotIndices
+} from '../utils/slot-validation-utils.js';
+import {
+    getDateGrayOutStatus,
+    getDateTextColor,
+    getBusinessHoursLinesToDraw
+} from '../utils/slot-rendering-utils.js';
 
 /**
  * 簡易表示モードで記号を描画（Canvas版）
@@ -91,14 +104,7 @@ export function renderCanvasBarChart(contentCtx, params) {
     const slotCount = slotStartMins.length;
 
     // データがない場合は描画しない
-    const validIndices = [];
-    for (let i = 0; i < slotCount; i++) {
-        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
-        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
-        if (cap > 0 || count > 0) {
-            validIndices.push(i);
-        }
-    }
+    const validIndices = getValidSlotIndices(slotCaps, slotCounts);
 
     if (validIndices.length === 0) {
         return false;
@@ -111,33 +117,11 @@ export function renderCanvasBarChart(contentCtx, params) {
     const businessEndX = cellLeft + CONFIG.spacing.barXOffset + barAreaWidth;
 
     // 昼休み時間帯の長さを計算
-    const lunchDuration = (lunchStartHour !== null && lunchEndHour !== null)
-        ? (lunchEndHour - lunchStartHour)
-        : 0;
+    const lunchDuration = calculateLunchDuration(lunchStartHour, lunchEndHour);
     const effectiveTotalHours = totalHours - lunchDuration;
 
-    // 時刻をX座標に変換する関数
-    const timeToX = (timeInHours) => {
-        let relativePosition;
-        if (lunchStartHour !== null && lunchEndHour !== null && effectiveTotalHours > 0) {
-            const morningHours = lunchStartHour - startHour;
-            const afternoonHours = endHour - lunchEndHour;
-
-            if (timeInHours < lunchStartHour) {
-                const morningRatio = (timeInHours - startHour) / morningHours;
-                relativePosition = morningRatio * (morningHours / effectiveTotalHours);
-            } else if (timeInHours >= lunchEndHour) {
-                const afternoonRatio = (timeInHours - lunchEndHour) / afternoonHours;
-                const morningWidth = morningHours / effectiveTotalHours;
-                relativePosition = morningWidth + afternoonRatio * (afternoonHours / effectiveTotalHours);
-            } else {
-                relativePosition = morningHours / effectiveTotalHours;
-            }
-        } else {
-            relativePosition = Math.max(0, Math.min(1, (timeInHours - startHour) / totalHours));
-        }
-        return businessStartX + relativePosition * barAreaWidth;
-    };
+    // 時刻をX座標に変換する関数（新しいユーティリティを使用）
+    const timeToX = createTimeToXConverter(startHour, endHour, lunchStartHour, lunchEndHour, businessStartX, barAreaWidth);
 
     // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
     // フラグのビット割り当て:

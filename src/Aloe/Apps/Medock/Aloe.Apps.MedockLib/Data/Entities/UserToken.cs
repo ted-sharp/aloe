@@ -32,6 +32,17 @@ public class UserToken
     [Column("token_value")]
     public string TokenValue { get; set; } = String.Empty;
 
+    // Enum Wrapper
+    /// <summary>
+    /// トークンプロバイダーの列挙値表現（便宜的、実際の計算はintコードを使用）
+    /// </summary>
+    [NotMapped]
+    public int TokenProviderEnum
+    {
+        get => this.TokenProvider;
+        set => this.TokenProvider = value;
+    }
+
     // Navigation Properties
     public virtual User User { get; set; } = null!;
 }

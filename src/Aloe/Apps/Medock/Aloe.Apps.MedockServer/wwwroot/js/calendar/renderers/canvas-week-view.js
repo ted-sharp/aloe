@@ -16,6 +16,7 @@ import {
     drawSymbol,
     drawSlotInfoText
 } from '../utils/slot-display-utils.js';
+import { getValidSlotIndices } from '../utils/slot-validation-utils.js';
 
 /**
  * HH:mm形式の時間文字列を時間.分の数値に変換

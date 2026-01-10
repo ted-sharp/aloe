@@ -23,21 +23,6 @@ public interface IAppointmentRepository
     Task<List<Appointment>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate);
 
     /// <summary>
-    /// フロアと日付で予約を取得します。
-    /// </summary>
-    Task<List<Appointment>> GetByFloorAndDateAsync(Guid floorId, DateOnly date);
-
-    /// <summary>
-    /// 患者IDで予約を取得します。
-    /// </summary>
-    Task<List<Appointment>> GetByPatientIdAsync(Guid ptId);
-
-    /// <summary>
-    /// 団体IDで予約を取得します。
-    /// </summary>
-    Task<List<Appointment>> GetByOrganizationIdAsync(Guid orgId);
-
-    /// <summary>
     /// 予約を追加します。
     /// </summary>
     Task AddAsync(Appointment appointment);

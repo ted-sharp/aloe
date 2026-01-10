@@ -98,8 +98,8 @@ internal static class AppointmentStatsSeeder
                             ApptStatSlotId = Guid.CreateVersion7(),
                             ApptDate = currentDate,
                             ApptResId = schedule.ApptResId,
-                            SlotStart = slot.SlotStartMin,
-                            SlotEnd = slot.SlotEndMin,
+                            SlotStartMin = slot.SlotStartMin,
+                            SlotEndMin = slot.SlotEndMin,
                             SlotCap = slot.SlotCap,
                             SlotCount = slotCount  // ACCURATE count from aggregation
                         };
@@ -150,8 +150,8 @@ internal static class AppointmentStatsSeeder
                                 ApptStatSlotId = Guid.CreateVersion7(),
                                 ApptDate = currentDate,
                                 ApptResId = schedule.ApptResId,
-                                SlotStart = slotStartMin,
-                                SlotEnd = slotEndMin,
+                                SlotStartMin = slotStartMin,
+                                SlotEndMin = slotEndMin,
                                 SlotCap = 0, // 時間外なので容量は0
                                 SlotCount = slotCount
                             };

@@ -82,6 +82,27 @@ public class Plan : IAuditableEntity
     [Column("updated_session_id")]
     public Guid UpdatedSessionId { get; set; }
 
+    // Enum Wrappers
+    /// <summary>
+    /// プランタイプコードの列挙値表現（便宜的、実際の計算はintコードを使用）
+    /// </summary>
+    [NotMapped]
+    public int PlanTypeEnum
+    {
+        get => this.PlanTypeCode;
+        set => this.PlanTypeCode = value;
+    }
+
+    /// <summary>
+    /// プラン種別コードの列挙値表現（便宜的、実際の計算はintコードを使用）
+    /// </summary>
+    [NotMapped]
+    public int PlanKindEnum
+    {
+        get => this.PlanKindCode;
+        set => this.PlanKindCode = value;
+    }
+
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
     public virtual ICollection<PlanConditionMember> PlanConditionMembers { get; set; } = new List<PlanConditionMember>();

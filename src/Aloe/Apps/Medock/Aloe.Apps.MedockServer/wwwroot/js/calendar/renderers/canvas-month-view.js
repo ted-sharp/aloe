@@ -11,6 +11,7 @@ import { renderCanvasMonthCalendar } from './canvas-month-calendar.js';
 import { renderCanvasDayBarChart } from './canvas-bar-chart.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
+import { getValidSlotIndices } from '../utils/slot-validation-utils.js';
 
 /**
  * 月間カレンダーを描画（Canvas API版）

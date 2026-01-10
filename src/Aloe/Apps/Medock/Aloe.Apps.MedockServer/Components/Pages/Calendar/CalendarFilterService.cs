@@ -93,8 +93,8 @@ public class CalendarFilterService
 
             foreach (var statSlot in slots.Where(s => !s.IsDeleted))
             {
-                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStartMin));
+                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEndMin));
                 var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
 
                 if (slotMap.ContainsKey(timeRangeKey))

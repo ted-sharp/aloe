@@ -183,8 +183,8 @@ public partial class DayDetailPopup : ComponentBase
 
             foreach (var statSlot in slots.Where(s => !s.IsDeleted))
             {
-                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStart));
-                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEnd));
+                var slotStartTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotStartMin));
+                var slotEndTime = TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(statSlot.SlotEndMin));
                 var timeRangeKey = $"{slotStartTime:HH:mm}-{slotEndTime:HH:mm}";
 
                 if (slotMap.ContainsKey(timeRangeKey))
@@ -472,7 +472,7 @@ public partial class DayDetailPopup : ComponentBase
         var dateSlotsData = this.MainStatsSlots
             .Where(kvp => kvp.Key.ApptDate == this.SelectedDate.Value)
             .SelectMany(kvp => kvp.Value)
-            .OrderBy(s => s.SlotStart)
+            .OrderBy(s => s.SlotStartMin)
             .ToList();
 
         if (!dateSlotsData.Any())
@@ -490,8 +490,8 @@ public partial class DayDetailPopup : ComponentBase
         }
 
         // 並列配列形式に変換
-        var slotStarts = dateSlotsData.Select(s => s.SlotStart).ToArray();
-        var slotEnds = dateSlotsData.Select(s => s.SlotEnd).ToArray();
+        var slotStarts = dateSlotsData.Select(s => s.SlotStartMin).ToArray();
+        var slotEnds = dateSlotsData.Select(s => s.SlotEndMin).ToArray();
         var slotCounts = dateSlotsData.Select(s => s.SlotCount).ToArray();
         var slotCaps = dateSlotsData.Select(s => s.SlotCap).ToArray();
         var slotAvailables = dateSlotsData.Select(s => Math.Max(0, s.SlotCap - s.SlotCount)).ToArray();
@@ -504,7 +504,7 @@ public partial class DayDetailPopup : ComponentBase
             {
                 var slot = dateSlotsData[i];
                 var (isOutsideHoursBefore, isOutsideHoursAfter, isOutsideHoursLunch) =
-                    this.BusinessHours.CheckSlotOutsideHours(slot.SlotStart, slot.SlotEnd);
+                    this.BusinessHours.CheckSlotOutsideHours(slot.SlotStartMin, slot.SlotEndMin);
 
                 byte flags = 0;
                 if (isOutsideHoursBefore) flags |= 0b0010;  // ビット1: IsOutsideHoursBefore（朝）

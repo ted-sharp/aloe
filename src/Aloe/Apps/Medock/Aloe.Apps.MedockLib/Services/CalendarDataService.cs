@@ -78,7 +78,7 @@ public class CalendarDataService : ICalendarDataService
                     {
                         validSlots = slots
                             .Where(s => !s.IsDeleted)
-                            .OrderBy(s => s.SlotStart)
+                            .OrderBy(s => s.SlotStartMin)
                             .ToList();
                     }
                 }
@@ -97,22 +97,22 @@ public class CalendarDataService : ICalendarDataService
                     for (int i = 0; i < count; i++)
                     {
                         var statSlot = validSlots[i];
-                        int slotStartHour = statSlot.SlotStart / 60;
+                        int slotStartHour = statSlot.SlotStartMin / 60;
                         var isSlotGrayed = false;
                         if (filterHours != null && filterHours.Count > 0)
                         {
                             isSlotGrayed = !filterHours.Contains(slotStartHour);
                         }
 
-                        slotStarts[i] = statSlot.SlotStart;
-                        slotEnds[i] = statSlot.SlotEnd;
+                        slotStarts[i] = statSlot.SlotStartMin;
+                        slotEnds[i] = statSlot.SlotEndMin;
                         slotCounts[i] = statSlot.SlotCount;
                         slotCaps[i] = statSlot.SlotCap;
                         slotAvailables[i] = statSlot.SlotAvailable;
 
                         // 業務時間外スロットの種類を判定（Before/After/Lunch）
                         var (isOutsideHoursBefore, isOutsideHoursAfter, isOutsideHoursLunch) = businessHours != null
-                            ? businessHours.CheckSlotOutsideHours(statSlot.SlotStart, statSlot.SlotEnd)
+                            ? businessHours.CheckSlotOutsideHours(statSlot.SlotStartMin, statSlot.SlotEndMin)
                             : (false, false, false);
 
                         // フラグをビット単位で設定

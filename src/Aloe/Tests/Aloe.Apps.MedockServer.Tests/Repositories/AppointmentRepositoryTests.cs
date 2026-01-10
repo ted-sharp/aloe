@@ -206,64 +206,6 @@ public class AppointmentRepositoryTests
     }
 
     [Fact]
-    public async Task GetByFloorAndDateAsync_Should_Return_Appointments_For_Floor()
-    {
-        // Arrange
-        var options = CreateInMemoryOptions();
-        Guid targetFloorId;
-        var targetDate = new DateOnly(2025, 12, 15);
-
-        await using (var context = new MedockDbContext(options))
-        {
-            var (tenantId, facilityId, floorId, orgId, ptId) = await SeedTestDataAsync(context);
-            targetFloorId = floorId;
-
-            // 別のフロアを作成
-            var otherFloorId = Guid.CreateVersion7();
-            context.Floors.Add(new Floor
-            {
-                FloorId = otherFloorId,
-                FacilityId = facilityId,
-                FloorCode = "2F",
-                FloorName = "2階"
-            });
-
-            // ターゲットフロアの予約
-            context.Appointments.Add(new Appointment
-            {
-                ApptId = Guid.CreateVersion7(),
-                FloorId = floorId,
-                OrgId = orgId,
-                PtId = ptId,
-                ApptDate = targetDate
-            });
-
-            // 別のフロアの予約（同日）
-            context.Appointments.Add(new Appointment
-            {
-                ApptId = Guid.CreateVersion7(),
-                FloorId = otherFloorId,
-                OrgId = orgId,
-                PtId = ptId,
-                ApptDate = targetDate
-            });
-
-            await context.SaveChangesAsync();
-        }
-
-        // Act
-        await using (var context = new MedockDbContext(options))
-        {
-            var repository = new AppointmentRepository(context, CreateMockLogger(), CreateMockUserContextService(), CreateMockDateTimeProvider());
-            var result = await repository.GetByFloorAndDateAsync(targetFloorId, targetDate);
-
-            // Assert
-            result.Should().HaveCount(1);
-            result.First().FloorId.Should().Be(targetFloorId);
-        }
-    }
-
-    [Fact]
     public async Task AddAsync_Should_Add_New_Appointment()
     {
         // Arrange

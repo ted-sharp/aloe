@@ -74,8 +74,8 @@ public class CalendarStatsController : ControllerBase
                     .Select(slot => new
                     {
                         apptStatSlotId = slot.ApptStatSlotId.ToString(),
-                        slotStart = slot.SlotStart,
-                        slotEnd = slot.SlotEnd,
+                        slotStart = slot.SlotStartMin,
+                        slotEnd = slot.SlotEndMin,
                         slotCap = slot.SlotCap,
                         slotCount = slot.SlotCount,
                         slotAvailable = slot.SlotAvailable

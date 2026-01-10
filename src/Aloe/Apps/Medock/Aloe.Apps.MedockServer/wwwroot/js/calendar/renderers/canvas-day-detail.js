@@ -10,42 +10,19 @@ import { drawRect, drawLine, drawText } from '../utils/canvas-utils.js';
 import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
 import { isDateInRange } from '../utils/date-utils.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
-
-/**
- * スロットの時間範囲を解析（並列配列用）
- * @param {number} startMinutes - 開始時刻（分単位）
- * @param {number} endMinutes - 終了時刻（分単位）
- * @param {number} startHour - デフォルト開始時刻
- * @param {number} endHour - デフォルト終了時刻
- * @returns {{start: number, end: number}}
- */
-function parseSlotTimeRangeFromStrings(startMinutes, endMinutes, startHour, endHour) {
-    if (typeof startMinutes === 'number' && typeof endMinutes === 'number') {
-        return {
-            start: startMinutes / 60,  // 分を時間に変換
-            end: endMinutes / 60
-        };
-    }
-
-    // デフォルト: 業務時間全体
-    return {
-        start: startHour,
-        end: endHour
-    };
-}
-
-/**
- * スロットの時間範囲を解析（旧形式・互換性用）
- */
-function parseSlotTimeRange(slot, startHour, endHour) {
-    if (slot.start !== undefined && slot.end !== undefined) {
-        return parseSlotTimeRangeFromStrings(slot.start, slot.end, startHour, endHour);
-    }
-    return {
-        start: startHour,
-        end: endHour
-    };
-}
+import {
+    createTimeToXConverter,
+    calculateLunchDuration
+} from '../utils/time-conversion-utils.js';
+import {
+    parseSlotFlags,
+    getValidSlotIndices,
+    parseSlotTimeRangeFromMinutes
+} from '../utils/slot-validation-utils.js';
+import {
+    getDateGrayOutStatus,
+    getDateTextColor
+} from '../utils/slot-rendering-utils.js';
 
 /**
  * 日詳細ポップアップを描画（Canvas API版）
@@ -83,7 +60,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
 
     // 営業時間情報を取得
     const businessHours = state.options?.businessHours;
-    
+
     let lunchStartHour = null;
     let lunchEndHour = null;
     if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
@@ -94,6 +71,8 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         lunchStartHour = parseTime(businessHours.lunchStartTime);
         lunchEndHour = parseTime(businessHours.lunchEndTime);
     }
+
+    // Note: parseTime inline function is still needed here because it's not exposed in utilities
 
     // グレーアウト判定
     let isDateGrayed = false;
@@ -108,38 +87,27 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const totalHours = endHour - startHour;
 
     // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
-    // フラグのビット割り当て:
-    // ビット0 (0b0001): IsGrayedOut
-    // ビット1 (0b0010): IsOutsideHoursBefore（朝）
-    // ビット2 (0b0100): IsOutsideHoursAfter（夕方）
-    // ビット3 (0b1000): IsOutsideHoursLunch（昼休み）
-    const validSlotIndices = [];
+    const validSlotIndices = getValidSlotIndices(slotCaps, slotCounts);
+
+    // 時間外予約フラグを検出
     let hasOutsideHoursBefore = false;
     let hasOutsideHoursAfter = false;
     let hasOutsideHoursLunch = false;
 
     for (let i = 0; i < slotCount; i++) {
-        // ビジネスアワー外のスロットをフラグから判定
+        if (validSlotIndices.includes(i)) continue;
+
+        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+        if (count <= 0) continue;
+
+        // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
         const flagsBefore = slotFlags && (slotFlags[i] & 0b0010) !== 0;
         const flagsAfter = slotFlags && (slotFlags[i] & 0b0100) !== 0;
         const flagsLunch = slotFlags && (slotFlags[i] & 0b1000) !== 0;
-        const isOutsideHours = flagsBefore || flagsAfter || flagsLunch;
 
-        if (isOutsideHours) {
-            // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
-            const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
-            if (count > 0) {
-                if (flagsBefore) hasOutsideHoursBefore = true;
-                if (flagsAfter) hasOutsideHoursAfter = true;
-                if (flagsLunch) hasOutsideHoursLunch = true;
-            }
-            continue;
-        }
-
-        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
-        if (cap <= 0) continue;
-
-        validSlotIndices.push(i);
+        if (flagsBefore) hasOutsideHoursBefore = true;
+        if (flagsAfter) hasOutsideHoursAfter = true;
+        if (flagsLunch) hasOutsideHoursLunch = true;
     }
 
     // ビジネスアワー内のスロット数に更新
@@ -213,13 +181,13 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     for (const i of validSlotIndices) {
         const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
         maxValue = Math.max(maxValue, cap);
-        
+
         const slotStartStr = slotStarts[i];
         const slotEndStr = slotEnds[i];
-        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
+        const timeRange = parseSlotTimeRangeFromMinutes(slotStartStr, slotEndStr, startHour, endHour);
         const slotStart = Math.max(startHour, Math.min(endHour, timeRange.start));
         const slotEnd = Math.min(endHour, Math.max(startHour, timeRange.end));
-        
+
         actualStartHour = Math.min(actualStartHour, slotStart);
         actualEndHour = Math.max(actualEndHour, slotEnd);
     }
@@ -300,32 +268,14 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const effectiveTotalHours = actualTotalHours - lunchDuration;
 
     // 時刻をX座標に変換する関数（実際の範囲に合わせて調整）
-    const timeToX = (timeInHours) => {
-        // 実際の範囲内にクリップ
-        const clippedTime = Math.max(actualStartHour, Math.min(actualEndHour, timeInHours));
-        
-        let relativePosition;
-        if (actualLunchStartHour !== null && actualLunchEndHour !== null && effectiveTotalHours > 0) {
-            const morningHours = actualLunchStartHour - actualStartHour;
-            const afternoonHours = actualEndHour - actualLunchEndHour;
-
-            if (clippedTime < actualLunchStartHour) {
-                const morningRatio = morningHours > 0 ? (clippedTime - actualStartHour) / morningHours : 0;
-                relativePosition = morningRatio * (morningHours / effectiveTotalHours);
-            } else if (clippedTime >= actualLunchEndHour) {
-                const afternoonRatio = afternoonHours > 0 ? (clippedTime - actualLunchEndHour) / afternoonHours : 0;
-                const morningWidth = morningHours / effectiveTotalHours;
-                relativePosition = morningWidth + afternoonRatio * (afternoonHours / effectiveTotalHours);
-            } else {
-                relativePosition = morningHours / effectiveTotalHours;
-            }
-        } else {
-            relativePosition = actualTotalHours > 0 
-                ? (clippedTime - actualStartHour) / actualTotalHours 
-                : 0;
-        }
-        return yAxisWidth + relativePosition * graphWidth;
-    };
+    const timeToX = createTimeToXConverter(
+        actualStartHour,
+        actualEndHour,
+        actualLunchStartHour,
+        actualLunchEndHour,
+        yAxisWidth,
+        graphWidth
+    );
 
     // スロットを描画（並列配列対応、ビジネスアワー内のスロットのみ）
     for (const i of validSlotIndices) {
@@ -338,7 +288,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
 
         const slotStartStr = slotStarts[i];
         const slotEndStr = slotEnds[i];
-        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
+        const timeRange = parseSlotTimeRangeFromMinutes(slotStartStr, slotEndStr, startHour, endHour);
         // 実際の範囲内にクリップ（timeToX関数内でもクリップされるが、ここでも明示的にクリップ）
         const slotStart = Math.max(actualStartHour, Math.min(actualEndHour, timeRange.start));
         const slotEnd = Math.min(actualEndHour, Math.max(actualStartHour, timeRange.end));

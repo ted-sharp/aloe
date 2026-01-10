@@ -327,7 +327,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             query = query.Where(s => resourceIds.Contains(s.ApptResId));
         }
 
-        var slots = await query.OrderBy(s => s.ApptDate).ThenBy(s => s.ApptResId).ThenBy(s => s.SlotStart).ToListAsync();
+        var slots = await query.OrderBy(s => s.ApptDate).ThenBy(s => s.ApptResId).ThenBy(s => s.SlotStartMin).ToListAsync();
 
         // Group by (ApptDate, ApptResId) for easy lookup
         var result = new Dictionary<(DateOnly, Guid), List<AppointmentStatSlots>>();
