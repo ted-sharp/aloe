@@ -94,20 +94,22 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     let hasOutsideHoursAfter = false;
     let hasOutsideHoursLunch = false;
 
-    for (let i = 0; i < slotCount; i++) {
-        if (validSlotIndices.includes(i)) continue;
+    for (const i of validSlotIndices) {
+        // ビジネスアワー外のスロットをフラグから判定
+        const flagsBefore = slotFlags ? (slotFlags[i] & 0b0010) !== 0 : false;
+        const flagsAfter = slotFlags ? (slotFlags[i] & 0b0100) !== 0 : false;
+        const flagsLunch = slotFlags ? (slotFlags[i] & 0b1000) !== 0 : false;
+        const isOutsideHours = flagsBefore || flagsAfter || flagsLunch;
 
-        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
-        if (count <= 0) continue;
-
-        // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
-        const flagsBefore = slotFlags && (slotFlags[i] & 0b0010) !== 0;
-        const flagsAfter = slotFlags && (slotFlags[i] & 0b0100) !== 0;
-        const flagsLunch = slotFlags && (slotFlags[i] & 0b1000) !== 0;
-
-        if (flagsBefore) hasOutsideHoursBefore = true;
-        if (flagsAfter) hasOutsideHoursAfter = true;
-        if (flagsLunch) hasOutsideHoursLunch = true;
+        if (isOutsideHours) {
+            // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
+            const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+            if (count > 0) {
+                if (flagsBefore) hasOutsideHoursBefore = true;
+                if (flagsAfter) hasOutsideHoursAfter = true;
+                if (flagsLunch) hasOutsideHoursLunch = true;
+            }
+        }
     }
 
     // ビジネスアワー内のスロット数に更新

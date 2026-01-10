@@ -105,7 +105,7 @@ public static class TimeConstants
     public static int TimeStringToMinutes(string timeString)
     {
         var parts = timeString.Split(':');
-        if (parts.Length != 2 || !int.TryParse(parts[0], out var hours) || !int.TryParse(parts[1], out var minutes))
+        if (parts.Length != 2 || !Int32.TryParse(parts[0], out var hours) || !Int32.TryParse(parts[1], out var minutes))
         {
             throw new FormatException($"Invalid time format: {timeString}. Expected 'HH:mm' or 'H:mm'.");
         }
@@ -121,7 +121,7 @@ public static class TimeConstants
     /// <returns>真夜中からの経過分数、変換できない場合はnull</returns>
     public static int? TryTimeStringToMinutes(string? timeString)
     {
-        if (string.IsNullOrEmpty(timeString)) return null;
+        if (String.IsNullOrEmpty(timeString)) return null;
         try
         {
             return TimeStringToMinutes(timeString);

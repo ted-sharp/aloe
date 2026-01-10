@@ -162,13 +162,13 @@ public partial class Calendar : ComponentBase
     {
         var sw = Stopwatch.StartNew();
         this.Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
-        
+
         // CurrentDateが初期値の場合は今日の日付を設定
         if (this.State.CurrentDate == default)
         {
             this.State.CurrentDate = this.DateTimeProvider.TodayDateOnly;
         }
-        
+
         this.State.IsLoading = true;
         this.StateHasChanged();
         try

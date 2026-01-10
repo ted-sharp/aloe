@@ -77,14 +77,14 @@ public class CalendarFilterService
     private static bool TryParseTimeStringToMinutes(string timeString, out int minutes)
     {
         minutes = 0;
-        if (string.IsNullOrWhiteSpace(timeString))
+        if (String.IsNullOrWhiteSpace(timeString))
             return false;
 
         var parts = timeString.Split(':');
         if (parts.Length != 2)
             return false;
 
-        if (!int.TryParse(parts[0], out var hours) || !int.TryParse(parts[1], out var mins))
+        if (!Int32.TryParse(parts[0], out var hours) || !Int32.TryParse(parts[1], out var mins))
             return false;
 
         if (hours < 0 || hours >= 24 || mins < 0 || mins >= 60)

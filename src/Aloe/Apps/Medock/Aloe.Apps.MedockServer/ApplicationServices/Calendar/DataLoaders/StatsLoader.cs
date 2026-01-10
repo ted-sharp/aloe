@@ -36,7 +36,7 @@ public class StatsLoader : IStatsLoader
         DateOnly currentDate,
         int weekDays = 7)
     {
-            var sw = Stopwatch.StartNew();
+        var sw = Stopwatch.StartNew();
         try
         {
             var (startDate, endDate) = CalendarDateRangeHelper.GetDateRange(viewType, currentDate, weekDays);

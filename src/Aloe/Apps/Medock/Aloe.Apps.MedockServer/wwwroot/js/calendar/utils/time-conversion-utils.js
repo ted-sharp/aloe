@@ -85,8 +85,9 @@ export function createTimeToXConverter(startHour, endHour, lunchStartHour, lunch
                 const relativePosition = (timeInHours - lunchEndHour) / afternoonHours;
                 return businessStartX + afternoonOffset + (relativePosition * barAreaWidth * afternoonRatio);
             } else {
-                // 昼休み時間内
-                return null; // 昼休み時間はバーを描画しない
+                // 昼休み時間内 → 午前の終わり位置を返す（スロット端点計算用）
+                // バー描画は別途フィルタリングされるため、正確な座標が必要
+                return businessStartX + (barAreaWidth * morningRatio);
             }
         } else {
             // 昼休み時間が定義されていない場合

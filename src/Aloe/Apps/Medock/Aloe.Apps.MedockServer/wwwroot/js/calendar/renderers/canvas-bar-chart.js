@@ -316,14 +316,20 @@ export function renderCanvasBarChart(contentCtx, params) {
         opacity: 0.8
     });
 
-    // 昼休みライン
-    if (lunchStartHour !== null && lunchEndHour !== null) {
-        const lunchStartX = timeToX(lunchStartHour);
+    // 昼休みライン（昼休みは幅0として開始と終了が同じ位置に重なる）
+    if (lunchStartHour !== null && lunchEndHour !== null && effectiveTotalHours > 0) {
+        const morningHours = lunchStartHour - startHour;
+        const afternoonHours = endHour - lunchEndHour;
+        const morningRatio = morningHours / effectiveTotalHours;
+
+        // 昼休み開始時刻の X 座標を計算（午前の終わり = 午後の開始）
+        const lunchLineX = businessStartX + (barAreaWidth * morningRatio);
+
         const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : '#d1d5db';
         const lunchLineWidth = hasOutsideHoursLunch ? CONFIG.stroke.alert : CONFIG.stroke.normal;
 
         drawLine(contentCtx, {
-            points: [lunchStartX, barAreaTop, lunchStartX, barAreaTop + barAreaHeight],
+            points: [lunchLineX, barAreaTop, lunchLineX, barAreaTop + barAreaHeight],
             stroke: lunchLineColor,
             strokeWidth: lunchLineWidth,
             opacity: 0.8

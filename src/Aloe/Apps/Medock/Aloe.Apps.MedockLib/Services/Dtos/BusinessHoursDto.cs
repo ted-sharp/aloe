@@ -102,10 +102,11 @@ public class BusinessHoursDto
         {
             isOutsideHoursAfter = true;
         }
-        // 昼休み時間帯にある場合
+        // 昼休み時間帯にある場合（営業時間内のみ）
         else if (this.LunchStartMin > 0 && this.LunchEndMin > 0)
         {
-            if (slotStartMinutes >= this.LunchStartMin && slotEndMinutes <= this.LunchEndMin)
+            // スロットが完全に昼休み時間に含まれる場合（営業終了時刻より前の時間帯）
+            if (slotStartMinutes >= this.LunchStartMin && slotEndMinutes <= this.LunchEndMin && slotEndMinutes <= this.WorkEndMin)
             {
                 isOutsideHoursLunch = true;
             }
