@@ -39,6 +39,12 @@ public partial class AppointmentModal : ComponentBase
     private ILogger<AppointmentModal> Logger { get; set; } = default!;
 
     /// <summary>
+    /// 日時プロバイダー
+    /// </summary>
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
+    /// <summary>
     /// モーダルの開閉状態
     /// </summary>
     [Parameter]
@@ -117,7 +123,7 @@ public partial class AppointmentModal : ComponentBase
             // 新規作成モード
             this.FormModel = new AppointmentFormModel
             {
-                Date = this.SelectedDate ?? DateOnly.FromDateTime(DateTime.Today),
+                Date = this.SelectedDate ?? this.DateTimeProvider.TodayDateOnly,
                 StartTimeString = this.SelectedStartMin.HasValue
                     ? TimeOnly.FromTimeSpan(TimeSpan.FromMinutes(this.SelectedStartMin.Value)).ToString("HH:mm")
                     : BusinessHoursConstants.DefaultAppointmentStartTime,
@@ -455,17 +461,18 @@ public partial class AppointmentModal : ComponentBase
         }
 
         // 患者が見つからない場合または名前が空の場合は新規作成
+        var now = this.DateTimeProvider.UtcNow;
         var newPatient = new Patient
         {
             PtId = Guid.CreateVersion7(),
             FacilityId = facilityId,
             CanonicalPtId = Guid.CreateVersion7(),
-            PtCode = $"PT{DateTimeOffset.UtcNow.ToUnixTimeSeconds()}",
+            PtCode = $"PT{new DateTimeOffset(now).ToUnixTimeSeconds()}",
             PtName = patientName ?? String.Empty,
             PtNameCompat = patientName ?? String.Empty,
             PrimaryOrgId = await this.GetDefaultOrganizationAsync(context, facilityId),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = now,
+            UpdatedAt = now
         };
 
         context.Patients.Add(newPatient);
@@ -572,7 +579,7 @@ public partial class AppointmentModal : ComponentBase
     /// </summary>
     public class AppointmentFormModel
     {
-        public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+        public DateOnly Date { get; set; }
         public string StartTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentStartTime;
         public string EndTimeString { get; set; } = BusinessHoursConstants.DefaultAppointmentEndTime;
         public int Status { get; set; } = 0;

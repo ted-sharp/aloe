@@ -7,6 +7,9 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class WeekView : ComponentBase
 {
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
     [Parameter]
     public DateOnly CurrentDate { get; set; }
 

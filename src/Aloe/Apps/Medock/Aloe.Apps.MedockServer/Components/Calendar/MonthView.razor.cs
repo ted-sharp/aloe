@@ -7,11 +7,14 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class MonthView : ComponentBase
 {
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
     /// <summary>
     /// 表示する月の基準日
     /// </summary>
     [Parameter]
-    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly CurrentDate { get; set; }
 
     /// <summary>
     /// Mainリソース統計データ
@@ -171,6 +174,15 @@ public partial class MonthView : ComponentBase
     private async Task HandleDateSelectedSingle(DateOnly date)
     {
         await this.OnDateSelectedSingle.InvokeAsync(date);
+    }
+
+    protected override void OnInitialized()
+    {
+        if (this.CurrentDate == default)
+        {
+            this.CurrentDate = this.DateTimeProvider.TodayDateOnly;
+        }
+        base.OnInitialized();
     }
 }
 

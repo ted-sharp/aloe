@@ -6,7 +6,7 @@
         <div class="p-2 border-b border-r border-base-300"></div>
         @{
             var startOfWeek = CurrentDate.AddDays(-(int)CurrentDate.DayOfWeek);
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = DateTimeProvider.TodayDateOnly;
         }
         @for (int i = 0; i < 7; i++)
         {

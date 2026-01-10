@@ -13,7 +13,7 @@ namespace Aloe.Apps.MedockServer.Components.Pages;
 public class CalendarState
 {
     // ビュー状態
-    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly CurrentDate { get; set; }
     public CalendarViewType CurrentView { get; set; } = CalendarViewType.Month;
     public CalendarViewType PreviousView { get; set; } = CalendarViewType.Month;
     public int WeekDays { get; set; } = 7;
@@ -164,9 +164,9 @@ public class CalendarState
     /// <summary>
     /// 今日へ移動
     /// </summary>
-    public void GoToToday()
+    public void GoToToday(DateOnly today)
     {
-        this.CurrentDate = DateOnly.FromDateTime(DateTime.Today);
+        this.CurrentDate = today;
     }
 
     /// <summary>

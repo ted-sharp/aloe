@@ -7,6 +7,9 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class DayView : ComponentBase
 {
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
     [Parameter]
     public DateOnly CurrentDate { get; set; }
 

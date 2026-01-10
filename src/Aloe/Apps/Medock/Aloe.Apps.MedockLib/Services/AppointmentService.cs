@@ -67,7 +67,7 @@ public class AppointmentService : IAppointmentService
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             return Result<List<AppointmentDto>>.Failure(
                 $"Failed to retrieve appointments for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
@@ -75,7 +75,7 @@ public class AppointmentService : IAppointmentService
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             return Result<List<AppointmentDto>>.Failure(
                 "An unexpected error occurred while retrieving appointments",
@@ -91,7 +91,7 @@ public class AppointmentService : IAppointmentService
             var appointment = await this._appointmentRepository.GetByIdAsync(apptId);
             if (appointment is null)
             {
-                var (tenantId, facilityId, userId) = this.GetContext();
+                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                 LogMessages.AppointmentNotFound(this._logger, apptId, tenantId, facilityId, userId);
                 return Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
@@ -127,13 +127,13 @@ public class AppointmentService : IAppointmentService
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentRetrievalError(this._logger, apptId, tenantId, facilityId, userId, ex.InnerException ?? ex);
             return Result<AppointmentDto>.Failure($"Failed to retrieve appointment {apptId}", "APPT_RETRIEVAL_ERROR");
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentRetrievalError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("An unexpected error occurred", "APPT_RETRIEVAL_ERROR");
         }
@@ -182,7 +182,7 @@ public class AppointmentService : IAppointmentService
             var result = await this.GetAppointmentAsync(appointment.ApptId);
             if (!result.IsSuccess)
             {
-                var (tenantId, facilityId, userId) = this.GetContext();
+                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                 LogMessages.AppointmentCreateFailed(this._logger, dto.PatientId, dto.Date, tenantId, facilityId, userId, new Exception(result.ErrorMessage));
                 return Result<AppointmentDto>.Failure("Failed to create appointment", "APPT_CREATE_ERROR");
             }
@@ -190,13 +190,13 @@ public class AppointmentService : IAppointmentService
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentCreateFailed(this._logger, dto.PatientId, dto.Date, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure($"Database error while creating appointment", "APPT_CREATE_ERROR");
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentCreateFailed(this._logger, dto.PatientId, dto.Date, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("An unexpected error occurred while creating appointment", "APPT_CREATE_ERROR");
         }
@@ -210,7 +210,7 @@ public class AppointmentService : IAppointmentService
             var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
             if (appointment == null || appointment.IsDeleted)
             {
-                var (tenantId, facilityId, userId) = this.GetContext();
+                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                 LogMessages.AppointmentNotFound(this._logger, apptId, tenantId, facilityId, userId);
                 return Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
@@ -224,7 +224,7 @@ public class AppointmentService : IAppointmentService
 
                 if (actualSeconds != expectedSeconds)
                 {
-                    var (tenantId, facilityId, userId) = this.GetContext();
+                    var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                     this._logger.LogWarning(
                         "Concurrency conflict detected for appointment {ApptId}. Expected UpdatedAt: {Expected}, Actual: {Actual}",
                         apptId, expectedSeconds, actualSeconds);
@@ -277,7 +277,7 @@ public class AppointmentService : IAppointmentService
         }
         catch (ConcurrencyException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentConcurrencyError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure(
                 $"Appointment {apptId} was modified by another user. Please refresh and try again.",
@@ -285,13 +285,13 @@ public class AppointmentService : IAppointmentService
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentUpdateError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("Database error while updating appointment", "APPT_UPDATE_ERROR");
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentUpdateError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result<AppointmentDto>.Failure("An unexpected error occurred while updating appointment", "APPT_UPDATE_ERROR");
         }
@@ -305,7 +305,7 @@ public class AppointmentService : IAppointmentService
             var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
             if (appointment == null || appointment.IsDeleted)
             {
-                var (tenantId, facilityId, userId) = this.GetContext();
+                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
                 LogMessages.AppointmentNotFound(this._logger, apptId, tenantId, facilityId, userId);
                 return Result.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
@@ -315,19 +315,19 @@ public class AppointmentService : IAppointmentService
         }
         catch (NotFoundException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentNotFound(this._logger, apptId, tenantId, facilityId, userId);
             return Result.Failure(ex.Message, "APPT_NOT_FOUND");
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result.Failure("Database error while deleting appointment", "APPT_DELETE_ERROR");
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentDeleteError(this._logger, apptId, tenantId, facilityId, userId, ex);
             return Result.Failure("An unexpected error occurred while deleting appointment", "APPT_DELETE_ERROR");
         }
@@ -348,13 +348,13 @@ public class AppointmentService : IAppointmentService
         }
         catch (DatabaseException ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             return Result<List<HolidayDto>>.Failure("Failed to retrieve holidays", "HOLIDAY_RETRIEVAL_ERROR");
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this.GetContext();
+            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
             LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
             return Result<List<HolidayDto>>.Failure("An unexpected error occurred while retrieving holidays", "HOLIDAY_RETRIEVAL_ERROR");
         }
@@ -436,12 +436,5 @@ public class AppointmentService : IAppointmentService
         };
     }
 
-    /// <summary>
-    /// ユーザーコンテキスト情報を取得します。
-    /// </summary>
-    private (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetContext()
-    {
-        return this._userContextService.GetTenantContext();
-    }
 }
 

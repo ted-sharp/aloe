@@ -16,6 +16,9 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     [Inject]
     private ICalendarDataService CalendarDataService { get; set; } = default!;
 
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
     /// <summary>
     /// Current view type: "year", "month", "week"
     /// </summary>
@@ -26,7 +29,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
     /// Current date (center of the view)
     /// </summary>
     [Parameter]
-    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly CurrentDate { get; set; }
 
     /// <summary>
     /// Appointment data for the calendar
@@ -208,6 +211,15 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
                 this._lastShowSimpleView = this.ShowSimpleView;
             }
         }
+    }
+
+    protected override void OnInitialized()
+    {
+        if (this.CurrentDate == default)
+        {
+            this.CurrentDate = this.DateTimeProvider.TodayDateOnly;
+        }
+        base.OnInitialized();
     }
 
     protected override async Task OnParametersSetAsync()

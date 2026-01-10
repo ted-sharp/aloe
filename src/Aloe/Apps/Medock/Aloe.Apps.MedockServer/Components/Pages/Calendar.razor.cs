@@ -49,6 +49,9 @@ public partial class Calendar : ComponentBase
     private ILogger<Calendar> Logger { get; set; } = default!;
 
     [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
+    [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
     // ドロワー状態（Layoutと連携）
@@ -159,6 +162,13 @@ public partial class Calendar : ComponentBase
     {
         var sw = Stopwatch.StartNew();
         this.Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
+        
+        // CurrentDateが初期値の場合は今日の日付を設定
+        if (this.State.CurrentDate == default)
+        {
+            this.State.CurrentDate = this.DateTimeProvider.TodayDateOnly;
+        }
+        
         this.State.IsLoading = true;
         this.StateHasChanged();
         try
@@ -439,7 +449,7 @@ public partial class Calendar : ComponentBase
 
     private async Task GoToToday()
     {
-        this.State.GoToToday();
+        this.State.GoToToday(this.DateTimeProvider.TodayDateOnly);
         await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
     }

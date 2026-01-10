@@ -93,7 +93,8 @@ public class MedockDbContext : DbContext
 
     private void UpdateAuditFields()
     {
-        var now = this._dateTimeProvider?.Now ?? DateTime.Now;
+        // IDateTimeProviderが利用可能な場合は優先的に使用、フォールバックは現在の時刻
+        var now = this._dateTimeProvider?.Now ?? DateTime.UtcNow;
 
         // SaveChanges時にIUserContextServiceを取得（遅延評価）
         // Blazor Serverでは、ScopedサービスのライフタイムがSignalR接続に一致するため、

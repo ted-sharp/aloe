@@ -6,7 +6,7 @@
         @{
             var dayNames = new[] { "日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日" };
             var dayOfWeek = (int)CurrentDate.DayOfWeek;
-            var isToday = CurrentDate == DateOnly.FromDateTime(DateTime.Today);
+            var isToday = CurrentDate == DateTimeProvider.TodayDateOnly;
         }
         <div class="text-center">
             <span class="text-2xl font-bold @(dayOfWeek == 0 ? "text-error" : dayOfWeek == 6 ? "text-info" : "")">

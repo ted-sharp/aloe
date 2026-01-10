@@ -149,7 +149,7 @@
                     
                     <div class="join">
                         @{
-                            var today = DateOnly.FromDateTime(DateTime.Today);
+                            var today = DateTimeProvider.TodayDateOnly;
                             var years = new[] { today.Year - 1, today.Year, today.Year + 1 };
                             foreach (var year in years)
                             {
@@ -178,7 +178,7 @@
                     
                     <div class="join">
                         @{
-                            var todayMonth = DateOnly.FromDateTime(DateTime.Today);
+                            var todayMonth = DateTimeProvider.TodayDateOnly;
                             var currentMonth = new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
                             for (int i = -1; i <= 6; i++)
                             {

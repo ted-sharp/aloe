@@ -16,15 +16,18 @@ public class MetadataLoader : IMetadataLoader
 {
     private readonly IAppointmentService _appointmentService;
     private readonly IDbContextFactory<MedockDbContext> _contextFactory;
+    private readonly IDateTimeProvider _dateTimeProvider;
     private readonly ILogger<MetadataLoader> _logger;
 
     public MetadataLoader(
         IAppointmentService appointmentService,
         IDbContextFactory<MedockDbContext> contextFactory,
+        IDateTimeProvider dateTimeProvider,
         ILogger<MetadataLoader> logger)
     {
         this._appointmentService = appointmentService;
         this._contextFactory = contextFactory;
+        this._dateTimeProvider = dateTimeProvider;
         this._logger = logger;
     }
 
@@ -110,7 +113,7 @@ public class MetadataLoader : IMetadataLoader
             state.AvailableResources = resources;
 
             // プランをロード（有効なもののみ、PlanTypeCode=1（Plan）とPlanTypeCode=2（Option）の両方）
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = this._dateTimeProvider.TodayDateOnly;
             var plans = await context.Plans
                 .AsNoTracking()
                 .Where(p => p.FacilityId == facilityId &&

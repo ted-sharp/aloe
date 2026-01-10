@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Components;
+using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 
@@ -6,6 +7,9 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class WeekScheduler : ComponentBase
 {
+    [Inject]
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+
     /// <summary>
     /// 日数オプション
     /// </summary>
@@ -15,7 +19,7 @@ public partial class WeekScheduler : ComponentBase
     /// 表示する週の基準日
     /// </summary>
     [Parameter]
-    public DateOnly CurrentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+    public DateOnly CurrentDate { get; set; }
 
     /// <summary>
     /// 表示日数（デフォルト7日）
@@ -182,5 +186,14 @@ public partial class WeekScheduler : ComponentBase
     private async Task HandleDateSelectedSingle(DateOnly date)
     {
         await this.OnDateSelectedSingle.InvokeAsync(date);
+    }
+
+    protected override void OnInitialized()
+    {
+        if (this.CurrentDate == default)
+        {
+            this.CurrentDate = this.DateTimeProvider.TodayDateOnly;
+        }
+        base.OnInitialized();
     }
 }
