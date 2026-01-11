@@ -35,9 +35,14 @@ public static class BusinessHoursConstants
     public const int DefaultAppointmentStartMin = TimeConstants.WorkStartMin;
 
     /// <summary>
-    /// デフォルトの予約終了時間（10:00 = 600分）
+    /// デフォルトの予約時間（分）
     /// </summary>
-    public const int DefaultAppointmentEndMin = 600;
+    public const int DefaultAppointmentDurationMin = 60;
+
+    /// <summary>
+    /// デフォルトの予約終了時間（10:00 = DefaultAppointmentStartMin + DefaultAppointmentDurationMin）
+    /// </summary>
+    public const int DefaultAppointmentEndMin = DefaultAppointmentStartMin + DefaultAppointmentDurationMin;
 
     /// <summary>
     /// デフォルトの始業時間（"09:00"）を取得

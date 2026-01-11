@@ -68,40 +68,4 @@ public class FacilityBusinessHours : IAuditableEntity
 
     // Navigation Properties
     public virtual Facility Facility { get; set; } = null!;
-
-    /// <summary>
-    /// 分数から "HH:mm" 形式の文字列に変換
-    /// </summary>
-    public static string MinutesToTimeString(int minutes)
-    {
-        var hours = minutes / 60;
-        var mins = minutes % 60;
-        return $"{hours:D2}:{mins:D2}";
-    }
-
-    /// <summary>
-    /// "HH:mm" 形式の文字列から分数に変換
-    /// </summary>
-    public static int TimeStringToMinutes(string timeString)
-    {
-        var parts = timeString.Split(':');
-        if (parts.Length != 2) return 0;
-        if (!Int32.TryParse(parts[0], out var hours)) return 0;
-        if (!Int32.TryParse(parts[1], out var mins)) return 0;
-        return hours * 60 + mins;
-    }
-
-    /// <summary>
-    /// "HH:mm" 形式の文字列から分数に変換（null許可版）
-    /// 変換できない場合はnullを返します
-    /// </summary>
-    public static int? TryTimeStringToMinutes(string? timeString)
-    {
-        if (String.IsNullOrEmpty(timeString)) return null;
-        var parts = timeString.Split(':');
-        if (parts.Length != 2) return null;
-        if (!Int32.TryParse(parts[0], out var hours)) return null;
-        if (!Int32.TryParse(parts[1], out var mins)) return null;
-        return hours * 60 + mins;
-    }
 }

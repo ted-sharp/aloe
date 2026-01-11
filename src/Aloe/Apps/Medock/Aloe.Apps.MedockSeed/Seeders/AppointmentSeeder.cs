@@ -593,7 +593,7 @@ internal static class AppointmentSeeder
             var organization = organizations[_random.Next(organizations.Count)];
             var earlyMorningTimes = SeederHelper.TimeSlots.EarlyMorningSlots;
             var timeStr = earlyMorningTimes[_random.Next(earlyMorningTimes.Length)];
-            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+            var parsedMin = TimeConstants.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;
@@ -634,7 +634,7 @@ internal static class AppointmentSeeder
             var organization = organizations[_random.Next(organizations.Count)];
             var lunchTimes = SeederHelper.TimeSlots.LunchSlots;
             var timeStr = lunchTimes[_random.Next(lunchTimes.Length)];
-            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+            var parsedMin = TimeConstants.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;
@@ -677,7 +677,7 @@ internal static class AppointmentSeeder
             // 17:00-17:45の範囲で生成（15分単位）
             var eveningTimeStrs = new[] { "17:00", "17:15", "17:30", "17:45" };
             var timeStr = eveningTimeStrs[_random.Next(eveningTimeStrs.Length)];
-            var parsedMin = FacilityBusinessHours.TryTimeStringToMinutes(timeStr);
+            var parsedMin = TimeConstants.TryTimeStringToMinutes(timeStr);
             if (parsedMin.HasValue)
             {
                 var startMin = parsedMin.Value;

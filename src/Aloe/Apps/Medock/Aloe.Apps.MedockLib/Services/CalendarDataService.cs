@@ -42,9 +42,10 @@ public class CalendarDataService : ICalendarDataService
             filterHours = new HashSet<int>();
             foreach (var timeSlot in filterTimeSlots)
             {
-                var parts = timeSlot.Split(':');
-                if (parts.Length >= 1 && int.TryParse(parts[0], out var hour))
+                var minutes = TimeConstants.TryTimeStringToMinutes(timeSlot);
+                if (minutes.HasValue)
                 {
+                    var hour = minutes.Value / 60;
                     filterHours.Add(hour);
                 }
             }

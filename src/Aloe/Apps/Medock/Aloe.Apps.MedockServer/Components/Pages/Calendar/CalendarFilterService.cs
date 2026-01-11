@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockServer.Components.FAB;
@@ -61,39 +62,6 @@ public class CalendarFilterService
         return filter.SelectedDays.Any() && !filter.SelectedDays.Contains(dayOfWeek);
     }
 
-    /// <summary>
-    /// 分から"HH:mm"形式の文字列を生成します（表示用）
-    /// </summary>
-    private static string FormatMinutesToTimeString(int minutes)
-    {
-        var hours = minutes / 60;
-        var mins = minutes % 60;
-        return $"{hours:D2}:{mins:D2}";
-    }
-
-    /// <summary>
-    /// "HH:mm"形式の文字列から分に変換します
-    /// </summary>
-    private static bool TryParseTimeStringToMinutes(string timeString, out int minutes)
-    {
-        minutes = 0;
-        if (String.IsNullOrWhiteSpace(timeString))
-            return false;
-
-        var parts = timeString.Split(':');
-        if (parts.Length != 2)
-            return false;
-
-        if (!Int32.TryParse(parts[0], out var hours) || !Int32.TryParse(parts[1], out var mins))
-            return false;
-
-        if (hours < 0 || hours >= 24 || mins < 0 || mins >= 60)
-            return false;
-
-        minutes = hours * 60 + mins;
-        return true;
-    }
-
     private bool ProcessSlots(
         List<AppointmentStats> statsList,
         SearchFilterPanel.SearchFilter filter,
@@ -124,7 +92,7 @@ public class CalendarFilterService
             {
                 var slotStartMinutes = statSlot.SlotStartMin;
                 var slotEndMinutes = statSlot.SlotEndMin;
-                var timeRangeKey = $"{FormatMinutesToTimeString(slotStartMinutes)}-{FormatMinutesToTimeString(slotEndMinutes)}";
+                var timeRangeKey = $"{TimeConstants.MinutesToTimeString(slotStartMinutes)}-{TimeConstants.MinutesToTimeString(slotEndMinutes)}";
 
                 if (slotMap.ContainsKey(timeRangeKey))
                 {
@@ -160,9 +128,10 @@ public class CalendarFilterService
 
                     // selectedTimeSlotが時刻形式（"HH:mm"）の場合、1時間範囲として比較
                     // 例: "09:00"が選択されている場合、スロットの開始時刻が9時台（9:00〜9:59）ならマッチ
-                    if (TryParseTimeStringToMinutes(selectedTimeSlot, out var selectedMinutes))
+                    var selectedMinutes = TimeConstants.TryTimeStringToMinutes(selectedTimeSlot);
+                    if (selectedMinutes.HasValue)
                     {
-                        var selectedHour = selectedMinutes / 60;
+                        var selectedHour = selectedMinutes.Value / 60;
                         var slotStartHour = startMinutes / 60;
                         if (slotStartHour == selectedHour)
                         {
