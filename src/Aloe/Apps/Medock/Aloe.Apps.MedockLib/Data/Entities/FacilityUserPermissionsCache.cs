@@ -7,6 +7,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// 施設ユーザー権限キャッシュエンティティ
 /// 存在すれば使用、なければ作成
 /// </summary>
+/// <remarks>
+/// FUTURE FEATURE: Role-Based Access Control (RBAC) 実装用に予約されています。
+/// 現在はアクティブに使用されていません。実装計画については CLAUDE.md を参照してください。
+/// </remarks>
 [Table("facility_user_permissions_cache")]
 public class FacilityUserPermissionsCache
 {

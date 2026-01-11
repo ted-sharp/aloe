@@ -5,6 +5,10 @@ namespace Aloe.Apps.MedockLib.Services.Auth;
 /// <summary>
 /// 認証・認可に関するヘルパークラス
 /// </summary>
+/// <remarks>
+/// FUTURE FEATURE: Role-Based Access Control (RBAC) 実装用に予約されています。
+/// 現在はアクティブに使用されていません。実装計画については CLAUDE.md を参照してください。
+/// </remarks>
 public static class AuthorizationHelper
 {
     /// <summary>

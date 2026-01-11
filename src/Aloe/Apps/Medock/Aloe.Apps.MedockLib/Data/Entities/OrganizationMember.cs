@@ -6,6 +6,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// 団体メンバーエンティティ
 /// </summary>
+/// <remarks>
+/// FUTURE FEATURE: Role-Based Access Control (RBAC) 実装用に予約されています。
+/// 現在はアクティブに使用されていません。実装計画については CLAUDE.md を参照してください。
+/// </remarks>
 [Table("organization_members")]
 public class OrganizationMember : IAuditableEntity
 {

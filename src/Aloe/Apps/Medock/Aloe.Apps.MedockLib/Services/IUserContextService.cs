@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Aloe.Apps.MedockLib.Common;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -53,5 +54,11 @@ public interface IUserContextService
     /// </summary>
     /// <returns>(TenantId, FacilityId, UserId) のタプル</returns>
     (Guid? TenantId, Guid? FacilityId, Guid? UserId) GetTenantContext();
+
+    /// <summary>
+    /// 現在のユーザーのテナント、施設、ユーザーID を値オブジェクトで取得します。
+    /// </summary>
+    /// <returns>TenantContext 値オブジェクト</returns>
+    TenantContext GetTenantContextValue();
 }
 

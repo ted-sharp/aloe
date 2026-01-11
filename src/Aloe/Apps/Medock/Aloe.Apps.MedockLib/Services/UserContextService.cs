@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Aloe.Apps.MedockLib.Common;
 using Microsoft.Extensions.Logging;
 
 namespace Aloe.Apps.MedockLib.Services;
@@ -179,6 +180,17 @@ public class UserContextService : IUserContextService
         }
 
         return (this.CurrentUser.TenantId, this.CurrentUser.FacilityId, this.CurrentUser.UserId);
+    }
+
+    /// <inheritdoc />
+    public TenantContext GetTenantContextValue()
+    {
+        if (this.CurrentUser == null)
+        {
+            return new TenantContext(null, null, null);
+        }
+
+        return new TenantContext(this.CurrentUser.TenantId, this.CurrentUser.FacilityId, this.CurrentUser.UserId);
     }
 }
 

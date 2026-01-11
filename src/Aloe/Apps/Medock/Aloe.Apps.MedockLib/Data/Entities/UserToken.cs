@@ -6,6 +6,10 @@ using System.ComponentModel.DataAnnotations.Schema;
 /// <summary>
 /// ユーザートークンエンティティ
 /// </summary>
+/// <remarks>
+/// FUTURE FEATURE: Role-Based Access Control (RBAC) 実装用に予約されています。
+/// 現在はアクティブに使用されていません。実装計画については CLAUDE.md を参照してください。
+/// </remarks>
 [Table("user_tokens")]
 public class UserToken
 {
