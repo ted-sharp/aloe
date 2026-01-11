@@ -46,6 +46,6 @@ export function createLayers() {
             }
         };
 
-        setState({ layers });
+        // layers プロパティは削除されたため、setState は呼ばない
     }
 }

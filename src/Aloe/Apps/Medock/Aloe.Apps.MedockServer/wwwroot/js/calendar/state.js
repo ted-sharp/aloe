@@ -12,8 +12,6 @@ import { CONFIG } from './config.js';
  */
 let state = {
     canvasManager: null,              // Canvas Manager インスタンス
-    stage: null,                      // 互換性のため残す（Konva.Stageの代わり）
-    layers: {},                       // 互換性のため残す（Konvaレイヤーの代わり）
     dotNetRef: null,                  // .NET オブジェクト参照（コールバック用）
     containerId: null,                // コンテナ要素のID
     currentView: 'month',             // 現在のビュー: 'year', 'month', 'week'
@@ -68,11 +66,6 @@ export function resetState() {
         state.canvasManager.destroy();
     }
 
-    // 互換性のためのKonva Stageを破棄（存在する場合）
-    if (state.stage && state.stage.destroy) {
-        state.stage.destroy();
-    }
-
     // ResizeObserverを切断
     if (state.resizeObserver) {
         state.resizeObserver.disconnect();
@@ -82,8 +75,6 @@ export function resetState() {
     state = {
         ...state,
         canvasManager: null,
-        stage: null,
-        layers: {},
         appointments: [],
         mainStats: new Map(),
         equipmentStats: new Map(),

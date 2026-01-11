@@ -321,6 +321,20 @@ export function clearCanvas(ctx, width, height) {
 }
 
 /**
+ * RGB値を16進数カラーコードに変換
+ * @param {number} r - 赤（0-255）
+ * @param {number} g - 緑（0-255）
+ * @param {number} b - 青（0-255）
+ * @returns {string} 16進数カラーコード（#RRGGBB）
+ */
+export function rgbToHex(r, g, b) {
+    return '#' + [r, g, b].map(x => {
+        const hex = x.toString(16);
+        return hex.length === 1 ? '0' + hex : hex;
+    }).join('');
+}
+
+/**
  * CONFIGから色を取得
  * @param {string} path - 色のパス（例: 'weekend.sun', 'slot.empty'）
  * @returns {string} 色コード

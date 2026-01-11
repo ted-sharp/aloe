@@ -12,7 +12,8 @@ import { isDateInRange } from '../utils/date-utils.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
 import {
     createTimeToXConverter,
-    calculateLunchDuration
+    calculateLunchDuration,
+    parseTimeStringToHours
 } from '../utils/time-conversion-utils.js';
 import {
     parseSlotFlags,
@@ -64,15 +65,9 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     let lunchStartHour = null;
     let lunchEndHour = null;
     if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
-        const parseTime = (timeStr) => {
-            const parts = timeStr.split(':');
-            return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-        };
-        lunchStartHour = parseTime(businessHours.lunchStartTime);
-        lunchEndHour = parseTime(businessHours.lunchEndTime);
+        lunchStartHour = parseTimeStringToHours(businessHours.lunchStartTime);
+        lunchEndHour = parseTimeStringToHours(businessHours.lunchEndTime);
     }
-
-    // Note: parseTime inline function is still needed here because it's not exposed in utilities
 
     // グレーアウト判定
     let isDateGrayed = false;

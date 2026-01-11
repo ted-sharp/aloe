@@ -11,6 +11,7 @@ import { renderCanvasDayBarChart } from './canvas-bar-chart.js';
 import { renderCanvasLineChart } from './canvas-line-chart.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
 import { getValidSlotIndices } from '../utils/slot-validation-utils.js';
+import { parseTimeStringToHours } from '../utils/time-conversion-utils.js';
 
 /**
  * コンテナ幅に基づいてグリッドレイアウトを決定
@@ -100,12 +101,8 @@ export function renderCanvasYearView(canvasManager, state, fadeMode = 'crossfade
         let lunchStartHour = null;
         let lunchEndHour = null;
         if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
-            const parseTime = (timeStr) => {
-                const parts = timeStr.split(':');
-                return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-            };
-            lunchStartHour = parseTime(businessHours.lunchStartTime);
-            lunchEndHour = parseTime(businessHours.lunchEndTime);
+            lunchStartHour = parseTimeStringToHours(businessHours.lunchStartTime);
+            lunchEndHour = parseTimeStringToHours(businessHours.lunchEndTime);
         }
         const startHour = state.options.startHour || 9;
         const endHour = state.options.endHour || 17;

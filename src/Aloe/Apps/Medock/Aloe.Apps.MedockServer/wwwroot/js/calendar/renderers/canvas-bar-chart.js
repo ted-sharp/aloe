@@ -19,11 +19,13 @@ import {
 } from '../utils/slot-display-utils.js';
 import {
     createTimeToXConverter,
-    calculateLunchDuration
+    calculateLunchDuration,
+    parseTimeStringToHours
 } from '../utils/time-conversion-utils.js';
 import {
     parseSlotFlags,
-    getValidSlotIndices
+    getValidSlotIndices,
+    parseSlotTimeRangeFromMinutes
 } from '../utils/slot-validation-utils.js';
 import {
     getDateGrayOutStatus,
@@ -181,9 +183,9 @@ export function renderCanvasBarChart(contentCtx, params) {
         // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
         const isSlotGrayed = (slotFlags && (slotFlags[idx] & 0b001) !== 0) || isDateGrayed;
 
-        const slotStartStr = slotStartMins[idx];
-        const slotEndStr = slotEndMins[idx];
-        const timeRange = parseSlotTimeRangeFromStrings(slotStartStr, slotEndStr, startHour, endHour);
+        const slotStartMin = slotStartMins[idx];
+        const slotEndMin = slotEndMins[idx];
+        const timeRange = parseSlotTimeRangeFromMinutes(slotStartMin, slotEndMin);
         const slotStart = Math.max(startHour, timeRange.start);
         const slotEnd = Math.min(endHour, timeRange.end);
 
@@ -227,7 +229,7 @@ export function renderCanvasBarChart(contentCtx, params) {
                 width: barWidth,
                 height: barHeight,
                 slotIndex: idx,
-                slot: { start: slotStartStr, end: slotEndStr, count, cap, available },
+                slot: { start: slotStartMin, end: slotEndMin, count, cap, available },
                 color: slotColor
             });
         } else if (available < 0) {
@@ -252,7 +254,7 @@ export function renderCanvasBarChart(contentCtx, params) {
                 width: barWidth,
                 height: barHeight,
                 slotIndex: idx,
-                slot: { start: slotStartStr, end: slotEndStr, count, cap, available },
+                slot: { start: slotStartMin, end: slotEndMin, count, cap, available },
                 color: '#ef4444',
                 isOverflow: true
             });
@@ -340,49 +342,6 @@ export function renderCanvasBarChart(contentCtx, params) {
 }
 
 /**
- * スロットの時間範囲を解析（並列配列用）
- * @param {number} startMinutes - 開始時刻（分単位）
- * @param {number} endMinutes - 終了時刻（分単位）
- * @param {number} startHour - デフォルト開始時刻
- * @param {number} endHour - デフォルト終了時刻
- * @returns {{start: number, end: number}}
- */
-function parseSlotTimeRangeFromStrings(startMinutes, endMinutes, startHour, endHour) {
-    if (typeof startMinutes === 'number' && typeof endMinutes === 'number') {
-        return {
-            start: startMinutes / 60,  // 分を時間に変換
-            end: endMinutes / 60
-        };
-    }
-
-    // デフォルト: 業務時間全体
-    return {
-        start: startHour,
-        end: endHour
-    };
-}
-
-/**
- * スロットの時間範囲を解析（旧形式・互換性用）
- * @param {object} slot - スロット
- * @param {number} startHour - 開始時刻
- * @param {number} endHour - 終了時刻
- * @returns {{start: number, end: number}}
- */
-function parseSlotTimeRange(slot, startHour, endHour) {
-    // slotに時刻情報がある場合はそれを使用
-    if (slot.start !== undefined && slot.end !== undefined) {
-        return parseSlotTimeRangeFromStrings(slot.start, slot.end, startHour, endHour);
-    }
-
-    // デフォルト: 業務時間全体
-    return {
-        start: startHour,
-        end: endHour
-    };
-}
-
-/**
  * 日付セルのバーチャートを描画（統合関数）
  * @param {Map<string, CanvasRenderingContext2D>} contexts - レイヤーコンテキストのマップ
  * @param {object} state - アプリケーション状態
@@ -419,20 +378,16 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     let lunchEndHour = null;
     let businessStartHour = null;
     let businessEndHour = null;
-    const parseTime = (timeStr) => {
-        const parts = timeStr.split(':');
-        return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-    };
     if (businessHours) {
         if (businessHours.lunchStartTime && businessHours.lunchEndTime) {
-            lunchStartHour = parseTime(businessHours.lunchStartTime);
-            lunchEndHour = parseTime(businessHours.lunchEndTime);
+            lunchStartHour = parseTimeStringToHours(businessHours.lunchStartTime);
+            lunchEndHour = parseTimeStringToHours(businessHours.lunchEndTime);
         }
         if (businessHours.startTime) {
-            businessStartHour = parseTime(businessHours.startTime);
+            businessStartHour = parseTimeStringToHours(businessHours.startTime);
         }
         if (businessHours.endTime) {
-            businessEndHour = parseTime(businessHours.endTime);
+            businessEndHour = parseTimeStringToHours(businessHours.endTime);
         }
     }
 

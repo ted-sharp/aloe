@@ -3,6 +3,8 @@
  * グレーアウト状態、日付の色、ビジネスラインの描画などを統一的に処理します
  */
 
+import { isDateInRange } from './date-utils.js';
+
 /**
  * 日付のグレーアウト状態を取得
  * @param {string} dateStr - 日付文字列（"YYYY-MM-DD"）
@@ -20,17 +22,6 @@ export function getDateGrayOutStatus(dateStr, confirmedDateRange, stats) {
     }
 
     return isDateGrayed;
-}
-
-/**
- * 日付が範囲内か判定
- * @param {string} dateStr - 日付文字列（"YYYY-MM-DD"）
- * @param {string} startDateStr - 開始日付（"YYYY-MM-DD"）
- * @param {string} endDateStr - 終了日付（"YYYY-MM-DD"）
- * @returns {boolean} 範囲内の場合 true
- */
-export function isDateInRange(dateStr, startDateStr, endDateStr) {
-    return dateStr >= startDateStr && dateStr <= endDateStr;
 }
 
 /**
@@ -147,21 +138,3 @@ export function getBusinessHoursLinesToDraw(timeConverter, barAreaTop, barAreaHe
     return lines;
 }
 
-/**
- * スロット色情報を取得
- * @param {number} resourceTypeCode - リソースタイプコード
- * @param {number|null} planTypeCode - プランタイプコード
- * @param {number} available - 空き数
- * @param {number} capacity - 容量
- * @param {boolean} isGrayed - グレーアウト中か
- * @returns {Object} {fill, stroke, opacity}
- */
-export function getSlotColorInfo(resourceTypeCode, planTypeCode, available, capacity, isGrayed) {
-    // getColorFromTypeAndAvailable 関数に委譲
-    // このメソッドは呼び出し元の config.js で定義される関数を使用
-    return {
-        fill: '#3b82f6',
-        stroke: '#1f2937',
-        opacity: isGrayed ? 0.5 : 1.0
-    };
-}

@@ -4,22 +4,29 @@
  */
 
 /**
+ * "HH:mm" 形式の時間文字列を時間.分の数値に変換（例: "09:30" → 9.5）
+ * @param {string} timeStr - "HH:mm" 形式の時間文字列（例："09:30"）
+ * @returns {number|null} 時間.分の数値（例：9.5）、無効な場合は null
+ */
+export function parseTimeStringToHours(timeStr) {
+    if (!timeStr) return null;
+    const parts = timeStr.split(':');
+    const hours = parseInt(parts[0] || 0, 10);
+    const minutes = parseInt(parts[1] || 0, 10);
+    return hours + (minutes / 60);
+}
+
+/**
  * 業務時間の設定をパース（文字列 "HH:mm" 形式から時間単位に変換）
  * @param {Object} businessHours - 営業時間設定 {workStartTime, workEndTime, lunchStartTime, lunchEndTime}
  * @returns {Object} {startHour, endHour, lunchStartHour, lunchEndHour}
  */
 export function parseBusinessHours(businessHours) {
-    const parseTime = (timeStr) => {
-        if (!timeStr) return null;
-        const parts = timeStr.split(':');
-        return parseInt(parts[0], 10) + (parseInt(parts[1] || 0, 10) / 60);
-    };
-
     return {
-        startHour: parseTime(businessHours?.workStartTime) ?? 9,
-        endHour: parseTime(businessHours?.workEndTime) ?? 17,
-        lunchStartHour: parseTime(businessHours?.lunchStartTime) ?? null,
-        lunchEndHour: parseTime(businessHours?.lunchEndTime) ?? null
+        startHour: parseTimeStringToHours(businessHours?.workStartTime) ?? 9,
+        endHour: parseTimeStringToHours(businessHours?.workEndTime) ?? 17,
+        lunchStartHour: parseTimeStringToHours(businessHours?.lunchStartTime) ?? null,
+        lunchEndHour: parseTimeStringToHours(businessHours?.lunchEndTime) ?? null
     };
 }
 

@@ -5,6 +5,8 @@
  * タイプごとに基本色を定義し、利用可能数に応じた色調整を適用
  */
 
+import { rgbToHex } from './canvas-utils.js';
+
 /**
  * リソースタイプ別の基本色マッピング
  * 1: Main, 2: Equipment, 3: Environment, 99: Others
@@ -30,20 +32,6 @@ const PLAN_TYPE_COLORS = {
  * デフォルト色（タイプが不明な場合）
  */
 const DEFAULT_COLOR = '#6b7280'; // gray-500
-
-/**
- * RGB値を16進数カラーコードに変換
- * @param {number} r - 赤（0-255）
- * @param {number} g - 緑（0-255）
- * @param {number} b - 青（0-255）
- * @returns {string} 16進数カラーコード（#RRGGBB）
- */
-function rgbToHex(r, g, b) {
-    return '#' + [r, g, b].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
-}
 
 /**
  * 16進数カラーコードをRGBに変換

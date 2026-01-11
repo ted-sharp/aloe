@@ -17,19 +17,7 @@ import {
     drawSlotInfoText
 } from '../utils/slot-display-utils.js';
 import { getValidSlotIndices } from '../utils/slot-validation-utils.js';
-
-/**
- * HH:mm形式の時間文字列を時間.分の数値に変換
- * @param {string} timeStr - "HH:mm"形式の時間文字列（例："09:30"）
- * @returns {number} 時間.分の数値（例：9.5）
- */
-function parseTimeToHours(timeStr) {
-    if (!timeStr) return 9.0;
-    const parts = timeStr.split(':');
-    const hours = parseInt(parts[0] || 0, 10);
-    const minutes = parseInt(parts[1] || 0, 10);
-    return hours + (minutes / 60);
-}
+import { parseTimeStringToHours } from '../utils/time-conversion-utils.js';
 
 /**
  * ステータスコードからテキストを取得

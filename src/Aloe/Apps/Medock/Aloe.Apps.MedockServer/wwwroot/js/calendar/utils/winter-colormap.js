@@ -11,6 +11,7 @@
  */
 
 import { getTypeBaseColor, adjustColorByAvailability } from './type-colormap.js';
+import { rgbToHex } from './canvas-utils.js';
 
 /**
  * Winterカラーマップの256色RGBルックアップテーブル
@@ -26,20 +27,17 @@ for (let i = 0; i < 256; i++) {
 }
 
 /**
- * RGB値を16進数カラーコードに変換
+ * RGB値（0-1範囲）を16進数カラーコードに変換
  * @param {number} r - 赤（0-1）
  * @param {number} g - 緑（0-1）
  * @param {number} b - 青（0-1）
  * @returns {string} 16進数カラーコード（#RRGGBB）
  */
-function rgbToHex(r, g, b) {
+function rgbToHexFromFloat(r, g, b) {
     const rInt = Math.round(r * 255);
     const gInt = Math.round(g * 255);
     const bInt = Math.round(b * 255);
-    return '#' + [rInt, gInt, bInt].map(x => {
-        const hex = x.toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
+    return rgbToHex(rInt, gInt, bInt);
 }
 
 /**
@@ -64,7 +62,7 @@ export function getWinterColor(ratio) {
     const [r, g, b] = color;
     
     // 16進数カラーコードに変換
-    return rgbToHex(r, g, b);
+    return rgbToHexFromFloat(r, g, b);
 }
 
 /**
