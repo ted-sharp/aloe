@@ -1,16 +1,13 @@
+using Aloe.Apps.MedockServer.Components.Layout;
+using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
+using Aloe.Apps.MedockServer.Components.Calendar;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Aloe.Apps.MedockLib.Data.Entities;
-using Aloe.Apps.MedockServer.Components.Layout;
-using Aloe.Apps.MedockServer.Components.FAB;
-using Aloe.Apps.MedockServer.Components.Calendar;
-using Aloe.Apps.MedockServer.ApplicationServices.Calendar;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
-using Microsoft.Extensions.Logging;
-using System.Diagnostics;
 using Microsoft.JSInterop;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
@@ -21,50 +18,25 @@ public partial class Calendar : ComponentBase
     private CalendarLayout? Layout { get; set; }
 
     [Inject]
-    private IAppointmentService AppointmentService { get; set; } = default!;
-
-    [Inject]
-    private CalendarFilterService FilterService { get; set; } = default!;
-
-    [Inject]
-    private IUserContextService UserContextService { get; set; } = default!;
-
-    [Inject]
-    private IAuthService AuthService { get; set; } = default!;
-
-    [Inject]
-    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
-
-    [Inject]
-    private NavigationManager NavigationManager { get; set; } = default!;
-
-    [Inject]
-    private CalendarApplicationService DataService { get; set; } = default!;
-
-    // 状態管理（Scoped Service として DI 注入）
-    [Inject]
     private CalendarState State { get; set; } = default!;
 
     [Inject]
     private ILogger<Calendar> Logger { get; set; } = default!;
 
     [Inject]
-    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
+    private ICalendarOrchestrator Orchestrator { get; set; } = default!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
     [Inject]
-    private CalendarNavigationService NavigationService { get; set; } = default!;
+    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
 
     [Inject]
-    private CalendarDataCoordinator DataCoordinator { get; set; } = default!;
-
-    [Inject]
-    private CalendarFilterCoordinator FilterCoordinator { get; set; } = default!;
-
-    [Inject]
-    private CalendarModalCoordinator ModalCoordinator { get; set; } = default!;
+    private IDateTimeProvider DateTimeProvider { get; set; } = default!;
 
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
@@ -84,7 +56,7 @@ public partial class Calendar : ComponentBase
     // フィルターパネル参照
     private SearchFilterPanel? filterPanelRef;
 
-    // プロパティ（razorファイルとの互換性維持）
+    // プロパティ（razorファイルとの互換性維持 - .razorファイル変更不要にするため保持）
     private DateOnly CurrentDate
     {
         get => this.State.CurrentDate;
@@ -123,8 +95,6 @@ public partial class Calendar : ComponentBase
 
     private bool IsLoading => this.State.IsLoading;
 
-    // ShowEquipmentGraphプロパティは削除されました（EquipmentはAppointmentResourceに統合）
-
     private string UserInitial => this.State.UserInitial;
     private string UserDisplayName => this.State.UserDisplayName;
     private string UserEmail => this.State.UserEmail;
@@ -161,7 +131,6 @@ public partial class Calendar : ComponentBase
     private int StartHour => this.State.StartHour;
     private int EndHour => this.State.EndHour;
 
-    // AvailableEquipmentsプロパティは削除されました（EquipmentはAppointmentResourceに統合）
     private SearchFilterPanel.SearchFilter? CurrentFilter => this.State.CurrentFilter;
     private int ActiveFilterCount => this.State.ActiveFilterCount;
     private List<string>? FilterTimeSlots => this.State.CurrentFilter?.TimeSlots;
@@ -171,162 +140,35 @@ public partial class Calendar : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        var sw = Stopwatch.StartNew();
-        this.Logger.LogInformation("Calendar.OnInitializedAsync start: ViewType={ViewType}", this.State.CurrentView);
+        this.Logger.LogInformation("Calendar.OnInitializedAsync start");
 
-        // CurrentDateが初期値の場合は今日の日付を設定
-        if (this.State.CurrentDate == default)
+        var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var result = await this.Orchestrator.InitializeAsync(authState.User);
+
+        if (!result.Success && result.RedirectUrl != null)
         {
-            this.State.CurrentDate = this.DateTimeProvider.TodayDateOnly;
+            this.NavigationManager.NavigateTo(result.RedirectUrl, forceLoad: true);
+            return;
         }
 
-        this.State.IsLoading = true;
         this.StateHasChanged();
-        try
-        {
-            // ユーザー情報をロード（ログインスキップ時：前回のセッションが維持されている場合でも再初期化する）
-            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            if (user.Identity?.IsAuthenticated == true)
-            {
-                // IUserContextServiceを初期化（フォールバック処理込み：Cookieにfacility_idがない場合はDBから取得）
-                var isValid = await this.UserContextService.InitializeFromClaimsAsync(user);
-                if (!isValid)
-                {
-                    // 施設が存在しない、またはアクセス権がない場合はログインページにリダイレクト
-                    this.Logger.LogWarning("Calendar.OnInitializedAsync: Facility validation failed, redirecting to login");
-                    this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
-                    return;
-                }
-
-                var currentUser = this.UserContextService.CurrentUser;
-                if (currentUser != null)
-                {
-                    this.State.UserDisplayName = currentUser.UserDisplayName;
-                    this.State.UserEmail = currentUser.Email;
-                    this.State.TenantName = currentUser.TenantName;
-                    this.State.FacilityName = currentUser.FacilityName;
-                    this.State.CurrentFacilityId = currentUser.FacilityId;
-                    this.State.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
-                    this.State.UserInitial = currentUser.Initial;
-                    this.State.AvailableFacilities = await this.UserContextService.GetAccessibleFacilitiesAsync();
-                    this.State.HasMultipleFacilities = this.State.AvailableFacilities.Count > 1;
-                }
-                else
-                {
-                    this.Logger.LogWarning("Calendar.OnInitializedAsync: CurrentUser is null after InitializeFromClaimsAsync");
-                }
-            }
-            else
-            {
-                this.Logger.LogWarning("Calendar.OnInitializedAsync: User is not authenticated");
-            }
-
-            var businessHoursSw = Stopwatch.StartNew();
-            await this.DataService.LoadBusinessHoursAsync(this.State);
-            businessHoursSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadBusinessHours: {ElapsedMs}ms", businessHoursSw.ElapsedMilliseconds);
-
-            var mainStatsSw = Stopwatch.StartNew();
-            await this.DataService.LoadMainStatsAsync(
-                this.State,
-                this.State.CurrentView,
-                this.State.CurrentDate,
-                this.State.WeekDays);
-            mainStatsSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStats: {ElapsedMs}ms", mainStatsSw.ElapsedMilliseconds);
-
-            // Load slot-level statistics for calendar display
-            var mainStatSlotsSw = Stopwatch.StartNew();
-            await this.DataService.LoadMainStatsSlotsAsync(
-                this.State,
-                this.State.CurrentView,
-                this.State.CurrentDate,
-                this.State.WeekDays);
-            mainStatSlotsSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadMainStatsSlots: {ElapsedMs}ms", mainStatSlotsSw.ElapsedMilliseconds);
-
-            var equipmentStatsSw = Stopwatch.StartNew();
-            await this.DataService.LoadEquipmentStatsAsync(
-                this.State,
-                this.State.CurrentView,
-                this.State.CurrentDate,
-                this.State.WeekDays);
-            equipmentStatsSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadEquipmentStats: {ElapsedMs}ms", equipmentStatsSw.ElapsedMilliseconds);
-
-            var appointmentsSw = Stopwatch.StartNew();
-            await this.DataService.LoadAppointmentsAsync(
-                this.State,
-                this.State.CurrentView,
-                this.State.CurrentDate,
-                this.State.WeekDays);
-            appointmentsSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadAppointments: {ElapsedMs}ms", appointmentsSw.ElapsedMilliseconds);
-
-            var filterOptionsSw = Stopwatch.StartNew();
-            await this.DataService.LoadFilterOptionsAsync(this.State);
-            filterOptionsSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadFilterOptions: {ElapsedMs}ms", filterOptionsSw.ElapsedMilliseconds);
-
-            var holidaysSw = Stopwatch.StartNew();
-            await this.DataService.LoadHolidaysAsync(
-                this.State,
-                this.State.CurrentView,
-                this.State.CurrentDate,
-                this.State.WeekDays);
-            holidaysSw.Stop();
-            this.Logger.LogInformation("[TRACE] OnInitializedAsync - LoadHolidays: {ElapsedMs}ms", holidaysSw.ElapsedMilliseconds);
-        }
-        finally
-        {
-            this.State.IsLoading = false;
-            sw.Stop();
-            this.Logger.LogInformation("Calendar.OnInitializedAsync total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
-            this.StateHasChanged();
-        }
     }
 
     private async Task HandleLogout()
     {
-        try
+        var result = await this.Orchestrator.LogoutAsync();
+        if (result.RedirectUrl != null)
         {
-            var authState = await this.AuthenticationStateProvider.GetAuthenticationStateAsync();
-            var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
-            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
-            {
-                await this.AuthService.LogoutAsync(sessionId);
-            }
-        }
-        catch
-        {
-            // ログアウトAPIの失敗は無視
-        }
-        finally
-        {
-            this.NavigationManager.NavigateTo("/api/auth/logout", forceLoad: true);
+            this.NavigationManager.NavigateTo(result.RedirectUrl, forceLoad: true);
         }
     }
 
     private async Task HandleFacilitySwitch(Guid facilityId)
     {
-        var currentUser = this.UserContextService.CurrentUser;
-        if (currentUser == null || currentUser.UserId == Guid.Empty)
+        var result = await this.Orchestrator.SwitchFacilityAsync(facilityId);
+        if (result.Success && result.RedirectUrl != null)
         {
-            return;
-        }
-
-        try
-        {
-            var result = await this.AuthService.SwitchFacilityAsync(currentUser.UserId, facilityId);
-            if (result.IsSuccess)
-            {
-                this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
-            }
-        }
-        catch
-        {
-            // 施設切替失敗時は何もしない
+            this.NavigationManager.NavigateTo(result.RedirectUrl, forceLoad: true);
         }
     }
 
@@ -370,122 +212,78 @@ public partial class Calendar : ComponentBase
         this.RegisterLayoutActions();
     }
 
-
     private async Task SetView(CalendarViewType view)
     {
-        var sw = Stopwatch.StartNew();
-        this.Logger.LogInformation("Calendar.SetView start: CurrentView={CurrentView}, TargetView={TargetView}", this.State.CurrentView, view);
-
-        // 先にターゲットビュー用のデータをロード（CurrentView はまだ変更しない）
-        await this.DataService.LoadMainStatsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
-        await this.DataService.LoadMainStatsSlotsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
-        await this.DataService.LoadEquipmentStatsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
-        await this.DataService.LoadHolidaysAsync(this.State, view, this.State.CurrentDate, this.State.WeekDays);
-        await this.ReapplyCurrentFilterAsync();
-
-        // データロード完了後にビューを切り替えて描画
-        this.State.SetView(view);
+        await this.Orchestrator.SetViewAsync(view);
         this.Layout?.UpdateCurrentView(view.ToString().ToLower());
         this.RegisterLayoutActions();
         this.StateHasChanged();
-
-        sw.Stop();
-        this.Logger.LogInformation("Calendar.SetView total: {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 
     private string GetCurrentPeriodTitle() => this.State.GetCurrentPeriodTitle();
 
-    /// <summary>
-    /// カレンダーデータを再ロードする共通メソッド
-    /// </summary>
-    private async Task RefreshCalendarDataAsync()
+    // Navigation methods
+    private async Task PreviousPeriod()
     {
-        await this.DataCoordinator.RefreshCalendarDataAsync(
-            this.State,
-            this.ReapplyCurrentFilterAsync);
-        // StateHasChanged() は呼び出し元で実行される
+        await this.Orchestrator.NavigatePreviousPeriodAsync();
+        this.StateHasChanged();
     }
 
-    private async Task PreviousPeriod() =>
-        await this.NavigationService.NavigateAsync(
-            CalendarNavigationService.NavigationDirection.PreviousPeriod,
-            this.State,
-            this.RefreshCalendarDataAsync,
-            this.StateHasChanged);
+    private async Task NextPeriod()
+    {
+        await this.Orchestrator.NavigateNextPeriodAsync();
+        this.StateHasChanged();
+    }
 
-    private async Task NextPeriod() =>
-        await this.NavigationService.NavigateAsync(
-            CalendarNavigationService.NavigationDirection.NextPeriod,
-            this.State,
-            this.RefreshCalendarDataAsync,
-            this.StateHasChanged);
+    private async Task PreviousBigPeriod()
+    {
+        await this.Orchestrator.NavigatePreviousBigPeriodAsync();
+        this.StateHasChanged();
+    }
 
-    private async Task PreviousBigPeriod() =>
-        await this.NavigationService.NavigateAsync(
-            CalendarNavigationService.NavigationDirection.PreviousBigPeriod,
-            this.State,
-            this.RefreshCalendarDataAsync,
-            this.StateHasChanged);
-
-    private async Task NextBigPeriod() =>
-        await this.NavigationService.NavigateAsync(
-            CalendarNavigationService.NavigationDirection.NextBigPeriod,
-            this.State,
-            this.RefreshCalendarDataAsync,
-            this.StateHasChanged);
+    private async Task NextBigPeriod()
+    {
+        await this.Orchestrator.NavigateNextBigPeriodAsync();
+        this.StateHasChanged();
+    }
 
     private async Task GoToToday()
     {
-        this.State.GoToToday(this.DateTimeProvider.TodayDateOnly);
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.GoToTodayAsync();
         this.StateHasChanged();
     }
 
     private async Task HandleDateClick(DateOnly date)
     {
-        this.State.CurrentDate = date;
-        if (this.State.CurrentView == CalendarViewType.Month)
-        {
-            this.State.CurrentView = CalendarViewType.Week;
-            this.State.WeekDays = 7;
-            this.Layout?.UpdateCurrentView("week");
-            this.RegisterLayoutActions();
-        }
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.HandleDateClickAsync(date);
+        this.Layout?.UpdateCurrentView("week");
+        this.RegisterLayoutActions();
         this.StateHasChanged();
     }
 
     private async Task HandleDateSelectedSingle(DateOnly date)
     {
-        // JavaScript側で日付がクリックされた時にCurrentDateを更新
-        // ビュー切り替えはせず、選択状態のみ更新
-        this.State.CurrentDate = date;
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.HandleDateSelectedSingleAsync(date);
         this.StateHasChanged();
     }
 
     private async Task HandleMonthClick((int Year, int Month) yearMonth)
     {
-        this.State.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
-        this.State.CurrentView = CalendarViewType.Month;
+        await this.Orchestrator.HandleMonthClickAsync(yearMonth.Year, yearMonth.Month);
         this.Layout?.UpdateCurrentView("month");
         this.RegisterLayoutActions();
-        await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
     }
 
     private async Task HandleMonthSelected((int Year, int Month) yearMonth)
     {
-        this.State.CurrentDate = new DateOnly(yearMonth.Year, yearMonth.Month, 1);
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.HandleMonthSelectedAsync(yearMonth.Year, yearMonth.Month);
         this.StateHasChanged();
     }
 
     private async Task HandleYearSelected(int year)
     {
-        this.State.CurrentDate = new DateOnly(year, this.State.CurrentDate.Month, this.State.CurrentDate.Day);
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.HandleYearSelectedAsync(year);
         this.StateHasChanged();
     }
 
@@ -495,8 +293,6 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    // HandleEquipmentGraphChangedメソッドは削除されました（EquipmentはAppointmentResourceに統合）
-
     private void HandleDateSelect(DateOnly date)
     {
         this.State.SelectedDate = date;
@@ -505,15 +301,10 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleDateDoubleClick(DateOnly date)
     {
-        this.Logger.LogInformation("[TRACE] HandleDateDoubleClick: 日付={Date} へ Week 切り替え", date);
-        this.State.CurrentDate = date;
-        this.State.CurrentView = CalendarViewType.Week;
-        this.State.WeekDays = 1;
+        await this.Orchestrator.HandleDateDoubleClickAsync(date);
         this.Layout?.UpdateCurrentView("week");
         this.RegisterLayoutActions();
-        await this.RefreshCalendarDataAsync();
         this.StateHasChanged();
-        this.Logger.LogInformation("[TRACE] HandleDateDoubleClick: Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
     }
 
     private void HandleDateRangeSelect((DateOnly Start, DateOnly End) range)
@@ -522,54 +313,40 @@ public partial class Calendar : ComponentBase
         this.State.SelectedDateRange = range;
     }
 
+    // Filter handlers
     private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
-        await this.FilterCoordinator.HandleFilterAppliedAsync(
-            filter,
-            this.State,
-            () => { this.StateHasChanged(); return Task.CompletedTask; });
+        await this.Orchestrator.ApplyFilterAsync(filter);
+        this.StateHasChanged();
     }
 
-    /// <summary>
-    /// 現在のフィルターを再適用する（月切り替えやビュー変更後に呼び出す）
-    /// </summary>
     private async Task ReapplyCurrentFilterAsync()
     {
-        await this.FilterCoordinator.ReapplyCurrentFilterAsync(this.State);
+        await this.Orchestrator.ReapplyCurrentFilterAsync();
     }
 
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
-        await this.FilterCoordinator.HandleFilterChangedRealtimeAsync(
-            filter,
-            this.State,
-            () => { this.StateHasChanged(); return Task.CompletedTask; },
-            () => { this.StateHasChanged(); return Task.CompletedTask; });
+        await this.Orchestrator.HandleFilterChangedRealtimeAsync(filter);
+        this.StateHasChanged();
     }
 
+    // Modal handlers
     private void HandleAppointmentClick(Guid apptId)
     {
-        this.ModalCoordinator.HandleAppointmentClick(
-            apptId,
-            this.State.CurrentDate,
-            this.State,
-            (date, startMin, apptIdArg) => this.State.OpenModal(date, startMin, apptIdArg));
+        this.Orchestrator.OpenAppointmentModal(apptId);
         this.StateHasChanged();
     }
 
     private void HandleCreateRequest((DateOnly Date, int StartMin) request)
     {
-        this.ModalCoordinator.HandleCreateRequest(
-            request,
-            this.State,
-            (date, startMin) => this.State.OpenModal(date, startMin));
+        this.Orchestrator.OpenCreateRequestModal(request.Date, request.StartMin);
         this.StateHasChanged();
     }
 
     private async Task HandleWeekDaysChanged(int days)
     {
-        this.State.WeekDays = days;
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.HandleWeekDaysChangedAsync(days);
         this.StateHasChanged();
     }
 
@@ -586,52 +363,45 @@ public partial class Calendar : ComponentBase
 
     private void OpenNewAppointmentModal()
     {
-        this.ModalCoordinator.OpenNewAppointmentModal(
-            this.State.CurrentDate,
-            this.State,
-            (date, startMin) => this.State.OpenModal(date, startMin));
+        this.Orchestrator.OpenNewAppointmentModal(this.State.CurrentDate, 540);
         this.StateHasChanged();
     }
 
     private void CloseModal()
     {
-        this.ModalCoordinator.CloseModal(
-            this.State,
-            () => this.State.CloseModal());
+        this.Orchestrator.CloseModal();
         this.StateHasChanged();
     }
 
     private async Task HandleSaveAppointment()
     {
-        await this.ModalCoordinator.HandleSaveAppointmentAsync(
-            this.State,
-            () => this.CloseModal(),
-            () => { this.StateHasChanged(); return Task.CompletedTask; });
+        await this.Orchestrator.SaveAppointmentAsync();
+        this.CloseModal();
+        this.StateHasChanged();
     }
 
     private async Task HandleDeleteAppointment()
     {
-        await this.ModalCoordinator.HandleDeleteAppointmentAsync(
-            this.State,
-            () => this.CloseModal(),
-            () => { this.StateHasChanged(); return Task.CompletedTask; });
+        await this.Orchestrator.DeleteAppointmentAsync();
+        this.CloseModal();
+        this.StateHasChanged();
     }
 
     private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, int NewStartMin) moveInfo)
     {
         try
         {
-            var success = await this.ModalCoordinator.HandleAppointmentMovedAsync(
-                moveInfo,
-                this.State,
-                () => { this.StateHasChanged(); return Task.CompletedTask; },
-                async (errorMessage) =>
-                {
-                    this.Logger.LogWarning("Failed to move appointment: {ErrorMessage}", errorMessage);
-                    await this.JSRuntime.InvokeVoidAsync("alert", errorMessage);
-                });
+            var result = await this.Orchestrator.MoveAppointmentAsync(
+                moveInfo.ApptId,
+                moveInfo.NewDate,
+                moveInfo.NewStartMin);
 
-            if (success)
+            if (!result.Success && result.ErrorMessage != null)
+            {
+                this.Logger.LogWarning("Failed to move appointment: {ErrorMessage}", result.ErrorMessage);
+                await this.JSRuntime.InvokeVoidAsync("alert", result.ErrorMessage);
+            }
+            else if (result.Success)
             {
                 this.StateHasChanged();
             }
@@ -642,6 +412,7 @@ public partial class Calendar : ComponentBase
         }
     }
 
+    // Day detail popup handlers
     private void HandleShowDayDetail(DateOnly date)
     {
         this.DayDetailDate = date;
@@ -665,22 +436,20 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleDayDetailGoToWeekView(DateOnly date)
     {
-        this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: 日詳細ポップアップから Week へ切り替え、日付={Date}", date);
         this.CloseDayDetail();
         this.State.CurrentDate = date;
         this.State.CurrentView = CalendarViewType.Week;
         this.Layout?.UpdateCurrentView("week");
         this.RegisterLayoutActions();
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.RefreshCalendarDataAsync();
         this.StateHasChanged();
-        this.Logger.LogInformation("[TRACE] HandleDayDetailGoToWeekView: LoadMainStatsAsync 完了, Appointments 件数={Count}", this.State.Appointments?.Count ?? 0);
     }
 
     private async Task HandleDayDetailNavigateToPreviousDay(DateOnly date)
     {
         this.DayDetailDate = date;
         this.State.CurrentDate = date;
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.RefreshCalendarDataAsync();
         this.StateHasChanged();
     }
 
@@ -688,13 +457,11 @@ public partial class Calendar : ComponentBase
     {
         this.DayDetailDate = date;
         this.State.CurrentDate = date;
-        await this.RefreshCalendarDataAsync();
+        await this.Orchestrator.RefreshCalendarDataAsync();
         this.StateHasChanged();
     }
 
-    /// <summary>
-    /// キーボード入力ハンドラー
-    /// </summary>
+    // Keyboard handler (UI logic - kept in component)
     private async Task HandleKeyDown(KeyboardEventArgs e)
     {
         // 日詳細ダイアログが開いている場合の処理
@@ -712,7 +479,6 @@ public partial class Calendar : ComponentBase
                     this.CloseDayDetail();
                     return;
                 default:
-                    // その他のすべてのキーを吸収（応答しない）
                     return;
             }
         }
@@ -721,7 +487,6 @@ public partial class Calendar : ComponentBase
         {
             case "Enter":
             case " ":
-                // CurrentDateの日詳細を開く
                 this.HandleShowDayDetail(this.State.CurrentDate);
                 break;
             case "ArrowLeft":
@@ -731,11 +496,9 @@ public partial class Calendar : ComponentBase
                 await this.NextPeriod();
                 break;
             case "ArrowUp":
-                // ビュー切り替え: 週 → 月 → 年
                 await this.SetPreviousView();
                 break;
             case "ArrowDown":
-                // ビュー切り替え: 年 → 月 → 週
                 await this.SetNextView();
                 break;
             case "Home":
@@ -758,9 +521,6 @@ public partial class Calendar : ComponentBase
         }
     }
 
-    /// <summary>
-    /// ビュー切り替え（逆順: 週 → 月 → 年）
-    /// </summary>
     private async Task SetPreviousView()
     {
         var nextView = this.CurrentView switch
@@ -773,9 +533,6 @@ public partial class Calendar : ComponentBase
         await this.SetView(nextView);
     }
 
-    /// <summary>
-    /// ビュー切り替え（順序: 年 → 月 → 週）
-    /// </summary>
     private async Task SetNextView()
     {
         var nextView = this.CurrentView switch
@@ -788,9 +545,6 @@ public partial class Calendar : ComponentBase
         await this.SetView(nextView);
     }
 
-    /// <summary>
-    /// 簡易/詳細表示の切り替え
-    /// </summary>
     private void ToggleSimpleView()
     {
         if (this.CurrentView == CalendarViewType.Week)
@@ -804,18 +558,12 @@ public partial class Calendar : ComponentBase
         this.StateHasChanged();
     }
 
-    /// <summary>
-    /// 日詳細ダイアログでスロットが選択された時の処理
-    /// </summary>
     private void HandleDayDetailSlotClicked(DayDetailPopup.SlotClickedEventArgs args)
     {
         this.Logger.LogInformation("日詳細スロット選択: Date={Date}, Time={Start}-{End}",
             args.Date, args.StartMin, args.EndMin);
 
-        // ポップアップを閉じる
         this.CloseDayDetail();
-
-        // 予約モーダルを開く
         this.State.OpenModal(args.Date, args.StartMin);
         this.StateHasChanged();
     }

@@ -138,6 +138,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ApplicationServices.Calendar.CalendarFilterCoordinator>();
         services.AddScoped<ApplicationServices.Calendar.CalendarModalCoordinator>();
 
+        // Calendar Orchestrator (NEW - Facade for reducing component dependencies)
+        services.AddScoped<ApplicationServices.Calendar.ICalendarOrchestrator,
+            ApplicationServices.Calendar.CalendarOrchestrator>();
+
         return services;
     }
 
