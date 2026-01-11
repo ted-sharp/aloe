@@ -57,6 +57,15 @@ public partial class Calendar : ComponentBase
     [Inject]
     private CalendarNavigationService NavigationService { get; set; } = default!;
 
+    [Inject]
+    private CalendarDataCoordinator DataCoordinator { get; set; } = default!;
+
+    [Inject]
+    private CalendarFilterCoordinator FilterCoordinator { get; set; } = default!;
+
+    [Inject]
+    private CalendarModalCoordinator ModalCoordinator { get; set; } = default!;
+
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
     private bool IsDrawerOpen
@@ -392,32 +401,9 @@ public partial class Calendar : ComponentBase
     /// </summary>
     private async Task RefreshCalendarDataAsync()
     {
-        await this.DataService.LoadMainStatsAsync(
+        await this.DataCoordinator.RefreshCalendarDataAsync(
             this.State,
-            this.State.CurrentView,
-            this.State.CurrentDate,
-            this.State.WeekDays);
-        await this.DataService.LoadMainStatsSlotsAsync(
-            this.State,
-            this.State.CurrentView,
-            this.State.CurrentDate,
-            this.State.WeekDays);
-        await this.DataService.LoadEquipmentStatsAsync(
-            this.State,
-            this.State.CurrentView,
-            this.State.CurrentDate,
-            this.State.WeekDays);
-        await this.DataService.LoadAppointmentsAsync(
-            this.State,
-            this.State.CurrentView,
-            this.State.CurrentDate,
-            this.State.WeekDays);
-        await this.DataService.LoadHolidaysAsync(
-            this.State,
-            this.State.CurrentView,
-            this.State.CurrentDate,
-            this.State.WeekDays);
-        await this.ReapplyCurrentFilterAsync();
+            this.ReapplyCurrentFilterAsync);
         // StateHasChanged() は呼び出し元で実行される
     }
 
@@ -538,9 +524,10 @@ public partial class Calendar : ComponentBase
 
     private async Task HandleFilterApplied(SearchFilterPanel.SearchFilter filter)
     {
-        this.State.CurrentFilter = filter;
-        await this.ReapplyCurrentFilterAsync();
-        this.StateHasChanged();
+        await this.FilterCoordinator.HandleFilterAppliedAsync(
+            filter,
+            this.State,
+            () => { this.StateHasChanged(); return Task.CompletedTask; });
     }
 
     /// <summary>
@@ -548,49 +535,34 @@ public partial class Calendar : ComponentBase
     /// </summary>
     private async Task ReapplyCurrentFilterAsync()
     {
-        if (this.State.CurrentFilter is null)
-        {
-            return;
-        }
-
-        await this.FilterService.ApplyFilterAsync(
-            this.State.CurrentFilter,
-            this.State.MainStats,
-            this.State.MainStatsGrayedOut,
-            this.State.CurrentView,
-            this.State.CurrentDate);
+        await this.FilterCoordinator.ReapplyCurrentFilterAsync(this.State);
     }
 
     private async Task HandleFilterChangedRealtime(SearchFilterPanel.SearchFilter filter)
     {
-        this.State.CurrentFilter = filter;
-
-        // フロア、リソース、プランのフィルターが変更された場合はデータを再取得
-        var needsReload = filter.SelectedFloorIds.Any() ||
-                         filter.SelectedResourceIds.Any() ||
-                         filter.SelectedPlanIds.Any();
-
-        if (needsReload)
-        {
-            await this.RefreshCalendarDataAsync();
-            this.StateHasChanged();
-        }
-        else
-        {
-            await this.ReapplyCurrentFilterAsync();
-            this.StateHasChanged();
-        }
+        await this.FilterCoordinator.HandleFilterChangedRealtimeAsync(
+            filter,
+            this.State,
+            () => { this.StateHasChanged(); return Task.CompletedTask; },
+            () => { this.StateHasChanged(); return Task.CompletedTask; });
     }
 
     private void HandleAppointmentClick(Guid apptId)
     {
-        this.State.OpenModal(this.State.CurrentDate, 540, apptId);
+        this.ModalCoordinator.HandleAppointmentClick(
+            apptId,
+            this.State.CurrentDate,
+            this.State,
+            (date, startMin, apptIdArg) => this.State.OpenModal(date, startMin, apptIdArg));
         this.StateHasChanged();
     }
 
     private void HandleCreateRequest((DateOnly Date, int StartMin) request)
     {
-        this.State.OpenModal(request.Date, request.StartMin);
+        this.ModalCoordinator.HandleCreateRequest(
+            request,
+            this.State,
+            (date, startMin) => this.State.OpenModal(date, startMin));
         this.StateHasChanged();
     }
 
@@ -614,57 +586,53 @@ public partial class Calendar : ComponentBase
 
     private void OpenNewAppointmentModal()
     {
-        this.State.OpenModal(this.State.CurrentDate, 540);
+        this.ModalCoordinator.OpenNewAppointmentModal(
+            this.State.CurrentDate,
+            this.State,
+            (date, startMin) => this.State.OpenModal(date, startMin));
         this.StateHasChanged();
     }
 
     private void CloseModal()
     {
-        this.State.CloseModal();
+        this.ModalCoordinator.CloseModal(
+            this.State,
+            () => this.State.CloseModal());
         this.StateHasChanged();
     }
 
     private async Task HandleSaveAppointment()
     {
-        this.CloseModal();
-        // 予約保存後にデータを再取得
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
+        await this.ModalCoordinator.HandleSaveAppointmentAsync(
+            this.State,
+            () => this.CloseModal(),
+            () => { this.StateHasChanged(); return Task.CompletedTask; });
     }
 
     private async Task HandleDeleteAppointment()
     {
-        this.CloseModal();
-        // 予約削除後にデータを再取得
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
+        await this.ModalCoordinator.HandleDeleteAppointmentAsync(
+            this.State,
+            () => this.CloseModal(),
+            () => { this.StateHasChanged(); return Task.CompletedTask; });
     }
 
     private async Task HandleAppointmentMoved((Guid ApptId, DateOnly NewDate, int NewStartMin) moveInfo)
     {
         try
         {
-            var appt = this.State.Appointments.FirstOrDefault(a => a.Id == moveInfo.ApptId);
-            if (appt != null)
-            {
-                var result = await this.AppointmentService.UpdateAppointmentAsync(
-                    moveInfo.ApptId,
-                    new UpdateAppointmentDto
-                    {
-                        Date = moveInfo.NewDate,
-                        StartMin = moveInfo.NewStartMin,
-                        // EndTime = newEndTime
-                    });
-
-                if (!result.IsSuccess)
+            var success = await this.ModalCoordinator.HandleAppointmentMovedAsync(
+                moveInfo,
+                this.State,
+                () => { this.StateHasChanged(); return Task.CompletedTask; },
+                async (errorMessage) =>
                 {
-                    this.Logger.LogWarning("Failed to move appointment {ApptId}: {ErrorMessage}", moveInfo.ApptId, result.ErrorMessage);
-                    await this.JSRuntime.InvokeVoidAsync("alert", $"予約の移動に失敗しました: {result.ErrorMessage}");
-                    return;
-                }
+                    this.Logger.LogWarning("Failed to move appointment: {ErrorMessage}", errorMessage);
+                    await this.JSRuntime.InvokeVoidAsync("alert", errorMessage);
+                });
 
-                // 予約更新後にデータを再取得
-                await this.RefreshCalendarDataAsync();
+            if (success)
+            {
                 this.StateHasChanged();
             }
         }
