@@ -1,11 +1,8 @@
 using Aloe.Apps.MedockLib.Constants;
-using Aloe.Apps.MedockLib.Data;
-using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockLib.Services.Dtos;
 using Aloe.Apps.MedockLib.Services.Dtos.Appointments;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using System.ComponentModel.DataAnnotations;
 
@@ -20,16 +17,16 @@ public partial class AppointmentModal : ComponentBase
     private IAppointmentService AppointmentService { get; set; } = default!;
 
     /// <summary>
+    /// 予約フォームサービス
+    /// </summary>
+    [Inject]
+    private IAppointmentFormService FormService { get; set; } = default!;
+
+    /// <summary>
     /// ユーザーコンテキストサービス
     /// </summary>
     [Inject]
     private IUserContextService UserContextService { get; set; } = default!;
-
-    /// <summary>
-    /// DbContextファクトリ
-    /// </summary>
-    [Inject]
-    private IDbContextFactory<MedockDbContext> ContextFactory { get; set; } = default!;
 
     /// <summary>
     /// ロガー
@@ -204,21 +201,10 @@ public partial class AppointmentModal : ComponentBase
                 return;
             }
 
-            await using var context = await this.ContextFactory.CreateDbContextAsync();
-
-            this.AvailableEquipmentResources = await context.AppointmentResources
-                .AsNoTracking()
-                .Where(r => r.Floor.FacilityId == facilityId &&
-                           !r.IsDeleted &&
-                           r.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
-                .OrderBy(r => r.ApptResSeq)
-                .ThenBy(r => r.ApptResName)
-                .Select(r => new FilterItem
-                {
-                    Id = r.ApptResId,
-                    Name = r.ApptResName
-                })
-                .ToListAsync();
+            var resources = await this.FormService.GetAvailableEquipmentResourcesAsync(facilityId);
+            this.AvailableEquipmentResources = resources
+                .Select(r => new FilterItem { Id = r.Id, Name = r.Name })
+                .ToList();
 
             this.Logger.LogDebug("Loaded {Count} equipment resources", this.AvailableEquipmentResources.Count);
         }
@@ -353,9 +339,6 @@ public partial class AppointmentModal : ComponentBase
                 return;
             }
 
-            // DbContextを使用して必要なデータを取得
-            using var context = this.ContextFactory.CreateDbContext();
-
             // PatientIdがなければ患者を作成または取得（仮予約は null でも許可）
             Guid? patientId = null;
             if (this.FormModel.PatientId.HasValue)
@@ -365,7 +348,7 @@ public partial class AppointmentModal : ComponentBase
             else if (!String.IsNullOrWhiteSpace(this.FormModel.PatientName))
             {
                 // 患者名が入力されている場合のみ患者を作成
-                patientId = await this.GetOrCreatePatientAsync(context, facilityId, this.FormModel.PatientName);
+                patientId = await this.FormService.GetOrCreatePatientAsync(facilityId, this.FormModel.PatientName);
             }
             // else: patientId は null のまま（仮予約）
 
@@ -377,7 +360,7 @@ public partial class AppointmentModal : ComponentBase
             }
             else
             {
-                var defaultOrgId = await this.GetDefaultOrganizationAsync(context, facilityId);
+                var defaultOrgId = await this.FormService.GetDefaultOrganizationAsync(facilityId);
                 if (defaultOrgId != Guid.Empty)
                 {
                     organizationId = defaultOrgId;
@@ -393,7 +376,7 @@ public partial class AppointmentModal : ComponentBase
             }
             else
             {
-                floorId = await this.GetDefaultFloorAsync(context, facilityId);
+                floorId = await this.FormService.GetDefaultFloorAsync(facilityId);
                 if (floorId == Guid.Empty)
                 {
                     this.ErrorMessage = "デフォルトフロアが見つかりません。";
@@ -431,72 +414,6 @@ public partial class AppointmentModal : ComponentBase
             this.Logger.LogError(ex, "Error in CreateAppointmentAsync");
             throw;
         }
-    }
-
-    /// <summary>
-    /// 患者を取得、または新規作成
-    /// </summary>
-    private async Task<Guid> GetOrCreatePatientAsync(MedockDbContext context, Guid facilityId, string patientName)
-    {
-        // 患者名が指定されている場合は検索
-        if (!String.IsNullOrWhiteSpace(patientName))
-        {
-            // 同じ名前の患者を検索
-            var existingPatient = await context.Patients
-                .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.PtName == patientName && p.FacilityId == facilityId && !p.IsDeleted);
-
-            if (existingPatient != null)
-            {
-                return existingPatient.PtId;
-            }
-        }
-
-        // 患者が見つからない場合または名前が空の場合は新規作成
-        var now = this.DateTimeProvider.UtcNow;
-        var newPatient = new Patient
-        {
-            PtId = Guid.CreateVersion7(),
-            FacilityId = facilityId,
-            CanonicalPtId = Guid.CreateVersion7(),
-            PtCode = $"PT{new DateTimeOffset(now).ToUnixTimeSeconds()}",
-            PtName = patientName ?? String.Empty,
-            PtNameCompat = patientName ?? String.Empty,
-            PrimaryOrgId = await this.GetDefaultOrganizationAsync(context, facilityId),
-            CreatedAt = now,
-            UpdatedAt = now
-        };
-
-        context.Patients.Add(newPatient);
-        await context.SaveChangesAsync();
-
-        this.Logger.LogInformation("Created new patient: {PatientName} ({PatientId})", String.IsNullOrEmpty(patientName) ? "(空欄)" : patientName, newPatient.PtId);
-
-        return newPatient.PtId;
-    }
-
-    /// <summary>
-    /// デフォルト組織を取得
-    /// </summary>
-    private async Task<Guid> GetDefaultOrganizationAsync(MedockDbContext context, Guid facilityId)
-    {
-        var defaultOrg = await context.Organizations
-            .AsNoTracking()
-            .FirstOrDefaultAsync(o => o.FacilityId == facilityId && !o.IsDeleted);
-
-        return defaultOrg?.OrgId ?? Guid.Empty;
-    }
-
-    /// <summary>
-    /// デフォルトフロアを取得
-    /// </summary>
-    private async Task<Guid> GetDefaultFloorAsync(MedockDbContext context, Guid facilityId)
-    {
-        var defaultFloor = await context.Floors
-            .AsNoTracking()
-            .FirstOrDefaultAsync(f => f.FacilityId == facilityId && !f.IsDeleted);
-
-        return defaultFloor?.FloorId ?? Guid.Empty;
     }
 
     private async Task HandleDelete()

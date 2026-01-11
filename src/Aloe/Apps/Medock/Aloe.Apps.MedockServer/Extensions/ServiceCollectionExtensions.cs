@@ -110,6 +110,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IFacilityService, FacilityService>();
         services.AddScoped<ICalendarDataService, CalendarDataService>();
         services.AddScoped<IAppointmentStatsNotificationService, AppointmentStatsNotificationService>();
+        services.AddScoped<IAppointmentFormService, AppointmentFormService>();
 
         return services;
     }
