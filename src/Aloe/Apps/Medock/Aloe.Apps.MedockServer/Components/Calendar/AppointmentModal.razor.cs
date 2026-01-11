@@ -182,7 +182,10 @@ public partial class AppointmentModal : ComponentBase
         }
         catch (Exception ex)
         {
-            this.Logger.LogError(ex, "Error loading appointment: {AppointmentId}", this.AppointmentId);
+            var (tenantId, facilityId, userId) = this.UserContextService.GetTenantContext();
+            this.Logger.LogError(ex,
+                "Error loading appointment: {AppointmentId} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                this.AppointmentId, tenantId, facilityId, userId);
             this.ErrorMessage = "予約データの読み込み中にエラーが発生しました。";
         }
     }
@@ -210,7 +213,10 @@ public partial class AppointmentModal : ComponentBase
         }
         catch (Exception ex)
         {
-            this.Logger.LogError(ex, "Error loading available equipment resources");
+            var (tenantId, facilityId, userId) = this.UserContextService.GetTenantContext();
+            this.Logger.LogError(ex,
+                "Error loading available equipment resources | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                tenantId, facilityId, userId);
         }
     }
 
@@ -271,7 +277,10 @@ public partial class AppointmentModal : ComponentBase
         }
         catch (Exception ex)
         {
-            this.Logger.LogError(ex, "Error saving appointment");
+            var (tenantId, facilityId, userId) = this.UserContextService.GetTenantContext();
+            this.Logger.LogError(ex,
+                "Error saving appointment | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                tenantId, facilityId, userId);
             this.ErrorMessage = $"保存に失敗しました: {ex.Message}";
         }
         finally

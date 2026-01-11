@@ -129,12 +129,17 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task RefreshCalendarDataAsync()
     {
-        await _dataService.LoadMainStatsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadMainStatsSlotsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadEquipmentStatsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadAppointmentsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadHolidaysAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
+        _logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Starting");
+
+        await _dataService.LoadAllCalendarDataAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
         await _filterCoordinator.ReapplyCurrentFilterAsync(_state);
+
+        _logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Completed");
     }
 
     // ===================================================================
@@ -174,21 +179,21 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     public async Task SetViewAsync(CalendarViewType view)
     {
         var sw = Stopwatch.StartNew();
-        _logger.LogInformation("CalendarOrchestrator.SetView: {CurrentView} → {TargetView}", _state.CurrentView, view);
+        _logger.LogInformation("CalendarOrchestrator.SetView: {CurrentView} → {TargetView}",
+            _state.CurrentView, view);
 
-        // 先にターゲットビュー用のデータをロード
-        await _dataService.LoadMainStatsAsync(_state, view, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadMainStatsSlotsAsync(_state, view, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadEquipmentStatsAsync(_state, view, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadAppointmentsAsync(_state, view, _state.CurrentDate, _state.WeekDays);
-        await _dataService.LoadHolidaysAsync(_state, view, _state.CurrentDate, _state.WeekDays);
+        // ビュー切替前にデータをプリロード
+        await _dataService.LoadAllCalendarDataAsync(_state, view, _state.CurrentDate, _state.WeekDays);
+
+        // フィルター再適用
         await _filterCoordinator.ReapplyCurrentFilterAsync(_state);
 
-        // データロード完了後にビューを切り替え
+        // ビュー状態更新
         _state.SetView(view);
 
         sw.Stop();
-        _logger.LogInformation("CalendarOrchestrator.SetView completed: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        _logger.LogInformation("CalendarOrchestrator.SetView completed: {ElapsedMs}ms",
+            sw.ElapsedMilliseconds);
     }
 
     public async Task HandleDateClickAsync(DateOnly date)
@@ -379,39 +384,20 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     private async Task LoadAllDataAsync()
     {
-        var businessHoursSw = Stopwatch.StartNew();
-        await _dataService.LoadBusinessHoursAsync(_state);
-        businessHoursSw.Stop();
-        _logger.LogInformation("[TRACE] LoadBusinessHours: {ElapsedMs}ms", businessHoursSw.ElapsedMilliseconds);
+        var sw = Stopwatch.StartNew();
+        _logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Starting initial data load");
 
-        var mainStatsSw = Stopwatch.StartNew();
-        await _dataService.LoadMainStatsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        mainStatsSw.Stop();
-        _logger.LogInformation("[TRACE] LoadMainStats: {ElapsedMs}ms", mainStatsSw.ElapsedMilliseconds);
+        // 全データ一括読み込み（新メソッド使用）
+        // ビジネスアワーとフィルターオプションは初期化時のみ読み込み
+        await _dataService.LoadAllCalendarDataAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays,
+            includeBusinessHours: true,
+            includeFilterOptions: true);
 
-        var mainStatSlotsSw = Stopwatch.StartNew();
-        await _dataService.LoadMainStatsSlotsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        mainStatSlotsSw.Stop();
-        _logger.LogInformation("[TRACE] LoadMainStatsSlots: {ElapsedMs}ms", mainStatSlotsSw.ElapsedMilliseconds);
-
-        var equipmentStatsSw = Stopwatch.StartNew();
-        await _dataService.LoadEquipmentStatsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        equipmentStatsSw.Stop();
-        _logger.LogInformation("[TRACE] LoadEquipmentStats: {ElapsedMs}ms", equipmentStatsSw.ElapsedMilliseconds);
-
-        var appointmentsSw = Stopwatch.StartNew();
-        await _dataService.LoadAppointmentsAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        appointmentsSw.Stop();
-        _logger.LogInformation("[TRACE] LoadAppointments: {ElapsedMs}ms", appointmentsSw.ElapsedMilliseconds);
-
-        var filterOptionsSw = Stopwatch.StartNew();
-        await _dataService.LoadFilterOptionsAsync(_state);
-        filterOptionsSw.Stop();
-        _logger.LogInformation("[TRACE] LoadFilterOptions: {ElapsedMs}ms", filterOptionsSw.ElapsedMilliseconds);
-
-        var holidaysSw = Stopwatch.StartNew();
-        await _dataService.LoadHolidaysAsync(_state, _state.CurrentView, _state.CurrentDate, _state.WeekDays);
-        holidaysSw.Stop();
-        _logger.LogInformation("[TRACE] LoadHolidays: {ElapsedMs}ms", holidaysSw.ElapsedMilliseconds);
+        sw.Stop();
+        _logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Completed in {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 }

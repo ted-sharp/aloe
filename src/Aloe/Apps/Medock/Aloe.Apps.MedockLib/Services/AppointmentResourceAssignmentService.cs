@@ -9,7 +9,7 @@ namespace Aloe.Apps.MedockLib.Services;
 /// <summary>
 /// 予約リソース割り当てサービス
 /// </summary>
-public class AppointmentResourceAssignmentService
+public class AppointmentResourceAssignmentService : IAppointmentResourceAssignmentService
 {
     private readonly IDbContextFactory<MedockDbContext> _dbContextFactory;
     private readonly ILogger<AppointmentResourceAssignmentService> _logger;

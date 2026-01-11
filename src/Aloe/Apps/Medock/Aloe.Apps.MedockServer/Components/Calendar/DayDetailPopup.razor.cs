@@ -1,4 +1,6 @@
+using Aloe.Apps.MedockLib.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
 using Microsoft.JSInterop;
 
 namespace Aloe.Apps.MedockServer.Components.Calendar;
@@ -19,6 +21,12 @@ public partial class DayDetailPopup : ComponentBase
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
+
+    [Inject]
+    private IUserContextService UserContextService { get; set; } = default!;
+
+    [Inject]
+    private ILogger<DayDetailPopup> Logger { get; set; } = default!;
 
     [Parameter]
     public bool IsOpen { get; set; }
@@ -103,8 +111,12 @@ public partial class DayDetailPopup : ComponentBase
                 "MedockCalendar.getHolidayName", dateStr);
             this.StateHasChanged();
         }
-        catch
+        catch (Exception ex)
         {
+            var (tenantId, facilityId, userId) = this.UserContextService.GetTenantContext();
+            this.Logger.LogError(ex,
+                "Error loading holiday name for {Date} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                this.SelectedDate, tenantId, facilityId, userId);
             this.HolidayName = null;
         }
     }
@@ -141,7 +153,10 @@ public partial class DayDetailPopup : ComponentBase
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"DayDetailPopup: Failed to render chart: {ex.Message}");
+            var (tenantId, facilityId, userId) = this.UserContextService.GetTenantContext();
+            this.Logger.LogError(ex,
+                "Failed to render day detail popup chart | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                tenantId, facilityId, userId);
         }
     }
 

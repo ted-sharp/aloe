@@ -105,7 +105,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserContextService, UserContextService>();
-        services.AddScoped<AppointmentResourceAssignmentService>();
+        services.AddScoped<IAppointmentResourceAssignmentService, AppointmentResourceAssignmentService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IFacilityService, FacilityService>();
         services.AddScoped<ICalendarDataService, CalendarDataService>();
@@ -134,7 +134,6 @@ public static class ServiceCollectionExtensions
             ApplicationServices.Calendar.DataLoaders.MetadataLoader>();
         services.AddScoped<ApplicationServices.Calendar.CalendarApplicationService>();
         services.AddScoped<ApplicationServices.Calendar.CalendarNavigationService>();
-        services.AddScoped<ApplicationServices.Calendar.CalendarDataCoordinator>();
         services.AddScoped<ApplicationServices.Calendar.CalendarFilterCoordinator>();
         services.AddScoped<ApplicationServices.Calendar.CalendarModalCoordinator>();
 

@@ -23,7 +23,7 @@ public class AppointmentService : IAppointmentService
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IDbContextFactory<MedockDbContext> _dbContextFactory;
     private readonly ILogger<AppointmentService> _logger;
-    private readonly AppointmentResourceAssignmentService _resourceAssignmentService;
+    private readonly IAppointmentResourceAssignmentService _resourceAssignmentService;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
@@ -32,7 +32,7 @@ public class AppointmentService : IAppointmentService
         IDateTimeProvider dateTimeProvider,
         IDbContextFactory<MedockDbContext> dbContextFactory,
         ILogger<AppointmentService> logger,
-        AppointmentResourceAssignmentService resourceAssignmentService)
+        IAppointmentResourceAssignmentService resourceAssignmentService)
     {
         this._appointmentRepository = appointmentRepository;
         this._holidayRepository = holidayRepository;

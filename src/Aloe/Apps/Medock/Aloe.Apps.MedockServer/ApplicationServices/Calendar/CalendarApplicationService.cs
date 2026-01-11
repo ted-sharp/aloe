@@ -85,4 +85,35 @@ public class CalendarApplicationService
         DateOnly currentDate,
         int weekDays = 7)
         => this._statsLoader.LoadEquipmentStatsAsync(state, viewType, currentDate, weekDays);
+
+    /// <summary>
+    /// 全カレンダーデータを一括読み込み（重複ロジック統合）
+    /// </summary>
+    public async Task LoadAllCalendarDataAsync(
+        CalendarState state,
+        CalendarViewType viewType,
+        DateOnly currentDate,
+        int weekDays,
+        bool includeBusinessHours = false,
+        bool includeFilterOptions = false)
+    {
+        // ビジネスアワー（初期化時のみ）
+        if (includeBusinessHours)
+        {
+            await this.LoadBusinessHoursAsync(state);
+        }
+
+        // コアデータ（常に読み込み）
+        await this.LoadMainStatsAsync(state, viewType, currentDate, weekDays);
+        await this.LoadMainStatsSlotsAsync(state, viewType, currentDate, weekDays);
+        await this.LoadEquipmentStatsAsync(state, viewType, currentDate, weekDays);
+        await this.LoadAppointmentsAsync(state, viewType, currentDate, weekDays);
+        await this.LoadHolidaysAsync(state, viewType, currentDate, weekDays);
+
+        // フィルターオプション（初期化時のみ）
+        if (includeFilterOptions)
+        {
+            await this.LoadFilterOptionsAsync(state);
+        }
+    }
 }
