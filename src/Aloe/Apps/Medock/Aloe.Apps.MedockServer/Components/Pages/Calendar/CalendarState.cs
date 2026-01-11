@@ -43,9 +43,15 @@ public class CalendarState
     public (DateOnly Start, DateOnly End)? SelectedDateRange { get; set; }
 
     // カレンダーデータ
+    /// <summary>
+    /// メインリソースの統計データ（フィルターにより MainStatsGrayedOut フラグで表示/非表示を制御）
+    /// </summary>
     public Dictionary<string, List<AppointmentStats>> MainStats { get; set; } = new();
-    public Dictionary<string, List<AppointmentStats>> OriginalMainStats { get; set; } = new();
-    public Dictionary<string, bool> MainStatsGrayedOut { get; set; } = new(); // フィルター用のグレーアウト状態
+
+    /// <summary>
+    /// フィルター用のグレーアウト状態（特定の日付・時間スロットが条件を満たさない場合に true）
+    /// </summary>
+    public Dictionary<string, bool> MainStatsGrayedOut { get; set; } = new();
     public Dictionary<(DateOnly ApptDate, Guid ApptResId), List<AppointmentStatSlots>>? MainStatsSlots { get; set; } // スロット単位の統計データ
     public Dictionary<string, List<ResourceStatSlotsDto>>? EquipmentStatsOptimized { get; set; }
     public List<AppointmentDto> Appointments { get; set; } = new();

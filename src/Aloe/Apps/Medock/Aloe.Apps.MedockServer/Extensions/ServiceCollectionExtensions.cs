@@ -124,7 +124,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICalendarResourceFilterService, CalendarResourceFilterService>();
         services.AddScoped<Components.Pages.CalendarFilterService>();
 
-        // Calendar Application Services (Loaders + Facade)
+        // Calendar Application Services (Loaders + Facade + Navigation)
         services.AddScoped<ApplicationServices.Calendar.DataLoaders.IStatsLoader,
             ApplicationServices.Calendar.DataLoaders.StatsLoader>();
         services.AddScoped<ApplicationServices.Calendar.DataLoaders.IAppointmentLoader,
@@ -132,6 +132,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ApplicationServices.Calendar.DataLoaders.IMetadataLoader,
             ApplicationServices.Calendar.DataLoaders.MetadataLoader>();
         services.AddScoped<ApplicationServices.Calendar.CalendarApplicationService>();
+        services.AddScoped<ApplicationServices.Calendar.CalendarNavigationService>();
 
         return services;
     }

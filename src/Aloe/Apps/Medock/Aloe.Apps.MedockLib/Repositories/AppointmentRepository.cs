@@ -27,23 +27,15 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// </summary>
     public async Task<Appointment?> GetByIdAsync(Guid apptId)
     {
-        try
-        {
-            return await this.Context.Appointments
-                .AsNoTracking()
-                .Include(a => a.Floor)
-                .Include(a => a.Organization)
-                .Include(a => a.Patient)
-                .Include(a => a.AppointmentResourceAssignments)
-                    .ThenInclude(r => r.AppointmentResource)
-                .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentRetrievalError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Failed to retrieve appointment {apptId}", ex);
-        }
+        return await this.ExecuteQueryAsync(
+            () => this.CreateAppointmentQuery()
+                .FirstOrDefaultAsync(a => a.ApptId == apptId),
+            ex => $"Failed to retrieve appointment {apptId}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.AppointmentRetrievalError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <summary>
@@ -51,27 +43,20 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// </summary>
     public async Task<List<Appointment>> GetByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
-        try
-        {
-            return await this.Context.Appointments
-                .AsNoTracking()
-                .Include(a => a.Floor)
-                .Include(a => a.Organization)
-                .Include(a => a.Patient)
-                .Where(a => !a.IsDeleted &&
-                            a.ApptDate.HasValue &&
+        return await this.ExecuteQueryAsync(
+            () => this.CreateAppointmentQuery()
+                .Where(a => a.ApptDate.HasValue &&
                             a.ApptDate >= startDate &&
                             a.ApptDate <= endDate)
                 .OrderBy(a => a.ApptDate)
                 .ThenBy(a => a.ApptStartMin)
-                .ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentsRetrievalError((ILogger<AppointmentRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Failed to retrieve appointments for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
-        }
+                .ToListAsync(),
+            ex => $"Failed to retrieve appointments for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.AppointmentsRetrievalError((ILogger<AppointmentRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <summary>
@@ -79,26 +64,22 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// </summary>
     public async Task AddAsync(Appointment appointment)
     {
-        try
-        {
-            this.Context.Appointments.Add(appointment);
-            await this.Context.SaveChangesAsync();
+        await this.ExecuteCommandAsync(
+            async () =>
+            {
+                this.Context.Appointments.Add(appointment);
+                await this.Context.SaveChangesAsync();
+            },
+            ex => $"Database error while creating appointment {appointment.ApptId}",
+            ex => $"Concurrency error while creating appointment {appointment.ApptId}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.AppointmentCreateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
+            });
 
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentCreated((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId);
-        }
-        catch (DbUpdateException ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentCreateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Database error while creating appointment {appointment.ApptId}", ex);
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentCreateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
-            throw;
-        }
+        var (txnTenantId, txnFacilityId, txnUserId) = this.GetTenantContext();
+        LogMessages.AppointmentCreated((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, txnTenantId, txnFacilityId, txnUserId);
     }
 
     /// <summary>
@@ -106,32 +87,22 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// </summary>
     public async Task UpdateAsync(Appointment appointment)
     {
-        try
-        {
-            this.Context.Appointments.Update(appointment);
-            await this.Context.SaveChangesAsync();
+        await this.ExecuteCommandAsync(
+            async () =>
+            {
+                this.Context.Appointments.Update(appointment);
+                await this.Context.SaveChangesAsync();
+            },
+            ex => $"Database error while updating appointment {appointment.ApptId}",
+            ex => $"Appointment {appointment.ApptId} was modified by another user",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.AppointmentUpdateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
+            });
 
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentUpdated((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId);
-        }
-        catch (DbUpdateConcurrencyException ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentConcurrencyError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
-            throw new ConcurrencyException($"Appointment {appointment.ApptId} was modified by another user", ex);
-        }
-        catch (DbUpdateException ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentUpdateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Database error while updating appointment {appointment.ApptId}", ex);
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentUpdateError((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, tenantId, facilityId, userId, ex);
-            throw;
-        }
+        var (txnTenantId, txnFacilityId, txnUserId) = this.GetTenantContext();
+        LogMessages.AppointmentUpdated((ILogger<AppointmentRepository>)this.Logger, appointment.ApptId, txnTenantId, txnFacilityId, txnUserId);
     }
 
     /// <summary>
@@ -139,37 +110,28 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// </summary>
     public async Task DeleteAsync(Guid apptId)
     {
-        try
+        var (tenantId, facilityId, userId) = this.GetTenantContext();
+        var appointment = await this.Context.Appointments.FindAsync(apptId);
+        if (appointment == null)
         {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            var appointment = await this.Context.Appointments.FindAsync(apptId);
-            if (appointment == null)
+            LogMessages.AppointmentNotFoundForDeletion((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId);
+            throw new NotFoundException("Appointment", apptId);
+        }
+
+        await this.ExecuteCommandAsync(
+            async () =>
             {
-                LogMessages.AppointmentNotFoundForDeletion((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId);
-                throw new NotFoundException("Appointment", apptId);
-            }
+                appointment.IsDeleted = true;
+                await this.Context.SaveChangesAsync();
+            },
+            ex => $"Database error while deleting appointment {apptId}",
+            ex => $"Concurrency error while deleting appointment {apptId}",
+            ex =>
+            {
+                LogMessages.AppointmentDeleteError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
+            });
 
-            appointment.IsDeleted = true;
-            await this.Context.SaveChangesAsync();
-
-            LogMessages.AppointmentDeleted((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId);
-        }
-        catch (NotFoundException)
-        {
-            throw;
-        }
-        catch (DbUpdateException ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentDeleteError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Database error while deleting appointment {apptId}", ex);
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentDeleteError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
-            throw;
-        }
+        LogMessages.AppointmentDeleted((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId);
     }
 
 
@@ -177,20 +139,18 @@ public class AppointmentRepository : RepositoryBase, IAppointmentRepository
     /// <inheritdoc />
     public async Task<Appointment?> FindForUpdateAsync(Guid apptId)
     {
-        try
-        {
-            return await this.Context.Appointments
+        return await this.ExecuteQueryAsync(
+            () => this.Context.Appointments
                 .Include(a => a.Floor)
                 .Include(a => a.Organization)
                 .Include(a => a.Patient)
-                .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted);
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.AppointmentRetrievalError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Failed to retrieve appointment {apptId} for update", ex);
-        }
+                .FirstOrDefaultAsync(a => a.ApptId == apptId && !a.IsDeleted),
+            ex => $"Failed to retrieve appointment {apptId} for update",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.AppointmentRetrievalError((ILogger<AppointmentRepository>)this.Logger, apptId, tenantId, facilityId, userId, ex);
+            });
     }
 
 }

@@ -20,7 +20,6 @@ public class CalendarFilterService
     public async Task ApplyFilterAsync(
         SearchFilterPanel.SearchFilter filter,
         Dictionary<string, List<AppointmentStats>> mainStats,
-        Dictionary<string, List<AppointmentStats>> originalMainStats,
         Dictionary<string, bool> mainStatsGrayedOut,
         CalendarViewType currentView,
         DateOnly currentDate,

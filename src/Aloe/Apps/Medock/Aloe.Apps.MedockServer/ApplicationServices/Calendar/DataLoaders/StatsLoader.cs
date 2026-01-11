@@ -87,7 +87,6 @@ public class StatsLoader : IStatsLoader
 
             // 全日付を初期化
             state.MainStats.Clear();
-            state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
 
             var initSw = Stopwatch.StartNew();
@@ -101,12 +100,10 @@ public class StatsLoader : IStatsLoader
                     // NOTE: Slot overrides are now pre-calculated during seeding
                     // Stats are already in their final form from the database
                     state.MainStats[dateStr] = mainStatsList;
-                    state.OriginalMainStats[dateStr] = mainStatsList.ToList();
                 }
                 else
                 {
                     state.MainStats[dateStr] = new List<AppointmentStats>();
-                    state.OriginalMainStats[dateStr] = new List<AppointmentStats>();
                 }
 
                 state.MainStatsGrayedOut[dateStr] = false;
@@ -120,7 +117,6 @@ public class StatsLoader : IStatsLoader
             // エラー時は空のMainStatsを設定
             this._logger.LogError(ex, "Error loading main stats");
             state.MainStats.Clear();
-            state.OriginalMainStats.Clear();
             state.MainStatsGrayedOut.Clear();
         }
         finally

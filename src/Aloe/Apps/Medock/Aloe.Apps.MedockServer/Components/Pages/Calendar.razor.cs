@@ -54,6 +54,9 @@ public partial class Calendar : ComponentBase
     [Inject]
     private IJSRuntime JSRuntime { get; set; } = default!;
 
+    [Inject]
+    private CalendarNavigationService NavigationService { get; set; } = default!;
+
     // ドロワー状態（Layoutと連携）
     private bool _isDrawerOpen;
     private bool IsDrawerOpen
@@ -140,7 +143,6 @@ public partial class Calendar : ComponentBase
     private DateOnly? DayDetailDate { get; set; }
 
     private Dictionary<string, List<AppointmentStats>> MainStats => this.State.MainStats;
-    private Dictionary<string, List<AppointmentStats>> OriginalMainStats => this.State.OriginalMainStats;
     private Dictionary<string, bool> MainStatsGrayedOut => this.State.MainStatsGrayedOut;
     private Dictionary<string, List<ResourceStatSlotsDto>>? EquipmentStatsOptimized => this.State.EquipmentStatsOptimized;
     private List<AppointmentDto> Appointments => this.State.Appointments;
@@ -419,33 +421,33 @@ public partial class Calendar : ComponentBase
         // StateHasChanged() は呼び出し元で実行される
     }
 
-    private async Task PreviousPeriod()
-    {
-        this.State.PreviousPeriod();
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
-    }
+    private async Task PreviousPeriod() =>
+        await this.NavigationService.NavigateAsync(
+            CalendarNavigationService.NavigationDirection.PreviousPeriod,
+            this.State,
+            this.RefreshCalendarDataAsync,
+            this.StateHasChanged);
 
-    private async Task NextPeriod()
-    {
-        this.State.NextPeriod();
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
-    }
+    private async Task NextPeriod() =>
+        await this.NavigationService.NavigateAsync(
+            CalendarNavigationService.NavigationDirection.NextPeriod,
+            this.State,
+            this.RefreshCalendarDataAsync,
+            this.StateHasChanged);
 
-    private async Task PreviousBigPeriod()
-    {
-        this.State.PreviousBigPeriod();
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
-    }
+    private async Task PreviousBigPeriod() =>
+        await this.NavigationService.NavigateAsync(
+            CalendarNavigationService.NavigationDirection.PreviousBigPeriod,
+            this.State,
+            this.RefreshCalendarDataAsync,
+            this.StateHasChanged);
 
-    private async Task NextBigPeriod()
-    {
-        this.State.NextBigPeriod();
-        await this.RefreshCalendarDataAsync();
-        this.StateHasChanged();
-    }
+    private async Task NextBigPeriod() =>
+        await this.NavigationService.NavigateAsync(
+            CalendarNavigationService.NavigationDirection.NextBigPeriod,
+            this.State,
+            this.RefreshCalendarDataAsync,
+            this.StateHasChanged);
 
     private async Task GoToToday()
     {
@@ -554,7 +556,6 @@ public partial class Calendar : ComponentBase
         await this.FilterService.ApplyFilterAsync(
             this.State.CurrentFilter,
             this.State.MainStats,
-            this.State.OriginalMainStats,
             this.State.MainStatsGrayedOut,
             this.State.CurrentView,
             this.State.CurrentDate);
