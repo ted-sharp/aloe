@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
@@ -70,7 +71,7 @@ public static class ServiceCollectionExtensions
                     ? CookieSecurePolicy.SameAsRequest
                     : CookieSecurePolicy.Always;
                 options.Cookie.SameSite = SameSiteMode.Lax;
-                options.ExpireTimeSpan = TimeSpan.FromMinutes(cookieSettings.ExpireTimeSpanMinutes ?? 15);
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(cookieSettings.ExpireTimeSpanMinutes ?? AuthenticationConstants.DefaultCookieExpireMinutes);
                 options.SlidingExpiration = cookieSettings.SlidingExpiration ?? true;
                 options.LoginPath = "/login";
                 options.LogoutPath = "/api/auth/logout";
@@ -104,6 +105,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserContextService, UserContextService>();
+        services.AddScoped<AppointmentResourceAssignmentService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IFacilityService, FacilityService>();
         services.AddScoped<ICalendarDataService, CalendarDataService>();

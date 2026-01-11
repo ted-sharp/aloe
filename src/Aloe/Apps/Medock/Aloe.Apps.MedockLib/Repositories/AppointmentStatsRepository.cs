@@ -15,26 +15,21 @@ namespace Aloe.Apps.MedockLib.Repositories;
 /// <summary>
 /// 予約統計リポジトリ
 /// </summary>
-public class AppointmentStatsRepository : IAppointmentStatsRepository
+public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepository
 {
-    private readonly MedockDbContext _context;
-    private readonly ILogger<AppointmentStatsRepository> _logger;
-    private readonly IUserContextService _userContextService;
-
     public AppointmentStatsRepository(
         MedockDbContext context,
         ILogger<AppointmentStatsRepository> logger,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IDateTimeProvider dateTimeProvider)
+        : base(context, logger, userContextService, dateTimeProvider)
     {
-        this._context = context;
-        this._logger = logger;
-        this._userContextService = userContextService;
     }
 
     /// <inheritdoc />
     public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
-        return await this._context.AppointmentStats
+        return await this.Context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
             .Where(s => !s.IsDeleted &&
@@ -55,7 +50,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         List<Guid>? planIds = null,
         List<Guid>? optionPlanIds = null)
     {
-        var query = this._context.AppointmentStats
+        var query = this.Context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
                 .ThenInclude(r => r.Floor)
@@ -85,7 +80,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             // プランからリソースを取得
             if (planIds != null && planIds.Any())
             {
-                var planResourceIds = await this._context.PlanResourceRequirements
+                var planResourceIds = await this.Context.PlanResourceRequirements
                     .AsNoTracking()
                     .Where(prr => !prr.IsDeleted && planIds.Contains(prr.PlanId))
                     .Select(prr => prr.ApptResId)
@@ -101,7 +96,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
             if (optionPlanIds != null && optionPlanIds.Any())
             {
                 // オプションのプランIDから、そのプランのリソース要件を取得
-                var optionResourceIds = await this._context.PlanResourceRequirements
+                var optionResourceIds = await this.Context.PlanResourceRequirements
                     .AsNoTracking()
                     .Where(prr => !prr.IsDeleted && optionPlanIds.Contains(prr.PlanId))
                     .Select(prr => prr.ApptResId)
@@ -132,7 +127,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         DateOnly date,
         List<Guid> resourceIds)
     {
-        return await this._context.AppointmentStats
+        return await this.Context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
             .Where(s => !s.IsDeleted &&
@@ -149,7 +144,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         DateOnly endDate,
         List<Guid> equipmentResourceIds)
     {
-        var query = this._context.AppointmentStats
+        var query = this.Context.AppointmentStats
             .AsNoTracking()
             .Include(s => s.AppointmentResource)
             .Where(s => !s.IsDeleted &&
@@ -176,11 +171,11 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         // equipmentResourceIds が null または空の場合は空の辞書を返す
         if (equipmentResourceIds == null || !equipmentResourceIds.Any())
         {
-            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
+            ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: equipmentResourceIds is null or empty, returning empty dict");
             return new Dictionary<string, List<ResourceStatSlotsDto>>();
         }
 
-        this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
+        ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, IDs count={Count}",
             startDate, endDate, equipmentResourceIds.Count);
 
         // PostgreSQL の array_agg で SQL側で配列化
@@ -219,12 +214,12 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         // 中間DTO で日付を含める
         try
         {
-            var results = await this._context
+            var results = await this.Context
                 .Database
                 .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
                 .ToListAsync();
 
-            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
+            ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
 
             // 日付ごとにグループ化
             var groupedByDate = new Dictionary<string, List<ResourceStatSlotsDto>>();
@@ -262,8 +257,8 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.DiffDataRetrievalError(this._logger, tenantId, facilityId, userId, ex);
+            var (tenantId, facilityId, userId) = this.GetTenantContext();
+            LogMessages.DiffDataRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
     }
@@ -279,11 +274,11 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         if ((or1ResourceIds == null || !or1ResourceIds.Any()) &&
             (or2ResourceIds == null || !or2ResourceIds.Any()))
         {
-            this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: both OR groups are empty, returning empty dict");
+            ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: both OR groups are empty, returning empty dict");
             return new Dictionary<string, List<ResourceStatSlotsDto>>();
         }
 
-        this._logger.LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, OR1 count={Or1Count}, OR2 count={Or2Count}",
+        ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateWithOrGroupsAsync: DateRange={StartDate:yyyy-MM-dd}~{EndDate:yyyy-MM-dd}, OR1 count={Or1Count}, OR2 count={Or2Count}",
             startDate, endDate, or1ResourceIds?.Count ?? 0, or2ResourceIds?.Count ?? 0);
 
         // ORグループ条件を構築
@@ -316,7 +311,7 @@ public class AppointmentStatsRepository : IAppointmentStatsRepository
         DateOnly endDate,
         List<Guid>? resourceIds = null)
     {
-        var query = this._context.AppointmentStatSlots
+        var query = this.Context.AppointmentStatSlots
             .AsNoTracking()
             .Where(s => !s.IsDeleted &&
                         s.ApptDate >= startDate &&

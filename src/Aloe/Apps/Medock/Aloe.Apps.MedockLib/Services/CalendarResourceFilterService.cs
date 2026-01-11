@@ -74,7 +74,11 @@ public class CalendarResourceFilterService : ICalendarResourceFilterService
         }
         catch (Exception ex)
         {
-            this._logger.LogError(ex, "Error getting related resource IDs for calendar filtering");
+            // リソースIDの取得に失敗した場合、ログを出力して空のリストを返す
+            // 呼び出し元では、空のリストが返された場合、フィルタリングなしで動作を継続する
+            this._logger.LogWarning(ex, 
+                "Failed to get related resource IDs for calendar filtering. Returning empty list. FloorIds count={FloorCount}, PlanIds count={PlanCount}",
+                floorIds.Count(), planIds.Count());
         }
 
         return autoResourceIds.ToList();

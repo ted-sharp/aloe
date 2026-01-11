@@ -23,6 +23,7 @@ public class AppointmentService : IAppointmentService
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IDbContextFactory<MedockDbContext> _dbContextFactory;
     private readonly ILogger<AppointmentService> _logger;
+    private readonly AppointmentResourceAssignmentService _resourceAssignmentService;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
@@ -30,7 +31,8 @@ public class AppointmentService : IAppointmentService
         IUserContextService userContextService,
         IDateTimeProvider dateTimeProvider,
         IDbContextFactory<MedockDbContext> dbContextFactory,
-        ILogger<AppointmentService> logger)
+        ILogger<AppointmentService> logger,
+        AppointmentResourceAssignmentService resourceAssignmentService)
     {
         this._appointmentRepository = appointmentRepository;
         this._holidayRepository = holidayRepository;
@@ -38,6 +40,7 @@ public class AppointmentService : IAppointmentService
         this._dateTimeProvider = dateTimeProvider;
         this._dbContextFactory = dbContextFactory;
         this._logger = logger;
+        this._resourceAssignmentService = resourceAssignmentService;
     }
 
     /// <inheritdoc />
@@ -54,7 +57,7 @@ public class AppointmentService : IAppointmentService
                 querySw.ElapsedMilliseconds, appointments.Count);
 
             var mapSw = System.Diagnostics.Stopwatch.StartNew();
-            var dtos = appointments.Select(a => this.MapToDto(a)).ToList();
+            var dtos = appointments.Select(a => AppointmentMapper.MapToDto(a, this._dateTimeProvider)).ToList();
             mapSw.Stop();
             this._logger.LogInformation("[PERF] AppointmentService - MapToDto: {ElapsedMs}ms",
                 mapSw.ElapsedMilliseconds);
@@ -96,9 +99,11 @@ public class AppointmentService : IAppointmentService
                 return Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
 
-            var dto = this.MapToDto(appointment);
+            var dto = AppointmentMapper.MapToDto(appointment, this._dateTimeProvider);
 
             // 機器リソースを取得
+            // 注意: 機器リソースの取得に失敗した場合でも、予約DTOは返す（部分的な結果）
+            // EquipmentResourcesは空のリストで初期化されているため、例外が発生しても空のリストのままとなる
             try
             {
                 await using var context = await this._dbContextFactory.CreateDbContextAsync();
@@ -119,8 +124,12 @@ public class AppointmentService : IAppointmentService
             }
             catch (Exception ex)
             {
-                this._logger.LogError(ex, "Error loading equipment resources for appointment {ApptId}", apptId);
-                // エラーが発生しても DTO は返す（リソース情報なし）
+                // 機器リソースの取得に失敗した場合、ログを出力して処理を継続
+                // 予約DTOは返すが、EquipmentResourcesは空のリストのままとなる（部分的な結果）
+                var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
+                this._logger.LogWarning(ex, 
+                    "Failed to load equipment resources for appointment {ApptId}. Returning appointment without equipment resources. | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}",
+                    apptId, tenantId, facilityId, userId);
             }
 
             return Result<AppointmentDto>.Success(dto);
@@ -166,12 +175,12 @@ public class AppointmentService : IAppointmentService
             await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             // Mainリソースを自動的に割り当て
-            await this.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
+            await this._resourceAssignmentService.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
 
             // 選択された機器リソースを割り当て
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                await this.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
+                await this._resourceAssignmentService.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
             }
 
             await context.SaveChangesAsync();
@@ -250,23 +259,15 @@ public class AppointmentService : IAppointmentService
             await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             // 既存の割り当てをすべてソフト削除
-            var existingAssignments = await context.AppointmentResourceAssignments
-                .Where(a => a.ApptId == apptId && !a.IsDeleted)
-                .ToListAsync();
-
-            foreach (var assignment in existingAssignments)
-            {
-                assignment.IsDeleted = true;
-                assignment.UpdatedAt = appointment.UpdatedAt;
-            }
+            await this._resourceAssignmentService.SoftDeleteAllAssignmentsAsync(context, apptId, appointment.UpdatedAt);
 
             // Mainリソースを自動的に割り当て
-            await this.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
+            await this._resourceAssignmentService.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
 
             // 選択された機器リソースを割り当て
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                await this.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
+                await this._resourceAssignmentService.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
             }
 
             await context.SaveChangesAsync();
@@ -358,81 +359,6 @@ public class AppointmentService : IAppointmentService
         }
     }
 
-    /// <summary>
-    /// Mainリソースを予約に自動的に割り当てます
-    /// </summary>
-    private async Task AssignMainResourcesAsync(MedockDbContext context, Guid apptId, Guid floorId, DateTime timestamp)
-    {
-        var mainResources = await context.AppointmentResources
-            .AsNoTracking()
-            .Where(r => r.FloorId == floorId &&
-                       !r.IsDeleted &&
-                       r.ApptResTypeCode == (int)AppointmentResourceType.Main)
-            .OrderBy(r => r.ApptResSeq)
-            .ToListAsync();
-
-        foreach (var mainResource in mainResources)
-        {
-            var assignment = new AppointmentResourceAssignment
-            {
-                ApptResAssignId = Guid.CreateVersion7(),
-                ApptId = apptId,
-                ApptResId = mainResource.ApptResId,
-                IsDeleted = false,
-                CreatedAt = timestamp,
-                UpdatedAt = timestamp
-            };
-
-            await context.AppointmentResourceAssignments.AddAsync(assignment);
-        }
-
-        this._logger.LogDebug("Created {Count} main resource assignments for appointment {ApptId}",
-            mainResources.Count, apptId);
-    }
-
-    /// <summary>
-    /// 機器リソースを予約に割り当てます
-    /// </summary>
-    private async Task AssignEquipmentResourcesAsync(MedockDbContext context, Guid apptId, IEnumerable<Guid> equipmentResourceIds, DateTime timestamp)
-    {
-        foreach (var resourceId in equipmentResourceIds)
-        {
-            var assignment = new AppointmentResourceAssignment
-            {
-                ApptResAssignId = Guid.CreateVersion7(),
-                ApptId = apptId,
-                ApptResId = resourceId,
-                IsDeleted = false,
-                CreatedAt = timestamp,
-                UpdatedAt = timestamp
-            };
-
-            await context.AppointmentResourceAssignments.AddAsync(assignment);
-        }
-
-        this._logger.LogDebug("Created {Count} equipment resource assignments for appointment {ApptId}",
-            equipmentResourceIds.Count(), apptId);
-    }
-
-    private AppointmentDto MapToDto(Appointment appointment)
-    {
-        return new AppointmentDto
-        {
-            Id = appointment.ApptId,
-            Date = appointment.ApptDate ?? DateOnly.FromDateTime(this._dateTimeProvider.Today),
-            StartMin = appointment.ApptStartMin,
-            PatientId = appointment.PtId,
-            PatientName = appointment.Patient?.PtName,
-            OrganizationId = appointment.OrgId,
-            OrganizationName = appointment.Organization?.OrgName,
-            FloorId = appointment.FloorId,
-            FloorName = appointment.Floor?.FloorName,
-            Status = appointment.ApptStatusCode,
-            Memo = appointment.ApptMemo,
-            CreatedAt = appointment.CreatedAt,
-            UpdatedAt = appointment.UpdatedAt
-        };
-    }
 
 }
 

@@ -157,6 +157,23 @@ public static partial class LogMessages
         Exception ex);
 
     // ========================================
+    // Repository層: 祝日リポジトリ
+    // ========================================
+
+    [LoggerMessage(
+        EventId = 1010,
+        Level = LogLevel.Error,
+        Message = "Error retrieving holidays for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void HolidaysRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    // ========================================
     // Service層: 施設サービス
     // ========================================
 

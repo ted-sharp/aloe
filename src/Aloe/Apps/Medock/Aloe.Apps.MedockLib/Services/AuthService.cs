@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services.Auth;
@@ -61,10 +62,10 @@ public class AuthService : IAuthService
             // 累積失敗回数をインクリメント（履歴用、リセットされない）
             user.LoginFailureCount++;
 
-            // 連続5回失敗でアカウントをロック
-            if (user.LoginFailureAttempts >= 5)
+            // 連続失敗でアカウントをロック
+            if (user.LoginFailureAttempts >= AuthenticationConstants.MaxFailedLoginAttempts)
             {
-                user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(15);
+                user.LockedUntilAt = this._dateTimeProvider.UtcNow.AddMinutes(AuthenticationConstants.AccountLockoutMinutes);
             }
 
             await context.SaveChangesAsync();
@@ -79,9 +80,9 @@ public class AuthService : IAuthService
         var defaultFacility = this.DetermineDefaultFacility(context, user);
 
         var issuedAt = this._dateTimeProvider.UtcNow;
-        var expireMinutes = this._cookieSettings.ExpireTimeSpanMinutes ?? 15;
+        var expireMinutes = this._cookieSettings.ExpireTimeSpanMinutes ?? AuthenticationConstants.DefaultCookieExpireMinutes;
         var expiresAt = issuedAt.AddMinutes(expireMinutes);
-        var refreshTokenExpiration = issuedAt.AddDays(7);
+        var refreshTokenExpiration = issuedAt.AddDays(AuthenticationConstants.RefreshTokenExpirationDays);
 
         var session = new Session
         {
@@ -123,7 +124,7 @@ public class AuthService : IAuthService
         }
         facility ??= this.DetermineDefaultFacility(context, user);
 
-        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7);
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(AuthenticationConstants.RefreshTokenExpirationDays);
 
         return this.CreateSuccessResult(user, facility, refreshTokenExpiration, null);
     }
@@ -147,7 +148,7 @@ public class AuthService : IAuthService
             return AuthResult.Failed("Access denied to facility");
         }
 
-        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(7);
+        var refreshTokenExpiration = this._dateTimeProvider.UtcNow.AddDays(AuthenticationConstants.RefreshTokenExpirationDays);
 
         return this.CreateSuccessResult(user, facility, refreshTokenExpiration, null);
     }

@@ -11,20 +11,15 @@ namespace Aloe.Apps.MedockLib.Repositories;
 /// <summary>
 /// 祝日リポジトリ
 /// </summary>
-public class HolidayRepository : IHolidayRepository
+public class HolidayRepository : RepositoryBase, IHolidayRepository
 {
-    private readonly MedockDbContext _context;
-    private readonly ILogger<HolidayRepository> _logger;
-    private readonly IUserContextService _userContextService;
-
     public HolidayRepository(
         MedockDbContext context,
         ILogger<HolidayRepository> logger,
-        IUserContextService userContextService)
+        IUserContextService userContextService,
+        IDateTimeProvider dateTimeProvider)
+        : base(context, logger, userContextService, dateTimeProvider)
     {
-        this._context = context;
-        this._logger = logger;
-        this._userContextService = userContextService;
     }
 
     /// <inheritdoc />
@@ -32,7 +27,7 @@ public class HolidayRepository : IHolidayRepository
     {
         try
         {
-            return await this._context.Holidays
+            return await this.Context.Holidays
                 .AsNoTracking()
                 .Where(h => !h.IsDeleted &&
                             h.HolidayDate >= startDate &&
@@ -42,8 +37,8 @@ public class HolidayRepository : IHolidayRepository
         }
         catch (Exception ex)
         {
-            var (tenantId, facilityId, userId) = this._userContextService.GetTenantContext();
-            LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            var (tenantId, facilityId, userId) = this.GetTenantContext();
+            LogMessages.HolidaysRetrievalError((ILogger<HolidayRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
             throw new DatabaseException($"Failed to retrieve holidays for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
         }
     }

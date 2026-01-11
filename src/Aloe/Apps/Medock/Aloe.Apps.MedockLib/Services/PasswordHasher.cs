@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Aloe.Apps.MedockLib.Constants;
 
 namespace Aloe.Apps.MedockLib.Services;
 
@@ -14,9 +15,9 @@ public class PasswordHasher
 {
     private static readonly Lazy<PasswordHasher> s_default = new(() => new PasswordHasher
     {
-        SaltSize = 16,
-        HashSize = 32,
-        Iterations = 10000,
+        SaltSize = SecurityConstants.SaltSizeBytes,
+        HashSize = SecurityConstants.HashSizeBytes,
+        Iterations = SecurityConstants.PasswordHashingIterations,
     });
 
     /// <summary>

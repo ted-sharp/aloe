@@ -26,7 +26,7 @@ internal static class PatientSeeder
             var patients = new List<Patient>(1000);
 
             // 現在の日付を基準に年齢層を定義（2025年基準）
-            var today = DateOnly.FromDateTime(DateTime.Today);
+            var today = dateTimeProvider.TodayDateOnly;
             var ageRanges = new[]
             {
                 (Start: today.AddYears(-29), End: today.AddYears(-20)), // 20代
