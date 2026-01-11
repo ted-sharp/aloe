@@ -29,15 +29,22 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
     /// <inheritdoc />
     public async Task<List<Data.Entities.AppointmentStats>> GetMainResourceStatsByDateRangeAsync(DateOnly startDate, DateOnly endDate)
     {
-        return await this.Context.AppointmentStats
-            .AsNoTracking()
-            .Include(s => s.AppointmentResource)
-            .Where(s => !s.IsDeleted &&
-                        !s.AppointmentResource.IsDeleted &&
-                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
-                        s.ApptDate >= startDate &&
-                        s.ApptDate <= endDate)
-            .ToListAsync();
+        return await this.ExecuteQueryAsync(
+            () => this.Context.AppointmentStats
+                .AsNoTracking()
+                .Include(s => s.AppointmentResource)
+                .Where(s => !s.IsDeleted &&
+                            !s.AppointmentResource.IsDeleted &&
+                            s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                            s.ApptDate >= startDate &&
+                            s.ApptDate <= endDate)
+                .ToListAsync(),
+            ex => $"Failed to retrieve main resource stats for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.MainResourceStatsRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <inheritdoc />
@@ -50,76 +57,86 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
         List<Guid>? planIds = null,
         List<Guid>? optionPlanIds = null)
     {
-        var query = this.Context.AppointmentStats
-            .AsNoTracking()
-            .Include(s => s.AppointmentResource)
-                .ThenInclude(r => r.Floor)
-            .Where(s => !s.IsDeleted &&
-                        !s.AppointmentResource.IsDeleted &&
-                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
-                        s.ApptDate >= startDate &&
-                        s.ApptDate <= endDate);
-
-        // フロアフィルター
-        if (floorIds != null && floorIds.Any())
-        {
-            query = query.Where(s => floorIds.Contains(s.AppointmentResource.FloorId));
-        }
-
-        // リソースフィルター
-        if (resourceIds != null && resourceIds.Any())
-        {
-            query = query.Where(s => resourceIds.Contains(s.AppointmentResource.ApptResId));
-        }
-
-        // プラン・オプションフィルター（PlanResourceRequirementを介してリソースを絞り込み）
-        if (planIds != null && planIds.Any() || optionPlanIds != null && optionPlanIds.Any())
-        {
-            var resourceIdsFromPlans = new HashSet<Guid>();
-
-            // プランからリソースを取得
-            if (planIds != null && planIds.Any())
+        return await this.ExecuteQueryAsync(
+            async () =>
             {
-                var planResourceIds = await this.Context.PlanResourceRequirements
+                var query = this.Context.AppointmentStats
                     .AsNoTracking()
-                    .Where(prr => !prr.IsDeleted && planIds.Contains(prr.PlanId))
-                    .Select(prr => prr.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-                foreach (var id in planResourceIds)
+                    .Include(s => s.AppointmentResource)
+                        .ThenInclude(r => r.Floor)
+                    .Where(s => !s.IsDeleted &&
+                                !s.AppointmentResource.IsDeleted &&
+                                s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                                s.ApptDate >= startDate &&
+                                s.ApptDate <= endDate);
+
+                // フロアフィルター
+                if (floorIds != null && floorIds.Any())
                 {
-                    resourceIdsFromPlans.Add(id);
+                    query = query.Where(s => floorIds.Contains(s.AppointmentResource.FloorId));
                 }
-            }
 
-            // オプションからリソースを取得（PlanOptionのOptionPlanIdに対応するPlanResourceRequirementを検索）
-            if (optionPlanIds != null && optionPlanIds.Any())
-            {
-                // オプションのプランIDから、そのプランのリソース要件を取得
-                var optionResourceIds = await this.Context.PlanResourceRequirements
-                    .AsNoTracking()
-                    .Where(prr => !prr.IsDeleted && optionPlanIds.Contains(prr.PlanId))
-                    .Select(prr => prr.ApptResId)
-                    .Distinct()
-                    .ToListAsync();
-                foreach (var id in optionResourceIds)
+                // リソースフィルター
+                if (resourceIds != null && resourceIds.Any())
                 {
-                    resourceIdsFromPlans.Add(id);
+                    query = query.Where(s => resourceIds.Contains(s.AppointmentResource.ApptResId));
                 }
-            }
 
-            if (resourceIdsFromPlans.Any())
-            {
-                query = query.Where(s => resourceIdsFromPlans.Contains(s.AppointmentResource.ApptResId));
-            }
-            else
-            {
-                // プラン・オプションが選択されているが、該当リソースがない場合は空の結果を返す
-                return new List<Data.Entities.AppointmentStats>();
-            }
-        }
+                // プラン・オプションフィルター（PlanResourceRequirementを介してリソースを絞り込み）
+                if (planIds != null && planIds.Any() || optionPlanIds != null && optionPlanIds.Any())
+                {
+                    var resourceIdsFromPlans = new HashSet<Guid>();
 
-        return await query.ToListAsync();
+                    // プランからリソースを取得
+                    if (planIds != null && planIds.Any())
+                    {
+                        var planResourceIds = await this.Context.PlanResourceRequirements
+                            .AsNoTracking()
+                            .Where(prr => !prr.IsDeleted && planIds.Contains(prr.PlanId))
+                            .Select(prr => prr.ApptResId)
+                            .Distinct()
+                            .ToListAsync();
+                        foreach (var id in planResourceIds)
+                        {
+                            resourceIdsFromPlans.Add(id);
+                        }
+                    }
+
+                    // オプションからリソースを取得（PlanOptionのOptionPlanIdに対応するPlanResourceRequirementを検索）
+                    if (optionPlanIds != null && optionPlanIds.Any())
+                    {
+                        // オプションのプランIDから、そのプランのリソース要件を取得
+                        var optionResourceIds = await this.Context.PlanResourceRequirements
+                            .AsNoTracking()
+                            .Where(prr => !prr.IsDeleted && optionPlanIds.Contains(prr.PlanId))
+                            .Select(prr => prr.ApptResId)
+                            .Distinct()
+                            .ToListAsync();
+                        foreach (var id in optionResourceIds)
+                        {
+                            resourceIdsFromPlans.Add(id);
+                        }
+                    }
+
+                    if (resourceIdsFromPlans.Any())
+                    {
+                        query = query.Where(s => resourceIdsFromPlans.Contains(s.AppointmentResource.ApptResId));
+                    }
+                    else
+                    {
+                        // プラン・オプションが選択されているが、該当リソースがない場合は空の結果を返す
+                        return new List<Data.Entities.AppointmentStats>();
+                    }
+                }
+
+                return await query.ToListAsync();
+            },
+            ex => $"Failed to retrieve main resource stats with filters for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.MainResourceStatsWithFiltersRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <inheritdoc />
@@ -127,15 +144,22 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
         DateOnly date,
         List<Guid> resourceIds)
     {
-        return await this.Context.AppointmentStats
-            .AsNoTracking()
-            .Include(s => s.AppointmentResource)
-            .Where(s => !s.IsDeleted &&
-                        !s.AppointmentResource.IsDeleted &&
-                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
-                        s.ApptDate == date &&
-                        resourceIds.Contains(s.ApptResId))
-            .ToListAsync();
+        return await this.ExecuteQueryAsync(
+            () => this.Context.AppointmentStats
+                .AsNoTracking()
+                .Include(s => s.AppointmentResource)
+                .Where(s => !s.IsDeleted &&
+                            !s.AppointmentResource.IsDeleted &&
+                            s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Main &&
+                            s.ApptDate == date &&
+                            resourceIds.Contains(s.ApptResId))
+                .ToListAsync(),
+            ex => $"Failed to retrieve main resource stats for date {date:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.MainResourceStatsByDateRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, date, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <inheritdoc />
@@ -144,22 +168,32 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
         DateOnly endDate,
         List<Guid> equipmentResourceIds)
     {
-        var query = this.Context.AppointmentStats
-            .AsNoTracking()
-            .Include(s => s.AppointmentResource)
-            .Where(s => !s.IsDeleted &&
-                        !s.AppointmentResource.IsDeleted &&
-                        s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
-                        s.ApptDate >= startDate &&
-                        s.ApptDate <= endDate);
+        return await this.ExecuteQueryAsync(
+            async () =>
+            {
+                var query = this.Context.AppointmentStats
+                    .AsNoTracking()
+                    .Include(s => s.AppointmentResource)
+                    .Where(s => !s.IsDeleted &&
+                                !s.AppointmentResource.IsDeleted &&
+                                s.AppointmentResource.ApptResTypeCode == (int)AppointmentResourceType.Equipment &&
+                                s.ApptDate >= startDate &&
+                                s.ApptDate <= endDate);
 
-        // equipmentResourceIdsが指定されている場合のみフィルタリング
-        if (equipmentResourceIds != null && equipmentResourceIds.Any())
-        {
-            query = query.Where(s => equipmentResourceIds.Contains(s.AppointmentResource.ApptResId));
-        }
+                // equipmentResourceIdsが指定されている場合のみフィルタリング
+                if (equipmentResourceIds != null && equipmentResourceIds.Any())
+                {
+                    query = query.Where(s => equipmentResourceIds.Contains(s.AppointmentResource.ApptResId));
+                }
 
-        return await query.ToListAsync();
+                return await query.ToListAsync();
+            },
+            ex => $"Failed to retrieve equipment resource stats for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.EquipmentResourceStatsRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <inheritdoc />
@@ -212,55 +246,56 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
         var parameters = new object[] { equipmentTypeCode, startDateParam, endDateParam, equipmentIdsParam };
 
         // 中間DTO で日付を含める
-        try
-        {
-            var results = await this.Context
-                .Database
-                .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
-                .ToListAsync();
-
-            ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
-
-            // 日付ごとにグループ化
-            var groupedByDate = new Dictionary<string, List<ResourceStatSlotsDto>>();
-            foreach (var item in results)
+        return await this.ExecuteQueryAsync(
+            async () =>
             {
-                if (!groupedByDate.ContainsKey(item.ApptDate))
+                var results = await this.Context
+                    .Database
+                    .SqlQueryRaw<EquipmentStatsWithDateDto>(sql, parameters)
+                    .ToListAsync();
+
+                ((ILogger<AppointmentStatsRepository>)this.Logger).LogDebug("GetEquipmentResourceSlotsAsArraysByDateAsync: SQL returned {RowCount} rows", results.Count);
+
+                // 日付ごとにグループ化
+                var groupedByDate = new Dictionary<string, List<ResourceStatSlotsDto>>();
+                foreach (var item in results)
                 {
-                    groupedByDate[item.ApptDate] = new List<ResourceStatSlotsDto>();
+                    if (!groupedByDate.ContainsKey(item.ApptDate))
+                    {
+                        groupedByDate[item.ApptDate] = new List<ResourceStatSlotsDto>();
+                    }
+
+                    // 分数はそのままint配列として使用
+                    var slotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>();
+                    var slotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>();
+
+                    groupedByDate[item.ApptDate].Add(new ResourceStatSlotsDto
+                    {
+                        ResourceId = item.ResourceId ?? String.Empty,
+                        ResourceName = item.ResourceName ?? String.Empty,
+                        TotalCapacity = item.TotalCapacity,
+                        TotalAvailable = item.TotalAvailable,
+                        SlotStartMins = slotStartMinutes,
+                        SlotEndMins = slotEndMinutes,
+                        SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
+                        SlotCaps = item.SlotCaps ?? Array.Empty<int>(), // 空き率計算用
+                        SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
+                        SlotFlags = null, // 将来的にIsOutsideHoursなどを設定
+                        SlotFilteredCounts = null, // 現時点では使用しない
+                        IsDayGrayedOut = false, // Equipmentでは使用しない
+                        ResourceTypeCode = item.ResourceTypeCode,
+                        PlanTypeCode = null // プランタイプは現時点では未対応
+                    });
                 }
 
-                // 分数はそのままint配列として使用
-                var slotStartMinutes = item.SlotStartMinutes ?? Array.Empty<int>();
-                var slotEndMinutes = item.SlotEndMinutes ?? Array.Empty<int>();
-
-                groupedByDate[item.ApptDate].Add(new ResourceStatSlotsDto
-                {
-                    ResourceId = item.ResourceId ?? String.Empty,
-                    ResourceName = item.ResourceName ?? String.Empty,
-                    TotalCapacity = item.TotalCapacity,
-                    TotalAvailable = item.TotalAvailable,
-                    SlotStartMins = slotStartMinutes,
-                    SlotEndMins = slotEndMinutes,
-                    SlotCounts = Array.Empty<int>(), // Equipmentでは使用しない
-                    SlotCaps = item.SlotCaps ?? Array.Empty<int>(), // 空き率計算用
-                    SlotAvailables = item.SlotAvailables ?? Array.Empty<int>(),
-                    SlotFlags = null, // 将来的にIsOutsideHoursなどを設定
-                    SlotFilteredCounts = null, // 現時点では使用しない
-                    IsDayGrayedOut = false, // Equipmentでは使用しない
-                    ResourceTypeCode = item.ResourceTypeCode,
-                    PlanTypeCode = null // プランタイプは現時点では未対応
-                });
-            }
-
-            return groupedByDate;
-        }
-        catch (Exception ex)
-        {
-            var (tenantId, facilityId, userId) = this.GetTenantContext();
-            LogMessages.DiffDataRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, tenantId, facilityId, userId, ex);
-            throw new DatabaseException($"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}", ex);
-        }
+                return groupedByDate;
+            },
+            ex => $"Failed to retrieve equipment resource slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.EquipmentResourceSlotsRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     /// <inheritdoc />
@@ -311,32 +346,42 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
         DateOnly endDate,
         List<Guid>? resourceIds = null)
     {
-        var query = this.Context.AppointmentStatSlots
-            .AsNoTracking()
-            .Where(s => !s.IsDeleted &&
-                        s.ApptDate >= startDate &&
-                        s.ApptDate <= endDate);
-
-        if (resourceIds != null && resourceIds.Any())
-        {
-            query = query.Where(s => resourceIds.Contains(s.ApptResId));
-        }
-
-        var slots = await query.OrderBy(s => s.ApptDate).ThenBy(s => s.ApptResId).ThenBy(s => s.SlotStartMin).ToListAsync();
-
-        // Group by (ApptDate, ApptResId) for easy lookup
-        var result = new Dictionary<(DateOnly, Guid), List<AppointmentStatSlots>>();
-        foreach (var slot in slots)
-        {
-            var key = (slot.ApptDate, slot.ApptResId);
-            if (!result.ContainsKey(key))
+        return await this.ExecuteQueryAsync(
+            async () =>
             {
-                result[key] = new List<AppointmentStatSlots>();
-            }
-            result[key].Add(slot);
-        }
+                var query = this.Context.AppointmentStatSlots
+                    .AsNoTracking()
+                    .Where(s => !s.IsDeleted &&
+                                s.ApptDate >= startDate &&
+                                s.ApptDate <= endDate);
 
-        return result;
+                if (resourceIds != null && resourceIds.Any())
+                {
+                    query = query.Where(s => resourceIds.Contains(s.ApptResId));
+                }
+
+                var slots = await query.OrderBy(s => s.ApptDate).ThenBy(s => s.ApptResId).ThenBy(s => s.SlotStartMin).ToListAsync();
+
+                // Group by (ApptDate, ApptResId) for easy lookup
+                var result = new Dictionary<(DateOnly, Guid), List<AppointmentStatSlots>>();
+                foreach (var slot in slots)
+                {
+                    var key = (slot.ApptDate, slot.ApptResId);
+                    if (!result.ContainsKey(key))
+                    {
+                        result[key] = new List<AppointmentStatSlots>();
+                    }
+                    result[key].Add(slot);
+                }
+
+                return result;
+            },
+            ex => $"Failed to retrieve stat slots for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
+            ex =>
+            {
+                var (tenantId, facilityId, userId) = this.GetTenantContext();
+                LogMessages.StatSlotsRetrievalError((ILogger<AppointmentStatsRepository>)this.Logger, startDate, endDate, tenantId, facilityId, userId, ex);
+            });
     }
 
     // FromSql用の中間DTO

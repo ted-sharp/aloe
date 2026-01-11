@@ -174,6 +174,87 @@ public static partial class LogMessages
         Exception ex);
 
     // ========================================
+    // Repository層: 予約統計リポジトリ
+    // ========================================
+
+    [LoggerMessage(
+        EventId = 1011,
+        Level = LogLevel.Error,
+        Message = "Error retrieving main resource stats for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void MainResourceStatsRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1012,
+        Level = LogLevel.Error,
+        Message = "Error retrieving main resource stats with filters for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void MainResourceStatsWithFiltersRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1013,
+        Level = LogLevel.Error,
+        Message = "Error retrieving main resource stats for date {Date:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void MainResourceStatsByDateRetrievalError(
+        ILogger logger,
+        DateOnly date,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1014,
+        Level = LogLevel.Error,
+        Message = "Error retrieving equipment resource stats for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void EquipmentResourceStatsRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1015,
+        Level = LogLevel.Error,
+        Message = "Error retrieving equipment resource slots for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void EquipmentResourceSlotsRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    [LoggerMessage(
+        EventId = 1016,
+        Level = LogLevel.Error,
+        Message = "Error retrieving stat slots for date range {StartDate:yyyy-MM-dd} to {EndDate:yyyy-MM-dd} | TenantId={TenantId}, FacilityId={FacilityId}, UserId={UserId}")]
+    public static partial void StatSlotsRetrievalError(
+        ILogger logger,
+        DateOnly startDate,
+        DateOnly endDate,
+        Guid? tenantId,
+        Guid? facilityId,
+        Guid? userId,
+        Exception ex);
+
+    // ========================================
     // Service層: 施設サービス
     // ========================================
 
