@@ -384,6 +384,46 @@ public class AppointmentStatsRepository : RepositoryBase, IAppointmentStatsRepos
             });
     }
 
+    /// <inheritdoc />
+    public async Task UpsertStatsAndSlotsAsync(
+        Data.MedockDbContext context,
+        List<DateOnly> dates,
+        List<Guid> resourceIds,
+        List<Data.Entities.AppointmentStats> newStats,
+        List<Data.Entities.AppointmentStatSlots> newSlots)
+    {
+        // 既存Stats/StatSlotsをソフト削除
+        var existingStats = await context.AppointmentStats
+            .Where(s => dates.Contains(s.ApptDate) &&
+                       resourceIds.Contains(s.ApptResId) &&
+                       !s.IsDeleted)
+            .ToListAsync();
+
+        foreach (var stat in existingStats)
+        {
+            stat.IsDeleted = true;
+            stat.UpdatedAt = this.DateTimeProvider.NowRoundedToSeconds;
+        }
+
+        var existingSlots = await context.AppointmentStatSlots
+            .Where(s => dates.Contains(s.ApptDate) &&
+                       resourceIds.Contains(s.ApptResId) &&
+                       !s.IsDeleted)
+            .ToListAsync();
+
+        foreach (var slot in existingSlots)
+        {
+            slot.IsDeleted = true;
+            slot.UpdatedAt = this.DateTimeProvider.NowRoundedToSeconds;
+        }
+
+        // 新規レコード挿入
+        await context.AppointmentStats.AddRangeAsync(newStats);
+        await context.AppointmentStatSlots.AddRangeAsync(newSlots);
+
+        // Note: SaveChanges は呼び出さない（呼び出し側がトランザクション管理）
+    }
+
     // FromSql用の中間DTO
     private class EquipmentStatsWithDateDto
     {

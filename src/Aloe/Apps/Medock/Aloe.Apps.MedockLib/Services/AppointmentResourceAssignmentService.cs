@@ -29,7 +29,8 @@ public class AppointmentResourceAssignmentService : IAppointmentResourceAssignme
     /// <param name="apptId">予約ID</param>
     /// <param name="floorId">フロアID</param>
     /// <param name="timestamp">タイムスタンプ</param>
-    public async Task AssignMainResourcesAsync(MedockDbContext context, Guid apptId, Guid floorId, DateTime timestamp)
+    /// <returns>割り当てられたリソースIDのリスト</returns>
+    public async Task<List<Guid>> AssignMainResourcesAsync(MedockDbContext context, Guid apptId, Guid floorId, DateTime timestamp)
     {
         var mainResources = await context.AppointmentResources
             .AsNoTracking()
@@ -38,6 +39,8 @@ public class AppointmentResourceAssignmentService : IAppointmentResourceAssignme
                        r.ApptResTypeCode == (int)AppointmentResourceType.Main)
             .OrderBy(r => r.ApptResSeq)
             .ToListAsync();
+
+        var assignedResourceIds = new List<Guid>();
 
         foreach (var mainResource in mainResources)
         {
@@ -52,10 +55,13 @@ public class AppointmentResourceAssignmentService : IAppointmentResourceAssignme
             };
 
             await context.AppointmentResourceAssignments.AddAsync(assignment);
+            assignedResourceIds.Add(mainResource.ApptResId);
         }
 
         this._logger.LogDebug("Created {Count} main resource assignments for appointment {ApptId}",
             mainResources.Count, apptId);
+
+        return assignedResourceIds;
     }
 
     /// <summary>
@@ -65,8 +71,11 @@ public class AppointmentResourceAssignmentService : IAppointmentResourceAssignme
     /// <param name="apptId">予約ID</param>
     /// <param name="equipmentResourceIds">機器リソースIDのコレクション</param>
     /// <param name="timestamp">タイムスタンプ</param>
-    public async Task AssignEquipmentResourcesAsync(MedockDbContext context, Guid apptId, IEnumerable<Guid> equipmentResourceIds, DateTime timestamp)
+    /// <returns>割り当てられたリソースIDのリスト</returns>
+    public async Task<List<Guid>> AssignEquipmentResourcesAsync(MedockDbContext context, Guid apptId, IEnumerable<Guid> equipmentResourceIds, DateTime timestamp)
     {
+        var assignedResourceIds = new List<Guid>();
+
         foreach (var resourceId in equipmentResourceIds)
         {
             var assignment = new AppointmentResourceAssignment
@@ -80,10 +89,13 @@ public class AppointmentResourceAssignmentService : IAppointmentResourceAssignme
             };
 
             await context.AppointmentResourceAssignments.AddAsync(assignment);
+            assignedResourceIds.Add(resourceId);
         }
 
         this._logger.LogDebug("Created {Count} equipment resource assignments for appointment {ApptId}",
             equipmentResourceIds.Count(), apptId);
+
+        return assignedResourceIds;
     }
 
     /// <summary>

@@ -338,8 +338,27 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     public async Task SaveAppointmentAsync()
     {
         _state.CloseModal();
-        // 予約保存後にデータを再取得
+        // 予約保存後にデータを再取得（Statsも再計算されているので再取得）
         await _dataService.LoadAppointmentsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        // Statsを再取得
+        await _dataService.LoadMainStatsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        await _dataService.LoadMainStatsSlotsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        await _dataService.LoadEquipmentStatsAsync(
             _state,
             _state.CurrentView,
             _state.CurrentDate,
@@ -349,8 +368,27 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     public async Task DeleteAppointmentAsync()
     {
         _state.CloseModal();
-        // 予約削除後にデータを再取得
+        // 予約削除後にデータを再取得（Statsも再計算されているので再取得）
         await _dataService.LoadAppointmentsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        // Statsを再取得
+        await _dataService.LoadMainStatsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        await _dataService.LoadMainStatsSlotsAsync(
+            _state,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
+
+        await _dataService.LoadEquipmentStatsAsync(
             _state,
             _state.CurrentView,
             _state.CurrentDate,
@@ -380,8 +418,27 @@ public class CalendarOrchestrator : ICalendarOrchestrator
                 return new AppointmentMoveResult(false, $"予約の移動に失敗しました: {result.ErrorMessage}");
             }
 
-            // 移動成功後にデータを再取得
+            // 移動成功後にデータを再取得（Statsも再計算されているので再取得）
             await _dataService.LoadAppointmentsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            // Statsを再取得
+            await _dataService.LoadMainStatsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            await _dataService.LoadMainStatsSlotsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            await _dataService.LoadEquipmentStatsAsync(
                 _state,
                 _state.CurrentView,
                 _state.CurrentDate,

@@ -24,6 +24,7 @@ public class AppointmentService : IAppointmentService
     private readonly IDbContextFactory<MedockDbContext> _dbContextFactory;
     private readonly ILogger<AppointmentService> _logger;
     private readonly IAppointmentResourceAssignmentService _resourceAssignmentService;
+    private readonly IAppointmentStatsUpdateService _appointmentStatsUpdateService;
 
     public AppointmentService(
         IAppointmentRepository appointmentRepository,
@@ -32,7 +33,8 @@ public class AppointmentService : IAppointmentService
         IDateTimeProvider dateTimeProvider,
         IDbContextFactory<MedockDbContext> dbContextFactory,
         ILogger<AppointmentService> logger,
-        IAppointmentResourceAssignmentService resourceAssignmentService)
+        IAppointmentResourceAssignmentService resourceAssignmentService,
+        IAppointmentStatsUpdateService appointmentStatsUpdateService)
     {
         this._appointmentRepository = appointmentRepository;
         this._holidayRepository = holidayRepository;
@@ -41,6 +43,7 @@ public class AppointmentService : IAppointmentService
         this._dbContextFactory = dbContextFactory;
         this._logger = logger;
         this._resourceAssignmentService = resourceAssignmentService;
+        this._appointmentStatsUpdateService = appointmentStatsUpdateService;
     }
 
     /// <inheritdoc />
@@ -100,11 +103,33 @@ public class AppointmentService : IAppointmentService
             await _appointmentRepository.AddAsync(appointment);
 
             await using var context = await _dbContextFactory.CreateDbContextAsync();
-            await _resourceAssignmentService.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
+
+            // Mainリソースの割り当て（必ず含まれる）
+            // Mainリソースは画面で選択するものではなく、予約のフロアに基づいて自動的に割り当てられる
+            var mainResourceIds = await _resourceAssignmentService.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
+
+            // Equipmentリソースの割り当て（選択された場合のみ）
+            var equipmentResourceIds = new List<Guid>();
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
+                equipmentResourceIds = await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
             }
+
+            // リソース割り当てを先に保存（LoadAppointmentsAsyncで読み込めるようにするため）
+            await context.SaveChangesAsync();
+
+            // Stats再計算
+            // Mainリソースは常に含まれるため、mainResourceIdsが空でない限りStats/StatSlotsを更新する
+            var affectedResourceIds = mainResourceIds.Union(equipmentResourceIds).ToList();
+            if (affectedResourceIds.Any())
+            {
+                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                    context,
+                    new List<DateOnly> { dto.Date },
+                    affectedResourceIds);
+            }
+
+            // Stats/StatSlotsの保存
             await context.SaveChangesAsync();
 
             var result = await GetAppointmentAsync(appointment.ApptId);
@@ -140,6 +165,9 @@ public class AppointmentService : IAppointmentService
                 }
             }
 
+            // 変更前の日付を保存（Stats再計算の為）
+            var oldDate = appointment.ApptDate;
+
             if (dto.Date.HasValue) appointment.ApptDate = dto.Date.Value;
             if (dto.StartMin.HasValue) appointment.ApptStartMin = dto.StartMin.Value;
             if (dto.PatientId.HasValue) appointment.PtId = dto.PatientId.Value;
@@ -152,12 +180,42 @@ public class AppointmentService : IAppointmentService
             await _appointmentRepository.UpdateAsync(appointment);
 
             await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+            // Stats再計算の為、リソース削除前に古いリソースIDを取得
+            var oldResourceIds = await GetResourceIdsForAppointmentAsync(context, apptId);
+
             await _resourceAssignmentService.SoftDeleteAllAssignmentsAsync(context, apptId, appointment.UpdatedAt);
-            await _resourceAssignmentService.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
+            var newMainResourceIds = await _resourceAssignmentService.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
+            var newEquipmentResourceIds = new List<Guid>();
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
+                newEquipmentResourceIds = await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
             }
+
+            // Stats再計算の為、新しいリソースIDを取得
+            var newResourceIds = newMainResourceIds.Union(newEquipmentResourceIds).ToList();
+            var affectedResourceIds = oldResourceIds.Union(newResourceIds).Distinct().ToList();
+
+            // 影響を受ける日付を決定
+            var affectedDates = new List<DateOnly>();
+            if (appointment.ApptDate.HasValue)
+            {
+                affectedDates.Add(appointment.ApptDate.Value);
+            }
+            if (oldDate.HasValue && oldDate != appointment.ApptDate)
+            {
+                affectedDates.Add(oldDate.Value);
+            }
+
+            // Stats再計算
+            if (affectedResourceIds.Any())
+            {
+                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                    context,
+                    affectedDates.Distinct().ToList(),
+                    affectedResourceIds);
+            }
+
             await context.SaveChangesAsync();
 
             return await GetAppointmentAsync(apptId);
@@ -181,6 +239,7 @@ public class AppointmentService : IAppointmentService
     {
         return await ExecuteAsync(async () =>
         {
+            // 削除前にAppointmentを読み込み（リソースIDを含む）
             var appointment = await _appointmentRepository.FindForUpdateAsync(apptId);
             if (appointment == null || appointment.IsDeleted)
             {
@@ -188,7 +247,29 @@ public class AppointmentService : IAppointmentService
                 LogMessages.AppointmentNotFound(_logger, apptId, t, f, u);
                 throw new NotFoundException("Appointment", apptId);
             }
+
+            // Stats再計算の為、リソースIDを取得
+            var affectedDate = appointment.ApptDate;
+            var affectedResourceIds = appointment.AppointmentResourceAssignments
+                .Where(a => !a.IsDeleted)
+                .Select(a => a.ApptResId)
+                .ToList();
+
+            // 予約を削除
             await _appointmentRepository.DeleteAsync(apptId);
+
+            // Stats再計算
+            if (affectedDate.HasValue && affectedResourceIds.Any())
+            {
+                await using var context = await _dbContextFactory.CreateDbContextAsync();
+
+                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                    context,
+                    new List<DateOnly> { affectedDate.Value },
+                    affectedResourceIds);
+
+                await context.SaveChangesAsync();
+            }
         },
         (ex, t, f, u) => LogMessages.AppointmentDeleteError(_logger, apptId, t, f, u, ex),
         "Database error while deleting appointment",
@@ -210,6 +291,17 @@ public class AppointmentService : IAppointmentService
     }
 
     #region Helpers
+
+    /// <summary>
+    /// 予約のリソースIDリストを取得
+    /// </summary>
+    private async Task<List<Guid>> GetResourceIdsForAppointmentAsync(MedockDbContext context, Guid apptId)
+    {
+        return await context.AppointmentResourceAssignments
+            .Where(a => a.ApptId == apptId && !a.IsDeleted)
+            .Select(a => a.ApptResId)
+            .ToListAsync();
+    }
 
     private async Task<Result<T>> ExecuteAsync<T>(
         Func<Task<T>> operation,

@@ -106,6 +106,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserContextService, UserContextService>();
         services.AddScoped<IAppointmentResourceAssignmentService, AppointmentResourceAssignmentService>();
+        services.AddScoped<IAppointmentStatsUpdateService, AppointmentStatsUpdateService>();
         services.AddScoped<IAppointmentService, AppointmentService>();
         services.AddScoped<IFacilityService, FacilityService>();
         services.AddScoped<ICalendarDataService, CalendarDataService>();

@@ -10,7 +10,8 @@ public interface IAppointmentResourceAssignmentService
     /// <summary>
     /// メインリソースを予約に割り当てます
     /// </summary>
-    Task AssignMainResourcesAsync(
+    /// <returns>割り当てられたリソースIDのリスト</returns>
+    Task<List<Guid>> AssignMainResourcesAsync(
         MedockDbContext context,
         Guid apptId,
         Guid floorId,
@@ -19,7 +20,8 @@ public interface IAppointmentResourceAssignmentService
     /// <summary>
     /// 機器リソースを予約に割り当てます
     /// </summary>
-    Task AssignEquipmentResourcesAsync(
+    /// <returns>割り当てられたリソースIDのリスト</returns>
+    Task<List<Guid>> AssignEquipmentResourcesAsync(
         MedockDbContext context,
         Guid apptId,
         IEnumerable<Guid> equipmentResourceIds,

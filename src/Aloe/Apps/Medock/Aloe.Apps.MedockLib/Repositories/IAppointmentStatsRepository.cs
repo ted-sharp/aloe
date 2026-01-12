@@ -70,4 +70,16 @@ public interface IAppointmentStatsRepository
         DateOnly startDate,
         DateOnly endDate,
         List<Guid>? resourceIds = null);
+
+    /// <summary>
+    /// 指定した日付・リソースのStats/StatSlotsをUpsertします
+    /// 既存レコードをソフト削除後、新規レコードを挿入します
+    /// SaveChangesは呼び出し側で実行してください（トランザクション管理）
+    /// </summary>
+    Task UpsertStatsAndSlotsAsync(
+        Data.MedockDbContext context,
+        List<DateOnly> dates,
+        List<Guid> resourceIds,
+        List<Data.Entities.AppointmentStats> newStats,
+        List<Data.Entities.AppointmentStatSlots> newSlots);
 }
