@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data.Entities;
 using Aloe.Apps.MedockLib.Services;
 
@@ -30,7 +31,14 @@ public static class AppointmentMapper
             Status = appointment.ApptStatusCode,
             Memo = appointment.ApptMemo,
             CreatedAt = appointment.CreatedAt,
-            UpdatedAt = appointment.UpdatedAt
+            UpdatedAt = appointment.UpdatedAt,
+            EquipmentResources = appointment.AppointmentResourceAssignments?
+                .Where(a => !a.IsDeleted && a.AppointmentResource?.ApptResTypeCode == (int)AppointmentResourceType.Equipment)
+                .Select(a => new EquipmentResourceDto
+                {
+                    Id = a.ApptResId,
+                    Name = a.AppointmentResource?.ApptResName ?? string.Empty
+                }).ToList() ?? new List<EquipmentResourceDto>()
         };
     }
 }
