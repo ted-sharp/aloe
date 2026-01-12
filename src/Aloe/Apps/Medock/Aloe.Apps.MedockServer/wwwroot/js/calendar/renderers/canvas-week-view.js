@@ -351,11 +351,18 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const slotLeft = cellLeft + 2;
                     const slotWidth = cellWidth - 4;
 
+                    // グレーアウト状態を取得（スロットフラグから）
+                    const isSlotGrayed = slotFlags ? (slotFlags[idx] & 0b001) !== 0 : false;
+                    const isDateGrayed = stats?.isDayGrayedOut || false;
+                    const isGrayed = isSlotGrayed || isDateGrayed;
+
                     // スロットブロックを描画（薄い背景 + 枠線で範囲を表示）
                     // タイプ情報を使用した色計算
                     const resourceTypeCode = stats?.resourceTypeCode ?? 0;
                     const planTypeCode = stats?.planTypeCode ?? null;
-                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, false);
+                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isGrayed);
+                    const opacity = isGrayed ? 0.4 : 1.0;
+
                     drawRect(contentCtx, {
                         x: slotLeft,
                         y: slotTop,
@@ -363,9 +370,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         height: slotHeight,
                         fill: slotColor,
                         cornerRadius: 4,
-                        opacity: 0.15,  // 背景は薄く
-                        stroke: slotColor,  // 枠線は濃い色
-                        strokeWidth: 2
+                        opacity: isGrayed ? 0.06 : 0.15,  // グレーアウト時はさらに薄く
+                        stroke: slotColor,
+                        strokeWidth: 2,
+                        strokeOpacity: isGrayed ? 0.2 : 1.0  // 枠線もグレーアウト
                     });
 
                     // シンボルをブロック内に配置
@@ -373,12 +381,12 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const symbolCenterY = slotTop + slotHeight / 2;
                     const symbolSize = Math.min(slotWidth * 0.4, slotHeight * 0.5, 20);
 
-                    drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, 1.0);
+                    drawSymbol(contentCtx, symbolCenterX, symbolCenterY, symbolSize, symbolType, opacity);
 
                     // 「n/m」テキストも表示（スロット高さが十分な場合）
                     if (slotHeight >= 40 && cap > 0) {
                         const textY = symbolCenterY + symbolSize / 2 + 4;
-                        drawSlotInfoText(contentCtx, slotLeft + 2, textY, slotWidth - 4, available, cap, false, 1.0);
+                        drawSlotInfoText(contentCtx, slotLeft + 2, textY, slotWidth - 4, available, cap, isDateGrayed, opacity);
                     }
 
                     // Hit Test用に登録
@@ -464,10 +472,18 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                     const cap = (stats.slotCaps && stats.slotCaps[slotIndex] !== undefined && stats.slotCaps[slotIndex] !== null && stats.slotCaps[slotIndex] > 0) ? stats.slotCaps[slotIndex] : 0;
                     const available = cap - count;
 
+                    // グレーアウト状態を取得
+                    const isSlotGrayed = stats?.slotFlags ? (stats.slotFlags[slotIndex] & 0b001) !== 0 : false;
+                    const isDateGrayed = stats?.isDayGrayedOut || false;
+                    const isGrayed = isSlotGrayed || isDateGrayed;
+
                     // タイプ情報を使用した色計算
                     const resourceTypeCode = stats?.resourceTypeCode ?? 0;
                     const planTypeCode = stats?.planTypeCode ?? null;
-                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, false);
+                    const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isGrayed);
+                    const slotOpacity = isGrayed ? 0.06 : 0.15;
+                    const strokeOpacity = isGrayed ? 0.2 : 1.0;
+
                     drawRect(contentCtx, {
                         x: slotLeft,
                         y: slotTop,
@@ -475,9 +491,10 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         height: slotBlockHeight,
                         fill: slotColor,
                         cornerRadius: 4,
-                        opacity: 0.15,  // 背景は薄く
-                        stroke: slotColor,  // 枠線は濃い色
-                        strokeWidth: 2
+                        opacity: slotOpacity,
+                        stroke: slotColor,
+                        strokeWidth: 2,
+                        strokeOpacity: strokeOpacity
                     });
 
                     // スロット枠用のHit Test登録（枠のクリック判定）

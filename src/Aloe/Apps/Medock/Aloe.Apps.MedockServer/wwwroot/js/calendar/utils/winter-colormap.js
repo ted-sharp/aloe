@@ -121,17 +121,48 @@ export function getWinterColorFromUsageRatio(usageRatio) {
  * @returns {string} 16進数カラーコード（#RRGGBB）
  */
 export function getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isGrayed) {
+    let color;
+
     // タイプ情報が存在しない場合は従来のWinterカラーマップを使用（後方互換性）
     if (!resourceTypeCode || resourceTypeCode === 0) {
-        return getWinterColorFromAvailable(available, cap);
+        color = getWinterColorFromAvailable(available, cap);
+    } else {
+        // タイプの基本色を取得
+        const baseColor = getTypeBaseColor(resourceTypeCode, planTypeCode);
+
+        // 利用可能数に応じて色を調整
+        color = adjustColorByAvailability(baseColor, available, cap);
     }
-    
-    // タイプの基本色を取得
-    const baseColor = getTypeBaseColor(resourceTypeCode, planTypeCode);
-    
-    // 利用可能数に応じて色を調整
-    const adjustedColor = adjustColorByAvailability(baseColor, available, cap);
-    
-    // グレーアウト時は色を変更せず、そのまま返す（透明度は呼び出し側で制御）
-    return adjustedColor;
+
+    // グレーアウト時は色をグレーに寄せる（タイプの有無を問わず適用）
+    if (isGrayed) {
+        const grayColor = desaturateColor(color, 0.3);  // 元の色30% + グレー70%でグレーに寄せる
+        return grayColor;
+    }
+
+    return color;
+}
+
+/**
+ * 色の彩度を下げる（グレーに寄せる）
+ * @param {string} hexColor - 16進数カラーコード（#RRGGBB）
+ * @param {number} saturationFactor - 彩度の倍率（0.0 = グレースケール、1.0 = 元の色）
+ * @returns {string} 彩度を調整した16進数カラーコード
+ */
+function desaturateColor(hexColor, saturationFactor) {
+    // RGB値に変換
+    const r = parseInt(hexColor.slice(1, 3), 16);
+    const g = parseInt(hexColor.slice(3, 5), 16);
+    const b = parseInt(hexColor.slice(5, 7), 16);
+
+    // グレー値（明度）を計算（人間の目の感度を考慮した加重平均）
+    const gray = Math.round(0.299 * r + 0.587 * g + 0.114 * b);
+
+    // 彩度を調整（元の色とグレーをブレンド）
+    const newR = Math.round(gray + (r - gray) * saturationFactor);
+    const newG = Math.round(gray + (g - gray) * saturationFactor);
+    const newB = Math.round(gray + (b - gray) * saturationFactor);
+
+    // 16進数に戻す
+    return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
 }
