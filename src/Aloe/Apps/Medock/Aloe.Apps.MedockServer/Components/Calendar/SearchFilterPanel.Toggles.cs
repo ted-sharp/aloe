@@ -176,11 +176,11 @@ public partial class SearchFilterPanel
         // PlanTypeCode=2（Option）の場合
         else if (plan.PlanTypeCode == 2)
         {
-            // 親Planが選択されているかチェック
-            var parentPlanId = await this.GetParentPlanIdAsync(planId);
-            if (parentPlanId.HasValue && this.SelectedPlanIds.Contains(parentPlanId.Value))
+            // 選択されているプランに関連するオプションかどうかをキャッシュで確認
+            // （IsOptionSelectableと同じロジックを使用）
+            if (this._relatedOptionIds.Contains(planId))
             {
-                // 親Planが選択されている場合のみトグル可能
+                // 選択されているプランに関連するオプションの場合のみトグル可能
                 if (this.SelectedPlanIds.Contains(planId))
                 {
                     this.SelectedPlanIds.Remove(planId);
@@ -190,7 +190,7 @@ public partial class SearchFilterPanel
                     this.SelectedPlanIds.Add(planId);
                 }
             }
-            // 親Planが選択されていない場合は何もしない（選択不可）
+            // 選択されているプランに関連するオプションでない場合は何もしない（選択不可）
         }
 
         this.OnFilterChanged();
