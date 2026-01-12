@@ -65,7 +65,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
             x: x,
             y: y,
             width: width,
-            fill: '#374151',
+            fill: CONFIG.colors.text,
             fontSize: CONFIG.font.sizeLarge,
             fontStyle: 'bold',
             align: 'center'
@@ -111,7 +111,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                 y: gridTop,
                 width: cellWidth,
                 height: headerHeight,
-                fill: '#f9fafb',
+                fill: CONFIG.colors.dayHeaderBg,
                 stroke: CONFIG.colors.grid,
                 strokeWidth: 1
             });
@@ -164,7 +164,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                         y: cellTop,
                         width: cellWidth,
                         height: cellHeight,
-                        fill: '#f3f4f6',
+                        fill: CONFIG.colors.background,
                         stroke: CONFIG.colors.grid,
                         strokeWidth: 1
                     });
@@ -203,7 +203,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                             snapToPixel(cellLeft), 
                             snapToPixel(dayGridTop + rows * cellHeight)
                         ],
-                        stroke: '#e5e7eb',
+                        stroke: CONFIG.colors.grid,
                         strokeWidth: 1
                     });
                 }
@@ -217,7 +217,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                             snapToPixel(x + width), 
                             snapToPixel(dayGridTop + row * cellHeight)
                         ],
-                        stroke: '#e5e7eb',
+                        stroke: CONFIG.colors.grid,
                         strokeWidth: 1
                     });
                 }

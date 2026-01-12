@@ -4,6 +4,7 @@
  * Canvas Manager のトランジション処理を管理
  */
 
+import { CONFIG } from '../config.js';
 import { applyCrossfadeTransition } from './transitions/crossfade.js';
 import { applyFadethroughTransition } from './transitions/fadethrough.js';
 import { applySlidefadeTransition } from './transitions/slidefade.js';

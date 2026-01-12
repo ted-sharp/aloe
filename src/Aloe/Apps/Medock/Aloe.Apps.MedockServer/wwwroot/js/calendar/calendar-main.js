@@ -19,6 +19,7 @@ import { setupCanvasInteractions, drawSelectionBorder } from './renderers/canvas
 import { getRenderState, RenderState } from './renderers/canvas-render-state.js';
 import { setupDayDetailInteractions } from './renderers/canvas-day-detail-interactions.js';
 import { startConnection, stopConnection } from './realtime/signalr-client.js';
+import { observeThemeChanges, updateConfigColorsForCurrentTheme, ThemeColors, initializeTheme } from './utils/theme-utils.js';
 
 // Blazor DayDetailPopup用のステージを管理
 const dayDetailPopupStages = new Map();
@@ -128,6 +129,14 @@ function init(containerId, data, options, dotNetRef, currentDateStr) {
     });
     resizeObserver.observe(container);
     setState({ resizeObserver });
+
+    // テーマ変更を監視して自動再描画
+    const stopThemeObserver = observeThemeChanges((newTheme) => {
+        // テーマが変更されたら CONFIG の色を更新して再描画
+        updateConfigColorsForCurrentTheme(CONFIG);
+        render();
+    });
+    setState({ stopThemeObserver });
 
     // イベントハンドラはsetupCanvasInteractionsで設定されるため、ここでは不要
 
@@ -321,6 +330,11 @@ function destroy() {
         state.tooltip.parentNode.removeChild(state.tooltip);
     }
 
+    // テーマ変更監視を停止
+    if (state.stopThemeObserver) {
+        state.stopThemeObserver();
+    }
+
     // SignalR接続を停止
     stopConnection();
 
@@ -468,5 +482,9 @@ window.MedockCalendar = {
     destroy,
     renderDayDetailPopup,
     destroyDayDetailPopup,
-    getHolidayName
+    getHolidayName,
+    initializeTheme
 };
+
+// 初期化時にテーマを復元
+initializeTheme();

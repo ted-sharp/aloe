@@ -4,6 +4,8 @@
  * フェードスルートランジション（フェードアウト → フェードイン）
  */
 
+import { CONFIG } from '../../config.js';
+
 /**
  * フェードスルートランジションを適用
  * @param {object} manager - CanvasManager インスタンス
@@ -34,6 +36,12 @@ export function applyFadethroughTransition(manager, fadeDuration) {
 
             if (ctx && snapshotCanvas) {
                 ctx.clearRect(0, 0, manager.width, manager.height);
+
+                // 背景色を描画（テーマに対応した背景色）
+                if (layerName === 'background' || layerName === 'grid' || layerName === 'content') {
+                    ctx.fillStyle = CONFIG.colors.background;
+                    ctx.fillRect(0, 0, manager.width, manager.height);
+                }
 
                 if (elapsed < halfDuration) {
                     // 前半: 古い画面をフェードアウト（アルファ: 1 → 0）

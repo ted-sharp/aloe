@@ -276,7 +276,7 @@ export function renderCanvasBarChart(contentCtx, params) {
                 const canShowTwoDigits = barWidth >= 15 || (barWidth < 10 && (isFirstSlot || isLastSlot));
                 const labelText = canShowTwoDigits ? String(hourValue) : String(hourValue % 10);
                 const labelY = baselineY + 2;
-                const labelColor = isSlotGrayed ? '#d1d5db' : '#9ca3af';
+                const labelColor = isSlotGrayed ? CONFIG.colors.secondary : CONFIG.colors.text;
 
                 drawText(contentCtx, {
                     text: labelText,
@@ -417,7 +417,7 @@ export function renderCanvasDayBarChart(contexts, state, params) {
         y: cellTop + 1,
         width: bgWidth,
         height: bgHeight,
-        fill: isDateGrayed ? '#f3f4f6' : CONFIG.colors.slot.background,
+        fill: isDateGrayed ? CONFIG.colors.background : CONFIG.colors.slot.background,
         cornerRadius: Math.max(0, bgCornerRadius),
         opacity: isDateGrayed ? 0.6 : 1
     });
@@ -439,7 +439,7 @@ export function renderCanvasDayBarChart(contexts, state, params) {
     } else if (dayOfWeek === 6) {
         textColor = CONFIG.colors.weekend.sat;
     } else {
-        textColor = '#374151';
+        textColor = CONFIG.colors.text;
     }
 
     drawText(contentCtx, {

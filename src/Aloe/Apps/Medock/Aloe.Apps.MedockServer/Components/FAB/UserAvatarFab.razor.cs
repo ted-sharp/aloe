@@ -1,10 +1,14 @@
 using Aloe.Apps.MedockLib.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Aloe.Apps.MedockServer.Components.FAB;
 
 public partial class UserAvatarFab : ComponentBase
 {
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; } = default!;
+
     [Parameter]
     public string UserInitial { get; set; } = "U";
 
@@ -39,8 +43,22 @@ public partial class UserAvatarFab : ComponentBase
     public EventCallback<Guid> OnFacilitySwitch { get; set; }
 
     private bool IsMenuOpen { get; set; }
-    private bool IsDarkMode { get; set; }
+    private string SelectedTheme { get; set; } = "light";
     private bool ShowFacilityModal { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // 現在のテーマを取得
+        try
+        {
+            SelectedTheme = await JSRuntime.InvokeAsync<string>(
+                "eval", "document.documentElement.getAttribute('data-theme') || 'light'") ?? "light";
+        }
+        catch
+        {
+            SelectedTheme = "light";
+        }
+    }
 
     private void ToggleMenu()
     {
@@ -58,10 +76,20 @@ public partial class UserAvatarFab : ComponentBase
         await this.OnLogout.InvokeAsync();
     }
 
-    private async Task ToggleTheme()
+    private async Task ChangeTheme(string newTheme)
     {
-        // テーマ切り替えはJSInteropで実装
-        await Task.CompletedTask;
+        try
+        {
+            // テーマを適用（calendar-main.js の setTheme 関数を呼び出し）
+            await JSRuntime.InvokeVoidAsync(
+                "eval", $"(function(){{document.documentElement.setAttribute('data-theme', '{newTheme}');try{{localStorage.setItem('medock-theme', '{newTheme}');}}catch(e){{}}}})()");
+
+            SelectedTheme = newTheme;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error changing theme: {ex.Message}");
+        }
     }
 
     private void ShowFacilitySelector()

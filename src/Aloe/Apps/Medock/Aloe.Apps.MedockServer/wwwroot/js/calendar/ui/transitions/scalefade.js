@@ -4,6 +4,8 @@
  * スケールフェードトランジション（弱ディゾルブ＋微小スケール）
  */
 
+import { CONFIG } from '../../config.js';
+
 /**
  * スケールフェードトランジションを適用
  * @param {object} manager - CanvasManager インスタンス
@@ -36,6 +38,12 @@ export function applyScalefadeTransition(manager, fadeDuration) {
 
             if (ctx && snapshotCanvas) {
                 ctx.clearRect(0, 0, manager.width, manager.height);
+
+                // 背景色を描画（テーマに対応した背景色）
+                if (layerName === 'background' || layerName === 'grid' || layerName === 'content') {
+                    ctx.fillStyle = CONFIG.colors.background;
+                    ctx.fillRect(0, 0, manager.width, manager.height);
+                }
 
                 // 古い画面: フェードアウト＋微小縮小（アルファ: 1 → 0、スケール: 1.0 → 0.95）
                 const oldScale = 1.0 - easeOut * 0.05;

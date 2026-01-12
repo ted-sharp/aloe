@@ -133,13 +133,13 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const dayOfWeek = new Date(dateStr).getDay();
     let textColor;
     if (isDateGrayed) {
-        textColor = '#9ca3af';
+        textColor = CONFIG.colors.secondary;
     } else if (isHoliday || dayOfWeek === 0) {
         textColor = CONFIG.colors.weekend.sun;
     } else if (dayOfWeek === 6) {
         textColor = CONFIG.colors.weekend.sat;
     } else {
-        textColor = '#374151';
+        textColor = CONFIG.colors.text;
     }
 
     // 日付テキスト
@@ -163,7 +163,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             x: yAxisWidth,
             y: topPadding + graphHeight / 2,
             width: graphWidth,
-            fill: '#9ca3af',
+            fill: CONFIG.colors.text,
             fontSize: CONFIG.font.sizeLarge,
             align: 'center'
         });
@@ -208,7 +208,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
         // 目盛り線
         drawLine(gridCtx, {
             points: [yAxisWidth, y, yAxisWidth + graphWidth, y],
-            stroke: '#e5e7eb',
+            stroke: CONFIG.colors.grid,
             strokeWidth: 1
         });
 
@@ -218,7 +218,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
             x: 0,
             y: y - 6,
             width: yAxisWidth - 5,
-            fill: '#6b7280',
+            fill: CONFIG.colors.text,
             fontSize: CONFIG.font.sizeSmall,
             align: 'right'
         });
@@ -228,12 +228,12 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     const baselineY = topPadding + graphHeight;
     drawLine(gridCtx, {
         points: [yAxisWidth, baselineY, yAxisWidth + graphWidth, baselineY],
-        stroke: '#374151',
+        stroke: CONFIG.colors.text,
         strokeWidth: 2
     });
 
     // Y軸の縦線（業務開始ライン - 時間外予約がある場合は赤）
-    const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : '#374151';
+    const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : CONFIG.colors.text;
     const beforeLineWidth = hasOutsideHoursBefore ? 3 : 2;
     drawLine(gridCtx, {
         points: [yAxisWidth, topPadding, yAxisWidth, baselineY],
@@ -242,7 +242,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     });
 
     // 業務終了ライン（右端 - 時間外予約がある場合は赤）
-    const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : '#d1d5db';
+    const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : CONFIG.colors.grid;
     const afterLineWidth = hasOutsideHoursAfter ? 3 : 1;
     drawLine(gridCtx, {
         points: [yAxisWidth + graphWidth, topPadding, yAxisWidth + graphWidth, baselineY],
@@ -377,7 +377,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
                 x: barX,
                 y: baselineY + 5,
                 width: barWidth,
-                fill: '#6b7280',
+                fill: CONFIG.colors.text,
                 fontSize: CONFIG.font.sizeSmall,
                 align: 'center'
             });
@@ -387,7 +387,7 @@ export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, 
     // 昼休みライン（実際の範囲内の場合のみ描画 - 時間外予約がある場合は赤）
     if (actualLunchStartHour !== null && actualLunchEndHour !== null) {
         const lunchStartX = timeToX(actualLunchStartHour);
-        const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : '#d1d5db';
+        const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : CONFIG.colors.grid;
         const lunchLineWidth = hasOutsideHoursLunch ? 3 : 2;
         drawLine(contentCtx, {
             points: [lunchStartX, topPadding, lunchStartX, baselineY],

@@ -114,7 +114,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         y: 0,
         width: width,
         height: headerHeight,
-        fill: '#f9fafb',
+        fill: CONFIG.colors.dayHeaderBg,
         stroke: CONFIG.colors.grid,
         strokeWidth: 1
     });
@@ -125,7 +125,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         y: 0,
         width: timeColumnWidth,
         height: headerHeight,
-        fill: '#f3f4f6',
+        fill: CONFIG.colors.background,
         stroke: CONFIG.colors.grid,
         strokeWidth: 1
     });
@@ -155,7 +155,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         });
 
         // 曜日名
-        const dayTextColor = isHoliday || dayOfWeek === 0 ? CONFIG.colors.weekend.sun : dayOfWeek === 6 ? CONFIG.colors.weekend.sat : '#374151';
+        const dayTextColor = isHoliday || dayOfWeek === 0 ? CONFIG.colors.weekend.sun : dayOfWeek === 6 ? CONFIG.colors.weekend.sat : CONFIG.colors.dayHeaderText;
         drawText(gridCtx, {
             text: dayNames[dayOfWeek],
             x: x,
@@ -216,7 +216,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                 x: 5,
                 y: y - 6,
                 width: timeColumnWidth - 10,
-                fill: '#6b7280',
+                fill: CONFIG.colors.text,
                 fontSize: CONFIG.font.sizeSmall,
                 align: 'left'
             });
@@ -237,7 +237,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                 y: y,
                 width: width - timeColumnWidth,
                 height: hourHeight,
-                fill: '#f9fafb',
+                fill: CONFIG.colors.background,
                 opacity: 0.5
             });
         }
@@ -575,7 +575,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         x: overflowX + avatarSize / 2,
                         y: overflowY + avatarSize / 2,
                         radius: avatarSize / 2,
-                        fill: '#d1d5db',
+                        fill: CONFIG.colors.secondary,
                         stroke: '#ffffff',
                         strokeWidth: 2
                     });
@@ -586,7 +586,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
                         x: overflowX,
                         y: overflowY + avatarSize / 2 - 5,
                         width: avatarSize,
-                        fill: '#374151',
+                        fill: CONFIG.colors.text,
                         fontSize: 9,
                         fontStyle: 'bold',
                         align: 'center'

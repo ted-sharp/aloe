@@ -2,6 +2,23 @@
    カレンダーコンポーネント用スタイル
    ======================================== */
 
+/* daisyUI テーマ対応カラー定義（参考）
+   以下のCSS変数はdaisyUIによって自動的に定義されます。
+   カレンダーはこれらの変数を参照して、テーマの変更に自動的に対応します。
+
+   主要なCSS変数:
+   - --p: Primary color
+   - --s: Secondary color
+   - --a: Accent color
+   - --n: Neutral color
+   - --bc: Base content (text color)
+   - --b1: Base background (primary background)
+   - --b2: Base background (secondary background)
+
+   カレンダーのtheme-utils.jsがこれらの変数を取得し、
+   テーマに応じた色を動的に適用します。
+*/
+
 /* CalendarCanvas - カレンダーキャンバスコンテナ */
 .calendar-canvas-container {
     width: 100%;

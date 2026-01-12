@@ -4,6 +4,8 @@
  * スライドフェードトランジション（弱ディゾルブ＋微小スライド）
  */
 
+import { CONFIG } from '../../config.js';
+
 /**
  * スライドフェードトランジションを適用
  * @param {object} manager - CanvasManager インスタンス
@@ -37,6 +39,12 @@ export function applySlidefadeTransition(manager, fadeDuration) {
 
             if (ctx && snapshotCanvas) {
                 ctx.clearRect(0, 0, manager.width, manager.height);
+
+                // 背景色を描画（テーマに対応した背景色）
+                if (layerName === 'background' || layerName === 'grid' || layerName === 'content') {
+                    ctx.fillStyle = CONFIG.colors.background;
+                    ctx.fillRect(0, 0, manager.width, manager.height);
+                }
 
                 // 古い画面: フェードアウト＋微小左スライド（アルファ: 1 → 0、X: 0 → -15px）
                 ctx.save();

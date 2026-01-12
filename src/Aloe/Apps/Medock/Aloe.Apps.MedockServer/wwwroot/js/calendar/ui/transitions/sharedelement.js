@@ -4,6 +4,8 @@
  * 共有要素トランジション（位置・サイズを主に補間）
  */
 
+import { CONFIG } from '../../config.js';
+
 /**
  * 共有要素トランジションを適用
  * @param {object} manager - CanvasManager インスタンス
@@ -90,8 +92,8 @@ export function applySharedElementTransition(manager, fadeDuration, options = {}
                         ctx.translate(offsetX, offsetY);
                         ctx.scale(scaleX, scaleY);
 
-                        // まず背景を白で塗りつぶす（変換後の座標系、元のキャンバスサイズ）
-                        ctx.fillStyle = '#ffffff';
+                        // まず背景を塗りつぶす（テーマに対応した背景色、変換後の座標系、元のキャンバスサイズ）
+                        ctx.fillStyle = CONFIG.colors.background;
                         ctx.fillRect(0, 0, sourceBounds.width, sourceBounds.height);
 
                         // 月ビューを描画
