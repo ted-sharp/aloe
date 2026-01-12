@@ -62,19 +62,6 @@
                         </InputSelect>
                     </div>
 
-                    <!-- 終了時間 -->
-                    <div class="form-control">
-                        <label class="label">
-                            <span class="label-text font-medium">終了時間</span>
-                        </label>
-                        <InputSelect @bind-Value="FormModel.EndTimeString" class="select select-bordered w-full">
-                            @foreach (var time in TimeSlots)
-                            {
-                                <option value="@time">@time</option>
-                            }
-                        </InputSelect>
-                    </div>
-
                     <!-- 患者名 -->
                     <div class="form-control md:col-span-2">
                         <label class="label">
