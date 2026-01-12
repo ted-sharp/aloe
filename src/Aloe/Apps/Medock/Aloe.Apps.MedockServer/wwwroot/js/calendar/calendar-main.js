@@ -35,6 +35,12 @@ const dayDetailPopupStages = new Map();
 function init(containerId, data, options, dotNetRef, currentDateStr) {
     const state = getState();
 
+    // 初期化時に確実にテーマを復元（localStorage から保存されたテーマを読み込む）
+    initializeTheme();
+
+    // テーマ色を CONFIG に反映
+    updateConfigColorsForCurrentTheme(CONFIG);
+
     // dotNetRefは常に最新のものを保持（複数のCalendarCanvasインスタンスが存在する場合に対応）
     // console.log('MedockCalendar: init called', {
     //     containerId,
@@ -213,6 +219,11 @@ function navigateTo(dateStr) {
  */
 function render() {
     const state = getState();
+    
+    // CONFIG.colorsが初期化されていない場合は初期化（空オブジェクトもチェック）
+    if (!CONFIG.colors || Object.keys(CONFIG.colors).length === 0 || !CONFIG.colors.grid) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
     if (!state.canvasManager) return;
 
     const currentRenderState = getRenderState();
@@ -348,6 +359,10 @@ function destroy() {
  * @param {object} dotNetRef - DayDetailPopupコンポーネントの.NET参照（オプション）
  */
 function renderDayDetailPopup(containerId, dateStr, dotNetRef = null, dateSlots = null) {
+    // ポップアップ表示時にもテーマを確認して色を更新
+    initializeTheme();
+    updateConfigColorsForCurrentTheme(CONFIG);
+
     const container = document.getElementById(containerId);
     if (!container) {
         console.error('MedockCalendar: DayDetailPopup container not found:', containerId);

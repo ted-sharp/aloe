@@ -5,45 +5,8 @@
  * テーマ対応：daisyUIのテーマ変更に自動的に対応
  */
 
-import { ThemeColors } from './utils/theme-utils.js';
-
-// テーマ対応の色を取得
-const themeColors = ThemeColors.getThemeColors();
-
 export const CONFIG = {
-    colors: {
-        am: {
-            empty: themeColors.am.empty,
-            filled: themeColors.am.filled,
-            text: themeColors.am.text
-        },
-        pm: {
-            empty: themeColors.pm.empty,
-            filled: themeColors.pm.filled,
-            text: themeColors.pm.text
-        },
-        // 時間帯枠用の色（空き→青、満杯→赤）
-        slot: {
-            empty: themeColors.slot.empty,           // Primary色
-            full: themeColors.slot.full,             // 満杯（赤）
-            partial: themeColors.slot.partial,       // 一部埋まり（黄）
-            background: themeColors.slot.background  // 背景（グレー）
-        },
-        status: {
-            0: themeColors.status[0], // Reserved (gray)
-            1: themeColors.status[1], // Waiting (info)
-            2: themeColors.status[2], // Visited (success)
-            3: themeColors.status[3]  // Cancelled (error)
-        },
-        grid: themeColors.grid,
-        today: themeColors.today,
-        weekend: {
-            sun: themeColors.weekend.sun,
-            sat: themeColors.weekend.sat
-        },
-        hover: themeColors.hover,
-        grayout: themeColors.grayout
-    },
+    colors: {},
     font: {
         family: '"M PLUS Rounded 1c", system-ui, -apple-system, sans-serif',
         numberFamily: '"Playwrite Norge", cursive',

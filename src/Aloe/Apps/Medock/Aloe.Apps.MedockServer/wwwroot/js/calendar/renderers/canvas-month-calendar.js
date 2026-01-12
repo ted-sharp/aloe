@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { getFirstDayOfMonth, getLastDayOfMonth, isToday } from '../utils/date-utils.js';
 import { drawRect, drawLine, drawText, snapToPixel } from '../utils/canvas-utils.js';
 import { getRenderState } from './canvas-render-state.js';
+import { updateConfigColorsForCurrentTheme } from '../utils/theme-utils.js';
 
 /**
  * 月のカレンダーを描画（Canvas API版）
@@ -24,6 +25,11 @@ import { getRenderState } from './canvas-render-state.js';
  * @returns {object} 月情報 { bounds, dayGridTop, dayGridHeight, cellWidth, cellHeight, rows, startDayOfWeek, daysInMonth }
  */
 export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, width, height, options = {}) {
+    // CONFIG.colorsが初期化されていない場合は初期化（空オブジェクトもチェック）
+    if (!CONFIG.colors || Object.keys(CONFIG.colors).length === 0 || !CONFIG.colors.grid) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
+
     const opts = {
         showMonthHeader: false,
         onMonthHeaderClick: null,
@@ -112,7 +118,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                 width: cellWidth,
                 height: headerHeight,
                 fill: CONFIG.colors.dayHeaderBg,
-                stroke: CONFIG.colors.grid,
+                stroke: CONFIG.colors.grid || '#d1d5db',
                 strokeWidth: 1
             });
         } else if (opts.dayHeaderStyle === 'small') {
@@ -123,15 +129,15 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                 width: cellWidth,
                 height: dayHeaderHeight,
                 fill: 'transparent',
-                stroke: CONFIG.colors.grid,
+                stroke: CONFIG.colors.grid || '#d1d5db',
                 strokeWidth: 1
             });
         }
 
         // 曜日名
-        const dayColor = i === 0 ? CONFIG.colors.weekend.sun 
-                       : i === 6 ? CONFIG.colors.weekend.sat 
-                       : (opts.dayHeaderStyle === 'large' ? '#374151' : '#6b7280');
+        const dayColor = i === 0 ? CONFIG.colors.weekend.sun
+                       : i === 6 ? CONFIG.colors.weekend.sat
+                       : CONFIG.colors.dayHeaderText;
 
         drawText(gridCtx, {
             text: dayNames[i],
@@ -165,7 +171,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                         width: cellWidth,
                         height: cellHeight,
                         fill: CONFIG.colors.background,
-                        stroke: CONFIG.colors.grid,
+                        stroke: CONFIG.colors.grid || '#d1d5db',
                         strokeWidth: 1
                     });
                 } else {
@@ -176,7 +182,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                         width: cellWidth,
                         height: cellHeight,
                         fill: 'transparent',
-                        stroke: CONFIG.colors.grid,
+                        stroke: CONFIG.colors.grid || '#d1d5db',
                         strokeWidth: 1
                     });
                 }
@@ -203,7 +209,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                             snapToPixel(cellLeft), 
                             snapToPixel(dayGridTop + rows * cellHeight)
                         ],
-                        stroke: CONFIG.colors.grid,
+                        stroke: CONFIG.colors.grid || '#d1d5db',
                         strokeWidth: 1
                     });
                 }
@@ -217,7 +223,7 @@ export function renderCanvasMonthCalendar(contexts, state, year, month, x, y, wi
                             snapToPixel(x + width), 
                             snapToPixel(dayGridTop + row * cellHeight)
                         ],
-                        stroke: CONFIG.colors.grid,
+                        stroke: CONFIG.colors.grid || '#d1d5db',
                         strokeWidth: 1
                     });
                 }

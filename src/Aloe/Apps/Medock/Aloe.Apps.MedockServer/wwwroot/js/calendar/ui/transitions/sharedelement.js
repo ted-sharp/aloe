@@ -5,6 +5,7 @@
  */
 
 import { CONFIG } from '../../config.js';
+import { updateConfigColorsForCurrentTheme } from '../../utils/theme-utils.js';
 
 /**
  * 共有要素トランジションを適用
@@ -13,6 +14,10 @@ import { CONFIG } from '../../config.js';
  * @param {object} options - オプション { sourceBounds, targetBounds, transitionType }
  */
 export function applySharedElementTransition(manager, fadeDuration, options = {}) {
+    // CONFIG.colorsが初期化されていない場合は初期化
+    if (!CONFIG.colors || !CONFIG.colors.background) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
     const sourceBounds = options.sourceBounds;
     const targetBounds = options.targetBounds;
 

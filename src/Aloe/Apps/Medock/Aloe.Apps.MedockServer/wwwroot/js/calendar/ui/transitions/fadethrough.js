@@ -5,6 +5,7 @@
  */
 
 import { CONFIG } from '../../config.js';
+import { updateConfigColorsForCurrentTheme } from '../../utils/theme-utils.js';
 
 /**
  * フェードスルートランジションを適用
@@ -12,6 +13,10 @@ import { CONFIG } from '../../config.js';
  * @param {number} fadeDuration - フェード時間（ミリ秒）
  */
 export function applyFadethroughTransition(manager, fadeDuration) {
+    // CONFIG.colorsが初期化されていない場合は初期化
+    if (!CONFIG.colors || !CONFIG.colors.background) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
     // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
     manager.canvases.forEach((canvas, layerName) => {
         const snapshotCanvas = manager.snapshotCanvases.get(layerName);
@@ -61,6 +66,16 @@ export function applyFadethroughTransition(manager, fadeDuration) {
 
         if (totalProgress < 1) {
             requestAnimationFrame(animate);
+        } else {
+            // アニメーション完了後: オフスクリーンキャンバスをメインキャンバスに完全転送
+            manager.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                const ctx = manager.contexts.get(layerName);
+                if (ctx && offscreenCanvas) {
+                    ctx.clearRect(0, 0, manager.width, manager.height);
+                    ctx.globalAlpha = 1.0;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+            });
         }
     };
     requestAnimationFrame(animate);

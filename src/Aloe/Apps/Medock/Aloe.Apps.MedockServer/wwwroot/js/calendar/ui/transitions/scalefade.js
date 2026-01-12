@@ -5,6 +5,7 @@
  */
 
 import { CONFIG } from '../../config.js';
+import { updateConfigColorsForCurrentTheme } from '../../utils/theme-utils.js';
 
 /**
  * スケールフェードトランジションを適用
@@ -12,6 +13,10 @@ import { CONFIG } from '../../config.js';
  * @param {number} fadeDuration - フェード時間（ミリ秒）
  */
 export function applyScalefadeTransition(manager, fadeDuration) {
+    // CONFIG.colorsが初期化されていない場合は初期化
+    if (!CONFIG.colors || !CONFIG.colors.background) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
     // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
     manager.canvases.forEach((canvas, layerName) => {
         const snapshotCanvas = manager.snapshotCanvases.get(layerName);

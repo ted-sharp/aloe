@@ -9,6 +9,7 @@ import { CONFIG } from '../config.js';
 import { drawRect, drawLine, drawText, drawCircle } from '../utils/canvas-utils.js';
 import { dateToString, getStartOfWeek, isToday, parseDate } from '../utils/date-utils.js';
 import { getRenderState, resetRenderState } from './canvas-render-state.js';
+import { updateConfigColorsForCurrentTheme } from '../utils/theme-utils.js';
 import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
 import {
     getSymbolFromVacancyRatio,
@@ -58,6 +59,11 @@ const avatarColors = [
  * @param {object} transitionInfo - トランジション情報 { sourceBounds, targetDateStr }
  */
 export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade', fadeDuration = 200, transitionInfo = null) {
+    // CONFIG.colorsが初期化されていない場合は初期化（空オブジェクトもチェック）
+    if (!CONFIG.colors || Object.keys(CONFIG.colors).length === 0 || !CONFIG.colors.grid) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
+
     // オフスクリーンバッファに描画（ダブルバッファリング）
     const contexts = canvasManager.getAllOffscreenContexts();
     const width = canvasManager.width;
@@ -115,7 +121,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         width: width,
         height: headerHeight,
         fill: CONFIG.colors.dayHeaderBg,
-        stroke: CONFIG.colors.grid,
+        stroke: CONFIG.colors.grid || '#d1d5db',
         strokeWidth: 1
     });
 
@@ -126,7 +132,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         width: timeColumnWidth,
         height: headerHeight,
         fill: CONFIG.colors.background,
-        stroke: CONFIG.colors.grid,
+        stroke: CONFIG.colors.grid || '#d1d5db',
         strokeWidth: 1
     });
 
@@ -150,7 +156,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
             width: dayWidth,
             height: headerHeight,
             fill: isTodayCell ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-            stroke: CONFIG.colors.grid,
+            stroke: CONFIG.colors.grid || '#d1d5db',
             strokeWidth: 1
         });
 
@@ -225,7 +231,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
         // 横線（30分の区切り）
         drawLine(gridCtx, {
             points: [timeColumnWidth, y, width, y],
-            stroke: CONFIG.colors.grid,
+            stroke: CONFIG.colors.grid || '#d1d5db',
             strokeWidth: half % 2 === 0 ? 1 : 0.5,
             opacity: half % 2 === 0 ? 1 : 0.5
         });
@@ -248,7 +254,7 @@ export function renderCanvasWeekView(canvasManager, state, fadeMode = 'crossfade
     for (let i = 0; i <= weekDays; i++) {
         drawLine(gridCtx, {
             points: [verticalLineX, headerHeight, verticalLineX, height],
-            stroke: CONFIG.colors.grid,
+            stroke: CONFIG.colors.grid || '#d1d5db',
             strokeWidth: 1
         });
         if (i < weekDays) {
