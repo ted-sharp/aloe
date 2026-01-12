@@ -224,51 +224,27 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     protected override async Task OnParametersSetAsync()
     {
-        // MainStats が更新されたかチェック（初期化後の更新を検出するため）
         var currentMainStatsCount = this.MainStats?.Count ?? 0;
-        var mainStatsChanged = currentMainStatsCount != this._lastMainStatsCount;
-
-        // MainStatsSlots が更新されたかチェック
         var currentMainStatsSlotsCount = this.MainStatsSlots?.Count ?? 0;
-        var mainStatsSlotsChanged = currentMainStatsSlotsCount != this._lastMainStatsSlotsCount;
+        var hasDataChanged = this.HasDataChanged(currentMainStatsCount, currentMainStatsSlotsCount);
+        var hasData = this.Appointments != null || this.MainStats != null || this.MainStatsGrayedOut != null;
 
-        // 初期化完了後、またはデータが有効かつ初期化中に MainStats または MainStatsSlots が更新された場合
-        if ((mainStatsChanged || mainStatsSlotsChanged) && (this._isInitialized || currentMainStatsCount > 0))
+        // 初期化済みかつ（データ変更あり、またはデータが設定されている）場合に更新
+        // UpdateDataAsync内でエラーハンドリングされているため、ここでは例外をキャッチしない
+        if (this._isInitialized && (hasDataChanged || hasData))
         {
-            this._lastMainStatsCount = currentMainStatsCount;
-            this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
-            try
-            {
-                await this.UpdateDataAsync();
-            }
-            catch (TaskCanceledException)
-            {
-                // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
-                // これは正常な動作なので無視する
-            }
+            await this.UpdateDataAsync();
         }
-        else if (this._isInitialized && (this.Appointments != null || this.MainStats != null || this.MainStatsGrayedOut != null))
-        {
-            // 初期化完了後、データが設定されている場合はUpdateDataAsyncを呼ぶ
-            // MainStatsSlotsが設定される前に呼ばれる可能性があるが、その場合は後でMainStatsSlotsが設定されたときに再描画される
-            this._lastMainStatsCount = currentMainStatsCount;
-            this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
-            try
-            {
-                await this.UpdateDataAsync();
-            }
-            catch (TaskCanceledException)
-            {
-                // コンポーネントが破棄されたり、パラメータが頻繁に更新された場合に発生する可能性がある
-                // これは正常な動作なので無視する
-            }
-        }
-        else
-        {
-            // 変更がない場合でも、カウントを更新
-            this._lastMainStatsCount = currentMainStatsCount;
-            this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
-        }
+
+        // カウントを常に更新
+        this._lastMainStatsCount = currentMainStatsCount;
+        this._lastMainStatsSlotsCount = currentMainStatsSlotsCount;
+    }
+
+    private bool HasDataChanged(int currentMainStatsCount, int currentMainStatsSlotsCount)
+    {
+        return currentMainStatsCount != this._lastMainStatsCount || 
+               currentMainStatsSlotsCount != this._lastMainStatsSlotsCount;
     }
 
 

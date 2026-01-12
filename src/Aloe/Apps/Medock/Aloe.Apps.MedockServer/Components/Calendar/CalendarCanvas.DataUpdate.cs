@@ -10,6 +10,43 @@ namespace Aloe.Apps.MedockServer.Components.Calendar;
 
 public partial class CalendarCanvas
 {
+    /// <summary>
+    /// カレンダーデータを構築してJS用オブジェクトに変換します。
+    /// </summary>
+    private async Task<(CalendarDataDto CalendarData, object Data)> BuildCalendarDataForJsAsync()
+    {
+        var buildSw = Stopwatch.StartNew();
+        var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
+            this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
+            this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
+            this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
+            this.Holidays ?? new Dictionary<string, string>(),
+            this.FilterTimeSlots,
+            this.EquipmentStatsOptimized,
+            this.BusinessHours,
+            this.MainStatsSlots);
+        buildSw.Stop();
+        Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
+        Console.WriteLine($"  - Appointments: {calendarData.Appointments.Count}");
+        Console.WriteLine($"  - MainStats dates: {calendarData.MainStats.Count}");
+        Console.WriteLine($"  - EquipmentStats dates: {calendarData.EquipmentStats.Count}");
+        var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Count);
+        Console.WriteLine($"  - Total Equipment Resources: {totalEquipmentResources}");
+
+        var interopSw = Stopwatch.StartNew();
+        var data = CalendarCanvasInterop.BuildDataObject(calendarData);
+        interopSw.Stop();
+        Console.WriteLine($"[Performance] BuildDataObject: {interopSw.ElapsedMilliseconds}ms");
+
+        var serializeSw = Stopwatch.StartNew();
+        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(data);
+        serializeSw.Stop();
+        var sizeKb = jsonBytes.Length / 1024.0;
+        Console.WriteLine($"[Performance] JSON serialization: {serializeSw.ElapsedMilliseconds}ms (size: {sizeKb:F2} KB)");
+
+        return (calendarData, data);
+    }
+
     private async Task UpdateDataAsync()
     {
         if (!this._isInitialized) return;
@@ -17,37 +54,7 @@ public partial class CalendarCanvas
         var sw = Stopwatch.StartNew();
         try
         {
-            var buildSw = Stopwatch.StartNew();
-
-            var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
-                this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-                this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-                this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-                this.Holidays ?? new Dictionary<string, string>(),
-                this.FilterTimeSlots,
-                this.EquipmentStatsOptimized,
-                this.BusinessHours,
-                this.MainStatsSlots);
-
-            buildSw.Stop();
-            Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
-            Console.WriteLine($"  - Appointments: {calendarData.Appointments.Count}");
-            Console.WriteLine($"  - MainStats dates: {calendarData.MainStats.Count}");
-            Console.WriteLine($"  - EquipmentStats dates: {calendarData.EquipmentStats.Count}");
-            var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Count);
-            Console.WriteLine($"  - Total Equipment Resources: {totalEquipmentResources}");
-
-            var interopSw = Stopwatch.StartNew();
-            var data = CalendarCanvasInterop.BuildDataObject(calendarData);
-            interopSw.Stop();
-            Console.WriteLine($"[Performance] BuildDataObject: {interopSw.ElapsedMilliseconds}ms");
-
-            // JSON シリアライゼーションのサイズを計測
-            var serializeSw = Stopwatch.StartNew();
-            var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(data);
-            serializeSw.Stop();
-            var sizeKb = jsonBytes.Length / 1024.0;
-            Console.WriteLine($"[Performance] JSON serialization: {serializeSw.ElapsedMilliseconds}ms (size: {sizeKb:F2} KB)");
+            var (_, data) = await this.BuildCalendarDataForJsAsync();
 
             var jsSw = Stopwatch.StartNew();
             await this.JSRuntime.InvokeVoidAsync("MedockCalendar.updateData", data);

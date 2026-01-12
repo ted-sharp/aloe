@@ -9,15 +9,6 @@ public partial class CalendarCanvas
     // JSInvokable callbacks (called from JavaScript)
     // ============================================================
 
-    [JSInvokable]
-    public async Task OnDateSelectedCallback(string dateStr)
-    {
-        if (DateOnly.TryParse(dateStr, out var date))
-        {
-            await this.OnDateSelected.InvokeAsync(date);
-        }
-    }
-
     [JSInvokable("OnDateSelected")]
     public async Task OnDateSelectedFromJs(string dateStr)
     {

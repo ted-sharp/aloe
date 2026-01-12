@@ -42,28 +42,9 @@ public partial class CalendarCanvas
             }
         }
 
-        var buildSw = Stopwatch.StartNew();
+        var (_, data) = await this.BuildCalendarDataForJsAsync();
 
-        var calendarData = await this.CalendarDataService.BuildCalendarDataAsync(
-            this.Appointments ?? Enumerable.Empty<AppointmentDto>(),
-            this.MainStats ?? new Dictionary<string, List<AppointmentStats>>(),
-            this.MainStatsGrayedOut ?? new Dictionary<string, bool>(),
-            this.Holidays ?? new Dictionary<string, string>(),
-            this.FilterTimeSlots,
-            this.EquipmentStatsOptimized,
-            this.BusinessHours,
-            this.MainStatsSlots);
-
-        buildSw.Stop();
-        Console.WriteLine($"[Performance] BuildCalendarData: {buildSw.ElapsedMilliseconds}ms");
-        Console.WriteLine($"  - Appointments: {calendarData.Appointments.Count}");
-        Console.WriteLine($"  - MainStats dates: {calendarData.MainStats.Count}");
-        Console.WriteLine($"  - EquipmentStats dates: {calendarData.EquipmentStats.Count}");
-        var totalEquipmentResources = calendarData.EquipmentStats.Sum(kvp => kvp.Value.Count);
-        Console.WriteLine($"  - Total Equipment Resources: {totalEquipmentResources}");
-
-        var interopSw = Stopwatch.StartNew();
-        var data = CalendarCanvasInterop.BuildDataObject(calendarData);
+        var optionsSw = Stopwatch.StartNew();
         var options = CalendarCanvasInterop.BuildOptions(
             this.WeekDays,
             this.ShowSlots,
@@ -71,15 +52,8 @@ public partial class CalendarCanvas
             this.StartHour,
             this.EndHour,
             this.BusinessHours);
-        interopSw.Stop();
-        Console.WriteLine($"[Performance] BuildDataObject/BuildOptions: {interopSw.ElapsedMilliseconds}ms");
-
-        // JSON シリアライゼーションのサイズを計測
-        var serializeSw = Stopwatch.StartNew();
-        var jsonBytes = JsonSerializer.SerializeToUtf8Bytes(data);
-        serializeSw.Stop();
-        var sizeKb = jsonBytes.Length / 1024.0;
-        Console.WriteLine($"[Performance] JSON serialization: {serializeSw.ElapsedMilliseconds}ms (size: {sizeKb:F2} KB)");
+        optionsSw.Stop();
+        Console.WriteLine($"[Performance] BuildOptions: {optionsSw.ElapsedMilliseconds}ms");
 
         var jsInitSw = Stopwatch.StartNew();
         await this.JSRuntime.InvokeVoidAsync(
