@@ -20,8 +20,8 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly CalendarApplicationService _dataService;
-    private readonly CalendarFilterCoordinator _filterCoordinator;
-    private readonly CalendarModalCoordinator _modalCoordinator;
+    private readonly CalendarFilterService _filterService;
+    private readonly IAppointmentService _appointmentService;
     private readonly ILogger<CalendarOrchestrator> _logger;
 
     public CalendarOrchestrator(
@@ -31,8 +31,8 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         AuthenticationStateProvider authStateProvider,
         IDateTimeProvider dateTimeProvider,
         CalendarApplicationService dataService,
-        CalendarFilterCoordinator filterCoordinator,
-        CalendarModalCoordinator modalCoordinator,
+        CalendarFilterService filterService,
+        IAppointmentService appointmentService,
         ILogger<CalendarOrchestrator> logger)
     {
         _state = state;
@@ -41,8 +41,8 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         _authStateProvider = authStateProvider;
         _dateTimeProvider = dateTimeProvider;
         _dataService = dataService;
-        _filterCoordinator = filterCoordinator;
-        _modalCoordinator = modalCoordinator;
+        _filterService = filterService;
+        _appointmentService = appointmentService;
         _logger = logger;
     }
 
@@ -137,7 +137,7 @@ public class CalendarOrchestrator : ICalendarOrchestrator
             _state.CurrentDate,
             _state.WeekDays);
 
-        await _filterCoordinator.ReapplyCurrentFilterAsync(_state);
+        await ReapplyCurrentFilterAsync();
 
         _logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Completed");
     }
@@ -186,7 +186,7 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         await _dataService.LoadAllCalendarDataAsync(_state, view, _state.CurrentDate, _state.WeekDays);
 
         // フィルター再適用
-        await _filterCoordinator.ReapplyCurrentFilterAsync(_state);
+        await ReapplyCurrentFilterAsync();
 
         // ビュー状態更新
         _state.SetView(view);
@@ -253,21 +253,62 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task ApplyFilterAsync(SearchFilterPanel.SearchFilter filter)
     {
-        await _filterCoordinator.HandleFilterAppliedAsync(filter, _state, () => Task.CompletedTask);
+        _state.CurrentFilter = filter;
+        await ReapplyCurrentFilterAsync();
     }
 
     public async Task ReapplyCurrentFilterAsync()
     {
-        await _filterCoordinator.ReapplyCurrentFilterAsync(_state);
+        if (_state.CurrentFilter is null)
+        {
+            return;
+        }
+
+        await _filterService.ApplyFilterAsync(
+            _state.CurrentFilter,
+            _state.MainStats,
+            _state.MainStatsGrayedOut,
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.MainStatsSlots);
     }
 
     public async Task HandleFilterChangedRealtimeAsync(SearchFilterPanel.SearchFilter filter)
     {
-        await _filterCoordinator.HandleFilterChangedRealtimeAsync(
-            filter,
-            _state,
-            () => Task.CompletedTask,
-            () => Task.CompletedTask);
+        _state.CurrentFilter = filter;
+
+        // フロア、リソース、プランのフィルターが変更された場合はデータを再取得
+        var needsReload = filter.SelectedFloorIds.Any() ||
+                         filter.SelectedResourceIds.Any() ||
+                         filter.SelectedPlanIds.Any();
+
+        if (needsReload)
+        {
+            // データロード（この段階ではフィルター非適用）
+            await _dataService.LoadMainStatsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            await _dataService.LoadMainStatsSlotsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            await _dataService.LoadEquipmentStatsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            await ReapplyCurrentFilterAsync();
+        }
+        else
+        {
+            await ReapplyCurrentFilterAsync();
+        }
     }
 
     // ===================================================================
@@ -276,60 +317,82 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public void OpenAppointmentModal(Guid apptId)
     {
-        _modalCoordinator.HandleAppointmentClick(
-            apptId,
-            _state.CurrentDate,
-            _state,
-            (date, startMin, id) => _state.OpenModal(date, startMin, id));
+        _state.OpenModal(_state.CurrentDate, 540, apptId);
     }
 
     public void OpenNewAppointmentModal(DateOnly date, int startMin)
     {
-        _modalCoordinator.OpenNewAppointmentModal(
-            date,
-            _state,
-            (d, min) => _state.OpenModal(d, min));
+        _state.OpenModal(date, startMin);
     }
 
     public void OpenCreateRequestModal(DateOnly date, int startMin)
     {
-        _modalCoordinator.HandleCreateRequest(
-            (date, startMin),
-            _state,
-            (d, min) => _state.OpenModal(d, min));
+        _state.OpenModal(date, startMin);
     }
 
     public void CloseModal()
     {
-        _modalCoordinator.CloseModal(_state, () => _state.CloseModal());
+        _state.CloseModal();
     }
 
     public async Task SaveAppointmentAsync()
     {
-        await _modalCoordinator.HandleSaveAppointmentAsync(
+        _state.CloseModal();
+        // 予約保存後にデータを再取得
+        await _dataService.LoadAppointmentsAsync(
             _state,
-            () => _state.CloseModal(),
-            () => Task.CompletedTask);
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
     }
 
     public async Task DeleteAppointmentAsync()
     {
-        await _modalCoordinator.HandleDeleteAppointmentAsync(
+        _state.CloseModal();
+        // 予約削除後にデータを再取得
+        await _dataService.LoadAppointmentsAsync(
             _state,
-            () => _state.CloseModal(),
-            () => Task.CompletedTask);
+            _state.CurrentView,
+            _state.CurrentDate,
+            _state.WeekDays);
     }
 
     public async Task<AppointmentMoveResult> MoveAppointmentAsync(Guid apptId, DateOnly newDate, int newStartMin)
     {
-        string? errorMessage = null;
-        var success = await _modalCoordinator.HandleAppointmentMovedAsync(
-            (apptId, newDate, newStartMin),
-            _state,
-            () => Task.CompletedTask,
-            async (error) => { errorMessage = error; await Task.CompletedTask; });
+        try
+        {
+            var appt = _state.Appointments.FirstOrDefault(a => a.Id == apptId);
+            if (appt == null)
+            {
+                return new AppointmentMoveResult(false, "予約が見つかりません");
+            }
 
-        return new AppointmentMoveResult(success, errorMessage);
+            var result = await _appointmentService.UpdateAppointmentAsync(
+                apptId,
+                new UpdateAppointmentDto
+                {
+                    Date = newDate,
+                    StartMin = newStartMin,
+                });
+
+            if (!result.IsSuccess)
+            {
+                return new AppointmentMoveResult(false, $"予約の移動に失敗しました: {result.ErrorMessage}");
+            }
+
+            // 移動成功後にデータを再取得
+            await _dataService.LoadAppointmentsAsync(
+                _state,
+                _state.CurrentView,
+                _state.CurrentDate,
+                _state.WeekDays);
+
+            return new AppointmentMoveResult(true, null);
+        }
+        catch (Exception ex)
+        {
+            return new AppointmentMoveResult(false, $"予約の移動処理中にエラーが発生しました: {ex.Message}");
+        }
     }
 
     // ===================================================================
