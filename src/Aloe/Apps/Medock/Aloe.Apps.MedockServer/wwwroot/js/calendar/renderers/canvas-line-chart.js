@@ -74,9 +74,13 @@ function getAvailableCount(resource, index) {
  * MainリソースとEquipmentリソースのスロットをAND合成（最小空き件数を計算）
  * @param {object|null} mainStats - Mainリソース統計データ
  * @param {Array} equipmentResources - Equipmentリソースの配列
+ * @param {number} startHour - 業務開始時刻（時間単位）
+ * @param {number} endHour - 業務終了時刻（時間単位）
+ * @param {number|null} lunchStartHour - 昼休み開始時刻（時間単位、nullの場合は昼休みなし）
+ * @param {number|null} lunchEndHour - 昼休み終了時刻（時間単位、nullの場合は昼休みなし）
  * @returns {Array} 合成されたスロットデータ [{startHours, endHours, availableCount, centerHours}, ...]
  */
-function computeAndCompositeSlotsWithMain(mainStats, equipmentResources) {
+function computeAndCompositeSlotsWithMain(mainStats, equipmentResources, startHour, endHour, lunchStartHour, lunchEndHour) {
     const allResources = [];
     
     // Mainリソースを追加
@@ -118,12 +122,23 @@ function computeAndCompositeSlotsWithMain(mainStats, equipmentResources) {
         const segmentMid = (segmentStart + segmentEnd) / 2;
         const centerHours = segmentMid / 60;
         
-        // この時間区間に含まれる各リソースの空き件数を計算
-        let minAvailableCount = Infinity;
-        let hasData = false;
+        // 時間外のスロットを除外
+        // 1. ビジネスアワー外の判定: startHourより前、endHour以降、または昼休み時間内
+        const segmentStartHour = segmentStart / 60;
+        const segmentEndHour = segmentEnd / 60;
+        const isBeforeBusinessHours = segmentEndHour < startHour;
+        const isAfterBusinessHours = segmentStartHour >= endHour;
+        const isDuringLunch = lunchStartHour !== null && lunchEndHour !== null &&
+            segmentStartHour < lunchEndHour && segmentEndHour > lunchStartHour;
         
-        // AND合成: 全リソースが利用可能である必要がある
-        // 空き件数 = min(各リソースの空き件数)
+        // ビジネスアワー外のスロットは描画対象から除外
+        if (isBeforeBusinessHours || isAfterBusinessHours || isDuringLunch) {
+            continue;
+        }
+        
+        // 2. スロット定義から外れている時間帯を時間外として除外
+        // セグメントの中心時刻が、いずれかのリソースのスロット定義に含まれているかチェック
+        let isInAnySlotDefinition = false;
         allResources.forEach(resource => {
             const { slotStartMins, slotEndMins } = resource;
             if (!slotStartMins) return;
@@ -132,8 +147,49 @@ function computeAndCompositeSlotsWithMain(mainStats, equipmentResources) {
                 const startMin = slotStartMins[j];
                 const endMin = slotEndMins[j];
                 
+                // セグメントの中心時刻がスロット定義に含まれているかチェック
+                if (segmentMid >= startMin && segmentMid < endMin) {
+                    isInAnySlotDefinition = true;
+                    return; // このリソースで見つかったので、次のリソースをチェック
+                }
+            }
+        });
+        
+        // すべてのリソースのスロット定義から外れている場合は時間外として除外
+        // （例：水曜日・土曜日の午後はスロット定義が存在しないため、時間外として扱う）
+        if (!isInAnySlotDefinition) {
+            continue;
+        }
+        
+        // この時間区間に含まれる各リソースの空き件数を計算
+        let minAvailableCount = Infinity;
+        let hasData = false;
+        
+        // AND合成: 全リソースが利用可能である必要がある
+        // 空き件数 = min(各リソースの空き件数)
+        allResources.forEach(resource => {
+            const { slotStartMins, slotEndMins, slotFlags } = resource;
+            if (!slotStartMins) return;
+            
+            for (let j = 0; j < slotStartMins.length; j++) {
+                const startMin = slotStartMins[j];
+                const endMin = slotEndMins[j];
+                
                 // この区間がスロットに含まれるかチェック
                 if (segmentMid >= startMin && segmentMid < endMin) {
+                    // SlotFlagsで時間外を判定（存在する場合）
+                    // オーバーライドやその他の理由で時間外としてマークされている場合
+                    if (slotFlags && slotFlags.length > j) {
+                        const flags = slotFlags[j];
+                        const isOutsideBefore = (flags & 0b0010) !== 0;
+                        const isOutsideAfter = (flags & 0b0100) !== 0;
+                        const isOutsideLunch = (flags & 0b1000) !== 0;
+                        if (isOutsideBefore || isOutsideAfter || isOutsideLunch) {
+                            // 時間外スロットは除外
+                            continue;
+                        }
+                    }
+                    
                     const availableCount = getAvailableCount(resource, j);
                     minAvailableCount = Math.min(minAvailableCount, availableCount);
                     hasData = true;
@@ -166,7 +222,8 @@ export function renderCanvasLineChart(contentCtx, params) {
         cellLeft, cellTop, cellWidth, cellHeight,
         dateStr, barAreaTop, barAreaHeight,
         equipmentStats, mainStats, startHour, endHour,
-        lunchStartHour, lunchEndHour, isYearView = false
+        lunchStartHour, lunchEndHour, isYearView = false,
+        businessHours = null
     } = params;
 
     // Equipment統計データがない場合は描画しない
@@ -183,7 +240,7 @@ export function renderCanvasLineChart(contentCtx, params) {
     const mainStatsForDate = mainStats || null;
 
     // AND合成で最小空き件数のスロットデータを計算（Mainリソースも含む）
-    const compositeSlots = computeAndCompositeSlotsWithMain(mainStatsForDate, equipmentResources);
+    const compositeSlots = computeAndCompositeSlotsWithMain(mainStatsForDate, equipmentResources, startHour, endHour, lunchStartHour, lunchEndHour);
     if (compositeSlots.length === 0) {
         return false;
     }

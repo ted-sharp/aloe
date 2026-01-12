@@ -202,6 +202,7 @@ internal static class AppointmentScheduleSeeder
         }
 
         // 午後枠：13:00-17:00
+        // 水曜日（3）と土曜日（6）は半日営業のため、午後のスロットは作成しない
         var afternoonSlots = new List<AppointmentScheduleSlot>();
         for (int min = 780; min < 1020; min += slotDurationMin)
         {
@@ -209,7 +210,7 @@ internal static class AppointmentScheduleSeeder
             {
                 ApptScheduleSlotId = Guid.CreateVersion7(),
                 ApptScheduleId = schedule.ApptScheduleId,
-                DaysOfWeek = new[] { 1, 2, 3, 4, 5, 6 }, // 月〜土
+                DaysOfWeek = new[] { 1, 2, 4, 5 }, // 月火木金（水曜・土曜は除外）
                 SlotStartMin = min,
                 SlotEndMin = min + slotDurationMin,
                 SlotCap = capacity

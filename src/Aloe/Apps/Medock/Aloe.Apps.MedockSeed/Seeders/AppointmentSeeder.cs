@@ -461,7 +461,10 @@ internal static class AppointmentSeeder
         var mainAppointmentCount = slotAppointmentCounts.Sum();
 
         // Equipment リソースも時間帯乗数とスロット変動を考慮して計算
+        // 設備リソースはキャパオーバーにならないように、スロットごとのキャパシティを超えない予約を生成する
         var equipmentAppointmentCounts = new Dictionary<Guid, int>();
+        var equipmentSlotCounts = new Dictionary<(Guid ResId, int SlotStartMin), int>(); // スロットごとの予約数制限
+
         foreach (var (resId, slots) in equipmentSlots)
         {
             var equipmentCount = 0;
@@ -469,20 +472,33 @@ internal static class AppointmentSeeder
             {
                 var timeModifier = GetTimeModifier(slot.SlotStartMin);
                 // Equipment もスロットごとに独立した変動（±35%）
-                decimal equipSlotVariation = 0.65m + (decimal)(_random.NextDouble() * 0.70);
+                // キャパオーバーを防ぐため、変動範囲を0.65-1.0に制限（最大100%まで、キャパシティを超えない）
+                decimal equipSlotVariation = 0.65m + (decimal)(_random.NextDouble() * 0.35);
                 var slotCount = (int)(slot.SlotCap * occupancyRate * timeModifier * equipSlotVariation);
+                // スロットごとのキャパシティを超えないように制限
+                slotCount = Math.Min(slotCount, slot.SlotCap);
                 equipmentCount += slotCount;
+
+                // スロットごとの予約数制限を記録
+                equipmentSlotCounts[(resId, slot.SlotStartMin)] = slotCount;
             }
             equipmentAppointmentCounts[resId] = Math.Max(0, equipmentCount);
         }
 
         var appointmentCount = mainAppointmentCount;
 
-        // Equipment の現在カウントを追跡
+        // Equipment の現在カウントを追跡（1日あたりの合計）
         var equipmentCurrentCounts = new Dictionary<Guid, int>();
         foreach (var resId in equipmentAppointmentCounts.Keys)
         {
             equipmentCurrentCounts[resId] = 0;
+        }
+
+        // Equipment のスロットごとの現在カウントを追跡（スロットごとのキャパシティ制限用）
+        var equipmentSlotCurrentCounts = new Dictionary<(Guid ResId, int SlotStartMin), int>();
+        foreach (var kvp in equipmentSlotCounts)
+        {
+            equipmentSlotCurrentCounts[kvp.Key] = 0;
         }
 
         // Main リソースのスロット時間帯を使用（複数回参照されるため事前に用意）
@@ -726,14 +742,45 @@ internal static class AppointmentSeeder
             SeederHelper.InitializeAuditFields(mainAssignment, dateTimeProvider);
             resourceAssignments.Add(mainAssignment);
 
-            // 2. Equipmentリソースをランダムに追加（50%の確率で、上限を超えない範囲で）
+            // 2. Equipmentリソースをランダムに追加（50%の確率で、キャパオーバーを防ぐ）
             if (equipmentResources.Any() && _random.Next(100) < 50)
             {
-                // 利用可能なEquipmentをフィルタ（上限に余裕があるもの）
-                var availableEquipments = equipmentResources
-                    .Where(e => equipmentCurrentCounts.ContainsKey(e.ApptResId) &&
-                                equipmentCurrentCounts[e.ApptResId] < equipmentAppointmentCounts[e.ApptResId])
-                    .ToList();
+                // 設備リソースはキャパオーバーにならないように、スロットごとのキャパシティを超えないようにする
+                // この予約の時間帯に対応するスロットで、まだキャパシティに余裕がある設備リソースをフィルタ
+                var availableEquipments = new List<AppointmentResource>();
+
+                foreach (var equipment in equipmentResources)
+                {
+                    if (!equipmentCurrentCounts.ContainsKey(equipment.ApptResId))
+                        continue;
+
+                    // 1日あたりの上限チェック（念のため）
+                    if (equipmentCurrentCounts[equipment.ApptResId] >= equipmentAppointmentCounts[equipment.ApptResId])
+                        continue;
+
+                    // この予約の時間帯に対応するスロットを探す
+                    if (equipmentSlots.TryGetValue(equipment.ApptResId, out var slots) && slots.Any())
+                    {
+                        var matchedSlot = slots.FirstOrDefault(s => appointment.ApptStartMin >= s.SlotStartMin && appointment.ApptStartMin < s.SlotEndMin);
+
+                        if (matchedSlot.SlotEndMin > matchedSlot.SlotStartMin)
+                        {
+                            // スロットが見つかった場合、スロットごとのキャパシティをチェック
+                            var slotKey = (ResId: equipment.ApptResId, SlotStartMin: matchedSlot.SlotStartMin);
+                            if (equipmentSlotCurrentCounts.ContainsKey(slotKey))
+                            {
+                                var slotLimit = equipmentSlotCounts[slotKey];
+                                var slotCurrent = equipmentSlotCurrentCounts[slotKey];
+
+                                // スロットごとのキャパシティを超えていない場合のみ追加
+                                if (slotCurrent < slotLimit)
+                                {
+                                    availableEquipments.Add(equipment);
+                                }
+                            }
+                        }
+                    }
+                }
 
                 if (availableEquipments.Any())
                 {
@@ -752,58 +799,141 @@ internal static class AppointmentSeeder
 
                         foreach (var equipment in selectedEquipments)
                         {
-                            // 上限チェック（念のため）
-                            if (equipmentCurrentCounts[equipment.ApptResId] < equipmentAppointmentCounts[equipment.ApptResId])
+                            // 再度チェック（念のため）
+                            if (equipmentCurrentCounts[equipment.ApptResId] >= equipmentAppointmentCounts[equipment.ApptResId])
+                                continue;
+
+                            // スロットごとのキャパシティチェック
+                            var aggTime = appointment.ApptStartMin;
+                            if (equipmentSlots.TryGetValue(equipment.ApptResId, out var slots) && slots.Any())
                             {
-                                var equipmentAssignment = new AppointmentResourceAssignment
+                                var matchedSlot = slots.FirstOrDefault(s => aggTime >= s.SlotStartMin && aggTime < s.SlotEndMin);
+                                if (matchedSlot.SlotEndMin > matchedSlot.SlotStartMin)
                                 {
-                                    ApptResAssignId = Guid.CreateVersion7(),
-                                    ApptId = appointment.ApptId,
-                                    ApptResId = equipment.ApptResId,
-                                    IsDeleted = false
-                                };
+                                    aggTime = matchedSlot.SlotStartMin;
+                                    var slotKey = (ResId: equipment.ApptResId, SlotStartMin: aggTime);
 
-                                SeederHelper.InitializeAuditFields(equipmentAssignment, dateTimeProvider);
-                                resourceAssignments.Add(equipmentAssignment);
-
-                                // Track Equipment resource assignment in aggregation
-                                // Determine the correct slot start time (aggregation key) based on equipment's schedule
-                                // This matches the logic used for Main resources (line 500): use slot start time if within a configured slot,
-                                // otherwise use the actual appointment start time (for out-of-hours appointments)
-                                var aggTime = appointment.ApptStartMin;
-                                if (equipmentSlots.TryGetValue(equipment.ApptResId, out var slots) && slots.Any())
-                                {
-                                    // Find if this appointment time falls into any configured slot for this equipment
-                                    // Match logic: appointment time >= slot start AND < slot end
-                                    var matchedSlot = slots.FirstOrDefault(s => aggTime >= s.SlotStartMin && aggTime < s.SlotEndMin);
-
-                                    // Check if a valid slot was matched (not default tuple value)
-                                    // Default tuple is (0, 0, 0), but we also need to handle edge case where 0:00 might be a valid slot
-                                    // More robust check: ensure both SlotStartMin and SlotEndMin are set (SlotEndMin > SlotStartMin)
-                                    if (matchedSlot.SlotEndMin > matchedSlot.SlotStartMin)
+                                    if (equipmentSlotCurrentCounts.ContainsKey(slotKey))
                                     {
-                                        aggTime = matchedSlot.SlotStartMin;
+                                        var slotLimit = equipmentSlotCounts[slotKey];
+                                        var slotCurrent = equipmentSlotCurrentCounts[slotKey];
+
+                                        // スロットごとのキャパシティを超えている場合はスキップ
+                                        if (slotCurrent >= slotLimit)
+                                            continue;
+
+                                        // スロットごとのカウントを加算
+                                        equipmentSlotCurrentCounts[slotKey]++;
                                     }
-                                    // If no slot matched, aggTime remains as appointment.ApptStartMin (out-of-hours appointment)
                                 }
-
-                                var equipmentAgg = (equipment.ApptResId, appointment.ApptDate!.Value, aggTime);
-                                if (daySlotAggregation.ContainsKey(equipmentAgg))
-                                {
-                                    daySlotAggregation[equipmentAgg]++;
-                                }
-                                else
-                                {
-                                    daySlotAggregation[equipmentAgg] = 1;
-                                }
-
-                                // カウント加算
-                                equipmentCurrentCounts[equipment.ApptResId]++;
                             }
+
+                            var equipmentAssignment = new AppointmentResourceAssignment
+                            {
+                                ApptResAssignId = Guid.CreateVersion7(),
+                                ApptId = appointment.ApptId,
+                                ApptResId = equipment.ApptResId,
+                                IsDeleted = false
+                            };
+
+                            SeederHelper.InitializeAuditFields(equipmentAssignment, dateTimeProvider);
+                            resourceAssignments.Add(equipmentAssignment);
+
+                            // Track Equipment resource assignment in aggregation
+                            var equipmentAgg = (equipment.ApptResId, appointment.ApptDate!.Value, aggTime);
+                            if (daySlotAggregation.ContainsKey(equipmentAgg))
+                            {
+                                daySlotAggregation[equipmentAgg]++;
+                            }
+                            else
+                            {
+                                daySlotAggregation[equipmentAgg] = 1;
+                            }
+
+                            // 1日あたりのカウント加算
+                            equipmentCurrentCounts[equipment.ApptResId]++;
                         }
 
                     }
                 }
+            }
+        }
+
+        // 水曜日と土曜日の午後に10%の確率で時間外予約を生成（イレギュラー）
+        // 半日営業の日の午後は通常営業していないが、イレギュラーとして10%の確率で時間外予約を生成
+        if ((date.DayOfWeek == DayOfWeek.Wednesday || date.DayOfWeek == DayOfWeek.Saturday) && _random.Next(100) < 10)
+        {
+            // 午後の時間帯（13:00-17:00）からランダムに選択
+            var afternoonStartMins = new[] { 780, 840, 900, 960, 1020 }; // 13:00, 14:00, 15:00, 16:00, 17:00
+            var timeOutOfHoursStartMin = afternoonStartMins[_random.Next(afternoonStartMins.Length)];
+
+            var outOfHoursPatient = patients[_random.Next(patients.Count)];
+            var outOfHoursOrganization = organizations[_random.Next(organizations.Count)];
+
+            var outOfHoursAppointment = new Appointment
+            {
+                ApptId = Guid.CreateVersion7(),
+                FloorId = floor.FloorId,
+                OrgId = outOfHoursOrganization.OrgId,
+                PtId = outOfHoursPatient.PtId,
+                ApptDate = date,
+                ApptStartMin = timeOutOfHoursStartMin,
+                ApptStatusCode = _random.Next(100) < 95 ? 0 : _random.Next(1, 5), // 約95%が予約済み、5%がその他
+                ApptMemo = "イレギュラー営業（時間外）",
+                IsDeleted = false
+            };
+
+            SeederHelper.InitializeAuditFields(outOfHoursAppointment, dateTimeProvider);
+            appointments.Add(outOfHoursAppointment);
+
+            // Mainリソースへの割り当て
+            var outOfHoursMainAssignment = new AppointmentResourceAssignment
+            {
+                ApptResAssignId = Guid.CreateVersion7(),
+                ApptId = outOfHoursAppointment.ApptId,
+                ApptResId = mainResource.ApptResId,
+                IsDeleted = false
+            };
+
+            SeederHelper.InitializeAuditFields(outOfHoursMainAssignment, dateTimeProvider);
+            resourceAssignments.Add(outOfHoursMainAssignment);
+
+            // Equipmentリソースも50%の確率で追加（時間外予約でも設備を使用する場合がある）
+            if (equipmentResources.Any() && _random.Next(100) < 50)
+            {
+                var selectedEquipment = equipmentResources[_random.Next(equipmentResources.Count)];
+                var outOfHoursEquipmentAssignment = new AppointmentResourceAssignment
+                {
+                    ApptResAssignId = Guid.CreateVersion7(),
+                    ApptId = outOfHoursAppointment.ApptId,
+                    ApptResId = selectedEquipment.ApptResId,
+                    IsDeleted = false
+                };
+
+                SeederHelper.InitializeAuditFields(outOfHoursEquipmentAssignment, dateTimeProvider);
+                resourceAssignments.Add(outOfHoursEquipmentAssignment);
+
+                // 時間外予約の集計（時間外として記録）
+                var outOfHoursEquipmentAgg = (selectedEquipment.ApptResId, date, timeOutOfHoursStartMin);
+                if (daySlotAggregation.ContainsKey(outOfHoursEquipmentAgg))
+                {
+                    daySlotAggregation[outOfHoursEquipmentAgg]++;
+                }
+                else
+                {
+                    daySlotAggregation[outOfHoursEquipmentAgg] = 1;
+                }
+            }
+
+            // Mainリソースの時間外予約の集計
+            var outOfHoursMainAgg = (mainResource.ApptResId, date, timeOutOfHoursStartMin);
+            if (daySlotAggregation.ContainsKey(outOfHoursMainAgg))
+            {
+                daySlotAggregation[outOfHoursMainAgg]++;
+            }
+            else
+            {
+                daySlotAggregation[outOfHoursMainAgg] = 1;
             }
         }
 

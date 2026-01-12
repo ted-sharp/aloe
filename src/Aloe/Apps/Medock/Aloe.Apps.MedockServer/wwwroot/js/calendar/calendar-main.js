@@ -149,8 +149,13 @@ function updateData(data) {
         setState({ mainStats: mainStatsMap });
     }
 
+    // equipmentStatsは常に更新（null/undefinedの場合は空のMapで置き換え）
+    // これにより、月を切り替えるときに以前の月のデータが残らないようにする
     if (data.equipmentStats) {
         setState({ equipmentStats: new Map(Object.entries(data.equipmentStats)) });
+    } else {
+        // data.equipmentStatsが存在しない場合は空のMapで置き換え（以前の月のデータをクリア）
+        setState({ equipmentStats: new Map() });
     }
 
     if (data.holidays) {

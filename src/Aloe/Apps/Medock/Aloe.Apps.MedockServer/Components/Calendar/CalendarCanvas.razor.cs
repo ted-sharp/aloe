@@ -243,7 +243,7 @@ public partial class CalendarCanvas : ComponentBase, IAsyncDisposable
 
     private bool HasDataChanged(int currentMainStatsCount, int currentMainStatsSlotsCount)
     {
-        return currentMainStatsCount != this._lastMainStatsCount || 
+        return currentMainStatsCount != this._lastMainStatsCount ||
                currentMainStatsSlotsCount != this._lastMainStatsSlotsCount;
     }
 

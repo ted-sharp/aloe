@@ -49,12 +49,12 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Result<List<AppointmentDto>>> GetAppointmentsAsync(DateOnly startDate, DateOnly endDate)
     {
-        return await ExecuteAsync(async () =>
+        return await this.ExecuteAsync(async () =>
         {
-            var appointments = await _appointmentRepository.GetByDateRangeAsync(startDate, endDate);
-            return appointments.Select(a => AppointmentMapper.MapToDto(a, _dateTimeProvider)).ToList();
+            var appointments = await this._appointmentRepository.GetByDateRangeAsync(startDate, endDate);
+            return appointments.Select(a => AppointmentMapper.MapToDto(a, this._dateTimeProvider)).ToList();
         },
-        (ex, t, f, u) => LogMessages.AppointmentsRetrievalError(_logger, startDate, endDate, t, f, u, ex),
+        (ex, t, f, u) => LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, t, f, u, ex),
         $"Failed to retrieve appointments for date range {startDate:yyyy-MM-dd} to {endDate:yyyy-MM-dd}",
         "APPT_RETRIEVAL_ERROR");
     }
@@ -62,18 +62,18 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Result<AppointmentDto>> GetAppointmentAsync(Guid apptId)
     {
-        return await ExecuteAsync(async () =>
+        return await this.ExecuteAsync(async () =>
         {
-            var appointment = await _appointmentRepository.GetByIdAsync(apptId);
+            var appointment = await this._appointmentRepository.GetByIdAsync(apptId);
             if (appointment is null)
             {
-                var (t, f, u) = _userContextService.GetTenantContext();
-                LogMessages.AppointmentNotFound(_logger, apptId, t, f, u);
+                var (t, f, u) = this._userContextService.GetTenantContext();
+                LogMessages.AppointmentNotFound(this._logger, apptId, t, f, u);
                 throw new NotFoundException("Appointment", apptId);
             }
-            return AppointmentMapper.MapToDto(appointment, _dateTimeProvider);
+            return AppointmentMapper.MapToDto(appointment, this._dateTimeProvider);
         },
-        (ex, t, f, u) => LogMessages.AppointmentRetrievalError(_logger, apptId, t, f, u, ex),
+        (ex, t, f, u) => LogMessages.AppointmentRetrievalError(this._logger, apptId, t, f, u, ex),
         $"Failed to retrieve appointment {apptId}",
         "APPT_RETRIEVAL_ERROR",
         onNotFound: (ex) => Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND"));
@@ -82,9 +82,9 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Result<AppointmentDto>> CreateAppointmentAsync(CreateAppointmentDto dto)
     {
-        return await ExecuteAsync(async () =>
+        return await this.ExecuteAsync(async () =>
         {
-            var now = _dateTimeProvider.NowRoundedToSeconds;
+            var now = this._dateTimeProvider.NowRoundedToSeconds;
             var appointment = new Appointment
             {
                 ApptId = Guid.CreateVersion7(),
@@ -100,19 +100,19 @@ public class AppointmentService : IAppointmentService
                 UpdatedAt = now
             };
 
-            await _appointmentRepository.AddAsync(appointment);
+            await this._appointmentRepository.AddAsync(appointment);
 
-            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             // Mainリソースの割り当て（必ず含まれる）
             // Mainリソースは画面で選択するものではなく、予約のフロアに基づいて自動的に割り当てられる
-            var mainResourceIds = await _resourceAssignmentService.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
+            var mainResourceIds = await this._resourceAssignmentService.AssignMainResourcesAsync(context, appointment.ApptId, dto.FloorId, now);
 
             // Equipmentリソースの割り当て（選択された場合のみ）
             var equipmentResourceIds = new List<Guid>();
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                equipmentResourceIds = await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
+                equipmentResourceIds = await this._resourceAssignmentService.AssignEquipmentResourcesAsync(context, appointment.ApptId, dto.EquipmentResourceIds, now);
             }
 
             // リソース割り当てを先に保存（LoadAppointmentsAsyncで読み込めるようにするため）
@@ -123,7 +123,7 @@ public class AppointmentService : IAppointmentService
             var affectedResourceIds = mainResourceIds.Union(equipmentResourceIds).ToList();
             if (affectedResourceIds.Any())
             {
-                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                await this._appointmentStatsUpdateService.RecalculateStatsAsync(
                     context,
                     new List<DateOnly> { dto.Date },
                     affectedResourceIds);
@@ -132,11 +132,11 @@ public class AppointmentService : IAppointmentService
             // Stats/StatSlotsの保存
             await context.SaveChangesAsync();
 
-            var result = await GetAppointmentAsync(appointment.ApptId);
+            var result = await this.GetAppointmentAsync(appointment.ApptId);
             if (!result.IsSuccess) throw new Exception(result.ErrorMessage);
             return result.Value!;
         },
-        (ex, t, f, u) => LogMessages.AppointmentCreateFailed(_logger, dto.PatientId, dto.Date, t, f, u, ex),
+        (ex, t, f, u) => LogMessages.AppointmentCreateFailed(this._logger, dto.PatientId, dto.Date, t, f, u, ex),
         "Database error while creating appointment",
         "APPT_CREATE_ERROR");
     }
@@ -146,21 +146,21 @@ public class AppointmentService : IAppointmentService
     {
         try
         {
-            var appointment = await _appointmentRepository.FindForUpdateAsync(apptId);
+            var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
             if (appointment == null || appointment.IsDeleted)
             {
-                var (t, f, u) = _userContextService.GetTenantContext();
-                LogMessages.AppointmentNotFound(_logger, apptId, t, f, u);
+                var (t, f, u) = this._userContextService.GetTenantContext();
+                LogMessages.AppointmentNotFound(this._logger, apptId, t, f, u);
                 return Result<AppointmentDto>.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND");
             }
 
             if (dto.ExpectedUpdatedAt.HasValue)
             {
-                var expected = _dateTimeProvider.RoundToSeconds(dto.ExpectedUpdatedAt.Value);
-                var actual = _dateTimeProvider.RoundToSeconds(appointment.UpdatedAt);
+                var expected = this._dateTimeProvider.RoundToSeconds(dto.ExpectedUpdatedAt.Value);
+                var actual = this._dateTimeProvider.RoundToSeconds(appointment.UpdatedAt);
                 if (actual != expected)
                 {
-                    _logger.LogWarning("Concurrency conflict for {ApptId}. Expected: {Expected}, Actual: {Actual}", apptId, expected, actual);
+                    this._logger.LogWarning("Concurrency conflict for {ApptId}. Expected: {Expected}, Actual: {Actual}", apptId, expected, actual);
                     return Result<AppointmentDto>.Failure("This appointment was modified by another user.", "APPT_CONCURRENCY_ERROR");
                 }
             }
@@ -176,20 +176,20 @@ public class AppointmentService : IAppointmentService
             if (dto.Status.HasValue) appointment.ApptStatusCode = dto.Status.Value;
             if (dto.Memo != null) appointment.ApptMemo = dto.Memo;
 
-            appointment.UpdatedAt = _dateTimeProvider.NowRoundedToSeconds;
-            await _appointmentRepository.UpdateAsync(appointment);
+            appointment.UpdatedAt = this._dateTimeProvider.NowRoundedToSeconds;
+            await this._appointmentRepository.UpdateAsync(appointment);
 
-            await using var context = await _dbContextFactory.CreateDbContextAsync();
+            await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
             // Stats再計算の為、リソース削除前に古いリソースIDを取得
-            var oldResourceIds = await GetResourceIdsForAppointmentAsync(context, apptId);
+            var oldResourceIds = await this.GetResourceIdsForAppointmentAsync(context, apptId);
 
-            await _resourceAssignmentService.SoftDeleteAllAssignmentsAsync(context, apptId, appointment.UpdatedAt);
-            var newMainResourceIds = await _resourceAssignmentService.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
+            await this._resourceAssignmentService.SoftDeleteAllAssignmentsAsync(context, apptId, appointment.UpdatedAt);
+            var newMainResourceIds = await this._resourceAssignmentService.AssignMainResourcesAsync(context, apptId, appointment.FloorId, appointment.UpdatedAt);
             var newEquipmentResourceIds = new List<Guid>();
             if (dto.EquipmentResourceIds?.Any() == true)
             {
-                newEquipmentResourceIds = await _resourceAssignmentService.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
+                newEquipmentResourceIds = await this._resourceAssignmentService.AssignEquipmentResourcesAsync(context, apptId, dto.EquipmentResourceIds, appointment.UpdatedAt);
             }
 
             // Stats再計算の為、新しいリソースIDを取得
@@ -210,7 +210,7 @@ public class AppointmentService : IAppointmentService
             // Stats再計算
             if (affectedResourceIds.Any())
             {
-                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                await this._appointmentStatsUpdateService.RecalculateStatsAsync(
                     context,
                     affectedDates.Distinct().ToList(),
                     affectedResourceIds);
@@ -218,18 +218,18 @@ public class AppointmentService : IAppointmentService
 
             await context.SaveChangesAsync();
 
-            return await GetAppointmentAsync(apptId);
+            return await this.GetAppointmentAsync(apptId);
         }
         catch (ConcurrencyException ex)
         {
-            var (t, f, u) = _userContextService.GetTenantContext();
-            LogMessages.AppointmentConcurrencyError(_logger, apptId, t, f, u, ex);
+            var (t, f, u) = this._userContextService.GetTenantContext();
+            LogMessages.AppointmentConcurrencyError(this._logger, apptId, t, f, u, ex);
             return Result<AppointmentDto>.Failure("This appointment was modified by another user.", "APPT_CONCURRENCY_ERROR");
         }
         catch (Exception ex)
         {
-            var (t, f, u) = _userContextService.GetTenantContext();
-            LogMessages.AppointmentUpdateError(_logger, apptId, t, f, u, ex);
+            var (t, f, u) = this._userContextService.GetTenantContext();
+            LogMessages.AppointmentUpdateError(this._logger, apptId, t, f, u, ex);
             return Result<AppointmentDto>.Failure(ex is DatabaseException ? "Database error while updating appointment" : "An unexpected error occurred", "APPT_UPDATE_ERROR");
         }
     }
@@ -237,14 +237,14 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Result> DeleteAppointmentAsync(Guid apptId)
     {
-        return await ExecuteAsync(async () =>
+        return await this.ExecuteAsync(async () =>
         {
             // 削除前にAppointmentを読み込み（リソースIDを含む）
-            var appointment = await _appointmentRepository.FindForUpdateAsync(apptId);
+            var appointment = await this._appointmentRepository.FindForUpdateAsync(apptId);
             if (appointment == null || appointment.IsDeleted)
             {
-                var (t, f, u) = _userContextService.GetTenantContext();
-                LogMessages.AppointmentNotFound(_logger, apptId, t, f, u);
+                var (t, f, u) = this._userContextService.GetTenantContext();
+                LogMessages.AppointmentNotFound(this._logger, apptId, t, f, u);
                 throw new NotFoundException("Appointment", apptId);
             }
 
@@ -256,14 +256,14 @@ public class AppointmentService : IAppointmentService
                 .ToList();
 
             // 予約を削除
-            await _appointmentRepository.DeleteAsync(apptId);
+            await this._appointmentRepository.DeleteAsync(apptId);
 
             // Stats再計算
             if (affectedDate.HasValue && affectedResourceIds.Any())
             {
-                await using var context = await _dbContextFactory.CreateDbContextAsync();
+                await using var context = await this._dbContextFactory.CreateDbContextAsync();
 
-                await _appointmentStatsUpdateService.RecalculateStatsAsync(
+                await this._appointmentStatsUpdateService.RecalculateStatsAsync(
                     context,
                     new List<DateOnly> { affectedDate.Value },
                     affectedResourceIds);
@@ -271,7 +271,7 @@ public class AppointmentService : IAppointmentService
                 await context.SaveChangesAsync();
             }
         },
-        (ex, t, f, u) => LogMessages.AppointmentDeleteError(_logger, apptId, t, f, u, ex),
+        (ex, t, f, u) => LogMessages.AppointmentDeleteError(this._logger, apptId, t, f, u, ex),
         "Database error while deleting appointment",
         "APPT_DELETE_ERROR",
         onNotFound: (ex) => Result.Failure($"Appointment {apptId} not found", "APPT_NOT_FOUND"));
@@ -280,12 +280,12 @@ public class AppointmentService : IAppointmentService
     /// <inheritdoc />
     public async Task<Result<List<HolidayDto>>> GetHolidaysAsync(DateOnly startDate, DateOnly endDate)
     {
-        return await ExecuteAsync(async () =>
+        return await this.ExecuteAsync(async () =>
         {
-            var holidays = await _holidayRepository.GetByDateRangeAsync(startDate, endDate);
+            var holidays = await this._holidayRepository.GetByDateRangeAsync(startDate, endDate);
             return holidays.Select(h => new HolidayDto { Date = h.HolidayDate, Name = h.HolidayName }).ToList();
         },
-        (ex, t, f, u) => LogMessages.AppointmentsRetrievalError(_logger, startDate, endDate, t, f, u, ex),
+        (ex, t, f, u) => LogMessages.AppointmentsRetrievalError(this._logger, startDate, endDate, t, f, u, ex),
         "Failed to retrieve holidays",
         "HOLIDAY_RETRIEVAL_ERROR");
     }
@@ -320,7 +320,7 @@ public class AppointmentService : IAppointmentService
         }
         catch (Exception ex)
         {
-            var (t, f, u) = _userContextService.GetTenantContext();
+            var (t, f, u) = this._userContextService.GetTenantContext();
             logAction(ex, t, f, u);
             return Result<T>.Failure(ex is DatabaseException ? errorMessage : "An unexpected error occurred", errorCode);
         }
@@ -344,7 +344,7 @@ public class AppointmentService : IAppointmentService
         }
         catch (Exception ex)
         {
-            var (t, f, u) = _userContextService.GetTenantContext();
+            var (t, f, u) = this._userContextService.GetTenantContext();
             logAction(ex, t, f, u);
             return Result.Failure(ex is DatabaseException ? errorMessage : "An unexpected error occurred", errorCode);
         }

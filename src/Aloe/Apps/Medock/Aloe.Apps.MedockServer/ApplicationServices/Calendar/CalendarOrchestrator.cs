@@ -35,15 +35,15 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         IAppointmentService appointmentService,
         ILogger<CalendarOrchestrator> logger)
     {
-        _state = state;
-        _userContext = userContext;
-        _authService = authService;
-        _authStateProvider = authStateProvider;
-        _dateTimeProvider = dateTimeProvider;
-        _dataService = dataService;
-        _filterService = filterService;
-        _appointmentService = appointmentService;
-        _logger = logger;
+        this._state = state;
+        this._userContext = userContext;
+        this._authService = authService;
+        this._authStateProvider = authStateProvider;
+        this._dateTimeProvider = dateTimeProvider;
+        this._dataService = dataService;
+        this._filterService = filterService;
+        this._appointmentService = appointmentService;
+        this._logger = logger;
     }
 
     // ===================================================================
@@ -53,65 +53,65 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     public async Task<CalendarInitializationResult> InitializeAsync(ClaimsPrincipal user)
     {
         var sw = Stopwatch.StartNew();
-        _logger.LogInformation("CalendarOrchestrator.InitializeAsync start");
+        this._logger.LogInformation("CalendarOrchestrator.InitializeAsync start");
 
         // CurrentDateが初期値の場合は今日の日付を設定
-        if (_state.CurrentDate == default)
+        if (this._state.CurrentDate == default)
         {
-            _state.CurrentDate = _dateTimeProvider.TodayDateOnly;
+            this._state.CurrentDate = this._dateTimeProvider.TodayDateOnly;
         }
 
-        _state.IsLoading = true;
+        this._state.IsLoading = true;
 
         try
         {
             // ユーザー情報をロード
             if (user.Identity?.IsAuthenticated == true)
             {
-                var isValid = await _userContext.InitializeFromClaimsAsync(user);
+                var isValid = await this._userContext.InitializeFromClaimsAsync(user);
                 if (!isValid)
                 {
-                    _logger.LogWarning("CalendarOrchestrator: Facility validation failed");
+                    this._logger.LogWarning("CalendarOrchestrator: Facility validation failed");
                     return new CalendarInitializationResult(
                         Success: false,
                         RedirectUrl: "/api/auth/logout",
                         ErrorMessage: "Facility validation failed");
                 }
 
-                var currentUser = _userContext.CurrentUser;
+                var currentUser = this._userContext.CurrentUser;
                 if (currentUser != null)
                 {
-                    _state.UserDisplayName = currentUser.UserDisplayName;
-                    _state.UserEmail = currentUser.Email;
-                    _state.TenantName = currentUser.TenantName;
-                    _state.FacilityName = currentUser.FacilityName;
-                    _state.CurrentFacilityId = currentUser.FacilityId;
-                    _state.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
-                    _state.UserInitial = currentUser.Initial;
-                    _state.AvailableFacilities = await _userContext.GetAccessibleFacilitiesAsync();
-                    _state.HasMultipleFacilities = _state.AvailableFacilities.Count > 1;
+                    this._state.UserDisplayName = currentUser.UserDisplayName;
+                    this._state.UserEmail = currentUser.Email;
+                    this._state.TenantName = currentUser.TenantName;
+                    this._state.FacilityName = currentUser.FacilityName;
+                    this._state.CurrentFacilityId = currentUser.FacilityId;
+                    this._state.UserRole = currentUser.Roles.FirstOrDefault() ?? "";
+                    this._state.UserInitial = currentUser.Initial;
+                    this._state.AvailableFacilities = await this._userContext.GetAccessibleFacilitiesAsync();
+                    this._state.HasMultipleFacilities = this._state.AvailableFacilities.Count > 1;
                 }
                 else
                 {
-                    _logger.LogWarning("CalendarOrchestrator: CurrentUser is null after InitializeFromClaimsAsync");
+                    this._logger.LogWarning("CalendarOrchestrator: CurrentUser is null after InitializeFromClaimsAsync");
                 }
             }
             else
             {
-                _logger.LogWarning("CalendarOrchestrator: User is not authenticated");
+                this._logger.LogWarning("CalendarOrchestrator: User is not authenticated");
             }
 
             // データロード
-            await LoadAllDataAsync();
+            await this.LoadAllDataAsync();
 
             sw.Stop();
-            _logger.LogInformation("CalendarOrchestrator.InitializeAsync completed: {ElapsedMs}ms", sw.ElapsedMilliseconds);
+            this._logger.LogInformation("CalendarOrchestrator.InitializeAsync completed: {ElapsedMs}ms", sw.ElapsedMilliseconds);
 
             return new CalendarInitializationResult(Success: true, RedirectUrl: null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "CalendarOrchestrator.InitializeAsync failed");
+            this._logger.LogError(ex, "CalendarOrchestrator.InitializeAsync failed");
             return new CalendarInitializationResult(
                 Success: false,
                 RedirectUrl: null,
@@ -119,7 +119,7 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         }
         finally
         {
-            _state.IsLoading = false;
+            this._state.IsLoading = false;
         }
     }
 
@@ -129,17 +129,17 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task RefreshCalendarDataAsync()
     {
-        _logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Starting");
+        this._logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Starting");
 
-        await _dataService.LoadAllCalendarDataAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadAllCalendarDataAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
-        await ReapplyCurrentFilterAsync();
+        await this.ReapplyCurrentFilterAsync();
 
-        _logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Completed");
+        this._logger.LogDebug("CalendarOrchestrator.RefreshCalendarDataAsync: Completed");
     }
 
     // ===================================================================
@@ -148,103 +148,103 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task NavigatePreviousPeriodAsync()
     {
-        _state.PreviousPeriod();
-        await RefreshCalendarDataAsync();
+        this._state.PreviousPeriod();
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task NavigateNextPeriodAsync()
     {
-        _state.NextPeriod();
-        await RefreshCalendarDataAsync();
+        this._state.NextPeriod();
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task NavigatePreviousBigPeriodAsync()
     {
-        _state.PreviousBigPeriod();
-        await RefreshCalendarDataAsync();
+        this._state.PreviousBigPeriod();
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task NavigateNextBigPeriodAsync()
     {
-        _state.NextBigPeriod();
-        await RefreshCalendarDataAsync();
+        this._state.NextBigPeriod();
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task GoToTodayAsync()
     {
-        _state.GoToToday(_dateTimeProvider.TodayDateOnly);
-        await RefreshCalendarDataAsync();
+        this._state.GoToToday(this._dateTimeProvider.TodayDateOnly);
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task SetViewAsync(CalendarViewType view)
     {
         var sw = Stopwatch.StartNew();
-        _logger.LogInformation("CalendarOrchestrator.SetView: {CurrentView} → {TargetView}",
-            _state.CurrentView, view);
+        this._logger.LogInformation("CalendarOrchestrator.SetView: {CurrentView} → {TargetView}",
+            this._state.CurrentView, view);
 
         // ビュー切替前にデータをプリロード
-        await _dataService.LoadAllCalendarDataAsync(_state, view, _state.CurrentDate, _state.WeekDays);
+        await this._dataService.LoadAllCalendarDataAsync(this._state, view, this._state.CurrentDate, this._state.WeekDays);
 
         // フィルター再適用
-        await ReapplyCurrentFilterAsync();
+        await this.ReapplyCurrentFilterAsync();
 
         // ビュー状態更新
-        _state.SetView(view);
+        this._state.SetView(view);
 
         sw.Stop();
-        _logger.LogInformation("CalendarOrchestrator.SetView completed: {ElapsedMs}ms",
+        this._logger.LogInformation("CalendarOrchestrator.SetView completed: {ElapsedMs}ms",
             sw.ElapsedMilliseconds);
     }
 
     public async Task HandleDateClickAsync(DateOnly date)
     {
-        _state.CurrentDate = date;
-        if (_state.CurrentView == CalendarViewType.Month)
+        this._state.CurrentDate = date;
+        if (this._state.CurrentView == CalendarViewType.Month)
         {
-            _state.CurrentView = CalendarViewType.Week;
-            _state.WeekDays = 7;
+            this._state.CurrentView = CalendarViewType.Week;
+            this._state.WeekDays = 7;
         }
-        await RefreshCalendarDataAsync();
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleDateSelectedSingleAsync(DateOnly date)
     {
-        _state.CurrentDate = date;
-        await RefreshCalendarDataAsync();
+        this._state.CurrentDate = date;
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleMonthClickAsync(int year, int month)
     {
-        _state.CurrentDate = new DateOnly(year, month, 1);
-        _state.CurrentView = CalendarViewType.Month;
-        await RefreshCalendarDataAsync();
+        this._state.CurrentDate = new DateOnly(year, month, 1);
+        this._state.CurrentView = CalendarViewType.Month;
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleMonthSelectedAsync(int year, int month)
     {
-        _state.CurrentDate = new DateOnly(year, month, 1);
-        await RefreshCalendarDataAsync();
+        this._state.CurrentDate = new DateOnly(year, month, 1);
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleYearSelectedAsync(int year)
     {
-        _state.CurrentDate = new DateOnly(year, _state.CurrentDate.Month, _state.CurrentDate.Day);
-        await RefreshCalendarDataAsync();
+        this._state.CurrentDate = new DateOnly(year, this._state.CurrentDate.Month, this._state.CurrentDate.Day);
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleDateDoubleClickAsync(DateOnly date)
     {
-        _logger.LogInformation("[TRACE] HandleDateDoubleClick: Date={Date}", date);
-        _state.CurrentDate = date;
-        _state.CurrentView = CalendarViewType.Week;
-        _state.WeekDays = 1;
-        await RefreshCalendarDataAsync();
+        this._logger.LogInformation("[TRACE] HandleDateDoubleClick: Date={Date}", date);
+        this._state.CurrentDate = date;
+        this._state.CurrentView = CalendarViewType.Week;
+        this._state.WeekDays = 1;
+        await this.RefreshCalendarDataAsync();
     }
 
     public async Task HandleWeekDaysChangedAsync(int days)
     {
-        _state.WeekDays = days;
-        await RefreshCalendarDataAsync();
+        this._state.WeekDays = days;
+        await this.RefreshCalendarDataAsync();
     }
 
     // ===================================================================
@@ -253,29 +253,29 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task ApplyFilterAsync(SearchFilterPanel.SearchFilter filter)
     {
-        _state.CurrentFilter = filter;
-        await ReapplyCurrentFilterAsync();
+        this._state.CurrentFilter = filter;
+        await this.ReapplyCurrentFilterAsync();
     }
 
     public async Task ReapplyCurrentFilterAsync()
     {
-        if (_state.CurrentFilter is null)
+        if (this._state.CurrentFilter is null)
         {
             return;
         }
 
-        await _filterService.ApplyFilterAsync(
-            _state.CurrentFilter,
-            _state.MainStats,
-            _state.MainStatsGrayedOut,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.MainStatsSlots);
+        await this._filterService.ApplyFilterAsync(
+            this._state.CurrentFilter,
+            this._state.MainStats,
+            this._state.MainStatsGrayedOut,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.MainStatsSlots);
     }
 
     public async Task HandleFilterChangedRealtimeAsync(SearchFilterPanel.SearchFilter filter)
     {
-        _state.CurrentFilter = filter;
+        this._state.CurrentFilter = filter;
 
         // フロア、リソース、プランのフィルターが変更された場合はデータを再取得
         var needsReload = filter.SelectedFloorIds.Any() ||
@@ -285,29 +285,29 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         if (needsReload)
         {
             // データロード（この段階ではフィルター非適用）
-            await _dataService.LoadMainStatsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
-            await _dataService.LoadMainStatsSlotsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadMainStatsSlotsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
-            await _dataService.LoadEquipmentStatsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadEquipmentStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
-            await ReapplyCurrentFilterAsync();
+            await this.ReapplyCurrentFilterAsync();
         }
         else
         {
-            await ReapplyCurrentFilterAsync();
+            await this.ReapplyCurrentFilterAsync();
         }
     }
 
@@ -317,95 +317,95 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public void OpenAppointmentModal(Guid apptId)
     {
-        _state.OpenModal(_state.CurrentDate, 540, apptId);
+        this._state.OpenModal(this._state.CurrentDate, 540, apptId);
     }
 
     public void OpenNewAppointmentModal(DateOnly date, int startMin)
     {
-        _state.OpenModal(date, startMin);
+        this._state.OpenModal(date, startMin);
     }
 
     public void OpenCreateRequestModal(DateOnly date, int startMin)
     {
-        _state.OpenModal(date, startMin);
+        this._state.OpenModal(date, startMin);
     }
 
     public void CloseModal()
     {
-        _state.CloseModal();
+        this._state.CloseModal();
     }
 
     public async Task SaveAppointmentAsync()
     {
-        _state.CloseModal();
+        this._state.CloseModal();
         // 予約保存後にデータを再取得（Statsも再計算されているので再取得）
-        await _dataService.LoadAppointmentsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadAppointmentsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
         // Statsを再取得
-        await _dataService.LoadMainStatsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
-        await _dataService.LoadMainStatsSlotsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadMainStatsSlotsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
-        await _dataService.LoadEquipmentStatsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadEquipmentStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
     }
 
     public async Task DeleteAppointmentAsync()
     {
-        _state.CloseModal();
+        this._state.CloseModal();
         // 予約削除後にデータを再取得（Statsも再計算されているので再取得）
-        await _dataService.LoadAppointmentsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadAppointmentsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
         // Statsを再取得
-        await _dataService.LoadMainStatsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadMainStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
-        await _dataService.LoadMainStatsSlotsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadMainStatsSlotsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
 
-        await _dataService.LoadEquipmentStatsAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays);
+        await this._dataService.LoadEquipmentStatsAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays);
     }
 
     public async Task<AppointmentMoveResult> MoveAppointmentAsync(Guid apptId, DateOnly newDate, int newStartMin)
     {
         try
         {
-            var appt = _state.Appointments.FirstOrDefault(a => a.Id == apptId);
+            var appt = this._state.Appointments.FirstOrDefault(a => a.Id == apptId);
             if (appt == null)
             {
                 return new AppointmentMoveResult(false, "予約が見つかりません");
             }
 
-            var result = await _appointmentService.UpdateAppointmentAsync(
+            var result = await this._appointmentService.UpdateAppointmentAsync(
                 apptId,
                 new UpdateAppointmentDto
                 {
@@ -419,30 +419,30 @@ public class CalendarOrchestrator : ICalendarOrchestrator
             }
 
             // 移動成功後にデータを再取得（Statsも再計算されているので再取得）
-            await _dataService.LoadAppointmentsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadAppointmentsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
             // Statsを再取得
-            await _dataService.LoadMainStatsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadMainStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
-            await _dataService.LoadMainStatsSlotsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadMainStatsSlotsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
-            await _dataService.LoadEquipmentStatsAsync(
-                _state,
-                _state.CurrentView,
-                _state.CurrentDate,
-                _state.WeekDays);
+            await this._dataService.LoadEquipmentStatsAsync(
+                this._state,
+                this._state.CurrentView,
+                this._state.CurrentDate,
+                this._state.WeekDays);
 
             return new AppointmentMoveResult(true, null);
         }
@@ -460,11 +460,11 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     {
         try
         {
-            var authState = await _authStateProvider.GetAuthenticationStateAsync();
+            var authState = await this._authStateProvider.GetAuthenticationStateAsync();
             var sessionIdClaim = authState.User.FindFirst("session_id")?.Value;
-            if (!string.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
+            if (!String.IsNullOrEmpty(sessionIdClaim) && Guid.TryParse(sessionIdClaim, out var sessionId))
             {
-                await _authService.LogoutAsync(sessionId);
+                await this._authService.LogoutAsync(sessionId);
             }
         }
         catch
@@ -477,7 +477,7 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
     public async Task<AuthOperationResult> SwitchFacilityAsync(Guid facilityId)
     {
-        var currentUser = _userContext.CurrentUser;
+        var currentUser = this._userContext.CurrentUser;
         if (currentUser == null || currentUser.UserId == Guid.Empty)
         {
             return new AuthOperationResult(Success: false, RedirectUrl: null);
@@ -485,7 +485,7 @@ public class CalendarOrchestrator : ICalendarOrchestrator
 
         try
         {
-            var result = await _authService.SwitchFacilityAsync(currentUser.UserId, facilityId);
+            var result = await this._authService.SwitchFacilityAsync(currentUser.UserId, facilityId);
             if (result.IsSuccess)
             {
                 return new AuthOperationResult(Success: true, RedirectUrl: "/calendar");
@@ -505,19 +505,19 @@ public class CalendarOrchestrator : ICalendarOrchestrator
     private async Task LoadAllDataAsync()
     {
         var sw = Stopwatch.StartNew();
-        _logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Starting initial data load");
+        this._logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Starting initial data load");
 
         // 全データ一括読み込み（新メソッド使用）
         // ビジネスアワーとフィルターオプションは初期化時のみ読み込み
-        await _dataService.LoadAllCalendarDataAsync(
-            _state,
-            _state.CurrentView,
-            _state.CurrentDate,
-            _state.WeekDays,
+        await this._dataService.LoadAllCalendarDataAsync(
+            this._state,
+            this._state.CurrentView,
+            this._state.CurrentDate,
+            this._state.WeekDays,
             includeBusinessHours: true,
             includeFilterOptions: true);
 
         sw.Stop();
-        _logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Completed in {ElapsedMs}ms", sw.ElapsedMilliseconds);
+        this._logger.LogInformation("CalendarOrchestrator.LoadAllDataAsync: Completed in {ElapsedMs}ms", sw.ElapsedMilliseconds);
     }
 }

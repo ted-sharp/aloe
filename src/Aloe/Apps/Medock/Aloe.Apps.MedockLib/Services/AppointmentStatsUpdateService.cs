@@ -22,9 +22,9 @@ public class AppointmentStatsUpdateService : IAppointmentStatsUpdateService
         ILogger<AppointmentStatsUpdateService> logger,
         IAppointmentStatsRepository statsRepository)
     {
-        _dateTimeProvider = dateTimeProvider;
-        _logger = logger;
-        _statsRepository = statsRepository;
+        this._dateTimeProvider = dateTimeProvider;
+        this._logger = logger;
+        this._statsRepository = statsRepository;
     }
 
     /// <inheritdoc />
@@ -38,36 +38,36 @@ public class AppointmentStatsUpdateService : IAppointmentStatsUpdateService
             return;
         }
 
-        _logger.LogDebug("Starting stats recalculation for {DateCount} dates and {ResourceCount} resources",
+        this._logger.LogDebug("Starting stats recalculation for {DateCount} dates and {ResourceCount} resources",
             affectedDates.Count, affectedResourceIds.Count);
 
         // スケジュール・オーバーライドを取得
-        var schedules = await LoadSchedulesAsync(context, affectedResourceIds);
+        var schedules = await this.LoadSchedulesAsync(context, affectedResourceIds);
         if (!schedules.Any())
         {
-            _logger.LogDebug("No active schedules found for resources");
+            this._logger.LogDebug("No active schedules found for resources");
             return;
         }
 
         // 影響範囲の予約を取得
-        var appointments = await LoadAppointmentsAsync(context, affectedDates, affectedResourceIds);
+        var appointments = await this.LoadAppointmentsAsync(context, affectedDates, affectedResourceIds);
 
         // 統計を集計
-        var (stats, statSlots) = AggregateStats(
+        var (stats, statSlots) = this.AggregateStats(
             schedules,
             appointments,
             affectedDates,
             affectedResourceIds);
 
         // Stats/StatSlotsをUpsert（既存をソフト削除後に新規挿入）
-        await _statsRepository.UpsertStatsAndSlotsAsync(
+        await this._statsRepository.UpsertStatsAndSlotsAsync(
             context,
             affectedDates,
             affectedResourceIds,
             stats,
             statSlots);
 
-        _logger.LogDebug("Stats recalculated: {StatsCount} stats records, {SlotsCount} slot records",
+        this._logger.LogDebug("Stats recalculated: {StatsCount} stats records, {SlotsCount} slot records",
             stats.Count, statSlots.Count);
     }
 
@@ -139,7 +139,7 @@ public class AppointmentStatsUpdateService : IAppointmentStatsUpdateService
     {
         var stats = new List<AppointmentStats>();
         var statSlots = new List<AppointmentStatSlots>();
-        var now = _dateTimeProvider.NowRoundedToSeconds;
+        var now = this._dateTimeProvider.NowRoundedToSeconds;
 
         // (Date, ResourceId)の全組み合わせについて集計
         foreach (var date in affectedDates)
@@ -168,7 +168,7 @@ public class AppointmentStatsUpdateService : IAppointmentStatsUpdateService
                     // 各予約をスロットにマッチング
                     foreach (var appt in appointmentsForKey)
                     {
-                        var matchingSlotStart = FindMatchingSlotStartMin(appt.ApptStartMin, applicableSlots);
+                        var matchingSlotStart = this.FindMatchingSlotStartMin(appt.ApptStartMin, applicableSlots);
                         if (matchingSlotStart.HasValue)
                         {
                             // 通常スロット内
@@ -224,7 +224,7 @@ public class AppointmentStatsUpdateService : IAppointmentStatsUpdateService
                         outOfHoursCount += count;
 
                         // 時間外スロットのSlotEndMinを計算（昼休み考慮）
-                        var slotEndMin = CalculateOutOfHoursSlotEndMin(slotStartMin);
+                        var slotEndMin = this.CalculateOutOfHoursSlotEndMin(slotStartMin);
 
                         var outOfHoursStatSlot = new AppointmentStatSlots
                         {

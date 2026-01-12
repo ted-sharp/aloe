@@ -37,7 +37,7 @@ public static class AppointmentMapper
                 .Select(a => new EquipmentResourceDto
                 {
                     Id = a.ApptResId,
-                    Name = a.AppointmentResource?.ApptResName ?? string.Empty
+                    Name = a.AppointmentResource?.ApptResName ?? String.Empty
                 }).ToList() ?? new List<EquipmentResourceDto>()
         };
     }
