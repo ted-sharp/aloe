@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Apps/" />
+  <Folder Name="/Apps/RazorReportDesigner/">
+    <Project Path="Apps/RazorReportDesigner/Aloe.Apps.RazorReportDesigner/Aloe.Apps.RazorReportDesigner.csproj" Id="aedc5372-7d6a-4632-92a5-dbcbc82bf746" />
+    <Project Path="Apps/RazorReportDesigner/Aloe.Apps.RazorReportDesignerLib/Aloe.Apps.RazorReportDesignerLib.csproj" Id="b907bdab-67d0-4473-ba46-3ee8a8e682af" />
+  </Folder>
+  <Folder Name="/Libs/">
+    <Project Path="Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" Id="d776e2db-0ebc-44ce-b8ae-76e44bd0cb2b" />
+  </Folder>
+</Solution>
