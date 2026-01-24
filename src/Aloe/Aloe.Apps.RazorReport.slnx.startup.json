@@ -54,18 +54,13 @@
   "MultiProjectConfigurations": {
     "Server": {
       "Projects": {
-        "Aloe.Apps.MedockServer": {}
-      }
-    },
-    "Seed": {
-      "Projects": {
-        "Aloe.Apps.MedockSeed": {}
+        "Aloe.Apps.RazorReportServer": {}
       }
     },
     "Server + Client": {
       "Projects": {
-        "Aloe.Apps.MedockServer": {},
-        "Aloe.Apps.MedockClient": {}
+        "Aloe.Apps.RazorReportServer": {},
+        "Aloe.Apps.RazorReportClient": {}
       }
     }
 

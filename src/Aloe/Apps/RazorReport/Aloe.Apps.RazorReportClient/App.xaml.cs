@@ -2,7 +2,7 @@
 using System.Data;
 using System.Windows;
 
-namespace Aloe.Apps.RazorReportDesigner
+namespace Aloe.Apps.RazorReportClient
 {
     /// <summary>
     /// Interaction logic for App.xaml
