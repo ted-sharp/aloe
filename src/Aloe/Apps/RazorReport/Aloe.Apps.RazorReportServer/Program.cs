@@ -1,10 +1,19 @@
 using Aloe.Apps.RazorReportServer.Components;
+using Aloe.Apps.RazorReportServer.Services;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddMudServices();
+builder.Services.AddSingleton<ReportStateService>();
+builder.Services.AddSingleton<SelectionService>();
+builder.Services.AddSingleton<GridCalculationService>();
+builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<FileInteropService>();
 
 var app = builder.Build();
 

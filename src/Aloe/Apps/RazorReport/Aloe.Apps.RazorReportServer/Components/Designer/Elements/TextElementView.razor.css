@@ -1,0 +1,28 @@
+.text-element {
+    position: relative;
+    padding: 4px;
+    overflow: hidden;
+    cursor: move;
+    user-select: none;
+    border: 1px solid transparent;
+    transition: border-color 0.2s;
+}
+
+.text-element:hover {
+    border: 1px dashed #999;
+}
+
+.text-element.selected {
+    border: 2px solid #1976d2;
+    border-radius: 4px;
+    z-index: 100;
+}
+
+.text-content {
+    white-space: normal;
+    word-wrap: break-word;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+    pointer-events: none;
+}

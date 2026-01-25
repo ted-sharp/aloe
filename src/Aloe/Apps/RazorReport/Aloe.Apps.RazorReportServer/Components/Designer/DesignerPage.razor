@@ -1,0 +1,149 @@
+@inject ReportStateService ReportState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject DocumentService DocumentService
+@inject FileInteropService FileInterop
+@inject IJSRuntime JS
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="designer-page-container">
+    <MudAppBar>
+        <h6 style="margin: 0; flex: 0 0 auto;">
+            Razor Report Designer@(ReportState.IsModified ? "*" : "")
+        </h6>
+        <MudSpacer />
+
+        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                       Color="Color.Primary"
+                       OnClick="HandleNewDocument">
+            <MudTooltip Text="新規ドキュメント" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.FolderOpen"
+                       OnClick="TriggerFileInput">
+            <MudTooltip Text="ドキュメントを開く" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Save"
+                       OnClick="HandleSaveDocument">
+            <MudTooltip Text="ドキュメントを保存" />
+        </MudIconButton>
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudButton Variant="Variant.Text" OnClick="ToggleGrid">
+            @(ReportState.ShowGrid ? "グリッド非表示" : "グリッド表示")
+        </MudButton>
+    </MudAppBar>
+
+    <div class="designer-layout">
+        <aside class="tool-panel">
+            <ToolPalette />
+        </aside>
+
+        <main class="design-area">
+            <GridArea />
+        </main>
+
+        <aside class="property-panel">
+            <PropertyPanel />
+        </aside>
+    </div>
+</MudContainer>
+
+<InputFile @ref="fileInputRef"
+           OnChange="OnFileSelected"
+           style="display:none"
+           accept=".json"
+           class="file-input-hidden" />
+
+@code {
+    private InputFile? fileInputRef;
+
+    protected override void OnInitialized()
+    {
+        ReportState.OnChange += StateHasChanged;
+    }
+
+    private async Task HandleNewDocument()
+    {
+        if (!await ConfirmDiscardChanges())
+            return;
+
+        ReportState.CreateNewDocument();
+        Snackbar.Add("新規ドキュメントを作成しました", Severity.Success);
+    }
+
+    private async Task HandleSaveDocument()
+    {
+        try
+        {
+            var json = DocumentService.SerializeDocument(ReportState.Document);
+            var filename = $"{ReportState.Document.Title}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            await FileInterop.DownloadFileAsync(filename, json);
+
+            ReportState.MarkAsSaved();
+            Snackbar.Add("ドキュメントを保存しました", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"保存に失敗しました: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task TriggerFileInput()
+    {
+        if (!await ConfirmDiscardChanges())
+            return;
+
+        await JS.InvokeVoidAsync("document.querySelector('.file-input-hidden').click()");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var document = DocumentService.DeserializeDocument(json);
+            if (document == null)
+                throw new InvalidOperationException("ドキュメントの形式が無効です");
+
+            ReportState.LoadDocument(document);
+            Snackbar.Add("ドキュメントを読込みました", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"読込に失敗しました: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<bool> ConfirmDiscardChanges()
+    {
+        if (!ReportState.IsModified)
+            return true;
+
+        var parameters = new DialogParameters
+        {
+            { "Message", "保存されていない変更があります。破棄しますか？" }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("未保存の変更", parameters);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
+    }
+
+    private void ToggleGrid()
+    {
+        ReportState.ShowGrid = !ReportState.ShowGrid;
+        ReportState.NotifyStateChanged();
+    }
+
+    public void Dispose()
+    {
+        ReportState.OnChange -= StateHasChanged;
+    }
+}

@@ -1,0 +1,31 @@
+@using Aloe.Apps.RazorReportServer.Services
+@inject SelectionService SelectionService
+
+<div class="resize-handles">
+    <div class="resize-handle tl" @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.TopLeft))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle t"  @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.Top))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle tr" @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.TopRight))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle l"  @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.Left))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle r"  @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.Right))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle bl" @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.BottomLeft))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle b"  @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.Bottom))" @onmousedown:stopPropagation="true"></div>
+    <div class="resize-handle br" @onmousedown="@((MouseEventArgs e) => HandleResizeStart(e, ResizeHandle.BottomRight))" @onmousedown:stopPropagation="true"></div>
+</div>
+
+@code {
+    [Parameter]
+    public Guid ElementId { get; set; }
+
+    [Parameter]
+    public GridPosition Position { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<(ResizeHandle handle, MouseEventArgs e)> OnResizeStart { get; set; }
+
+    private async Task HandleResizeStart(MouseEventArgs e, ResizeHandle handle)
+    {
+        SelectionService.IsResizing = true;
+        SelectionService.ActiveResizeHandle = handle;
+        await OnResizeStart.InvokeAsync((handle, e));
+    }
+}
