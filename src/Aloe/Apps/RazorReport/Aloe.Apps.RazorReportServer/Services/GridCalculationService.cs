@@ -27,8 +27,8 @@ public class GridCalculationService
     /// </summary>
     public (int column, int row) PixelToGridCell(double x, double y)
     {
-        int column = (int)Math.Floor(x / CellWidthPx);
-        int row = (int)Math.Floor(y / CellHeightPx);
+        int column = (int)Math.Floor(x / this.CellWidthPx);
+        int row = (int)Math.Floor(y / this.CellHeightPx);
 
         return (
             Math.Max(0, Math.Min(column, COLUMNS - 1)),
@@ -41,7 +41,7 @@ public class GridCalculationService
     /// </summary>
     public (double x, double y) GridCellToPixel(int column, int row)
     {
-        return (column * CellWidthPx, row * CellHeightPx);
+        return (column * this.CellWidthPx, row * this.CellHeightPx);
     }
 
     /// <summary>

@@ -8,7 +8,7 @@ public class PageSize
     /// <summary>
     /// 用紙名
     /// </summary>
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = String.Empty;
 
     /// <summary>
     /// 用紙幅（mm）
@@ -23,12 +23,12 @@ public class PageSize
     /// <summary>
     /// 用紙幅（px）- 96 DPI基準
     /// </summary>
-    public double WidthPx => WidthMm * 96 / 25.4;
+    public double WidthPx => this.WidthMm * 96 / 25.4;
 
     /// <summary>
     /// 用紙高さ（px）- 96 DPI基準
     /// </summary>
-    public double HeightPx => HeightMm * 96 / 25.4;
+    public double HeightPx => this.HeightMm * 96 / 25.4;
 
     /// <summary>
     /// A4用紙（210mm × 297mm）

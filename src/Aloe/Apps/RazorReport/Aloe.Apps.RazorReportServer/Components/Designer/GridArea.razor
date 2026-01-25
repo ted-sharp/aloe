@@ -1,4 +1,5 @@
 @using Aloe.Apps.RazorReportServer.Services
+@using Aloe.Apps.RazorReportLib.Models
 @inject ReportStateService ReportState
 @inject SelectionService SelectionService
 @inject GridCalculationService GridCalc
@@ -15,6 +16,18 @@
         @if (element is TextElement textElement)
         {
             <TextElementView Element="textElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is ImageElement imageElement)
+        {
+            <ImageElementView Element="imageElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is TableElement tableElement)
+        {
+            <TableElementView Element="tableElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is ContainerElement containerElement)
+        {
+            <ContainerElementView Element="containerElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
         }
     }
 

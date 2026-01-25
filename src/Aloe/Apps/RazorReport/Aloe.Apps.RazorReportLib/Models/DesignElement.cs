@@ -7,6 +7,9 @@ namespace Aloe.Apps.RazorReportLib.Models;
 /// </summary>
 [JsonPolymorphic(TypeDiscriminatorPropertyName = "$type")]
 [JsonDerivedType(typeof(TextElement), "text")]
+[JsonDerivedType(typeof(ImageElement), "image")]
+[JsonDerivedType(typeof(TableElement), "table")]
+[JsonDerivedType(typeof(ContainerElement), "container")]
 public abstract class DesignElement
 {
     /// <summary>
@@ -23,4 +26,9 @@ public abstract class DesignElement
     /// 要素のタイプ名
     /// </summary>
     public abstract string ElementType { get; }
+
+    /// <summary>
+    /// 汎用プロパティディクショナリ
+    /// </summary>
+    public Dictionary<string, object?> Properties { get; set; } = new();
 }

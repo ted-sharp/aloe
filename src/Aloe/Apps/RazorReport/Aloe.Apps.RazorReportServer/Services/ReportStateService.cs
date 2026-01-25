@@ -32,8 +32,8 @@ public class ReportStateService
     /// </summary>
     public ReportStateService()
     {
-        Document = new ReportDocument();
-        Document.Elements.Add(new TextElement
+        this.Document = new ReportDocument();
+        this.Document.Elements.Add(new TextElement
         {
             Position = new GridPosition(2, 2, 12, 2),
             Text = "Sample Text",
@@ -47,7 +47,7 @@ public class ReportStateService
     /// </summary>
     public void NotifyStateChanged()
     {
-        MarkAsModified();
+        this.MarkAsModified();
         OnChange?.Invoke();
     }
 
@@ -56,8 +56,8 @@ public class ReportStateService
     /// </summary>
     public void CreateNewDocument()
     {
-        Document = new ReportDocument();
-        IsModified = false;
+        this.Document = new ReportDocument();
+        this.IsModified = false;
         OnChange?.Invoke();
     }
 
@@ -66,8 +66,8 @@ public class ReportStateService
     /// </summary>
     public void LoadDocument(ReportDocument document)
     {
-        Document = document;
-        IsModified = false;
+        this.Document = document;
+        this.IsModified = false;
         OnChange?.Invoke();
     }
 
@@ -76,8 +76,8 @@ public class ReportStateService
     /// </summary>
     public void MarkAsModified()
     {
-        IsModified = true;
-        Document.UpdatedAt = DateTime.Now;
+        this.IsModified = true;
+        this.Document.UpdatedAt = DateTime.Now;
     }
 
     /// <summary>
@@ -85,6 +85,6 @@ public class ReportStateService
     /// </summary>
     public void MarkAsSaved()
     {
-        IsModified = false;
+        this.IsModified = false;
     }
 }

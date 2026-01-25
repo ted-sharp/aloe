@@ -16,7 +16,7 @@ public class DocumentService
     /// </summary>
     public DocumentService()
     {
-        _jsonOptions = new JsonSerializerOptions
+        this._jsonOptions = new JsonSerializerOptions
         {
             WriteIndented = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -29,7 +29,7 @@ public class DocumentService
     /// </summary>
     public string SerializeDocument(ReportDocument document)
     {
-        return JsonSerializer.Serialize(document, _jsonOptions);
+        return JsonSerializer.Serialize(document, this._jsonOptions);
     }
 
     /// <summary>
@@ -37,6 +37,6 @@ public class DocumentService
     /// </summary>
     public ReportDocument? DeserializeDocument(string json)
     {
-        return JsonSerializer.Deserialize<ReportDocument>(json, _jsonOptions);
+        return JsonSerializer.Deserialize<ReportDocument>(json, this._jsonOptions);
     }
 }

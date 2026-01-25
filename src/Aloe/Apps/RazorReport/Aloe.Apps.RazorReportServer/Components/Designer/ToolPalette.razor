@@ -1,4 +1,85 @@
-<div class="tool-palette">
-    <h3>Tool Palette</h3>
-    <p>Components will be added here</p>
-</div>
+@using MudBlazor
+@using Aloe.Apps.RazorReportServer.Services
+@using Aloe.Apps.RazorReportLib.Models
+@inject ReportStateService ReportState
+@implements IDisposable
+
+<MudPanel Elevation="2" Class="tool-palette">
+    <MudPanelHeader>
+        <MudText Typo="Typo.h6">コンポーネント</MudText>
+    </MudPanelHeader>
+    <MudPanelContent>
+        <MudList T="string">
+            <MudListItem
+                OnClick="@(() => AddComponent("Text"))"
+                Class="mud-list-item">
+                <MudIcon Icon="@Icons.Material.Filled.TextFields" />
+                <MudText>テキスト</MudText>
+            </MudListItem>
+            <MudListItem
+                OnClick="@(() => AddComponent("Image"))"
+                Class="mud-list-item">
+                <MudIcon Icon="@Icons.Material.Filled.Image" />
+                <MudText>画像</MudText>
+            </MudListItem>
+            <MudListItem
+                OnClick="@(() => AddComponent("Table"))"
+                Class="mud-list-item">
+                <MudIcon Icon="@Icons.Material.Filled.TableChart" />
+                <MudText>テーブル</MudText>
+            </MudListItem>
+            <MudListItem
+                OnClick="@(() => AddComponent("Container"))"
+                Class="mud-list-item">
+                <MudIcon Icon="@Icons.Material.Filled.ViewModule" />
+                <MudText>コンテナ</MudText>
+            </MudListItem>
+        </MudList>
+    </MudPanelContent>
+</MudPanel>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ReportState.OnChange += StateHasChanged;
+    }
+
+    private void AddComponent(string componentType)
+    {
+        var element = componentType switch
+        {
+            "Text" => (DesignElement)new TextElement
+            {
+                Position = new GridPosition(0, ReportState.Document.Elements.Count, 6, 1),
+                Text = "新しいテキスト",
+                FontFamily = "Arial",
+                FontSize = 12
+            },
+            "Image" => new ImageElement
+            {
+                Position = new GridPosition(6, ReportState.Document.Elements.Count, 6, 3)
+            },
+            "Table" => new TableElement
+            {
+                Position = new GridPosition(0, ReportState.Document.Elements.Count + 2, 12, 2)
+            },
+            "Container" => new ContainerElement
+            {
+                Position = new GridPosition(0, ReportState.Document.Elements.Count + 3, 12, 4)
+            },
+            _ => null
+        };
+
+        if (element != null)
+        {
+            ReportState.Document.Elements.Add(element);
+            ReportState.NotifyStateChanged();
+        }
+    }
+
+    public void Dispose()
+    {
+        ReportState.OnChange -= StateHasChanged;
+    }
+}
+

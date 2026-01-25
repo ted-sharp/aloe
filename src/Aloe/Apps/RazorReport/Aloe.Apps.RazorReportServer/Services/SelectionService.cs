@@ -12,7 +12,7 @@ public class SelectionService
     /// <summary>
     /// 選択されている要素IDの読み取り専用コレクション
     /// </summary>
-    public IReadOnlySet<Guid> SelectedElementIds => _selectedElementIds;
+    public IReadOnlySet<Guid> SelectedElementIds => this._selectedElementIds;
 
     /// <summary>
     /// 選択状態が変更された時のイベント
@@ -25,9 +25,9 @@ public class SelectionService
     public void SelectElement(Guid elementId, bool multiSelect = false)
     {
         if (!multiSelect)
-            _selectedElementIds.Clear();
+            this._selectedElementIds.Clear();
 
-        _selectedElementIds.Add(elementId);
+        this._selectedElementIds.Add(elementId);
         OnSelectionChanged?.Invoke();
     }
 
@@ -36,10 +36,10 @@ public class SelectionService
     /// </summary>
     public void ToggleSelection(Guid elementId)
     {
-        if (_selectedElementIds.Contains(elementId))
-            _selectedElementIds.Remove(elementId);
+        if (this._selectedElementIds.Contains(elementId))
+            this._selectedElementIds.Remove(elementId);
         else
-            _selectedElementIds.Add(elementId);
+            this._selectedElementIds.Add(elementId);
 
         OnSelectionChanged?.Invoke();
     }
@@ -49,9 +49,9 @@ public class SelectionService
     /// </summary>
     public void ClearSelection()
     {
-        if (_selectedElementIds.Count > 0)
+        if (this._selectedElementIds.Count > 0)
         {
-            _selectedElementIds.Clear();
+            this._selectedElementIds.Clear();
             OnSelectionChanged?.Invoke();
         }
     }
@@ -59,7 +59,7 @@ public class SelectionService
     /// <summary>
     /// 要素が選択されているかどうかを判定する
     /// </summary>
-    public bool IsSelected(Guid elementId) => _selectedElementIds.Contains(elementId);
+    public bool IsSelected(Guid elementId) => this._selectedElementIds.Contains(elementId);
 
     /// <summary>
     /// ドラッグ中かどうか

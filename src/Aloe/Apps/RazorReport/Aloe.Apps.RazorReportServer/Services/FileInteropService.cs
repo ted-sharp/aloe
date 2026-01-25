@@ -14,7 +14,7 @@ public class FileInteropService
     /// </summary>
     public FileInteropService(IJSRuntime jsRuntime)
     {
-        _jsRuntime = jsRuntime;
+        this._jsRuntime = jsRuntime;
     }
 
     /// <summary>
@@ -24,7 +24,7 @@ public class FileInteropService
     {
         try
         {
-            var module = await _jsRuntime.InvokeAsync<IJSObjectReference>(
+            var module = await this._jsRuntime.InvokeAsync<IJSObjectReference>(
                 "import", "./js/fileInterop.js");
             await module.InvokeVoidAsync("downloadFile", filename, content, mimeType);
         }

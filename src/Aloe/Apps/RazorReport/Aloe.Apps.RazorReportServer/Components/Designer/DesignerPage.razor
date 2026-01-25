@@ -1,3 +1,4 @@
+@using Aloe.Apps.RazorReportServer.Components.Designer
 @inject ReportStateService ReportState
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
@@ -7,7 +8,7 @@
 @implements IDisposable
 
 <MudContainer MaxWidth="MaxWidth.False" Class="designer-page-container">
-    <MudAppBar>
+    <MudAppBar @ref="appBarRef">
         <h6 style="margin: 0; flex: 0 0 auto;">
             Razor Report Designer@(ReportState.IsModified ? "*" : "")
         </h6>
@@ -51,18 +52,22 @@
     </div>
 </MudContainer>
 
-<InputFile @ref="fileInputRef"
-           OnChange="OnFileSelected"
+<InputFile OnChange="OnFileSelected"
            style="display:none"
            accept=".json"
            class="file-input-hidden" />
 
 @code {
-    private InputFile? fileInputRef;
+    private MudAppBar? appBarRef;
 
     protected override void OnInitialized()
     {
         ReportState.OnChange += StateHasChanged;
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return Task.CompletedTask;
     }
 
     private async Task HandleNewDocument()

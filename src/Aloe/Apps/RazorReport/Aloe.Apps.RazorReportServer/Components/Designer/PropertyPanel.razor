@@ -1,4 +1,211 @@
+@using Aloe.Apps.RazorReportServer.Services
+@using Aloe.Apps.RazorReportLib.Models
+@using MudBlazor
+@inject ReportStateService ReportState
+@inject SelectionService SelectionService
+@implements IDisposable
+
 <div class="property-panel">
-    <h3>Properties</h3>
-    <p>Properties will be edited here</p>
+    @if (SelectedElements.Count == 0)
+    {
+        <div class="no-selection">
+            <p>要素を選択してください</p>
+        </div>
+    }
+    else if (SelectedElements.Count == 1)
+    {
+        var element = SelectedElements.First();
+        <div class="properties-form">
+            <h4>@element.ElementType</h4>
+
+            <MudDivider Class="my-2" />
+
+            <!-- 共通プロパティ - 読み取り専用（GridPosition は不変） -->
+            <MudTextField Value="element.Position.Column.ToString()"
+                          Label="Column"
+                          Type="@InputType.Number"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          ReadOnly="true" />
+
+            <MudTextField Value="element.Position.Row.ToString()"
+                          Label="Row"
+                          Type="@InputType.Number"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          ReadOnly="true" />
+
+            <MudTextField Value="element.Position.ColumnSpan.ToString()"
+                          Label="Column Span"
+                          Type="@InputType.Number"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          ReadOnly="true" />
+
+            <MudTextField Value="element.Position.RowSpan.ToString()"
+                          Label="Row Span"
+                          Type="@InputType.Number"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          ReadOnly="true" />
+
+            <MudDivider Class="my-2" />
+
+            <!-- TextElementの固有プロパティ -->
+            @if (element is TextElement textElement)
+            {
+                <MudTextField @bind-Value="textElement.Text"
+                              Label="Text"
+                              MultiLine="true"
+                              Lines="3"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudSelect @bind-Value="textElement.FontFamily"
+                           Label="Font Family"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense">
+                    <MudSelectItem Value="@("Arial")">Arial</MudSelectItem>
+                    <MudSelectItem Value="@("Times New Roman")">Times New Roman</MudSelectItem>
+                    <MudSelectItem Value="@("Courier New")">Courier New</MudSelectItem>
+                    <MudSelectItem Value="@("Verdana")">Verdana</MudSelectItem>
+                </MudSelect>
+
+                <MudTextField @bind-Value="textElement.FontSize"
+                              Label="Font Size (pt)"
+                              Type="@InputType.Number"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudCheckBox T="bool" @bind-Checked="textElement.IsBold"
+                             Label="Bold"
+                             Class="my-2" />
+
+                <MudCheckBox T="bool" @bind-Checked="textElement.IsItalic"
+                             Label="Italic"
+                             Class="my-2" />
+            }
+
+            <!-- ImageElementの固有プロパティ -->
+            @if (element is ImageElement imageElement)
+            {
+                <MudTextField @bind-Value="imagePath"
+                              Label="Image Path"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudCheckBox T="bool" @bind-Checked="maintainAspectRatio"
+                             Label="Maintain Aspect Ratio"
+                             Class="my-2" />
+            }
+
+            <!-- TableElementの固有プロパティ -->
+            @if (element is TableElement tableElement)
+            {
+                <MudTextField @bind-Value="tableRows"
+                              Label="Rows"
+                              Type="@InputType.Number"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudTextField @bind-Value="tableColumns"
+                              Label="Columns"
+                              Type="@InputType.Number"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+            }
+
+            <!-- ContainerElementの固有プロパティ -->
+            @if (element is ContainerElement containerElement)
+            {
+                <MudTextField @bind-Value="backgroundColor"
+                              Label="Background Color"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="#ffffff" />
+
+                <MudTextField @bind-Value="borderColor"
+                              Label="Border Color"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="#000000" />
+
+                <MudTextField @bind-Value="borderWidth"
+                              Label="Border Width (px)"
+                              Type="@InputType.Number"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+
+                <MudTextField @bind-Value="padding"
+                              Label="Padding (px)"
+                              Type="@InputType.Number"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense" />
+            }
+        </div>
+    }
+    else
+    {
+        <div class="multiple-selection">
+            <p>@SelectedElements.Count 個の要素が選択されています</p>
+            <p>複数要素の一括編集機能は現在準備中です</p>
+        </div>
+    }
 </div>
+
+@code {
+    private List<DesignElement> SelectedElements => ReportState.Document.Elements
+        .Where(el => SelectionService.IsSelected(el.Id))
+        .ToList();
+
+    // Temporary values for ImageElement
+    private string imagePath = "";
+    private bool maintainAspectRatio = true;
+
+    // Temporary values for TableElement
+    private int tableRows = 1;
+    private int tableColumns = 1;
+
+    // Temporary values for ContainerElement
+    private string backgroundColor = "transparent";
+    private string borderColor = "transparent";
+    private int borderWidth = 0;
+    private int padding = 0;
+
+    protected override void OnInitialized()
+    {
+        SelectionService.OnSelectionChanged += StateHasChanged;
+        ReportState.OnChange += StateHasChanged;
+    }
+
+    private void UpdateElement(DesignElement element)
+    {
+        ReportState.NotifyStateChanged();
+    }
+
+    private void UpdateImageProperty(ImageElement element)
+    {
+        element.Properties["imagePath"] = imagePath;
+        element.Properties["maintainAspectRatio"] = maintainAspectRatio;
+    }
+
+    private void UpdateTableProperty(TableElement element)
+    {
+        element.Properties["rows"] = tableRows;
+        element.Properties["columns"] = tableColumns;
+    }
+
+    private void UpdateContainerProperty(ContainerElement element)
+    {
+        element.Properties["backgroundColor"] = backgroundColor;
+        element.Properties["borderColor"] = borderColor;
+        element.Properties["borderWidth"] = borderWidth;
+        element.Properties["padding"] = padding;
+    }
+
+    public void Dispose()
+    {
+        SelectionService.OnSelectionChanged -= StateHasChanged;
+        ReportState.OnChange -= StateHasChanged;
+    }
+}

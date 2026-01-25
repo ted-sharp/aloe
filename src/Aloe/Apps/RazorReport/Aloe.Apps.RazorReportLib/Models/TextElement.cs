@@ -8,7 +8,7 @@ public class TextElement : DesignElement
     /// <summary>
     /// 表示するテキスト
     /// </summary>
-    public string Text { get; set; } = string.Empty;
+    public string Text { get; set; } = String.Empty;
 
     /// <summary>
     /// フォントファミリー

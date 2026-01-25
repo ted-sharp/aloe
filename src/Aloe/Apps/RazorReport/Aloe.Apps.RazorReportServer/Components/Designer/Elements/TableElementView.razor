@@ -1,0 +1,130 @@
+@using Aloe.Apps.RazorReportLib.Models
+@using Aloe.Apps.RazorReportServer.Services
+@inject SelectionService SelectionService
+@implements IDisposable
+
+<div class="table-element @(IsSelected ? "selected" : "")"
+     style="grid-column: @(Element.Position.Column + 1) / span @Element.Position.ColumnSpan; grid-row: @(Element.Position.Row + 1) / span @Element.Position.RowSpan;"
+     @onclick="HandleClick"
+     @onclick:stopPropagation="true"
+     @onmousedown="HandleMouseDown"
+     @onmousedown:stopPropagation="true">
+    <div class="table-content">
+        <table class="data-table">
+            <tbody>
+                @for (int row = 0; row < GetRows(); row++)
+                {
+                    <tr>
+                        @for (int col = 0; col < GetColumns(); col++)
+                        {
+                            var cellContent = GetCellContent(row, col);
+                            <td class="table-cell">
+                                @if (IsSelected)
+                                {
+                                    <input type="text"
+                                           value="@cellContent"
+                                           @onchange="@((ChangeEventArgs e) => UpdateCell(row, col, e.Value?.ToString() ?? ""))"
+                                           @onclick:stopPropagation="true"
+                                           class="cell-input" />
+                                }
+                                else
+                                {
+                                    <span>@cellContent</span>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    @if (IsSelected)
+    {
+        <ResizeHandles ElementId="Element.Id" Position="Element.Position" OnResizeStart="HandleResizeStart" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public TableElement Element { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDragStart { get; set; }
+
+    [Parameter]
+    public EventCallback<(ResizeHandle handle, MouseEventArgs e)> OnResizeStart { get; set; }
+
+    private bool IsSelected => SelectionService.IsSelected(Element.Id);
+
+    protected override void OnInitialized()
+    {
+        SelectionService.OnSelectionChanged += StateHasChanged;
+    }
+
+    private int GetRows()
+    {
+        if (Element.Properties.TryGetValue("rows", out var rows) && rows is int rowCount)
+            return rowCount;
+        return 1;
+    }
+
+    private int GetColumns()
+    {
+        if (Element.Properties.TryGetValue("columns", out var cols) && cols is int colCount)
+            return colCount;
+        return 1;
+    }
+
+    private string GetCellContent(int row, int col)
+    {
+        if (Element.Properties.TryGetValue("cells", out var cellsObj) && cellsObj is List<List<string>> cells)
+        {
+            if (row < cells.Count && col < cells[row].Count)
+                return cells[row][col];
+        }
+        return "";
+    }
+
+    private void UpdateCell(int row, int col, string content)
+    {
+        if (Element.Properties.TryGetValue("cells", out var cellsObj) && cellsObj is List<List<string>> cells)
+        {
+            while (cells.Count <= row)
+                cells.Add(new List<string>());
+
+            while (cells[row].Count <= col)
+                cells[row].Add("");
+
+            cells[row][col] = content;
+        }
+    }
+
+    private void HandleClick(MouseEventArgs e)
+    {
+        bool multiSelect = e.ShiftKey || e.CtrlKey;
+
+        if (e.CtrlKey)
+            SelectionService.ToggleSelection(Element.Id);
+        else
+            SelectionService.SelectElement(Element.Id, multiSelect);
+    }
+
+    private async Task HandleMouseDown(MouseEventArgs e)
+    {
+        if (IsSelected)
+        {
+            await OnDragStart.InvokeAsync(e);
+        }
+    }
+
+    private async Task HandleResizeStart((ResizeHandle handle, MouseEventArgs e) args)
+    {
+        await OnResizeStart.InvokeAsync(args);
+    }
+
+    public void Dispose()
+    {
+        SelectionService.OnSelectionChanged -= StateHasChanged;
+    }
+}
