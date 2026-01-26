@@ -7,20 +7,27 @@ namespace Aloe.Apps.RazorReportServer.Services;
 /// </summary>
 public class GridCalculationService
 {
-    private const int COLUMNS = 36;
-    private const int ROWS = 51;
-    private const double WIDTH_PX = 793.7;
-    private const double HEIGHT_PX = 1122.52;
+    private readonly PageConfigService _pageConfigService;
+
+    public GridCalculationService(PageConfigService pageConfigService)
+    {
+        _pageConfigService = pageConfigService;
+    }
+
+    private int Columns => _pageConfigService.CurrentColumns;
+    private int Rows => _pageConfigService.CurrentRows;
+    private double WidthPx => _pageConfigService.CurrentWidthPx;
+    private double HeightPx => _pageConfigService.CurrentHeightPx;
 
     /// <summary>
     /// セルの幅（ピクセル）
     /// </summary>
-    public double CellWidthPx => WIDTH_PX / COLUMNS;   // ~22.05px
+    public double CellWidthPx => WidthPx / Columns;
 
     /// <summary>
     /// セルの高さ（ピクセル）
     /// </summary>
-    public double CellHeightPx => HEIGHT_PX / ROWS;    // ~22.01px
+    public double CellHeightPx => HeightPx / Rows;
 
     /// <summary>
     /// マウス座標をグリッドセルに変換する
@@ -31,8 +38,8 @@ public class GridCalculationService
         int row = (int)Math.Floor(y / this.CellHeightPx);
 
         return (
-            Math.Max(0, Math.Min(column, COLUMNS - 1)),
-            Math.Max(0, Math.Min(row, ROWS - 1))
+            Math.Max(0, Math.Min(column, Columns - 1)),
+            Math.Max(0, Math.Min(row, Rows - 1))
         );
     }
 
@@ -60,8 +67,8 @@ public class GridCalculationService
     {
         return position.Column >= 0 &&
                position.Row >= 0 &&
-               position.Column + position.ColumnSpan <= COLUMNS &&
-               position.Row + position.RowSpan <= ROWS;
+               position.Column + position.ColumnSpan <= Columns &&
+               position.Row + position.RowSpan <= Rows;
     }
 
     /// <summary>
@@ -125,5 +132,41 @@ public class GridCalculationService
             ),
             _ => original
         };
+    }
+
+    /// <summary>
+    /// マウス座標をグリッドセルに変換する（コンテナオフセット考慮）
+    /// </summary>
+    public (int column, int row) MousePositionToGridCell(double mouseX, double mouseY, double containerLeft, double containerTop, double zoom)
+    {
+        // ズームを考慮してマウス座標を相対座標に変換
+        double relativeX = (mouseX - containerLeft) / zoom;
+        double relativeY = (mouseY - containerTop) / zoom;
+
+        // グリッドセルに変換
+        int column = (int)Math.Floor(relativeX / this.CellWidthPx);
+        int row = (int)Math.Floor(relativeY / this.CellHeightPx);
+
+        // 有効な範囲内にクランプ
+        return (
+            Math.Max(0, Math.Min(column, Columns - 1)),
+            Math.Max(0, Math.Min(row, Rows - 1))
+        );
+    }
+
+    /// <summary>
+    /// ドラッグ範囲からグリッド位置を計算する
+    /// </summary>
+    public GridPosition CalculatePlacementRange(int startCol, int startRow, int endCol, int endRow)
+    {
+        int minCol = Math.Min(startCol, endCol);
+        int minRow = Math.Min(startRow, endRow);
+        int maxCol = Math.Max(startCol, endCol);
+        int maxRow = Math.Max(startRow, endRow);
+
+        int columnSpan = Math.Max(1, maxCol - minCol + 1);
+        int rowSpan = Math.Max(1, maxRow - minRow + 1);
+
+        return new GridPosition(minCol, minRow, columnSpan, rowSpan);
     }
 }

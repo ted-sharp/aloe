@@ -9,6 +9,8 @@ public class PlacementModeService
 {
     private string? _selectedComponentType;
     private bool _isPlacementModeActive;
+    private bool _isDraggingFromPalette;
+    private (double x, double y)? _dragStartPosition;
 
     /// <summary>
     /// 配置モードが有効かどうか
@@ -21,6 +23,16 @@ public class PlacementModeService
     public string? SelectedComponentType => this._selectedComponentType;
 
     /// <summary>
+    /// パレットからドラッグ中かどうか
+    /// </summary>
+    public bool IsDraggingFromPalette => this._isDraggingFromPalette;
+
+    /// <summary>
+    /// ドラッグ開始位置
+    /// </summary>
+    public (double x, double y)? DragStartPosition => this._dragStartPosition;
+
+    /// <summary>
     /// 配置モードの状態が変更されたときに発生するイベント
     /// </summary>
     public event Action? PlacementModeChanged;
@@ -28,7 +40,7 @@ public class PlacementModeService
     /// <summary>
     /// コンポーネントを選択して配置モードを有効化
     /// </summary>
-    /// <param name="componentType">コンポーネントタイプ（"Text", "Image", "Table", "RazorCodeBlock", "Container"など）</param>
+    /// <param name="componentType">コンポーネントタイプ（"Text", "Image", "Table", "Container"など）</param>
     public void ActivatePlacementMode(string componentType)
     {
         this._selectedComponentType = componentType;
@@ -53,6 +65,27 @@ public class PlacementModeService
     {
         this._selectedComponentType = null;
         this._isPlacementModeActive = false;
+        PlacementModeChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// パレットからのドラッグを開始する
+    /// </summary>
+    public void StartDragFromPalette(string componentType, double x, double y)
+    {
+        this._selectedComponentType = componentType;
+        this._isDraggingFromPalette = true;
+        this._dragStartPosition = (x, y);
+    }
+
+    /// <summary>
+    /// パレットからのドラッグを完了する
+    /// </summary>
+    public void CompleteDragFromPalette()
+    {
+        this._selectedComponentType = null;
+        this._isDraggingFromPalette = false;
+        this._dragStartPosition = null;
         PlacementModeChanged?.Invoke();
     }
 }

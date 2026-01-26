@@ -36,3 +36,33 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* Placement Mode Styles */
+.placement-mode-cursor {
+    cursor: crosshair !important;
+}
+
+.placement-preview {
+    background-color: rgba(33, 150, 243, 0.2);
+    border: 2px dashed #2196F3;
+    box-sizing: border-box;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.tool-palette-item-active {
+    background-color: rgba(33, 150, 243, 0.3) !important;
+    border-left: 4px solid #2196F3 !important;
+}
+
+.drag-ghost {
+    position: fixed;
+    pointer-events: none;
+    background-color: rgba(33, 150, 243, 0.8);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 4px;
+    font-size: 12px;
+    z-index: 1000;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}

@@ -2,6 +2,7 @@
 @using Aloe.Apps.RazorReportServer.Services
 @using Aloe.Apps.RazorReportLib.Models
 @inject ReportStateService ReportState
+@inject PlacementModeService PlacementMode
 @implements IDisposable
 
 <MudPanel Elevation="2" Class="tool-palette">
@@ -10,30 +11,38 @@
     </MudPanelHeader>
     <MudPanelContent>
         <MudList T="string">
-            <MudListItem
-                OnClick="@(() => AddComponent("Text"))"
-                Class="mud-list-item">
-                <MudIcon Icon="@Icons.Material.Filled.TextFields" />
-                <MudText>テキスト</MudText>
-            </MudListItem>
-            <MudListItem
-                OnClick="@(() => AddComponent("Image"))"
-                Class="mud-list-item">
-                <MudIcon Icon="@Icons.Material.Filled.Image" />
-                <MudText>画像</MudText>
-            </MudListItem>
-            <MudListItem
-                OnClick="@(() => AddComponent("Table"))"
-                Class="mud-list-item">
-                <MudIcon Icon="@Icons.Material.Filled.TableChart" />
-                <MudText>テーブル</MudText>
-            </MudListItem>
-            <MudListItem
-                OnClick="@(() => AddComponent("Container"))"
-                Class="mud-list-item">
-                <MudIcon Icon="@Icons.Material.Filled.ViewModule" />
-                <MudText>コンテナ</MudText>
-            </MudListItem>
+            <div @onmousedown="@(e => HandleDragStart(e, "Text"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Text"))"
+                    Class="@GetItemClass("Text")">
+                    <MudIcon Icon="@Icons.Material.Filled.TextFields" />
+                    <MudText>テキスト</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Image"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Image"))"
+                    Class="@GetItemClass("Image")">
+                    <MudIcon Icon="@Icons.Material.Filled.Image" />
+                    <MudText>画像</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Table"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Table"))"
+                    Class="@GetItemClass("Table")">
+                    <MudIcon Icon="@Icons.Material.Filled.TableChart" />
+                    <MudText>テーブル</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Container"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Container"))"
+                    Class="@GetItemClass("Container")">
+                    <MudIcon Icon="@Icons.Material.Filled.ViewModule" />
+                    <MudText>コンテナ</MudText>
+                </MudListItem>
+            </div>
         </MudList>
     </MudPanelContent>
 </MudPanel>
@@ -42,44 +51,30 @@
     protected override void OnInitialized()
     {
         ReportState.OnChange += StateHasChanged;
+        PlacementMode.PlacementModeChanged += StateHasChanged;
     }
 
-    private void AddComponent(string componentType)
+    private void ActivatePlacementMode(string componentType)
     {
-        var element = componentType switch
-        {
-            "Text" => (DesignElement)new TextElement
-            {
-                Position = new GridPosition(0, ReportState.Document.Elements.Count, 6, 1),
-                Text = "新しいテキスト",
-                FontFamily = "Arial",
-                FontSize = 12
-            },
-            "Image" => new ImageElement
-            {
-                Position = new GridPosition(6, ReportState.Document.Elements.Count, 6, 3)
-            },
-            "Table" => new TableElement
-            {
-                Position = new GridPosition(0, ReportState.Document.Elements.Count + 2, 12, 2)
-            },
-            "Container" => new ContainerElement
-            {
-                Position = new GridPosition(0, ReportState.Document.Elements.Count + 3, 12, 4)
-            },
-            _ => null
-        };
+        PlacementMode.ActivatePlacementMode(componentType);
+    }
 
-        if (element != null)
-        {
-            ReportState.Document.Elements.Add(element);
-            ReportState.NotifyStateChanged();
-        }
+    private void HandleDragStart(MouseEventArgs e, string componentType)
+    {
+        PlacementMode.StartDragFromPalette(componentType, e.ClientX, e.ClientY);
+    }
+
+    private string GetItemClass(string componentType)
+    {
+        return PlacementMode.IsPlacementModeActive && PlacementMode.SelectedComponentType == componentType
+            ? "tool-palette-item-active"
+            : "";
     }
 
     public void Dispose()
     {
         ReportState.OnChange -= StateHasChanged;
+        PlacementMode.PlacementModeChanged -= StateHasChanged;
     }
 }
 

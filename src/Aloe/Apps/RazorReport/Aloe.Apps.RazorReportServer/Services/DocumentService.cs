@@ -39,4 +39,12 @@ public class DocumentService
     {
         return JsonSerializer.Deserialize<ReportDocument>(json, this._jsonOptions);
     }
+
+    /// <summary>
+    /// JsonSerializerOptionsを取得する（他のサービスで利用するため）
+    /// </summary>
+    public JsonSerializerOptions GetSerializerOptions()
+    {
+        return this._jsonOptions;
+    }
 }

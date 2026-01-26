@@ -4,16 +4,31 @@ using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Add configuration for papers and components
+builder.Configuration.AddJsonFile("appsettings.papers.json", optional: false, reloadOnChange: true);
+builder.Configuration.AddJsonFile("appsettings.components.json", optional: false, reloadOnChange: true);
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
+builder.Services.AddScoped<PageConfigService>();
+builder.Services.AddScoped<ZoomService>();
+builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<UndoRedoService>();
+builder.Services.AddScoped<ClipboardService>();
 builder.Services.AddSingleton<ReportStateService>();
 builder.Services.AddSingleton<SelectionService>();
-builder.Services.AddSingleton<GridCalculationService>();
-builder.Services.AddScoped<DocumentService>();
+builder.Services.AddScoped<GridCalculationService>();
+builder.Services.AddScoped<AlignmentService>();
 builder.Services.AddScoped<FileInteropService>();
+builder.Services.AddScoped<PlacementModeService>();
+builder.Services.AddScoped<ComponentFactoryService>();
+
+// Configure ComponentsConfiguration
+builder.Services.Configure<Aloe.Apps.RazorReportLib.Models.ComponentsConfiguration>(
+    builder.Configuration.GetSection("ComponentsConfiguration"));
 
 var app = builder.Build();
 
