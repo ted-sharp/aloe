@@ -1,0 +1,69 @@
+@page "/"
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
+
+<PageTitle>FileBridge</PageTitle>
+
+<main class="container">
+    <hgroup>
+        <h1>FileBridge</h1>
+        <p>ファイル監視とプロセス起動アプリケーション</p>
+    </hgroup>
+
+    <article>
+        <header>
+            <h3>
+                <i data-lucide="scroll-text" aria-hidden="true"></i> FileBridge アプリ監視ログ
+            </h3>
+        </header>
+        <p>FileBridgeの監視・プロセス起動に関するログを確認できます。ファイルイベント、プロセス起動、エラーなどを閲覧・フィルタできます。</p>
+        <footer>
+            <a href="/logs" role="button">アプリ監視ログを表示</a>
+        </footer>
+    </article>
+
+    <article>
+        <header>
+            <h3>
+                <i data-lucide="settings" aria-hidden="true"></i> 設定
+            </h3>
+        </header>
+        <p>現在のアプリ設定（監視ディレクトリ、実行ファイル、ポーリング間隔など）を確認できます。</p>
+        <footer>
+            <a href="/settings" role="button">設定を表示</a>
+        </footer>
+    </article>
+
+    <article>
+        <header>
+            <h2>主な機能</h2>
+        </header>
+        <ul>
+            <li><strong>WEBからログ表示</strong> - BlazorでWEBからFileBridgeのアプリ監視ログを表示できます</li>
+            <li><strong>ネットワークドライブ対応</strong> - ネットワークドライブ越しのファイルコピーを安全に検知します</li>
+            <li><strong>確実なイベント検知</strong> - ファイルシステムからのイベントでトリガーされます</li>
+            <li><strong>ポーリングとの組み合わせ</strong> - ポーリング（長間隔）とイベント検知を組み合わせて確実性を向上させます</li>
+        </ul>
+    </article>
+
+    <article>
+        <header>
+            <h2>概要</h2>
+        </header>
+        <p>FileBridgeは、特定のディレクトリを監視し、ファイルイベントを検知した際に別のexeを起動するアプリケーションです。</p>
+    </article>
+</main>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("lucide.createIcons");
+            }
+            catch { }
+        }
+    }
+}
