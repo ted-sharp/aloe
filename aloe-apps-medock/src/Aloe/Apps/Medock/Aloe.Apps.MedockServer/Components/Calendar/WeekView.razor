@@ -1,0 +1,61 @@
+@* 週表示コンポーネント *@
+
+<div class="overflow-x-auto">
+    <!-- 曜日ヘッダー -->
+    <div class="grid grid-cols-8 bg-base-200 sticky top-0 z-10">
+        <div class="p-2 border-b border-r border-base-300"></div>
+        @{
+            var startOfWeek = CurrentDate.AddDays(-(int)CurrentDate.DayOfWeek);
+            var today = DateTimeProvider.TodayDateOnly;
+        }
+        @for (int i = 0; i < 7; i++)
+        {
+            var date = startOfWeek.AddDays(i);
+            var isToday = date == today;
+            var dayName = new[] { "日", "月", "火", "水", "木", "金", "土" }[i];
+            var textColor = i == 0 ? "text-error" : i == 6 ? "text-info" : "";
+
+            <div class="p-2 text-center border-b border-r border-base-300 @textColor @(isToday ? "bg-primary/10" : "")">
+                <div class="font-semibold">@dayName</div>
+                <div class="@(isToday ? "badge badge-primary" : "")">@date.Day</div>
+            </div>
+        }
+    </div>
+
+    <!-- 時間グリッド -->
+    <div class="min-h-[600px]">
+        @for (int hour = 8; hour <= 18; hour++)
+        {
+            <div class="grid grid-cols-8 border-b border-base-300">
+                <!-- 時間ラベル -->
+                <div class="p-2 text-right text-sm text-base-content/60 border-r border-base-300 sticky left-0 bg-base-100">
+                    @hour:00
+                </div>
+
+                <!-- 各曜日のスロット -->
+                @for (int day = 0; day < 7; day++)
+                {
+                    var date = startOfWeek.AddDays(day);
+                    var dateTime = date.ToDateTime(new TimeOnly(hour, 0));
+                    var hourAppointments = GetHourAppointments(date, hour).ToList();
+                    var hasAppointment = hourAppointments.Any();
+
+                    <div class="p-1 min-h-[60px] border-r border-base-300 hover:bg-base-200 cursor-pointer transition-colors"
+                         @onclick="() => OnTimeSlotClick.InvokeAsync(dateTime)">
+                        @foreach (var appt in hourAppointments)
+                        {
+                            <div class="text-xs p-1 mb-1 rounded @GetStatusClass(appt.Status)">
+                                <div class="font-semibold">@appt.Name</div>
+                                <div class="opacity-75">@appt.Org</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+
+
+

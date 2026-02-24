@@ -1,0 +1,274 @@
+@*
+    SearchFilterPanel - カレンダー用の検索フィルターパネル
+    条件に当てはまらない日/時間帯をグレーアウト表示するためのフィルター
+*@
+
+<div class="card bg-base-100 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <!-- ヘッダー: タイトルと閉じるボタン -->
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+                <h3 class="font-bold text-base-content">空き検索フィルター</h3>
+                @if (ActiveFilterCount > 0)
+                {
+                    <span class="badge badge-primary badge-sm">@ActiveFilterCount</span>
+                }
+            </div>
+            <button class="btn btn-sm btn-ghost btn-square" @onclick="HandleClose" title="閉じる">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <div class="divider my-2"></div>
+
+        <!-- フィルター詳細パネル -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <!-- 曜日 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">曜日</span>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllDays">全選択</button>
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllDays">全解除</button>
+                    </div>
+                </label>
+                <div class="flex flex-wrap gap-1">
+                    @foreach (var (day, index) in DayNames.Select((d, i) => (d, i)))
+                    {
+                        var dayIndex = index;
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                   checked="@SelectedDays.Contains(dayIndex)"
+                                   @onchange="() => ToggleDay(dayIndex)" />
+                            <span class="badge @(SelectedDays.Contains(dayIndex) ? "badge-primary" : "badge-outline")
+                                         @(dayIndex == 0 ? "text-error" : dayIndex == 6 ? "text-info" : "")">
+                                @day
+                            </span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <!-- 時間帯 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">時間帯</span>
+                    <div class="flex gap-1">
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllTimeSlots">全選択</button>
+                        <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllTimeSlots">全解除</button>
+                    </div>
+                </label>
+                <div class="flex flex-wrap gap-1">
+                    @foreach (var slot in TimeSlots)
+                    {
+                        <label class="cursor-pointer">
+                            <input type="checkbox"
+                                   class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                   checked="@SelectedTimeSlots.Contains(slot)"
+                                   @onchange="() => ToggleTimeSlot(slot)" />
+                            <span class="badge @(SelectedTimeSlots.Contains(slot) ? "badge-primary" : "badge-outline")">
+                                @slot
+                            </span>
+                        </label>
+                    }
+                </div>
+            </div>
+
+            <!-- 必要人数 -->
+            <div class="form-control">
+                <label class="label">
+                    <span class="label-text font-semibold">空き枠数</span>
+                </label>
+                <div class="flex flex-col gap-2">
+                    <!-- 1-4人のボタン選択 -->
+                    <div class="flex flex-wrap gap-1">
+                        @for (int count = 1; count <= 4; count++)
+                        {
+                            var selectedCount = count;
+                            var isSelected = RequiredCapacity == selectedCount;
+                            <button type="button"
+                                    class="btn btn-sm @(isSelected ? "btn-primary" : "btn-outline btn-primary")"
+                                    @onclick="() => { RequiredCapacity = selectedCount; OnFilterChanged(); }"
+                                    title="@selectedCount 人を選択">
+                                @selectedCount 名
+                            </button>
+                        }
+                    </div>
+                    <!-- 5人以上の入力欄 -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-base-content/60">5人以上:</span>
+                        <input type="number" class="input input-bordered input-sm w-20"
+                               min="5" max="100"
+                               @bind="RequiredCapacity" @bind:event="oninput" @bind:after="OnFilterChanged" />
+                        <span class="text-sm text-base-content/60">名以上</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 第2行: フロア、リソース、プラン -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+            <!-- フロア選択 -->
+            @if (AvailableFloors != null)
+            {
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">フロア</span>
+                    </label>
+                    @if (AvailableFloors.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                            @foreach (var floor in AvailableFloors)
+                            {
+                                <label class="cursor-pointer">
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                           checked="@SelectedFloorIds.Contains(floor.Id)"
+                                           @onchange="() => ToggleFloor(floor.Id)" />
+                                    <span class="badge @(SelectedFloorIds.Contains(floor.Id) ? "badge-primary" : "badge-outline")">
+                                        @floor.Name
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-sm text-base-content/60 py-2">
+                            データがありません
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- リソース選択 -->
+            @if (AvailableResources != null)
+            {
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">リソース</span>
+                        @if (AvailableResources.Any())
+                        {
+                            <div class="flex gap-1">
+                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllResources">全解除</button>
+                            </div>
+                        }
+                    </label>
+                    <!-- ORグループ選択ボタン -->
+                    <div class="flex gap-2 mb-2">
+                        <button type="button" 
+                                class="btn btn-xs @(CalendarState.ActiveOrGroup == 1 ? "btn-info" : "btn-outline btn-info")"
+                                @onclick="() => SetActiveOrGroup(1)"
+                                title="OR1グループを選択">
+                            OR1
+                        </button>
+                        <button type="button" 
+                                class="btn btn-xs @(CalendarState.ActiveOrGroup == 2 ? "btn-success" : "btn-outline btn-success")"
+                                @onclick="() => SetActiveOrGroup(2)"
+                                title="OR2グループを選択">
+                            OR2
+                        </button>
+                    </div>
+                    @if (AvailableResources.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                            @foreach (var resource in AvailableResources)
+                            {
+                                var isResourceSelected = SelectedResourceIds.Contains(resource.Id);
+                                var resourceBadgeClass = GetResourceBadgeClass(resource, isResourceSelected);
+                                var resourceBadgeStyle = GetResourceBadgeStyle(resource, isResourceSelected);
+                                <label class="cursor-pointer">
+                                    <input type="checkbox"
+                                           class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                           checked="@isResourceSelected"
+                                           @onchange="() => ToggleResource(resource.Id)" />
+                                    <span class="badge @resourceBadgeClass" style="@resourceBadgeStyle">
+                                        @resource.Name
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-sm text-base-content/60 py-2">
+                            データがありません
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- プラン選択 -->
+            @if (AvailablePlans != null)
+            {
+                <div class="form-control">
+                    <label class="label">
+                        <span class="label-text font-semibold">プラン</span>
+                        @if (AvailablePlans.Any())
+                        {
+                            <div class="flex gap-1">
+                                <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllPlans">全解除</button>
+                            </div>
+                        }
+                    </label>
+                    @if (AvailablePlans.Any())
+                    {
+                        <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                            @foreach (var plan in AvailablePlans)
+                            {
+                                var isSelected = SelectedPlanIds.Contains(plan.Id);
+                                var isSelectable = plan.PlanTypeCode == 1 || IsOptionSelectable(plan);
+                                var badgeClass = GetPlanBadgeClass(plan, isSelected);
+                                var badgeStyle = GetPlanBadgeStyle(plan, isSelected);
+                                var opacityClass = !isSelectable ? "opacity-50" : "";
+                                <label class="@(isSelectable ? "cursor-pointer" : "cursor-not-allowed") @opacityClass">
+                                    @if (plan.PlanTypeCode == 1)
+                                    {
+                                        @* Plan: ラジオボタンのように表示 *@
+                                        <input type="radio"
+                                               name="plan-selection"
+                                               class="radio radio-xs radio-primary hidden peer"
+                                               checked="@isSelected"
+                                               @onclick="() => TogglePlan(plan.Id)" />
+                                    }
+                                    else
+                                    {
+                                        @* Option: チェックボックス *@
+                                        <input type="checkbox"
+                                               class="checkbox checkbox-xs checkbox-secondary hidden peer"
+                                               checked="@isSelected"
+                                               disabled="@(!isSelectable)"
+                                               @onchange="() => TogglePlan(plan.Id)" />
+                                    }
+                                    <span class="badge @badgeClass" style="@badgeStyle">
+                                        @plan.Name
+                                    </span>
+                                </label>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-sm text-base-content/60 py-2">
+                            データがありません
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- クリアボタン -->
+        <div class="flex justify-end mt-4">
+            <button class="btn btn-ghost btn-sm" @onclick="ClearFilters">
+                クリア
+            </button>
+        </div>
+    </div>
+</div>
+

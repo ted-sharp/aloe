@@ -1,0 +1,135 @@
+@* ユーザーアバターボタン（ヘッダー行内に配置） *@
+@using Aloe.Apps.MedockLib.Services
+
+<!-- バックドロップ（メニュー表示時） -->
+@if (IsMenuOpen)
+{
+    <div class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[999]"
+         @onclick="CloseMenu"
+         aria-hidden="true">
+    </div>
+}
+
+<div class="relative self-center">
+    <!-- アバターボタン -->
+    <button class="btn btn-circle h-12 w-12 shadow-md z-[1000]"
+            @onclick="ToggleMenu"
+            aria-label="ユーザーメニュー"
+            aria-expanded="@IsMenuOpen">
+        <div class="avatar placeholder">
+            <div class="bg-emerald-500 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                <span class="text-lg whitespace-nowrap select-none">@UserInitial</span>
+            </div>
+        </div>
+    </button>
+
+    <!-- ドロップダウンメニュー -->
+    @if (IsMenuOpen)
+    {
+        <div class="absolute right-0 top-14 z-[1001] w-72 bg-base-100 rounded-box shadow-2xl overflow-hidden">
+            <!-- App Name Header -->
+            <div class="p-3 border-b border-base-300 bg-base-200 text-center">
+                <span class="font-bold text-lg text-emerald-600">Aloe Medock</span>
+            </div>
+            <!-- ユーザー情報ヘッダー -->
+            <div class="p-4 border-b border-base-300 bg-base-200/50">
+                <div class="flex items-center gap-3">
+                    <div class="avatar placeholder">
+                        <div class="bg-emerald-500 text-white rounded-full w-12 h-12 flex items-center justify-center">
+                            <span class="text-lg whitespace-nowrap select-none">@UserInitial</span>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-semibold truncate">@UserDisplayName</p>
+                        <p class="text-sm text-base-content/60 truncate">@UserEmail</p>
+                        @if (!string.IsNullOrEmpty(UserRole))
+                        {
+                            <span class="badge badge-sm badge-outline mt-1">@UserRole</span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <!-- 現在の施設 -->
+            <div class="p-3 border-b border-base-300 bg-base-100">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1 min-w-0">
+                        <p class="text-xs text-base-content/50 mb-1">現在の施設</p>
+                        <p class="font-medium truncate">@FacilityName</p>
+                        @if (!string.IsNullOrEmpty(TenantName))
+                        {
+                            <p class="text-xs text-base-content/40 truncate">@TenantName</p>
+                        }
+                    </div>
+                    @if (HasMultipleFacilities)
+                    {
+                        <button class="btn btn-xs btn-ghost"
+                                @onclick="ShowFacilitySelector"
+                                @onclick:stopPropagation="true">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4" />
+                            </svg>
+                            切替
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- メニュー項目 -->
+            <ul class="menu p-2">
+                <li>
+                    <a href="/profile" @onclick="CloseMenu" class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        プロフィール
+                    </a>
+                </li>
+                <li>
+                    <a href="/settings" @onclick="CloseMenu" class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        設定
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                        <span class="flex-1">テーマ</span>
+                        <select class="select select-xs select-bordered"
+                                value="@SelectedTheme"
+                                @onchange="@((ChangeEventArgs e) => ChangeTheme(e.Value?.ToString() ?? "light"))">
+                            <option value="light">ライト</option>
+                            <option value="dark">ダーク</option>
+                            <option value="cyberpunk">サイバーパンク</option>
+                        </select>
+                    </div>
+                </li>
+                <div class="divider my-1"></div>
+                <li>
+                    <button @onclick="HandleLogout" class="flex items-center gap-2 text-error">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        ログアウト
+                    </button>
+                </li>
+            </ul>
+        </div>
+    }
+</div>
+
+<!-- 施設選択モーダル -->
+@if (ShowFacilityModal)
+{
+    <FacilitySelectorModal
+        Facilities="@AvailableFacilities"
+        CurrentFacilityId="@CurrentFacilityId"
+        OnSelect="@HandleFacilitySwitch"
+        OnClose="@CloseFacilityModal" />
+}
+

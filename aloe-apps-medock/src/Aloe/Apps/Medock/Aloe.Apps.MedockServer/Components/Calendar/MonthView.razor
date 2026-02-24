@@ -1,0 +1,28 @@
+@* 
+    MonthView - 月間カレンダー表示（Canvas版）
+    各日をAM/PM円グラフで表示し、予約状況を視覚化
+*@
+
+<div class="month-view flex flex-col h-full">
+    <!-- Canvas カレンダー -->
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas
+            ViewType="month"
+            CurrentDate="@CurrentDate"
+            MainStats="@MainStats"
+            MainStatsSlots="@MainStatsSlots"
+            MainStatsGrayedOut="@MainStatsGrayedOut"
+            EquipmentStatsOptimized="@EquipmentStatsOptimized"
+            Holidays="@Holidays"
+            ShowSimpleView="@ShowSimpleView"
+            BusinessHours="@BusinessHours"
+            FilterTimeSlots="@FilterTimeSlots"
+            StartHour="@StartHour"
+            EndHour="@EndHour"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnDateSelectedSingle="@HandleDateSelectedSingle"
+            OnDateDoubleClicked="@HandleDateDoubleClicked"
+            OnShowDayDetail="@HandleShowDayDetail" />
+    </div>
+</div>

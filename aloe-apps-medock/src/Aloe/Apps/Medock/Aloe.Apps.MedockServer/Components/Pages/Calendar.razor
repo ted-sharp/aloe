@@ -1,0 +1,370 @@
+@page "/calendar"
+@layout CalendarLayout
+@using Aloe.Apps.MedockLib.Services
+@using Aloe.Apps.MedockServer.Components.Layout
+@using Aloe.Apps.MedockServer.Components.FAB
+@using Aloe.Apps.MedockServer.Components.Calendar
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+
+<PageTitle>カレンダー - Aloe Medock</PageTitle>
+
+<div class="flex flex-col year-grid-container calendar-full-height" @onkeydown="HandleKeyDown" tabindex="0">
+    <!-- ヘッダー行: 左FAB + ナビバー + 右FAB -->
+    <div class="calendar-header flex items-center justify-between px-2 py-1">
+        <!-- 左側: HamburgerFab領域 -->
+        <div class="w-14 flex justify-center">
+            <HamburgerFab @bind-IsDrawerOpen="IsDrawerOpen" />
+        </div>
+
+        <!-- 中央: ナビゲーションバー -->
+        <div class="flex flex-col md:flex-row items-center justify-center gap-2 flex-1">
+            <!-- 1行目: ビュー切り替え、簡易詳細、フィルター -->
+            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm min-w-[260px] max-w-[260px] justify-between">
+                <!-- 左側: ビュー切り替え + 簡易詳細 -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <!-- ビュー切り替え -->
+                    <div class="join">
+                        <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Year ? "btn-active btn-primary" : "")"
+                                @onclick="() => SetView(CalendarViewType.Year)">
+                            年
+                        </button>
+                        <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Month ? "btn-active btn-primary" : "")"
+                                @onclick="() => SetView(CalendarViewType.Month)">
+                            月
+                        </button>
+                        <button class="btn btn-xs join-item @(CurrentView == CalendarViewType.Week ? "btn-active btn-primary" : "")"
+                                @onclick="() => SetView(CalendarViewType.Week)">
+                            週
+                        </button>
+                    </div>
+
+                    <div class="divider divider-horizontal mx-0"></div>
+
+                    <!-- 簡易｜詳細切り替え -->
+                    @if (CurrentView == CalendarViewType.Year || CurrentView == CalendarViewType.Month)
+                    {
+                        <div class="join">
+                            <button class="btn btn-xs join-item @(ShowSimpleView ? "btn-active btn-primary" : "")"
+                                    @onclick="() => HandleSimpleViewChanged(true)">
+                                簡易
+                            </button>
+                            <button class="btn btn-xs join-item @(!ShowSimpleView ? "btn-active btn-primary" : "")"
+                                    @onclick="() => HandleSimpleViewChanged(false)">
+                                詳細
+                            </button>
+                        </div>
+                    }
+                    else if (CurrentView == CalendarViewType.Week)
+                    {
+                        <div class="join">
+                            <button class="btn btn-xs join-item @(ShowSlots ? "btn-active btn-primary" : "")"
+                                    @onclick="() => HandleShowSlotsChanged(true)">
+                                簡易
+                            </button>
+                            <button class="btn btn-xs join-item @(!ShowSlots ? "btn-active btn-primary" : "")"
+                                    @onclick="() => HandleShowSlotsChanged(false)">
+                                詳細
+                            </button>
+                        </div>
+                    }
+                </div>
+
+                <!-- 中央: スペーサー -->
+                <div class="flex-1 min-w-0"></div>
+
+                <!-- 右側: フィルターボタン -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <div class="divider divider-horizontal mx-0"></div>
+
+                    <!-- フィルターボタン -->
+                    <button class="btn btn-xs btn-square @(ShowFilterPanel ? "btn-primary" : "btn-ghost") relative" @onclick="ToggleFilterPanel" title="フィルター">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                        </svg>
+                        @if (ActiveFilterCount > 0)
+                        {
+                            <span class="badge badge-xs badge-secondary absolute -top-1 -right-1">@ActiveFilterCount</span>
+                        }
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2行目: 期間移動 -->
+            <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm min-w-[260px] max-w-[260px] justify-between">
+                <!-- 左側ボタン -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousBigPeriod" title="前の年/月/週">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="PreviousPeriod" title="前へ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                    </button>
+                </div>
+                <!-- 中央: 日付表示 -->
+                <div class="flex flex-row items-center gap-0 flex-1 justify-center min-w-0">
+                    <span class="font-bold text-base-content text-sm text-center w-[120px] truncate">@GetCurrentPeriodTitle()</span>
+                    @if (State.CurrentView == CalendarViewType.Year || State.CurrentView == CalendarViewType.Month)
+                    {
+                        <span class="text-gray-500 hidden md:inline text-[0.5rem]">@State.GetCurrentDateFormatted()</span>
+                    }
+                </div>
+                <!-- 右側ボタン -->
+                <div class="flex items-center gap-1 flex-shrink-0">
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="NextPeriod" title="次へ">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="NextBigPeriod" title="次の年/月/週">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3行目: ビュー別ボタン群 -->
+            <!-- 外枠: 透明で最小幅を確保（ビュー切り替え時に幅が変わると他に影響がでるため） -->
+            <div class="flex items-center md:min-w-[420px]">
+                <!-- 内側: 内容に応じた幅のカード（年/月/週ビューで幅が変わる） -->
+                <div class="flex items-center gap-1 px-2 py-1 bg-base-100/90 backdrop-blur-sm rounded-lg shadow-sm flex-nowrap min-w-fit">
+                @if (CurrentView == CalendarViewType.Year)
+                {
+                    <!-- 年間カレンダー: 今日ボタン + 年選択 -->
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <!-- カレンダー -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <!-- チェックマーク（中央下部） -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15l2 2 4-4" />
+                        </svg>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <div class="join">
+                        @{
+                            var today = DateTimeProvider.TodayDateOnly;
+                            var years = new[] { today.Year - 1, today.Year, today.Year + 1 };
+                            foreach (var year in years)
+                            {
+                                var isCurrent = year == CurrentDate.Year;
+                                <button class="btn btn-xs join-item @(isCurrent ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleYearSelected(year)">
+                                    @(year)年
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                else if (CurrentView == CalendarViewType.Month)
+                {
+                    <!-- 月間カレンダー: 今日ボタン + 月選択 -->
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <!-- カレンダー -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <!-- チェックマーク（中央下部） -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15l2 2 4-4" />
+                        </svg>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <div class="join">
+                        @{
+                            var todayMonth = DateTimeProvider.TodayDateOnly;
+                            var currentMonth = new DateOnly(CurrentDate.Year, CurrentDate.Month, 1);
+                            for (int i = -1; i <= 6; i++)
+                            {
+                                var monthDate = todayMonth.AddMonths(i);
+                                var isCurrent = monthDate.Year == currentMonth.Year && monthDate.Month == currentMonth.Month;
+                                <button class="btn btn-xs join-item @(isCurrent ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleMonthSelected((monthDate.Year, monthDate.Month))">
+                                    @(monthDate.Month)月
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                else if (CurrentView == CalendarViewType.Week)
+                {
+                    <!-- 週間カレンダー: 今日ボタン + 表示日数選択 -->
+                    <button class="btn btn-xs btn-ghost btn-square" @onclick="HandleGoToToday" title="今日">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <!-- カレンダー -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            <!-- チェックマーク（中央下部） -->
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 15l2 2 4-4" />
+                        </svg>
+                    </button>
+                    
+                    <div class="divider divider-horizontal mx-0"></div>
+                    
+                    <div class="join">
+                        @{
+                            var dayOptions = new[] { 1, 3, 7, 14, 31 };
+                            foreach (var days in dayOptions)
+                            {
+                                <button class="btn btn-xs join-item @(WeekDays == days ? "btn-active btn-primary" : "")"
+                                        @onclick="() => HandleWeekDaysChanged(days)">
+                                    @(days)日間
+                                </button>
+                            }
+                        }
+                    </div>
+                }
+                </div>
+            </div>
+        </div>
+
+        <!-- 右側: UserAvatarFab領域 -->
+        <div class="w-14 flex justify-center items-center">
+            <UserAvatarFab UserInitial="@UserInitial"
+                           UserDisplayName="@UserDisplayName"
+                           UserEmail="@UserEmail"
+                           TenantName="@TenantName"
+                           FacilityName="@FacilityName"
+                           UserRole="@UserRole"
+                           CurrentFacilityId="@CurrentFacilityId"
+                           HasMultipleFacilities="@HasMultipleFacilities"
+                           AvailableFacilities="@AvailableFacilities"
+                           OnLogout="HandleLogout"
+                           OnFacilitySwitch="HandleFacilitySwitch" />
+        </div>
+    </div>
+
+    <!-- 検索フィルター（トグル表示） -->
+    @if (ShowFilterPanel)
+    {
+        <div class="fixed inset-0 z-40">
+            <!-- 背景ぼかしオーバーレイ -->
+            <div class="absolute inset-0 backdrop-blur-[2px] bg-black/10" @onclick="CloseFilterPanel"></div>
+            
+            <!-- フィルターパネル -->
+            <div class="absolute top-16 left-4 right-4 z-50">
+                <SearchFilterPanel @ref="filterPanelRef"
+                    AvailableFloors="@AvailableFloors"
+                    AvailableResources="@AvailableResources"
+                    AvailablePlans="@AvailablePlans"
+                    OnFilterApplied="@HandleFilterApplied"
+                    OnFilterChangedRealtime="@HandleFilterChangedRealtime"
+                    OnClose="@CloseFilterPanel" />
+            </div>
+        </div>
+    }
+
+    <!-- カレンダー本体 -->
+    <div class="flex-1 overflow-hidden p-2 relative">
+        @if (CurrentView == CalendarViewType.Year)
+        {
+            @if (MainStats != null && MainStats.Count > 0)
+            {
+                <YearView
+                    CurrentDate="@CurrentDate"
+                    MainStats="@MainStats"
+                    MainStatsSlots="@State.MainStatsSlots"
+                    MainStatsGrayedOut="@MainStatsGrayedOut"
+                    EquipmentStatsOptimized="@EquipmentStatsOptimized"
+                    Holidays="@Holidays"
+                    ShowSimpleView="@ShowSimpleView"
+                    BusinessHours="@BusinessHours"
+                    FilterTimeSlots="@FilterTimeSlots"
+                    StartHour="@StartHour"
+                    EndHour="@EndHour"
+                    Height="100%"
+                    OnDateClick="@HandleDateClick"
+                    OnMonthClick="@HandleMonthClick"
+                    OnDateSelect="@HandleDateSelect"
+                    OnDateSelectedSingle="@HandleDateSelectedSingle"
+                    OnDateDoubleClick="@HandleDateDoubleClick"
+                    OnDateRangeSelect="@HandleDateRangeSelect"
+                    OnYearSelected="@HandleYearSelected"
+                    OnSimpleViewChanged="@HandleSimpleViewChanged"
+                    OnGoToToday="@HandleGoToToday"
+                    OnShowDayDetail="@HandleShowDayDetail" />
+            }
+        }
+        else if (CurrentView == CalendarViewType.Month)
+        {
+            @if (MainStats != null && MainStats.Count > 0)
+            {
+                <MonthView
+                    CurrentDate="@CurrentDate"
+                    MainStats="@MainStats"
+                    MainStatsSlots="@State.MainStatsSlots"
+                    MainStatsGrayedOut="@MainStatsGrayedOut"
+                    EquipmentStatsOptimized="@EquipmentStatsOptimized"
+                    Holidays="@Holidays"
+                    ShowSimpleView="@ShowSimpleView"
+                    BusinessHours="@BusinessHours"
+                    FilterTimeSlots="@FilterTimeSlots"
+                    StartHour="@StartHour"
+                    EndHour="@EndHour"
+                    Height="100%"
+                    OnDateClick="@HandleDateClick"
+                    OnDateSelectedSingle="@HandleDateSelectedSingle"
+                    OnDateDoubleClick="@HandleDateDoubleClick"
+                    OnMonthSelected="@HandleMonthSelected"
+                    OnSimpleViewChanged="@HandleSimpleViewChanged"
+                    OnGoToToday="@HandleGoToToday"
+                    OnShowDayDetail="@HandleShowDayDetail" />
+            }
+        }
+        else
+        {
+            <WeekScheduler
+                CurrentDate="@CurrentDate"
+                WeekDays="@WeekDays"
+                ShowSlots="@ShowSlots"
+                Appointments="@Appointments"
+                MainStats="@MainStats"
+                MainStatsSlots="@State.MainStatsSlots"
+                MainStatsGrayedOut="@MainStatsGrayedOut"
+                Holidays="@Holidays"
+                StartHour="@StartHour"
+                EndHour="@EndHour"
+                Height="100%"
+                OnDateSelected="@HandleDateClick"
+                OnDateSelectedSingle="@HandleDateSelectedSingle"
+                OnAppointmentClicked="@HandleAppointmentClick"
+                OnCreateRequested="@HandleCreateRequest"
+                OnWeekDaysChanged="@HandleWeekDaysChanged"
+                OnShowSlotsChanged="@HandleShowSlotsChanged"
+                OnAppointmentMoved="@HandleAppointmentMoved"
+                OnGoToToday="@HandleGoToToday"
+                OnShowDayDetail="@HandleShowDayDetail" />
+        }
+    </div>
+</div>
+
+<!-- 予約モーダル -->
+<AppointmentModal
+    IsOpen="@IsModalOpen"
+    SelectedDate="@ModalDate"
+    SelectedStartMin="@ModalStartMin"
+    AppointmentId="@SelectedAppointmentId"
+    OnClose="@CloseModal"
+    OnSave="@HandleSaveAppointment"
+    OnDelete="@HandleDeleteAppointment" />
+
+<!-- 日詳細ダイアログ -->
+@if (IsDayDetailOpen)
+{
+    <DayDetailPopup
+        IsOpen="@IsDayDetailOpen"
+        SelectedDate="@DayDetailDate"
+        MainStats="@GetDayDetailStats()"
+        MainStatsSlots="@State.MainStatsSlots"
+        BusinessHours="@State.BusinessHours"
+        OnClose="@CloseDayDetail"
+        OnGoToWeekView="@HandleDayDetailGoToWeekView"
+        OnNavigateToPreviousDay="@HandleDayDetailNavigateToPreviousDay"
+        OnNavigateToNextDay="@HandleDayDetailNavigateToNextDay"
+        OnSlotClicked="@HandleDayDetailSlotClicked" />
+}

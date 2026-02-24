@@ -1,0 +1,15 @@
+@* 
+    CalendarCanvas - High Performance Canvas Calendar Component
+    All rendering is done in JavaScript (Konva.js) for optimal performance.
+    This Blazor component is a thin wrapper that:
+    - Provides the container div
+    - Sends data to JavaScript
+    - Receives action callbacks from JavaScript
+*@
+
+<div id="@ContainerId" 
+     class="calendar-canvas-container @CssClass" 
+     style="--calendar-height: @Height;">
+</div>
+
+

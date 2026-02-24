@@ -1,0 +1,28 @@
+@* Bottom Sheet形式のナビゲーションメニュー（グリッドデザイン） *@
+@inject NavigationManager NavigationManager
+
+<!-- バックドロップ -->
+<div class="bottom-sheet-backdrop @(IsOpen ? "open" : "")"
+     @onclick="Close"
+     aria-hidden="true">
+</div>
+
+<!-- Bottom Sheet -->
+<div class="bottom-sheet bg-base-100 shadow-2xl @(IsOpen ? "open" : "")">
+    <div class="p-4">
+        <!-- ハンドルバー -->
+        <div class="bottom-sheet-handle"></div>
+
+        <!-- グリッドメニュー -->
+        <div class="menu-grid">
+            @foreach (var item in MenuItems)
+            {
+                <a href="@item.Href" @onclick="Close" class="menu-grid-item">
+                    @((MarkupString)item.Icon)
+                    <span>@item.Label</span>
+                </a>
+            }
+        </div>
+    </div>
+</div>
+

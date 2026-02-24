@@ -1,0 +1,123 @@
+@page "/login"
+@layout LoginLayout
+@using Aloe.Apps.MedockLib.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Server
+@using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage
+@rendermode InteractiveServer
+
+<PageTitle>ログイン - Aloe Medock</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-100 p-4">
+    <div class="w-full max-w-md">
+        <!-- ロゴとタイトル -->
+        <div class="text-center mb-8">
+            <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-500 mb-4 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold text-gray-800">Aloe Medock</h1>
+            <p class="text-gray-600 mt-2">予約管理システム</p>
+        </div>
+
+        <!-- お知らせ -->
+        <div class="mb-6">
+            <div class="alert bg-emerald-50 border border-emerald-200">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm text-emerald-800">システムメンテナンス: 12/10 深夜0時〜6時</span>
+            </div>
+        </div>
+
+        <!-- ログインカード -->
+        <div class="card bg-base-100 shadow-xl">
+            <div class="card-body">
+                <h2 class="card-title text-lg mb-4">ログイン</h2>
+                
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-error mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>@ErrorMessage</span>
+                    </div>
+                }
+
+                <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm">
+                    <!-- ユーザーID -->
+                    <div class="form-control w-full mb-4">
+                        <label class="label">
+                            <span class="label-text font-medium">ユーザーID</span>
+                        </label>
+                        <InputText 
+                            @bind-Value="loginModel.UserCode"
+                            placeholder="ユーザーIDを入力" 
+                            class="input input-bordered w-full focus:input-primary" 
+                            autocomplete="username" />
+                    </div>
+
+                    <!-- パスワード -->
+                    <div class="form-control w-full mb-4">
+                        <label class="label">
+                            <span class="label-text font-medium">パスワード</span>
+                        </label>
+                        <InputText 
+                            type="password"
+                            @bind-Value="loginModel.Password"
+                            placeholder="パスワードを入力" 
+                            class="input input-bordered w-full focus:input-primary" 
+                            autocomplete="current-password" />
+                    </div>
+
+                    <!-- オプション -->
+                    <div class="flex flex-col gap-2 mb-6">
+                        <label class="label cursor-pointer justify-start gap-2">
+                            <InputCheckbox @bind-Value="loginModel.RememberMe" class="checkbox checkbox-primary checkbox-sm" />
+                            <span class="label-text">ログイン情報を記憶</span>
+                        </label>
+                        <label class="label cursor-pointer justify-start gap-2">
+                            <InputCheckbox @bind-Value="loginModel.KeepSession" class="checkbox checkbox-primary checkbox-sm" />
+                            <span class="label-text">セッションを維持（次回ログインをスキップ）</span>
+                        </label>
+                    </div>
+
+                    <!-- ログインボタン -->
+                    <button 
+                        type="submit" 
+                        class="btn btn-primary w-full"
+                        disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="loading loading-spinner loading-sm"></span>
+                            <span>ログイン中...</span>
+                        }
+                        else
+                        {
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
+                            <span>ログイン</span>
+                        }
+                    </button>
+                </EditForm>
+
+                <!-- デバッグ情報（開発用） -->
+                @if (DebugMessage != null)
+                {
+                    <div class="mt-4 p-2 bg-gray-100 rounded text-xs text-gray-600">
+                        <p>Debug: @DebugMessage</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- フッター -->
+        <div class="text-center mt-6 text-sm text-gray-500">
+            <p>© 2025 Aloe Medock. All rights reserved.</p>
+        </div>
+    </div>
+</div>
+

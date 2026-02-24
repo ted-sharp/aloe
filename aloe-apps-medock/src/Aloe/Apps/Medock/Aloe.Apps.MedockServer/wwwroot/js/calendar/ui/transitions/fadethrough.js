@@ -1,0 +1,82 @@
+/**
+ * Fadethrough Transition
+ *
+ * フェードスルートランジション（フェードアウト → フェードイン）
+ */
+
+import { CONFIG } from '../../config.js';
+import { updateConfigColorsForCurrentTheme } from '../../utils/theme-utils.js';
+
+/**
+ * フェードスルートランジションを適用
+ * @param {object} manager - CanvasManager インスタンス
+ * @param {number} fadeDuration - フェード時間（ミリ秒）
+ */
+export function applyFadethroughTransition(manager, fadeDuration) {
+    // CONFIG.colorsが初期化されていない場合は初期化
+    if (!CONFIG.colors || !CONFIG.colors.background) {
+        updateConfigColorsForCurrentTheme(CONFIG);
+    }
+    // 1. 現在のメインCanvasの内容をスナップショット（古い画面）
+    manager.canvases.forEach((canvas, layerName) => {
+        const snapshotCanvas = manager.snapshotCanvases.get(layerName);
+        if (snapshotCanvas) {
+            const snapshotCtx = snapshotCanvas.getContext('2d');
+            snapshotCtx.clearRect(0, 0, manager.width, manager.height);
+            snapshotCtx.drawImage(canvas, 0, 0);
+        }
+    });
+
+    // 2. アニメーションループでフェードスルー
+    const halfDuration = fadeDuration / 2;
+    const startTime = performance.now();
+
+    const animate = (currentTime) => {
+        const elapsed = currentTime - startTime;
+        const totalProgress = Math.min(elapsed / fadeDuration, 1);
+
+        manager.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+            const ctx = manager.contexts.get(layerName);
+            const snapshotCanvas = manager.snapshotCanvases.get(layerName);
+
+            if (ctx && snapshotCanvas) {
+                ctx.clearRect(0, 0, manager.width, manager.height);
+
+                // 背景色を描画（テーマに対応した背景色）
+                if (layerName === 'background' || layerName === 'grid' || layerName === 'content') {
+                    ctx.fillStyle = CONFIG.colors.background;
+                    ctx.fillRect(0, 0, manager.width, manager.height);
+                }
+
+                if (elapsed < halfDuration) {
+                    // 前半: 古い画面をフェードアウト（アルファ: 1 → 0）
+                    const fadeOutProgress = elapsed / halfDuration;
+                    ctx.globalAlpha = 1 - fadeOutProgress;
+                    ctx.drawImage(snapshotCanvas, 0, 0);
+                    ctx.globalAlpha = 1.0;
+                } else {
+                    // 後半: 新しい画面をフェードイン（アルファ: 0 → 1）
+                    const fadeInProgress = (elapsed - halfDuration) / halfDuration;
+                    ctx.globalAlpha = fadeInProgress;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+        });
+
+        if (totalProgress < 1) {
+            requestAnimationFrame(animate);
+        } else {
+            // アニメーション完了後: オフスクリーンキャンバスをメインキャンバスに完全転送
+            manager.offscreenCanvases.forEach((offscreenCanvas, layerName) => {
+                const ctx = manager.contexts.get(layerName);
+                if (ctx && offscreenCanvas) {
+                    ctx.clearRect(0, 0, manager.width, manager.height);
+                    ctx.globalAlpha = 1.0;
+                    ctx.drawImage(offscreenCanvas, 0, 0);
+                }
+            });
+        }
+    };
+    requestAnimationFrame(animate);
+}

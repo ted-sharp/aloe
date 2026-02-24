@@ -1,0 +1,466 @@
+/**
+ * Canvas Day Detail Renderer
+ * 
+ * 日詳細ポップアップ用の描画（Canvas API版）
+ * 1日の詳細な棒グラフを表示
+ */
+
+import { CONFIG } from '../config.js';
+import { drawRect, drawLine, drawText } from '../utils/canvas-utils.js';
+import { getWinterColorFromAvailable, getColorFromTypeAndAvailable } from '../utils/winter-colormap.js';
+import { isDateInRange } from '../utils/date-utils.js';
+import { renderCanvasLineChart } from './canvas-line-chart.js';
+import {
+    createTimeToXConverter,
+    calculateLunchDuration,
+    parseTimeStringToHours
+} from '../utils/time-conversion-utils.js';
+import {
+    parseSlotFlags,
+    getValidSlotIndices,
+    parseSlotTimeRangeFromMinutes
+} from '../utils/slot-validation-utils.js';
+import {
+    getDateGrayOutStatus,
+    getDateTextColor
+} from '../utils/slot-rendering-utils.js';
+
+/**
+ * 日詳細ポップアップを描画（Canvas API版）
+ * @param {object} canvasManager - CanvasManagerインスタンス
+ * @param {object} state - アプリケーション状態
+ * @param {string} dateStr - 日付文字列
+ * @param {number} dayNumber - 日にち
+ * @param {boolean} isHoliday - 祝日フラグ
+ * @param {boolean} showDateText - 日付テキストを表示するか
+ * @param {object} equipmentStats - Equipment統計データ（オプション）
+ * @param {object} renderState - RenderState（ローカル、Hit Test用）
+ */
+export function renderCanvasDayDetail(canvasManager, state, dateStr, dayNumber, isHoliday, showDateText = true, equipmentStats = null, renderState = null) {
+    // オフスクリーンバッファに描画（ダブルバッファリング）
+    const contexts = canvasManager.getAllOffscreenContexts();
+    const width = canvasManager.width;
+    const height = canvasManager.height;
+
+    // オフスクリーンレイヤーをクリア
+    canvasManager.clearAllOffscreen();
+
+    const backgroundCtx = contexts.get('background');
+    const gridCtx = contexts.get('grid');
+    const contentCtx = contexts.get('content');
+
+    // 時間帯枠データを取得（並列配列形式）
+    const stats = state.mainStats.get(dateStr);
+    const slotStarts = stats?.slotStartMins || [];
+    const slotEnds = stats?.slotEndMins || [];
+    const slotCounts = stats?.slotCounts || [];
+    const slotCaps = stats?.slotCaps || [];
+    const slotAvailables = stats?.slotAvailables || [];
+    const slotFlags = stats?.slotFlags || null;
+    const slotCount = slotStarts.length;
+
+    // 営業時間情報を取得
+    const businessHours = state.options?.businessHours;
+
+    let lunchStartHour = null;
+    let lunchEndHour = null;
+    if (businessHours && businessHours.lunchStartTime && businessHours.lunchEndTime) {
+        lunchStartHour = parseTimeStringToHours(businessHours.lunchStartTime);
+        lunchEndHour = parseTimeStringToHours(businessHours.lunchEndTime);
+    }
+
+    // グレーアウト判定
+    let isDateGrayed = false;
+    if (state.confirmedDateRange) {
+        isDateGrayed = !isDateInRange(dateStr, state.confirmedDateRange.start, state.confirmedDateRange.end);
+    } else {
+        isDateGrayed = stats?.isDayGrayedOut || false;
+    }
+
+    const startHour = state.options.startHour || 8;
+    const endHour = state.options.endHour || 17;
+    const totalHours = endHour - startHour;
+
+    // ビジネスアワー内のスロットのインデックスを事前に収集 & 時間外予約の検出
+    const validSlotIndices = getValidSlotIndices(slotCaps, slotCounts);
+
+    // 時間外予約フラグを検出
+    let hasOutsideHoursBefore = false;
+    let hasOutsideHoursAfter = false;
+    let hasOutsideHoursLunch = false;
+
+    for (const i of validSlotIndices) {
+        // ビジネスアワー外のスロットをフラグから判定
+        const flagsBefore = slotFlags ? (slotFlags[i] & 0b0010) !== 0 : false;
+        const flagsAfter = slotFlags ? (slotFlags[i] & 0b0100) !== 0 : false;
+        const flagsLunch = slotFlags ? (slotFlags[i] & 0b1000) !== 0 : false;
+        const isOutsideHours = flagsBefore || flagsAfter || flagsLunch;
+
+        if (isOutsideHours) {
+            // 時間外スロットに予約がある場合、赤いライン表示用のフラグを設定
+            const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+            if (count > 0) {
+                if (flagsBefore) hasOutsideHoursBefore = true;
+                if (flagsAfter) hasOutsideHoursAfter = true;
+                if (flagsLunch) hasOutsideHoursLunch = true;
+            }
+        }
+    }
+
+    // ビジネスアワー内のスロット数に更新
+    const validSlotCount = validSlotIndices.length;
+
+    // レイアウト計算
+    const yAxisWidth = 50;
+    const xAxisHeight = 30;
+    const topPadding = showDateText ? 50 : 30;
+    // Equipmentデータがある場合は右Y軸用のスペースを確保
+    const hasEquipmentData = equipmentStats && Object.keys(equipmentStats).length > 0;
+    const rightAxisWidth = hasEquipmentData ? 50 : 10;
+    const graphWidth = width - yAxisWidth - rightAxisWidth;
+    const graphHeight = height - topPadding - xAxisHeight;
+
+    // 背景
+    drawRect(backgroundCtx, {
+        x: 0,
+        y: 0,
+        width: width,
+        height: height,
+        fill: '#ffffff'
+    });
+
+    // 日付テキストの色を計算
+    const dayOfWeek = new Date(dateStr).getDay();
+    let textColor;
+    if (isDateGrayed) {
+        textColor = CONFIG.colors.secondary;
+    } else if (isHoliday || dayOfWeek === 0) {
+        textColor = CONFIG.colors.weekend.sun;
+    } else if (dayOfWeek === 6) {
+        textColor = CONFIG.colors.weekend.sat;
+    } else {
+        textColor = CONFIG.colors.text;
+    }
+
+    // 日付テキスト
+    if (showDateText) {
+        drawText(contentCtx, {
+            text: `${dateStr} (${dayNumber}日)`,
+            x: yAxisWidth,
+            y: 10,
+            width: graphWidth,
+            fill: textColor,
+            fontSize: CONFIG.font.sizeLarge,
+            fontStyle: 'bold',
+            align: 'center'
+        });
+    }
+
+    // データがない場合
+    if (validSlotCount === 0) {
+        drawText(contentCtx, {
+            text: 'データなし',
+            x: yAxisWidth,
+            y: topPadding + graphHeight / 2,
+            width: graphWidth,
+            fill: CONFIG.colors.text,
+            fontSize: CONFIG.font.sizeLarge,
+            align: 'center'
+        });
+        return;
+    }
+
+    // 有効なスロットの実際の開始時刻と終了時刻を計算
+    let actualStartHour = endHour;
+    let actualEndHour = startHour;
+    let maxValue = 0;
+    
+    for (const i of validSlotIndices) {
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
+        maxValue = Math.max(maxValue, cap);
+
+        const slotStartStr = slotStarts[i];
+        const slotEndStr = slotEnds[i];
+        const timeRange = parseSlotTimeRangeFromMinutes(slotStartStr, slotEndStr, startHour, endHour);
+        const slotStart = Math.max(startHour, Math.min(endHour, timeRange.start));
+        const slotEnd = Math.min(endHour, Math.max(startHour, timeRange.end));
+
+        actualStartHour = Math.min(actualStartHour, slotStart);
+        actualEndHour = Math.max(actualEndHour, slotEnd);
+    }
+
+    if (maxValue <= 0) {
+        maxValue = 10; // デフォルト
+    }
+    
+    // 有効なスロットがない場合は、ビジネスアワー全体を使用
+    if (actualStartHour >= actualEndHour) {
+        actualStartHour = startHour;
+        actualEndHour = endHour;
+    }
+
+    // Y軸の目盛り
+    const tickCount = Math.min(5, maxValue);
+    for (let i = 0; i <= tickCount; i++) {
+        const value = Math.round((maxValue / tickCount) * i);
+        const y = topPadding + graphHeight - (i / tickCount) * graphHeight;
+
+        // 目盛り線
+        drawLine(gridCtx, {
+            points: [yAxisWidth, y, yAxisWidth + graphWidth, y],
+            stroke: CONFIG.colors.grid,
+            strokeWidth: 1
+        });
+
+        // ラベル
+        drawText(gridCtx, {
+            text: String(value),
+            x: 0,
+            y: y - 6,
+            width: yAxisWidth - 5,
+            fill: CONFIG.colors.text,
+            fontSize: CONFIG.font.sizeSmall,
+            align: 'right'
+        });
+    }
+
+    // ベースライン
+    const baselineY = topPadding + graphHeight;
+    drawLine(gridCtx, {
+        points: [yAxisWidth, baselineY, yAxisWidth + graphWidth, baselineY],
+        stroke: CONFIG.colors.text,
+        strokeWidth: 2
+    });
+
+    // Y軸の縦線（業務開始ライン - 時間外予約がある場合は赤）
+    const beforeLineColor = hasOutsideHoursBefore ? '#ef4444' : CONFIG.colors.text;
+    const beforeLineWidth = hasOutsideHoursBefore ? 3 : 2;
+    drawLine(gridCtx, {
+        points: [yAxisWidth, topPadding, yAxisWidth, baselineY],
+        stroke: beforeLineColor,
+        strokeWidth: beforeLineWidth
+    });
+
+    // 業務終了ライン（右端 - 時間外予約がある場合は赤）
+    const afterLineColor = hasOutsideHoursAfter ? '#ef4444' : CONFIG.colors.grid;
+    const afterLineWidth = hasOutsideHoursAfter ? 3 : 1;
+    drawLine(gridCtx, {
+        points: [yAxisWidth + graphWidth, topPadding, yAxisWidth + graphWidth, baselineY],
+        stroke: afterLineColor,
+        strokeWidth: afterLineWidth
+    });
+
+    // 昼休み時間帯の長さを計算（実際の範囲内で）
+    const actualLunchStartHour = (lunchStartHour !== null && lunchStartHour >= actualStartHour && lunchStartHour <= actualEndHour) 
+        ? lunchStartHour 
+        : null;
+    const actualLunchEndHour = (lunchEndHour !== null && lunchEndHour >= actualStartHour && lunchEndHour <= actualEndHour) 
+        ? lunchEndHour 
+        : null;
+    
+    const actualTotalHours = actualEndHour - actualStartHour;
+    const lunchDuration = (actualLunchStartHour !== null && actualLunchEndHour !== null)
+        ? (actualLunchEndHour - actualLunchStartHour)
+        : 0;
+    const effectiveTotalHours = actualTotalHours - lunchDuration;
+
+    // 時刻をX座標に変換する関数（実際の範囲に合わせて調整）
+    const timeToX = createTimeToXConverter(
+        actualStartHour,
+        actualEndHour,
+        actualLunchStartHour,
+        actualLunchEndHour,
+        yAxisWidth,
+        graphWidth
+    );
+
+    // スロットを描画（並列配列対応、ビジネスアワー内のスロットのみ）
+    for (const i of validSlotIndices) {
+        const count = (slotCounts[i] !== undefined && slotCounts[i] !== null) ? slotCounts[i] : 0;
+        const cap = (slotCaps[i] !== undefined && slotCaps[i] !== null && slotCaps[i] > 0) ? slotCaps[i] : 0;
+        const available = cap - count;
+
+        // フラグからisSlotGrayedを取得（ビット0: IsGrayedOut）
+        const isSlotGrayed = (slotFlags && (slotFlags[i] & 0b001) !== 0) || isDateGrayed;
+
+        const slotStartStr = slotStarts[i];
+        const slotEndStr = slotEnds[i];
+        const timeRange = parseSlotTimeRangeFromMinutes(slotStartStr, slotEndStr, startHour, endHour);
+        // 実際の範囲内にクリップ（timeToX関数内でもクリップされるが、ここでも明示的にクリップ）
+        const slotStart = Math.max(actualStartHour, Math.min(actualEndHour, timeRange.start));
+        const slotEnd = Math.min(actualEndHour, Math.max(actualStartHour, timeRange.end));
+
+        const slotStartX = timeToX(slotStart);
+        const slotEndX = timeToX(slotEnd);
+        const barX = slotStartX;
+        const barWidth = Math.max(2, slotEndX - slotStartX);
+
+        // キャパシティライン
+        const capacityY = baselineY - (cap / maxValue) * graphHeight;
+        drawLine(contentCtx, {
+            points: [barX, capacityY, barX + barWidth, capacityY],
+            stroke: '#3b82f6',
+            strokeWidth: 2,
+            opacity: isSlotGrayed ? 0.4 : 0.8
+        });
+
+        // 棒グラフ
+        if (available > 0) {
+            const barHeight = (available / maxValue) * graphHeight;
+            const barY = baselineY - barHeight;
+            // タイプ情報を使用した色計算（グレーアウト時もタイプの色を保つ）
+            const resourceTypeCode = stats?.resourceTypeCode ?? 0;
+            const planTypeCode = stats?.planTypeCode ?? null;
+            const slotColor = getColorFromTypeAndAvailable(resourceTypeCode, planTypeCode, available, cap, isSlotGrayed);
+
+            drawRect(contentCtx, {
+                x: barX,
+                y: barY,
+                width: barWidth,
+                height: barHeight,
+                fill: slotColor,
+                cornerRadius: 2,
+                opacity: isSlotGrayed ? 0.4 : 0.9
+            });
+
+            // ラベル
+            if (barWidth > 20) {
+                drawText(contentCtx, {
+                    text: `${Math.round(available)}`,
+                    x: barX,
+                    y: barY - 15,
+                    width: barWidth,
+                    fill: slotColor,
+                    fontSize: CONFIG.font.sizeSmall,
+                    fontStyle: 'bold',
+                    align: 'center'
+                });
+            }
+
+            // Hit Test用にバーを登録
+            if (renderState && !isSlotGrayed) {
+                renderState.addBar(dateStr, {
+                    x: barX,
+                    y: barY,
+                    width: barWidth,
+                    height: barHeight,
+                    slotIndex: i,
+                    startMinutes: slotStartStr,
+                    endMinutes: slotEndStr,
+                    cap: cap,
+                    count: count,
+                    available: available,
+                    isGrayed: isSlotGrayed
+                });
+            }
+        } else if (available < 0) {
+            const overflowAmount = Math.abs(available);
+            const barHeight = (overflowAmount / maxValue) * graphHeight;
+            const barY = baselineY;
+
+            drawRect(contentCtx, {
+                x: barX,
+                y: barY,
+                width: barWidth,
+                height: barHeight,
+                fill: '#ef4444',
+                cornerRadius: 2,
+                opacity: isSlotGrayed ? 0.4 : 0.9
+            });
+        }
+
+        // 時刻ラベル
+        if (barWidth > 15) {
+            const hourValue = Math.floor(timeRange.start);
+            drawText(contentCtx, {
+                text: String(hourValue),
+                x: barX,
+                y: baselineY + 5,
+                width: barWidth,
+                fill: CONFIG.colors.text,
+                fontSize: CONFIG.font.sizeSmall,
+                align: 'center'
+            });
+        }
+    }
+
+    // 昼休みライン（実際の範囲内の場合のみ描画 - 時間外予約がある場合は赤）
+    if (actualLunchStartHour !== null && actualLunchEndHour !== null) {
+        const lunchStartX = timeToX(actualLunchStartHour);
+        const lunchLineColor = hasOutsideHoursLunch ? '#ef4444' : CONFIG.colors.grid;
+        const lunchLineWidth = hasOutsideHoursLunch ? 3 : 2;
+        drawLine(contentCtx, {
+            points: [lunchStartX, topPadding, lunchStartX, baselineY],
+            stroke: lunchLineColor,
+            strokeWidth: lunchLineWidth,
+            opacity: 0.8
+        });
+    }
+
+    // 右Y軸（第二軸: Equipment空き率 0-100%）を描画
+    if (hasEquipmentData) {
+        const rightAxisX = yAxisWidth + graphWidth;
+        const equipmentColor = '#f59e0b'; // amber-500
+
+        // 右Y軸の縦線
+        drawLine(gridCtx, {
+            points: [rightAxisX, topPadding, rightAxisX, baselineY],
+            stroke: equipmentColor,
+            strokeWidth: 1,
+            opacity: 0.6
+        });
+
+        // 0%, 25%, 50%, 75%, 100% の目盛り
+        const percentTicks = [0, 25, 50, 75, 100];
+        percentTicks.forEach(percent => {
+            const y = baselineY - (percent / 100) * graphHeight;
+
+            // 目盛り線（短い横線）
+            drawLine(gridCtx, {
+                points: [rightAxisX, y, rightAxisX + 5, y],
+                stroke: equipmentColor,
+                strokeWidth: 1,
+                opacity: 0.6
+            });
+
+            // ラベル
+            drawText(gridCtx, {
+                text: `${percent}%`,
+                x: rightAxisX + 8,
+                y: y - 5,
+                width: 40,
+                fill: equipmentColor,
+                fontSize: CONFIG.font.sizeSmall,
+                align: 'left'
+            });
+        });
+    }
+
+    // Equipment折れ線グラフを描画（棒グラフの上に重ねて表示）
+    if (hasEquipmentData) {
+        // Mainリソース統計データを取得
+        const mainStats = state.mainStats.get(dateStr);
+        
+        renderCanvasLineChart(contentCtx, {
+            cellLeft: yAxisWidth,
+            cellTop: topPadding,
+            cellWidth: graphWidth,
+            cellHeight: graphHeight,
+            dateStr,
+            barAreaTop: topPadding,
+            barAreaHeight: graphHeight,
+            equipmentStats,
+            mainStats,
+            startHour: actualStartHour,
+            endHour: actualEndHour,
+            lunchStartHour: actualLunchStartHour,
+            lunchEndHour: actualLunchEndHour,
+            isYearView: false
+        });
+    }
+
+    // すべての描画が完了したら、オフスクリーンバッファをメインCanvasに一括転送（フェード有効）
+    canvasManager.commitAll(true, 150);
+}
+
+

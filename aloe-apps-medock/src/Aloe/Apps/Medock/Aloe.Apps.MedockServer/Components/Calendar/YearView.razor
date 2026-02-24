@@ -1,0 +1,31 @@
+@* 
+    YearView - 年間カレンダー表示
+    12ヶ月分のミニカレンダーを表示し、各日を時間帯枠の円グラフで表示
+*@
+
+<div class="year-view flex flex-col h-full">
+    <!-- Canvas カレンダー -->
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas
+            ViewType="year"
+            CurrentDate="@CurrentDate"
+            MainStats="@MainStats"
+            MainStatsSlots="@MainStatsSlots"
+            MainStatsGrayedOut="@MainStatsGrayedOut"
+            EquipmentStatsOptimized="@EquipmentStatsOptimized"
+            Holidays="@Holidays"
+            ShowSimpleView="@ShowSimpleView"
+            BusinessHours="@BusinessHours"
+            FilterTimeSlots="@FilterTimeSlots"
+            StartHour="@StartHour"
+            EndHour="@EndHour"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnMonthClicked="@HandleMonthClicked"
+            OnDateSelectedSingle="@HandleDateSelectedSingle"
+            OnDateDoubleClicked="@HandleDateDoubleClicked"
+            OnDateRangeSelected="@HandleDateRangeSelected"
+            OnShowDayDetail="@HandleShowDayDetail" />
+    </div>
+</div>
+

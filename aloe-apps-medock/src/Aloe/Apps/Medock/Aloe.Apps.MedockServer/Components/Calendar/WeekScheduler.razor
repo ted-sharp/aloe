@@ -1,0 +1,33 @@
+@using Aloe.Apps.MedockLib.Services.Dtos
+@* 
+    WeekScheduler - 週間スケジューラー（Canvas版）
+    可変日数表示（31日/14日/7日/3日/1日）に対応
+    縦軸: 時間、横軸: 日付
+    スロット表示と詳細表示の切り替え
+*@
+
+<div class="week-scheduler flex flex-col h-full">
+    <!-- Canvas カレンダー -->
+    <div class="flex-1 min-h-0">
+        <CalendarCanvas
+            ViewType="week"
+            CurrentDate="@CurrentDate"
+            Appointments="@Appointments"
+            MainStats="@MainStats"
+            MainStatsSlots="@MainStatsSlots"
+            MainStatsGrayedOut="@MainStatsGrayedOut"
+            Holidays="@Holidays"
+            WeekDays="@WeekDays"
+            ShowSlots="@ShowSlots"
+            StartHour="@StartHour"
+            EndHour="@EndHour"
+            Height="100%"
+            OnDateSelected="@HandleDateSelected"
+            OnDateSelectedSingle="@HandleDateSelectedSingle"
+            OnAppointmentClicked="@HandleAppointmentClicked"
+            OnCreateRequested="@HandleCreateRequested"
+            OnAppointmentMoved="@HandleAppointmentMoved"
+            OnShowDayDetail="@HandleShowDayDetail" />
+    </div>
+</div>
+

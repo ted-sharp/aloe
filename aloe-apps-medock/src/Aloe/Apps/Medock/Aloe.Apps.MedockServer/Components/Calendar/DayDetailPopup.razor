@@ -1,0 +1,69 @@
+@* 日付詳細ポップアップ - Konva.jsグラフ表示版 *@
+
+@if (IsOpen)
+{
+    <div class="modal modal-open">
+        <!-- 背景ぼかし -->
+        <div class="modal-backdrop backdrop-blur-sm bg-black/30" @onclick="HandleClose"></div>
+
+        <div class="modal-box max-w-[90vw] max-h-[90vh] w-[90vw] h-[90vh] overflow-hidden flex flex-col bg-base-100/90 backdrop-blur-md">
+            <!-- ヘッダー -->
+            <div class="flex-shrink-0 mb-2">
+                <!-- 年月日とナビゲーション -->
+                <div class="flex items-start gap-2">
+                    <!-- 前日ボタン + 年月日 + 翌日ボタン -->
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleNavigateToPreviousDay">&lt;</button>
+                    @if (SelectedDate.HasValue)
+                    {
+                        <h3 class="font-bold text-2xl @GetDateColorClass()">
+                            @SelectedDate.Value.ToString("yyyy年MM月dd日")
+                        </h3>
+                    }
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleNavigateToNextDay">&gt;</button>
+
+                    <!-- スペーサー -->
+                    <div class="flex-grow"></div>
+
+                    <!-- 閉じるボタン -->
+                    <button class="btn btn-sm btn-circle btn-ghost flex-shrink-0" @onclick="HandleClose">✕</button>
+                </div>
+
+                <!-- 祝日名・曜日情報（年月日の下） -->
+                @if (SelectedDate.HasValue)
+                {
+                    <div class="ml-10">
+                        <!-- 祝日名（あれば表示）-->
+                        @if (!string.IsNullOrEmpty(HolidayName))
+                        {
+                            <div class="text-red-600 font-semibold">@HolidayName</div>
+                        }
+                        <!-- 曜日 + 件数 + 割合 + 記号 -->
+                        <div class="flex items-center gap-2 text-base mt-1">
+                            <span class="@GetDateColorClass()">@GetDayOfWeekJapanese(SelectedDate.Value)</span>
+                            <span>@GetTotalCount()/@GetTotalCapacity()件</span>
+                            <span>空き@(Math.Round(GetOverallVacancyRatio() * 100))%</span>
+                            <span class="font-bold text-lg @GetSymbolColorClass()">@GetSymbol()</span>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Konvaキャンバスコンテナ -->
+            <div class="flex-1 overflow-hidden" style="min-height: 0;">
+                <div id="@ChartContainerId" style="width: 100%; height: 100%;"></div>
+            </div>
+
+            <!-- フッター -->
+            <div class="modal-action justify-between flex-shrink-0 mt-4">
+                <div class="flex gap-2">
+                    <button class="btn btn-outline btn-primary" disabled="@(_selectedSlot == null)" @onclick="HandleTentativeReservationClick">仮予約</button>
+                    <button class="btn btn-primary" disabled="@(_selectedSlot == null)" @onclick="HandleReservationClick">予約</button>
+                </div>
+                <div class="flex gap-2">
+                    <button class="btn btn-primary" @onclick="HandleGoToWeekView">週表示へ</button>
+                    <button class="btn btn-ghost" @onclick="HandleClose">閉じる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}

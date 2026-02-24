@@ -1,0 +1,174 @@
+@* 
+    AppointmentModal - 予約作成・編集モーダル
+    daisyUI モーダルを使用
+*@
+
+@if (IsOpen)
+{
+    <div class="modal modal-open">
+        <div class="modal-box max-w-2xl">
+            <!-- ヘッダー -->
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg">
+                    @if (IsEditMode)
+                    {
+                        <span>予約編集</span>
+                    }
+                    else
+                    {
+                        <span>新規予約</span>
+                    }
+                </h3>
+                <button class="btn btn-sm btn-circle btn-ghost" @onclick="HandleClose">✕</button>
+            </div>
+
+            <!-- フォーム -->
+            <EditForm Model="@FormModel" OnValidSubmit="HandleSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 日付 -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">予約日 <span class="text-error">*</span></span>
+                        </label>
+                        <InputDate @bind-Value="FormModel.Date" class="input input-bordered w-full" />
+                        <ValidationMessage For="@(() => FormModel.Date)" class="text-error text-sm mt-1" />
+                    </div>
+
+                    <!-- ステータス -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">ステータス</span>
+                        </label>
+                        <InputSelect @bind-Value="FormModel.Status" class="select select-bordered w-full">
+                            <option value="0">予約</option>
+                            <option value="1">待機中</option>
+                            <option value="2">来院済み</option>
+                            <option value="3">キャンセル</option>
+                        </InputSelect>
+                    </div>
+
+                    <!-- 開始時間 -->
+                    <div class="form-control">
+                        <label class="label">
+                            <span class="label-text font-medium">開始時間</span>
+                        </label>
+                        <InputSelect @bind-Value="FormModel.StartTimeString" class="select select-bordered w-full">
+                            @foreach (var time in TimeSlots)
+                            {
+                                <option value="@time">@time</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <!-- 患者名 -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">患者名</span>
+                        </label>
+                        <InputText @bind-Value="FormModel.PatientName"
+                                   placeholder="患者名を入力（任意）"
+                                   class="input input-bordered w-full" />
+                        <ValidationMessage For="@(() => FormModel.PatientName)" class="text-error text-sm mt-1" />
+                    </div>
+
+                    <!-- 団体名 -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">団体名</span>
+                        </label>
+                        <InputText @bind-Value="FormModel.OrganizationName"
+                                   placeholder="団体名を入力（任意）"
+                                   class="input input-bordered w-full" />
+                    </div>
+
+                    <!-- 機器リソース -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-semibold">リソース（機器）</span>
+                            @if (AvailableEquipmentResources.Any())
+                            {
+                                <div class="flex gap-1">
+                                    <button type="button" class="btn btn-xs btn-ghost" @onclick="SelectAllEquipment">全選択</button>
+                                    <button type="button" class="btn btn-xs btn-ghost" @onclick="ClearAllEquipment">全解除</button>
+                                </div>
+                            }
+                        </label>
+                        @if (AvailableEquipmentResources.Any())
+                        {
+                            <div class="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                                @foreach (var resource in AvailableEquipmentResources)
+                                {
+                                    <label class="cursor-pointer">
+                                        <input type="checkbox"
+                                               class="checkbox checkbox-xs checkbox-primary hidden peer"
+                                               checked="@FormModel.SelectedEquipmentResourceIds.Contains(resource.Id)"
+                                               @onchange="() => ToggleEquipmentResource(resource.Id)" />
+                                        <span class="badge @(FormModel.SelectedEquipmentResourceIds.Contains(resource.Id) ? "badge-primary" : "badge-outline")">
+                                            @resource.Name
+                                        </span>
+                                    </label>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-sm text-gray-500">利用可能なリソースがありません</p>
+                        }
+                    </div>
+
+                    <!-- メモ -->
+                    <div class="form-control md:col-span-2">
+                        <label class="label">
+                            <span class="label-text font-medium">メモ</span>
+                        </label>
+                        <InputTextArea @bind-Value="FormModel.Memo" 
+                                       placeholder="メモを入力（任意）" 
+                                       class="textarea textarea-bordered w-full h-24" />
+                    </div>
+                </div>
+
+                <!-- エラーメッセージ -->
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="alert alert-error mt-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-6 w-6" fill="none" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>@ErrorMessage</span>
+                    </div>
+                }
+
+                <!-- ボタン -->
+                <div class="modal-action">
+                    @if (IsEditMode)
+                    {
+                        <button type="button" class="btn btn-error btn-outline" @onclick="HandleDelete" disabled="@IsProcessing">
+                            @if (IsDeleting)
+                            {
+                                <span class="loading loading-spinner loading-sm"></span>
+                            }
+                            削除
+                        </button>
+                    }
+                    <button type="button" class="btn btn-ghost" @onclick="HandleClose" disabled="@IsProcessing">
+                        キャンセル
+                    </button>
+                    <button type="submit" class="btn btn-primary" disabled="@IsProcessing">
+                        @if (IsSaving)
+                        {
+                            <span class="loading loading-spinner loading-sm"></span>
+                        }
+                        @(IsEditMode ? "更新" : "作成")
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+        <div class="modal-backdrop" @onclick="HandleClose"></div>
+    </div>
+}
+
+
+
+
