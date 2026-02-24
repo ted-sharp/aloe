@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.35931.197
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aloe.Utils.Logging.Dump", "Aloe.Utils.Logging.Dump\Aloe.Utils.Logging.Dump.csproj", "{48993672-9D8E-ECC8-76C2-F6AA7A149A1C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aloe.Utils.Logging.Dump.Samples", "Aloe.Utils.Logging.Dump.Samples\Aloe.Utils.Logging.Dump.Samples.csproj", "{E88A3D7B-1FBC-40AC-ABC7-913249E5DE1B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{48993672-9D8E-ECC8-76C2-F6AA7A149A1C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{48993672-9D8E-ECC8-76C2-F6AA7A149A1C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{48993672-9D8E-ECC8-76C2-F6AA7A149A1C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{48993672-9D8E-ECC8-76C2-F6AA7A149A1C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E88A3D7B-1FBC-40AC-ABC7-913249E5DE1B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E88A3D7B-1FBC-40AC-ABC7-913249E5DE1B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E88A3D7B-1FBC-40AC-ABC7-913249E5DE1B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E88A3D7B-1FBC-40AC-ABC7-913249E5DE1B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {455AFF96-837F-4EE3-A9A4-38F53B326498}
+	EndGlobalSection
+EndGlobal
