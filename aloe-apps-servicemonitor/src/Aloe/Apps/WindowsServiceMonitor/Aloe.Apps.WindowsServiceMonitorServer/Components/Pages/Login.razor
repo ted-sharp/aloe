@@ -1,0 +1,60 @@
+@page "/login"
+@using Microsoft.AspNetCore.Antiforgery
+@inject IAntiforgery Antiforgery
+@inject IHttpContextAccessor HttpContextAccessor
+
+<PageTitle>ログイン</PageTitle>
+
+<main>
+    <article>
+        <h1>ログイン</h1>
+
+        @if (!string.IsNullOrEmpty(Error))
+        {
+            <aside role="alert">
+                @Error
+            </aside>
+        }
+
+        <form method="post" action="/api/login">
+            <label for="password">パスワード</label>
+            <input type="password" id="password" name="password" placeholder="パスワードを入力" required autofocus />
+
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+            @{
+                var httpContext = HttpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    var token = Antiforgery.GetAndStoreTokens(httpContext).RequestToken;
+                    <input type="hidden" name="__RequestVerificationToken" value="@token" />
+                }
+            }
+
+            <button type="submit">
+                ログイン
+            </button>
+        </form>
+    </article>
+</main>
+
+<style>
+    main {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
+
+    article {
+        width: 100%;
+        max-width: 400px;
+    }
+</style>
+
+@code {
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? Error { get; set; }
+}

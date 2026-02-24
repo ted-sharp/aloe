@@ -1,0 +1,41 @@
+@using Microsoft.AspNetCore.Components.Authorization
+
+<section>
+    <CascadingAuthenticationState>
+        <AuthorizeView>
+            <Authorized>
+                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+                    <div>
+                        <p style="margin: 0.25rem 0; font-size: 0.85rem;">
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #26b050; margin-right: 0.5rem;"></span>
+                            <span style="color: var(--muted-color);">認証済み</span>
+                        </p>
+                        <p style="margin: 0.25rem 0; font-size: 0.85rem;">
+                            <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: #17a2b8; margin-right: 0.5rem;"></span>
+                            <span style="color: var(--muted-color);">セッション有効</span>
+                        </p>
+                    </div>
+                </div>
+            </Authorized>
+        </AuthorizeView>
+    </CascadingAuthenticationState>
+    <form method="post" action="/logout" style="margin: 0;">
+        <button type="submit" class="icon-button" title="ログアウト" style="font-size: 1.2rem;">✕</button>
+    </form>
+</section>
+
+<style>
+    section {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--form-element-border-color);
+        margin-bottom: 1rem;
+    }
+
+    section a[role="button"] {
+        display: block;
+        text-align: center;
+    }
+</style>
+
+@code {
+}

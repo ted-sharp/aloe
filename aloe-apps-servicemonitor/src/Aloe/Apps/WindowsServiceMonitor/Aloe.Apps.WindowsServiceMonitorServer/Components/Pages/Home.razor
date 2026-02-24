@@ -1,0 +1,59 @@
+﻿@page "/"
+
+<PageTitle>ホーム - サービス監視</PageTitle>
+
+<main class="container">
+    <hgroup>
+        <h1>Windows サービス監視システム</h1>
+        <p>ブラウザからサーバー上のWindowsサービスを監視・操作します</p>
+    </hgroup>
+
+    <article>
+        <header>
+            <h3>
+                <span class="oi oi-list" aria-hidden="true"></span> サービス監視
+            </h3>
+        </header>
+        <p>appsettings.services.json で設定されたサーバー上のWindowsサービスをリアルタイムで監視します。テーブル形式で各サービスのステータス、起動タイプ、プロセスIDを確認・操作できます。</p>
+        <footer>
+            <a href="/services" role="button">サービス一覧へ</a>
+        </footer>
+    </article>
+
+    <article>
+        <header>
+            <h3>
+                <span class="oi oi-document" aria-hidden="true"></span> ログ閲覧
+            </h3>
+        </header>
+        <p>アクセスログ、操作ログ、サービスステータス変化ログを閲覧できます。ログタイプや日付範囲でフィルタリングが可能です。認証不要でアクセスできます。</p>
+        <footer>
+            <a href="/logs" role="button">ログを表示</a>
+        </footer>
+    </article>
+
+    <article>
+        <header>
+            <h2>機能</h2>
+        </header>
+        <ul>
+            <li>サーバー上の複数のWindowsサービスを一元管理</li>
+            <li>リアルタイムステータス更新（SignalR）</li>
+            <li>サービスの起動・停止・再起動</li>
+            <li>サービス詳細情報表示（説明、プロセスID等）</li>
+            <li>自動ポーリングによる監視</li>
+        </ul>
+    </article>
+
+    <article>
+        <header>
+            <h2>注意事項</h2>
+        </header>
+        <ul>
+            <li><strong>管理者権限が必須です</strong>：サーバー側でこのアプリケーションをWindows管理者権限で実行する必要があります</li>
+            <li><strong>設定ファイル管理</strong>：appsettings.services.json に記載されたサーバー上のサービスのみ監視対象となります</li>
+            <li><strong>Windows限定</strong>：サーバー側はWindows環境でのみ動作します（クライアントは任意のブラウザで可）</li>
+            <li><strong>セキュリティ</strong>：認証パスワードを安全に管理し、HTTPS経由でのアクセスを推奨します</li>
+        </ul>
+    </article>
+</main>
