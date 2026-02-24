@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Aloe.Utils.CommandLine.Samples/Aloe.Utils.CommandLine.Samples.csproj" />
+  <Project Path="Aloe.Utils.CommandLine.Tests/Aloe.Utils.CommandLine.Tests.csproj" />
+  <Project Path="Aloe.Utils.CommandLine/Aloe.Utils.CommandLine.csproj" />
+</Solution>
