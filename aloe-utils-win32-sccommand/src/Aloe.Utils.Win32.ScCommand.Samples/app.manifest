@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
+	<!-- 任意：自分のアプリケーション識別子 -->
+	<assemblyIdentity
+	  name="Alie.Utils.Win32.ScCommand.Samples"
+	  version="1.0.0.0" />
+
+	<!-- Windows Vista 以降で有効なセキュリティ設定 -->
+	<trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+		<security>
+			<requestedPrivileges>
+				<!-- 管理者権限で常に起動 -->
+				<requestedExecutionLevel
+				  level="requireAdministrator"
+				  uiAccess="false" />
+			</requestedPrivileges>
+		</security>
+	</trustInfo>
+
+	<!-- （必要なら compatibility や visualStyles など 他の要素を続けて追加） -->
+</assembly>
