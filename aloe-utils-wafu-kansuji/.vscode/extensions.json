@@ -1,0 +1,12 @@
+{
+    "recommendations": [
+        // "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.vscode-dotnet-runtime",
+        "k--kato.docomment",
+        "formulahendry.dotnet-test-explorer",
+        // "visualstudioexptteam.vscodeintellicode",
+        "editorconfig.editorconfig",
+        "jetbrains.resharper-code"
+    ]
+}
