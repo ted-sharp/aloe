@@ -1,0 +1,10 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## 開発環境
+- .NET 9.0, C#13 を使用し、最新の構文は積極的に使用
+- 日本語環境なので文字コードは SJIS ではなく UTF-8（BOMあり）を使用
+- Windows 環境なので改行コードは CRLF を使用
+
