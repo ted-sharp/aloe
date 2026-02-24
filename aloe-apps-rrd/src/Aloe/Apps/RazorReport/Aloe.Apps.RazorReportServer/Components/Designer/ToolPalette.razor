@@ -1,0 +1,80 @@
+@using MudBlazor
+@using Aloe.Apps.RazorReportServer.Services
+@using Aloe.Apps.RazorReportLib.Models
+@inject ReportStateService ReportState
+@inject PlacementModeService PlacementMode
+@implements IDisposable
+
+<MudPanel Elevation="2" Class="tool-palette">
+    <MudPanelHeader>
+        <MudText Typo="Typo.h6">コンポーネント</MudText>
+    </MudPanelHeader>
+    <MudPanelContent>
+        <MudList T="string">
+            <div @onmousedown="@(e => HandleDragStart(e, "Text"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Text"))"
+                    Class="@GetItemClass("Text")">
+                    <MudIcon Icon="@Icons.Material.Filled.TextFields" />
+                    <MudText>テキスト</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Image"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Image"))"
+                    Class="@GetItemClass("Image")">
+                    <MudIcon Icon="@Icons.Material.Filled.Image" />
+                    <MudText>画像</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Table"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Table"))"
+                    Class="@GetItemClass("Table")">
+                    <MudIcon Icon="@Icons.Material.Filled.TableChart" />
+                    <MudText>テーブル</MudText>
+                </MudListItem>
+            </div>
+            <div @onmousedown="@(e => HandleDragStart(e, "Container"))" style="cursor: grab;">
+                <MudListItem
+                    OnClick="@(() => ActivatePlacementMode("Container"))"
+                    Class="@GetItemClass("Container")">
+                    <MudIcon Icon="@Icons.Material.Filled.ViewModule" />
+                    <MudText>コンテナ</MudText>
+                </MudListItem>
+            </div>
+        </MudList>
+    </MudPanelContent>
+</MudPanel>
+
+@code {
+    protected override void OnInitialized()
+    {
+        ReportState.OnChange += StateHasChanged;
+        PlacementMode.PlacementModeChanged += StateHasChanged;
+    }
+
+    private void ActivatePlacementMode(string componentType)
+    {
+        PlacementMode.ActivatePlacementMode(componentType);
+    }
+
+    private void HandleDragStart(MouseEventArgs e, string componentType)
+    {
+        PlacementMode.StartDragFromPalette(componentType, e.ClientX, e.ClientY);
+    }
+
+    private string GetItemClass(string componentType)
+    {
+        return PlacementMode.IsPlacementModeActive && PlacementMode.SelectedComponentType == componentType
+            ? "tool-palette-item-active"
+            : "";
+    }
+
+    public void Dispose()
+    {
+        ReportState.OnChange -= StateHasChanged;
+        PlacementMode.PlacementModeChanged -= StateHasChanged;
+    }
+}
+

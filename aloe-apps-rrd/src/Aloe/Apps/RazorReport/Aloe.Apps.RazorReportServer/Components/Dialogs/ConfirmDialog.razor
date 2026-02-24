@@ -1,0 +1,31 @@
+@namespace Aloe.Apps.RazorReportServer.Components.Dialogs
+
+<MudDialog>
+    <DialogContent>
+        <MudText>@Message</MudText>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">キャンセル</MudButton>
+        <MudButton Color="Color.Primary" OnClick="Confirm">確認</MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter]
+    public object MudDialog { get; set; } = null!;
+
+    [Parameter]
+    public string Message { get; set; } = string.Empty;
+
+    private void Cancel()
+    {
+        var dialogInstance = (dynamic)MudDialog;
+        dialogInstance.Cancel();
+    }
+
+    private void Confirm()
+    {
+        var dialogInstance = (dynamic)MudDialog;
+        dialogInstance.Close(true);
+    }
+}

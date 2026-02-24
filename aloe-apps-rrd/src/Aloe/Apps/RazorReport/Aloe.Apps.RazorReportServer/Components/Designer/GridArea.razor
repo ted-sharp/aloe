@@ -1,0 +1,420 @@
+@using Aloe.Apps.RazorReportServer.Services
+@using Aloe.Apps.RazorReportLib.Models
+@inject ReportStateService ReportState
+@inject SelectionService SelectionService
+@inject GridCalculationService GridCalc
+@inject PageConfigService PageConfig
+@inject ZoomService Zoom
+@inject PlacementModeService PlacementMode
+@inject ComponentFactoryService ComponentFactory
+@inject UndoRedoService UndoRedo
+@inject DocumentService DocumentService
+@inject IJSRuntime JS
+@implements IDisposable
+
+<div class="grid-area-container" style="@GetContainerStyle()">
+    <div class="grid-area @(ReportState.ShowGrid ? "show-grid" : "") @(PlacementMode.IsPlacementModeActive ? "placement-mode-cursor" : "")"
+         @onclick="@(e => HandleBackgroundClick(e))"
+         @onmousemove="HandleMouseMove"
+         @onmouseup="@(e => HandleMouseUp(e))"
+         @onmouseleave="@(e => HandleMouseUp(e))"
+         style="@GetGridStyle()"
+         @ref="gridContainer">
+    @foreach (var element in ReportState.Document.Elements)
+    {
+        @if (element is TextElement textElement)
+        {
+            <TextElementView Element="textElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is ImageElement imageElement)
+        {
+            <ImageElementView Element="imageElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is TableElement tableElement)
+        {
+            <TableElementView Element="tableElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+        else if (element is ContainerElement containerElement)
+        {
+            <ContainerElementView Element="containerElement" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+        }
+    }
+
+    @if (dragPreview != null)
+    {
+        <div class="drag-preview" style="@GetDragPreviewStyle()"></div>
+    }
+
+    @if (resizePreview != null)
+    {
+        <div class="resize-preview" style="@GetResizePreviewStyle()"></div>
+    }
+
+    @if (placementPreview != null)
+    {
+        <div class="placement-preview" style="@GetPlacementPreviewStyle()"></div>
+    }
+    </div>
+</div>
+
+@code {
+    private ElementReference gridContainer;
+    private bool isDragging = false;
+    private bool isResizing = false;
+    private bool isPlacementDragging = false;
+    private GridPosition? dragStartPosition;
+    private GridPosition? dragPreview;
+    private GridPosition? resizePreview;
+    private GridPosition? placementPreview;
+    private (double x, double y)? mouseStart;
+    private (int column, int row)? placementStartCell;
+    private (double left, double top)? gridContainerOffset;
+    private ResizeHandle? activeResizeHandle;
+
+    private async void HandleBackgroundClick(MouseEventArgs e)
+    {
+        if (PlacementMode.IsPlacementModeActive)
+        {
+            // Start placement drag
+            await StartPlacementDrag(e);
+            return;
+        }
+        SelectionService.ClearSelection();
+    }
+
+    private void HandleDragStart(MouseEventArgs e)
+    {
+        if (!SelectionService.IsDragging) return;
+        if (PlacementMode.IsPlacementModeActive || PlacementMode.IsDraggingFromPalette) return;
+
+        isDragging = true;
+        mouseStart = (e.ClientX, e.ClientY);
+    }
+
+    private async Task HandleResizeStart((ResizeHandle handle, MouseEventArgs e) args)
+    {
+        isResizing = true;
+        activeResizeHandle = args.handle;
+        mouseStart = (args.e.ClientX, args.e.ClientY);
+    }
+
+    private async void HandleMouseMove(MouseEventArgs e)
+    {
+        // Ensure gridContainerOffset is initialized for drag operations
+        if (!gridContainerOffset.HasValue && (PlacementMode.IsDraggingFromPalette || isPlacementDragging))
+        {
+            try
+            {
+                var rect = await JS.InvokeAsync<BoundingClientRect>("getElementBoundingClientRect", gridContainer);
+                gridContainerOffset = (rect.Left, rect.Top);
+            }
+            catch
+            {
+                gridContainerOffset = (0, 0);
+            }
+        }
+
+        // Handle placement mode dragging
+        if (isPlacementDragging && mouseStart != null && placementStartCell.HasValue && gridContainerOffset.HasValue)
+        {
+            var currentCell = GridCalc.MousePositionToGridCell(
+                e.ClientX, e.ClientY,
+                gridContainerOffset.Value.left, gridContainerOffset.Value.top,
+                Zoom.ZoomLevel);
+
+            placementPreview = GridCalc.CalculatePlacementRange(
+                placementStartCell.Value.column, placementStartCell.Value.row,
+                currentCell.column, currentCell.row);
+
+            StateHasChanged();
+            return;
+        }
+
+        // Handle drag-from-palette
+        if (PlacementMode.IsDraggingFromPalette && gridContainerOffset.HasValue)
+        {
+            // Update ghost position if needed by parent component
+            return;
+        }
+
+        if (isDragging && mouseStart != null)
+        {
+            // Calculate mouse delta
+            double deltaX = e.ClientX - mouseStart.Value.x;
+            double deltaY = e.ClientY - mouseStart.Value.y;
+
+            // Convert to grid delta
+            int columnDelta = (int)Math.Round(deltaX / GridCalc.CellWidthPx);
+            int rowDelta = (int)Math.Round(deltaY / GridCalc.CellHeightPx);
+
+            // Get the first selected element's original position
+            var selectedId = SelectionService.SelectedElementIds.FirstOrDefault();
+            if (selectedId == Guid.Empty) return;
+
+            var element = ReportState.Document.Elements.FirstOrDefault(el => el.Id == selectedId);
+            if (element == null) return;
+
+            if (dragStartPosition == null)
+                dragStartPosition = element.Position;
+
+            // Calculate preview position
+            dragPreview = new GridPosition(
+                Math.Max(0, dragStartPosition.Column + columnDelta),
+                Math.Max(0, dragStartPosition.Row + rowDelta),
+                dragStartPosition.ColumnSpan,
+                dragStartPosition.RowSpan
+            );
+
+            StateHasChanged();
+        }
+        else if (isResizing && mouseStart != null && activeResizeHandle.HasValue)
+        {
+            var selectedId = SelectionService.SelectedElementIds.FirstOrDefault();
+            if (selectedId == Guid.Empty) return;
+
+            var element = ReportState.Document.Elements.FirstOrDefault(el => el.Id == selectedId);
+            if (element == null) return;
+
+            if (resizePreview == null)
+                resizePreview = element.Position;
+
+            // Calculate current mouse grid position
+            double deltaX = e.ClientX - mouseStart.Value.x;
+            double deltaY = e.ClientY - mouseStart.Value.y;
+
+            int newColumn = (int)Math.Round(element.Position.Column + deltaX / GridCalc.CellWidthPx);
+            int newRow = (int)Math.Round(element.Position.Row + deltaY / GridCalc.CellHeightPx);
+
+            resizePreview = GridCalc.CalculateResizedPosition(element.Position, activeResizeHandle.Value, newColumn, newRow);
+
+            StateHasChanged();
+        }
+    }
+
+    private void HandleMouseUp(MouseEventArgs e)
+    {
+        // Handle placement drag completion (Method 1)
+        if (isPlacementDragging && placementPreview != null)
+        {
+            var newElement = ComponentFactory.CreateComponent(PlacementMode.SelectedComponentType!, placementPreview);
+            ReportState.Document.Elements.Add(newElement);
+
+            // Record undo state
+            UndoRedo.SaveState(ReportState.Document);
+
+            // Select the new element
+            SelectionService.ClearSelection();
+            SelectionService.SelectElement(newElement.Id);
+
+            // Complete placement
+            PlacementMode.CompletePlacement();
+
+            // Reset state
+            isPlacementDragging = false;
+            placementPreview = null;
+            placementStartCell = null;
+            mouseStart = null;
+
+            ReportState.NotifyStateChanged();
+            return;
+        }
+
+        // Handle drag-from-palette (Method 2)
+        if (PlacementMode.IsDraggingFromPalette && gridContainerOffset.HasValue)
+        {
+            var currentCell = GridCalc.MousePositionToGridCell(
+                e.ClientX, e.ClientY,
+                gridContainerOffset.Value.left, gridContainerOffset.Value.top,
+                Zoom.ZoomLevel);
+
+            var newElement = ComponentFactory.CreateComponentWithDefaultSize(
+                PlacementMode.SelectedComponentType!, currentCell.column, currentCell.row);
+            ReportState.Document.Elements.Add(newElement);
+
+            // Record undo state
+            UndoRedo.SaveState(ReportState.Document);
+
+            // Select the new element
+            SelectionService.ClearSelection();
+            SelectionService.SelectElement(newElement.Id);
+
+            // Complete drag from palette
+            PlacementMode.CompleteDragFromPalette();
+
+            ReportState.NotifyStateChanged();
+            return;
+        }
+
+        if (isDragging && dragPreview != null)
+        {
+            var delta = GridCalc.CalculateDelta(
+                SelectionService.SelectedElementIds.FirstOrDefault() == Guid.Empty ?
+                    dragStartPosition! :
+                    ReportState.Document.Elements.First(elem => elem.Id == SelectionService.SelectedElementIds.First()).Position,
+                dragPreview);
+
+            foreach (var elementId in SelectionService.SelectedElementIds)
+            {
+                var element = ReportState.Document.Elements.FirstOrDefault(elem => elem.Id == elementId);
+                if (element != null)
+                {
+                    var newPos = new GridPosition(
+                        Math.Max(0, element.Position.Column + delta.columnDelta),
+                        Math.Max(0, element.Position.Row + delta.rowDelta),
+                        element.Position.ColumnSpan,
+                        element.Position.RowSpan
+                    );
+
+                    if (GridCalc.ValidatePosition(newPos))
+                        element.Position = newPos;
+                }
+            }
+
+            ReportState.NotifyStateChanged();
+        }
+        else if (isResizing && resizePreview != null && activeResizeHandle.HasValue)
+        {
+            var selectedId = SelectionService.SelectedElementIds.FirstOrDefault();
+            if (selectedId != Guid.Empty)
+            {
+                var element = ReportState.Document.Elements.FirstOrDefault(elem => elem.Id == selectedId);
+                if (element != null && GridCalc.ValidatePosition(resizePreview))
+                {
+                    element.Position = resizePreview;
+                    ReportState.NotifyStateChanged();
+                }
+            }
+        }
+
+        // Reset drag/resize state
+        isDragging = false;
+        isResizing = false;
+        isPlacementDragging = false;
+        dragPreview = null;
+        resizePreview = null;
+        placementPreview = null;
+        dragStartPosition = null;
+        placementStartCell = null;
+        mouseStart = null;
+        activeResizeHandle = null;
+        SelectionService.IsDragging = false;
+        SelectionService.IsResizing = false;
+    }
+
+    private async Task StartPlacementDrag(MouseEventArgs e)
+    {
+        isPlacementDragging = true;
+
+        // Get grid container offset
+        try
+        {
+            var rect = await JS.InvokeAsync<BoundingClientRect>("getElementBoundingClientRect", gridContainer);
+            gridContainerOffset = (rect.Left, rect.Top);
+        }
+        catch
+        {
+            gridContainerOffset = (0, 0);
+        }
+
+        var startCell = GridCalc.MousePositionToGridCell(
+            e.ClientX, e.ClientY,
+            gridContainerOffset.Value.left, gridContainerOffset.Value.top,
+            Zoom.ZoomLevel);
+
+        placementStartCell = startCell;
+        mouseStart = (e.ClientX, e.ClientY);
+    }
+
+    private void HandlePlacementModeChanged()
+    {
+        if (!PlacementMode.IsPlacementModeActive && !PlacementMode.IsDraggingFromPalette)
+        {
+            // Mode was canceled
+            isPlacementDragging = false;
+            placementPreview = null;
+            placementStartCell = null;
+            mouseStart = null;
+            StateHasChanged();
+        }
+    }
+
+    private string GetPlacementPreviewStyle()
+    {
+        if (placementPreview == null) return "";
+
+        return $"grid-column: {placementPreview.Column + 1} / span {placementPreview.ColumnSpan}; " +
+               $"grid-row: {placementPreview.Row + 1} / span {placementPreview.RowSpan};";
+    }
+
+    private string GetDragPreviewStyle()
+    {
+        if (dragPreview == null) return "";
+
+        return $"grid-column: {dragPreview.Column + 1} / span {dragPreview.ColumnSpan}; " +
+               $"grid-row: {dragPreview.Row + 1} / span {dragPreview.RowSpan};";
+    }
+
+    private string GetResizePreviewStyle()
+    {
+        if (resizePreview == null) return "";
+
+        return $"grid-column: {resizePreview.Column + 1} / span {resizePreview.ColumnSpan}; " +
+               $"grid-row: {resizePreview.Row + 1} / span {resizePreview.RowSpan};";
+    }
+
+    protected override void OnInitialized()
+    {
+        ReportState.OnChange += StateHasChanged;
+        SelectionService.OnSelectionChanged += HandleSelectionChanged;
+        PageConfig.OnPageConfigChanged += StateHasChanged;
+        Zoom.OnZoomChanged += StateHasChanged;
+        PlacementMode.PlacementModeChanged += HandlePlacementModeChanged;
+    }
+
+    private void HandleSelectionChanged()
+    {
+        dragStartPosition = null;
+        resizePreview = null;
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        ReportState.OnChange -= StateHasChanged;
+        SelectionService.OnSelectionChanged -= HandleSelectionChanged;
+        PageConfig.OnPageConfigChanged -= StateHasChanged;
+        Zoom.OnZoomChanged -= StateHasChanged;
+        PlacementMode.PlacementModeChanged -= HandlePlacementModeChanged;
+    }
+
+    private class BoundingClientRect
+    {
+        public double Left { get; set; }
+        public double Top { get; set; }
+        public double Right { get; set; }
+        public double Bottom { get; set; }
+        public double Width { get; set; }
+        public double Height { get; set; }
+    }
+
+    private string GetContainerStyle()
+    {
+        return $"transform: scale({Zoom.ZoomLevel}); " +
+               $"transform-origin: top left; " +
+               $"overflow: auto; " +
+               $"flex: 1;";
+    }
+
+    private string GetGridStyle()
+    {
+        var columns = string.Join(" ", Enumerable.Repeat("1fr", PageConfig.CurrentColumns));
+        var rows = string.Join(" ", Enumerable.Repeat("1fr", PageConfig.CurrentRows));
+
+        return $"display: grid; " +
+               $"grid-template-columns: {columns}; " +
+               $"grid-template-rows: {rows}; " +
+               $"width: {PageConfig.CurrentWidthPx}px; " +
+               $"height: {PageConfig.CurrentHeightPx}px; " +
+               $"gap: 0;";
+    }
+}

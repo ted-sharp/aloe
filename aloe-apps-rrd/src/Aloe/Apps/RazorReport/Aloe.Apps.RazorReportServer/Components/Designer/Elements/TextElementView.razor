@@ -1,0 +1,67 @@
+@using Aloe.Apps.RazorReportLib.Models
+@using Aloe.Apps.RazorReportServer.Services
+@inject SelectionService SelectionService
+@implements IDisposable
+
+<div class="text-element @(IsSelected ? "selected" : "")"
+     style="grid-column: @(Element.Position.Column + 1) / span @Element.Position.ColumnSpan; grid-row: @(Element.Position.Row + 1) / span @Element.Position.RowSpan;"
+     @onclick="HandleClick"
+     @onclick:stopPropagation="true"
+     @onmousedown="HandleMouseDown"
+     @onmousedown:stopPropagation="true">
+    <div class="text-content"
+         style="font-family: @Element.FontFamily; font-size: @Element.FontSize pt; font-weight: @(Element.IsBold ? "bold" : "normal"); font-style: @(Element.IsItalic ? "italic" : "normal");">
+        @Element.Text
+    </div>
+
+    @if (IsSelected)
+    {
+        <ResizeHandles ElementId="Element.Id" Position="Element.Position" OnResizeStart="HandleResizeStart" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public TextElement Element { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDragStart { get; set; }
+
+    [Parameter]
+    public EventCallback<(ResizeHandle handle, MouseEventArgs e)> OnResizeStart { get; set; }
+
+    private bool IsSelected => SelectionService.IsSelected(Element.Id);
+
+    protected override void OnInitialized()
+    {
+        SelectionService.OnSelectionChanged += StateHasChanged;
+    }
+
+    private void HandleClick(MouseEventArgs e)
+    {
+        bool multiSelect = e.ShiftKey || e.CtrlKey;
+
+        if (e.CtrlKey)
+            SelectionService.ToggleSelection(Element.Id);
+        else
+            SelectionService.SelectElement(Element.Id, multiSelect);
+    }
+
+    private async Task HandleMouseDown(MouseEventArgs e)
+    {
+        if (IsSelected)
+        {
+            await OnDragStart.InvokeAsync(e);
+        }
+    }
+
+    private async Task HandleResizeStart((ResizeHandle handle, MouseEventArgs e) args)
+    {
+        await OnResizeStart.InvokeAsync(args);
+    }
+
+    public void Dispose()
+    {
+        SelectionService.OnSelectionChanged -= StateHasChanged;
+    }
+}

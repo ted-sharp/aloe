@@ -1,0 +1,35 @@
+.grid-area {
+    display: grid;
+    grid-template-columns: repeat(36, 1fr);
+    grid-template-rows: repeat(51, 1fr);
+    width: 793.7px;
+    height: 1122.52px;
+    gap: 0;
+    background: white;
+    border: 1px solid #ccc;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.grid-area.show-grid {
+    background-image:
+        repeating-linear-gradient(to right, #e0e0e0 0, #e0e0e0 1px, transparent 1px, transparent),
+        repeating-linear-gradient(to bottom, #e0e0e0 0, #e0e0e0 1px, transparent 1px, transparent);
+    background-size: calc(100% / 36) calc(100% / 51);
+    background-position: 0 0;
+}
+
+.drag-preview {
+    position: absolute;
+    background: rgba(25, 118, 210, 0.1);
+    border: 2px dashed #1976d2;
+    pointer-events: none;
+    z-index: 99;
+}
+
+.resize-preview {
+    position: absolute;
+    background: rgba(25, 118, 210, 0.1);
+    border: 2px dashed #1976d2;
+    pointer-events: none;
+    z-index: 99;
+}

@@ -1,0 +1,132 @@
+@using Aloe.Apps.RazorReportLib.Models
+@using Aloe.Apps.RazorReportServer.Services
+@inject SelectionService SelectionService
+@implements IDisposable
+
+<div class="container-element @(IsSelected ? "selected" : "")"
+     style="@GetContainerStyle()"
+     @onclick="HandleClick"
+     @onclick:stopPropagation="true"
+     @onmousedown="HandleMouseDown"
+     @onmousedown:stopPropagation="true">
+    <div class="container-content" style="display: grid; grid-template-columns: repeat(12, 1fr); grid-template-rows: auto; gap: 0; width: 100%; height: 100%;">
+        @foreach (var child in Element.Children)
+        {
+            @if (child is TextElement textChild)
+            {
+                <TextElementView Element="textChild" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+            }
+            else if (child is ImageElement imageChild)
+            {
+                <ImageElementView Element="imageChild" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+            }
+            else if (child is TableElement tableChild)
+            {
+                <TableElementView Element="tableChild" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+            }
+            else if (child is ContainerElement containerChild)
+            {
+                <ContainerElementView Element="containerChild" OnDragStart="HandleDragStart" OnResizeStart="HandleResizeStart" />
+            }
+        }
+    </div>
+
+    @if (IsSelected)
+    {
+        <ResizeHandles ElementId="Element.Id" Position="Element.Position" OnResizeStart="HandleResizeStart" />
+    }
+</div>
+
+@code {
+    [Parameter]
+    public ContainerElement Element { get; set; } = null!;
+
+    [Parameter]
+    public EventCallback<MouseEventArgs> OnDragStart { get; set; }
+
+    [Parameter]
+    public EventCallback<(ResizeHandle handle, MouseEventArgs e)> OnResizeStart { get; set; }
+
+    private bool IsSelected => SelectionService.IsSelected(Element.Id);
+
+    protected override void OnInitialized()
+    {
+        SelectionService.OnSelectionChanged += StateHasChanged;
+    }
+
+    private string GetBackgroundColor()
+    {
+        if (Element.Properties.TryGetValue("backgroundColor", out var bgColor) && bgColor is string bgColorStr)
+            return bgColorStr;
+        return "transparent";
+    }
+
+    private string GetBorderColor()
+    {
+        if (Element.Properties.TryGetValue("borderColor", out var bColor) && bColor is string bColorStr)
+            return bColorStr;
+        return "transparent";
+    }
+
+    private int GetBorderWidth()
+    {
+        if (Element.Properties.TryGetValue("borderWidth", out var bWidth) && bWidth is int bWidthVal)
+            return bWidthVal;
+        return 0;
+    }
+
+    private int GetPadding()
+    {
+        if (Element.Properties.TryGetValue("padding", out var pad) && pad is int padVal)
+            return padVal;
+        return 0;
+    }
+
+    private string GetContainerStyle()
+    {
+        var bgColor = GetBackgroundColor();
+        var borderColor = GetBorderColor();
+        var borderWidth = GetBorderWidth();
+        var padding = GetPadding();
+
+        return $"grid-column: {Element.Position.Column + 1} / span {Element.Position.ColumnSpan}; " +
+               $"grid-row: {Element.Position.Row + 1} / span {Element.Position.RowSpan}; " +
+               $"background-color: {bgColor}; " +
+               $"border: {borderWidth}px solid {borderColor}; " +
+               $"padding: {padding}px;";
+    }
+
+    private void HandleClick(MouseEventArgs e)
+    {
+        bool multiSelect = e.ShiftKey || e.CtrlKey;
+
+        if (e.CtrlKey)
+            SelectionService.ToggleSelection(Element.Id);
+        else
+            SelectionService.SelectElement(Element.Id, multiSelect);
+    }
+
+    private async Task HandleMouseDown(MouseEventArgs e)
+    {
+        if (IsSelected)
+        {
+            await OnDragStart.InvokeAsync(e);
+        }
+    }
+
+    private async Task HandleDragStart(MouseEventArgs e)
+    {
+        // Prevent bubbling to parent container
+        await OnDragStart.InvokeAsync(e);
+    }
+
+    private async Task HandleResizeStart((ResizeHandle handle, MouseEventArgs e) args)
+    {
+        await OnResizeStart.InvokeAsync(args);
+    }
+
+    public void Dispose()
+    {
+        SelectionService.OnSelectionChanged -= StateHasChanged;
+    }
+}

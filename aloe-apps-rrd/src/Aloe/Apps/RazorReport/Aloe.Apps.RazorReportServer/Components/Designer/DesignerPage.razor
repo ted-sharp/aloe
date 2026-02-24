@@ -1,0 +1,507 @@
+@using Aloe.Apps.RazorReportServer.Components.Designer
+@using Aloe.Apps.RazorReportLib.Models
+@inject ReportStateService ReportState
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@inject DocumentService DocumentService
+@inject FileInteropService FileInterop
+@inject IJSRuntime JS
+@inject PageConfigService PageConfig
+@inject ZoomService Zoom
+@inject UndoRedoService UndoRedo
+@inject ClipboardService Clipboard
+@inject SelectionService SelectionService
+@inject AlignmentService Alignment
+@inject PlacementModeService PlacementMode
+@implements IDisposable
+
+<MudContainer MaxWidth="MaxWidth.False" Class="designer-page-container" @onkeydown="HandleKeyDown" tabindex="0">
+    <MudAppBar @ref="appBarRef">
+        <h6 style="margin: 0; flex: 0 0 auto;">
+            Razor Report Designer@(ReportState.IsModified ? "*" : "")
+        </h6>
+        <MudSpacer />
+
+        <MudIconButton Icon="@Icons.Material.Filled.Add"
+                       Color="Color.Primary"
+                       OnClick="HandleNewDocument">
+            <MudTooltip Text="新規ドキュメント" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.FolderOpen"
+                       OnClick="TriggerFileInput">
+            <MudTooltip Text="ドキュメントを開く" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Save"
+                       OnClick="HandleSaveDocument">
+            <MudTooltip Text="ドキュメントを保存" />
+        </MudIconButton>
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudIconButton Icon="@Icons.Material.Filled.Undo"
+                       Disabled="!UndoRedo.CanUndo"
+                       OnClick="HandleUndo">
+            <MudTooltip Text="元に戻す (Ctrl+Z)" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Redo"
+                       Disabled="!UndoRedo.CanRedo"
+                       OnClick="HandleRedo">
+            <MudTooltip Text="やり直す (Ctrl+Y)" />
+        </MudIconButton>
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                       Disabled="SelectionService.SelectedElementIds.Count == 0"
+                       OnClick="HandleCopy">
+            <MudTooltip Text="コピー (Ctrl+C)" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.ContentCut"
+                       Disabled="SelectionService.SelectedElementIds.Count == 0"
+                       OnClick="HandleCut">
+            <MudTooltip Text="切り取り (Ctrl+X)" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.ContentPaste"
+                       Disabled="!Clipboard.HasData"
+                       OnClick="HandlePaste">
+            <MudTooltip Text="貼り付け (Ctrl+V)" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                       Disabled="SelectionService.SelectedElementIds.Count == 0"
+                       OnClick="HandleDelete">
+            <MudTooltip Text="削除 (Delete)" />
+        </MudIconButton>
+
+        @if (SelectionService.SelectedElementIds.Count >= 2)
+        {
+            <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignVerticalTop"
+                           OnClick="() => HandleAlign(AlignmentType.Top)">
+                <MudTooltip Text="上揃え" />
+            </MudIconButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignVerticalCenter"
+                           OnClick="() => HandleAlign(AlignmentType.Middle)">
+                <MudTooltip Text="中央揃え（縦）" />
+            </MudIconButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignVerticalBottom"
+                           OnClick="() => HandleAlign(AlignmentType.Bottom)">
+                <MudTooltip Text="下揃え" />
+            </MudIconButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignHorizontalLeft"
+                           OnClick="() => HandleAlign(AlignmentType.Left)">
+                <MudTooltip Text="左揃え" />
+            </MudIconButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignHorizontalCenter"
+                           OnClick="() => HandleAlign(AlignmentType.Center)">
+                <MudTooltip Text="中央揃え（横）" />
+            </MudIconButton>
+
+            <MudIconButton Icon="@Icons.Material.Filled.AlignHorizontalRight"
+                           OnClick="() => HandleAlign(AlignmentType.Right)">
+                <MudTooltip Text="右揃え" />
+            </MudIconButton>
+        }
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudSelect T="string" Value="PageConfig.CurrentPaperName"
+                   ValueChanged="OnPageSizeChanged"
+                   Dense="true" Class="mt-2" Style="width: 120px;"
+                   Label="用紙サイズ">
+            @foreach (var paper in PageConfig.AvailablePaperNames)
+            {
+                <MudSelectItem T="string" Value="@paper">@paper</MudSelectItem>
+            }
+        </MudSelect>
+
+        <MudToggleIconButton Icon="@Icons.Material.Filled.Portrait"
+                             ToggledIcon="@Icons.Material.Filled.Landscape"
+                             Toggled="PageConfig.CurrentOrientation == Aloe.Apps.RazorReportLib.Models.Orientation.Landscape"
+                             ToggledChanged="OnOrientationToggled"
+                             Class="mx-2">
+            <MudTooltip Text="用紙向きを切り替え（縦/横）" />
+        </MudToggleIconButton>
+
+        <MudSelect T="int" Value="PageConfig.GridDivision"
+                   ValueChanged="OnGridDivisionChanged"
+                   Dense="true" Class="mt-2" Style="width: 120px;">
+            <MudSelectItem T="int" Value="0">グリッド分割</MudSelectItem>
+            <MudSelectItem T="int" Value="36">36列</MudSelectItem>
+            <MudSelectItem T="int" Value="30">30列</MudSelectItem>
+            <MudSelectItem T="int" Value="24">24列</MudSelectItem>
+            <MudSelectItem T="int" Value="18">18列</MudSelectItem>
+        </MudSelect>
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomOut"
+                       OnClick="Zoom.ZoomOut">
+            <MudTooltip Text="縮小" />
+        </MudIconButton>
+
+        <MudSelect T="double" Value="Zoom.ZoomLevel"
+                   ValueChanged="OnZoomLevelChanged"
+                   Dense="true" Class="mt-2" Style="width: 100px;">
+            <MudSelectItem T="double" Value="0.5">50%</MudSelectItem>
+            <MudSelectItem T="double" Value="0.75">75%</MudSelectItem>
+            <MudSelectItem T="double" Value="1.0">100%</MudSelectItem>
+            <MudSelectItem T="double" Value="1.25">125%</MudSelectItem>
+            <MudSelectItem T="double" Value="1.5">150%</MudSelectItem>
+            <MudSelectItem T="double" Value="2.0">200%</MudSelectItem>
+        </MudSelect>
+
+        <MudIconButton Icon="@Icons.Material.Filled.ZoomIn"
+                       OnClick="Zoom.ZoomIn">
+            <MudTooltip Text="拡大" />
+        </MudIconButton>
+
+        <MudIconButton Icon="@Icons.Material.Filled.FitScreen"
+                       OnClick="HandleFitToPage">
+            <MudTooltip Text="ページにフィット" />
+        </MudIconButton>
+
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2" />
+
+        <MudButton Variant="Variant.Text" OnClick="ToggleGrid">
+            @(ReportState.ShowGrid ? "グリッド非表示" : "グリッド表示")
+        </MudButton>
+    </MudAppBar>
+
+    <div class="designer-layout" @onmousemove="HandlePageMouseMove">
+        <aside class="tool-panel">
+            <ToolPalette />
+        </aside>
+
+        <main class="design-area">
+            <GridArea />
+        </main>
+
+        <aside class="property-panel">
+            <PropertyPanel />
+        </aside>
+    </div>
+
+    @if (PlacementMode.IsDraggingFromPalette && dragGhostPosition.HasValue)
+    {
+        <div class="drag-ghost" style="left: @dragGhostPosition.Value.x.ToString("F0")px; top: @dragGhostPosition.Value.y.ToString("F0")px;">
+            @GetComponentLabel(PlacementMode.SelectedComponentType)
+        </div>
+    }
+</MudContainer>
+
+<InputFile OnChange="OnFileSelected"
+           style="display:none"
+           accept=".json"
+           class="file-input-hidden" />
+
+@code {
+    private MudAppBar? appBarRef;
+    private (double x, double y)? dragGhostPosition;
+
+    private enum AlignmentType
+    {
+        Top,
+        Middle,
+        Bottom,
+        Left,
+        Center,
+        Right
+    }
+
+    protected override void OnInitialized()
+    {
+        ReportState.OnChange += StateHasChanged;
+        PageConfig.OnPageConfigChanged += StateHasChanged;
+        Zoom.OnZoomChanged += StateHasChanged;
+        UndoRedo.OnHistoryChanged += StateHasChanged;
+        Clipboard.OnClipboardChanged += StateHasChanged;
+        SelectionService.OnSelectionChanged += StateHasChanged;
+        PlacementMode.PlacementModeChanged += StateHasChanged;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            if (PlacementMode.IsPlacementModeActive)
+            {
+                PlacementMode.CancelPlacementMode();
+            }
+            else if (PlacementMode.IsDraggingFromPalette)
+            {
+                PlacementMode.CompleteDragFromPalette();
+            }
+        }
+    }
+
+    private void HandlePageMouseMove(MouseEventArgs e)
+    {
+        if (PlacementMode.IsDraggingFromPalette)
+        {
+            dragGhostPosition = (e.ClientX + 10, e.ClientY + 10);
+            StateHasChanged();
+        }
+    }
+
+    protected override Task OnAfterRenderAsync(bool firstRender)
+    {
+        return Task.CompletedTask;
+    }
+
+    private async Task HandleNewDocument()
+    {
+        if (!await ConfirmDiscardChanges())
+            return;
+
+        ReportState.CreateNewDocument();
+        Snackbar.Add("新規ドキュメントを作成しました", Severity.Success);
+    }
+
+    private async Task HandleSaveDocument()
+    {
+        try
+        {
+            var json = DocumentService.SerializeDocument(ReportState.Document);
+            var filename = $"{ReportState.Document.Title}_{DateTime.Now:yyyyMMdd_HHmmss}.json";
+            await FileInterop.DownloadFileAsync(filename, json);
+
+            ReportState.MarkAsSaved();
+            Snackbar.Add("ドキュメントを保存しました", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"保存に失敗しました: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task TriggerFileInput()
+    {
+        if (!await ConfirmDiscardChanges())
+            return;
+
+        await JS.InvokeVoidAsync("document.querySelector('.file-input-hidden').click()");
+    }
+
+    private async Task OnFileSelected(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 5 * 1024 * 1024);
+            using var reader = new StreamReader(stream);
+            var json = await reader.ReadToEndAsync();
+
+            var document = DocumentService.DeserializeDocument(json);
+            if (document == null)
+                throw new InvalidOperationException("ドキュメントの形式が無効です");
+
+            ReportState.LoadDocument(document);
+            Snackbar.Add("ドキュメントを読込みました", Severity.Success);
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"読込に失敗しました: {ex.Message}", Severity.Error);
+        }
+    }
+
+    private async Task<bool> ConfirmDiscardChanges()
+    {
+        if (!ReportState.IsModified)
+            return true;
+
+        var parameters = new DialogParameters
+        {
+            { "Message", "保存されていない変更があります。破棄しますか？" }
+        };
+
+        var dialog = await DialogService.ShowAsync<ConfirmDialog>("未保存の変更", parameters);
+        var result = await dialog.Result;
+        return result is not null && !result.Canceled;
+    }
+
+    private void ToggleGrid()
+    {
+        ReportState.ShowGrid = !ReportState.ShowGrid;
+        ReportState.NotifyStateChanged();
+    }
+
+    private void OnPageSizeChanged(string paperName)
+    {
+        PageConfig.ChangePageSize(paperName);
+    }
+
+    private void OnOrientationToggled(bool toggled)
+    {
+        PageConfig.ToggleOrientation();
+    }
+
+    private void OnGridDivisionChanged(int division)
+    {
+        PageConfig.SetGridDivision(division);
+    }
+
+    private void OnZoomLevelChanged(double zoomLevel)
+    {
+        Zoom.SetZoom(zoomLevel);
+    }
+
+    private void HandleFitToPage()
+    {
+        // Placeholder: will need viewport dimensions from JavaScript
+        // For now, just reset to 100%
+        Zoom.ResetZoom();
+    }
+
+    private void HandleUndo()
+    {
+        var document = UndoRedo.Undo(ReportState.Document);
+        if (document != null)
+        {
+            ReportState.LoadDocument(document);
+        }
+    }
+
+    private void HandleRedo()
+    {
+        var document = UndoRedo.Redo(ReportState.Document);
+        if (document != null)
+        {
+            ReportState.LoadDocument(document);
+        }
+    }
+
+    private void HandleCopy()
+    {
+        var selectedElements = ReportState.Document.Elements
+            .Where(e => SelectionService.SelectedElementIds.Contains(e.Id))
+            .ToList();
+
+        if (selectedElements.Any())
+        {
+            Clipboard.Copy(selectedElements);
+            Snackbar.Add($"{selectedElements.Count}個の要素をコピーしました", Severity.Info);
+        }
+    }
+
+    private void HandleCut()
+    {
+        HandleCopy();
+
+        var elementsToRemove = ReportState.Document.Elements
+            .Where(e => SelectionService.SelectedElementIds.Contains(e.Id))
+            .ToList();
+
+        foreach (var element in elementsToRemove)
+        {
+            ReportState.Document.Elements.Remove(element);
+        }
+
+        SelectionService.ClearSelection();
+        ReportState.NotifyStateChanged();
+        Snackbar.Add($"{elementsToRemove.Count}個の要素を切り取りました", Severity.Info);
+    }
+
+    private void HandlePaste()
+    {
+        var pasted = Clipboard.Paste();
+
+        if (pasted.Any())
+        {
+            ReportState.Document.Elements.AddRange(pasted);
+            SelectionService.ClearSelection();
+            foreach (var element in pasted)
+            {
+                SelectionService.SelectElement(element.Id);
+            }
+            ReportState.NotifyStateChanged();
+            Snackbar.Add($"{pasted.Count}個の要素を貼り付けました", Severity.Info);
+        }
+    }
+
+    private void HandleDelete()
+    {
+        var elementsToRemove = ReportState.Document.Elements
+            .Where(e => SelectionService.SelectedElementIds.Contains(e.Id))
+            .ToList();
+
+        if (elementsToRemove.Any())
+        {
+            foreach (var element in elementsToRemove)
+            {
+                ReportState.Document.Elements.Remove(element);
+            }
+
+            SelectionService.ClearSelection();
+            ReportState.NotifyStateChanged();
+            Snackbar.Add($"{elementsToRemove.Count}個の要素を削除しました", Severity.Info);
+        }
+    }
+
+    private void HandleAlign(AlignmentType alignType)
+    {
+        var selectedElements = ReportState.Document.Elements
+            .Where(e => SelectionService.SelectedElementIds.Contains(e.Id))
+            .ToList();
+
+        if (selectedElements.Count < 2)
+            return;
+
+        switch (alignType)
+        {
+            case AlignmentType.Top:
+                Alignment.AlignTop(selectedElements);
+                break;
+            case AlignmentType.Middle:
+                Alignment.AlignMiddle(selectedElements);
+                break;
+            case AlignmentType.Bottom:
+                Alignment.AlignBottom(selectedElements);
+                break;
+            case AlignmentType.Left:
+                Alignment.AlignLeft(selectedElements);
+                break;
+            case AlignmentType.Center:
+                Alignment.AlignCenter(selectedElements);
+                break;
+            case AlignmentType.Right:
+                Alignment.AlignRight(selectedElements);
+                break;
+        }
+
+        ReportState.NotifyStateChanged();
+    }
+
+    private string GetComponentLabel(string? componentType)
+    {
+        return componentType switch
+        {
+            "Text" => "テキスト",
+            "Image" => "画像",
+            "Table" => "テーブル",
+            "Container" => "コンテナ",
+            _ => "コンポーネント"
+        };
+    }
+
+    public void Dispose()
+    {
+        ReportState.OnChange -= StateHasChanged;
+        PageConfig.OnPageConfigChanged -= StateHasChanged;
+        Zoom.OnZoomChanged -= StateHasChanged;
+        UndoRedo.OnHistoryChanged -= StateHasChanged;
+        Clipboard.OnClipboardChanged -= StateHasChanged;
+        SelectionService.OnSelectionChanged -= StateHasChanged;
+        PlacementMode.PlacementModeChanged -= StateHasChanged;
+    }
+}
