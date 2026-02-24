@@ -1,0 +1,9 @@
+﻿<Application x:Class="Aloe.Utils.Drawing.Wpf.Samples.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:Aloe.Utils.Drawing.Wpf.Samples"
+             StartupUri="MainWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>
