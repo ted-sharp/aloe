@@ -113,6 +113,7 @@ public partial class Calendar : ComponentBase
 
     private DateOnly? ModalDate => this.State.ModalDate;
     private int? ModalStartMin => this.State.ModalStartMin;
+    private string? ModalPatientName => this.State.ModalPatientName;
     private Guid? SelectedAppointmentId => this.State.SelectedAppointmentId;
     private DateOnly? SelectedDate => this.State.SelectedDate;
     private (DateOnly Start, DateOnly End)? SelectedDateRange => this.State.SelectedDateRange;
@@ -189,7 +190,8 @@ public partial class Calendar : ComponentBase
             async () => { await this.GoToToday(); },
             async () => { await this.PreviousPeriod(); },
             async () => { await this.NextPeriod(); },
-            async (view) => { this.SetViewFromString(view); await Task.CompletedTask; }
+            async (view) => { this.SetViewFromString(view); await Task.CompletedTask; },
+            async (command) => { await this.HandleVoiceCommand(command); }
         );
     }
 
@@ -566,5 +568,76 @@ public partial class Calendar : ComponentBase
         this.CloseDayDetail();
         this.State.OpenModal(args.Date, args.StartMin);
         this.StateHasChanged();
+    }
+
+    // ===================================================================
+    // Voice Command
+    // ===================================================================
+
+    private async Task HandleVoiceFilter(
+        MedockLib.Services.VoiceCommand.VoiceCommandFilterParams? filterParams)
+    {
+        if (filterParams is null) return;
+
+        var filter = filterParams.ClearAll
+            ? new SearchFilterPanel.SearchFilter()
+            : new SearchFilterPanel.SearchFilter
+            {
+                SelectedDays = filterParams.SelectedDays?.ToList() ?? [],
+                TimeSlots = filterParams.TimeSlots?.ToList() ?? [],
+                RequiredCapacity = filterParams.RequiredCapacity ?? 1,
+            };
+
+        await this.Orchestrator.ApplyFilterAsync(filter);
+        this.StateHasChanged();
+    }
+
+    private async Task HandleVoiceCommand(MedockLib.Services.VoiceCommand.VoiceCommandResult command)
+    {
+        this.Logger.LogInformation("音声コマンド: Intent={Intent}, Summary={Summary}",
+            command.Intent, command.Summary);
+
+        switch (command.Intent)
+        {
+            case MedockLib.Services.VoiceCommand.VoiceCommandIntent.CreateAppointment:
+                this.Orchestrator.OpenNewAppointmentModal(
+                    command.Date ?? this.State.CurrentDate,
+                    command.StartMin ?? 540,
+                    command.PatientName);
+                this.StateHasChanged();
+                break;
+
+            case MedockLib.Services.VoiceCommand.VoiceCommandIntent.TentativeAppointment:
+                // 仮予約 = 患者名なしでモーダルを開く（患者未選択でも保存可能）
+                this.Orchestrator.OpenNewAppointmentModal(
+                    command.Date ?? this.State.CurrentDate,
+                    command.StartMin ?? 540,
+                    null);
+                this.StateHasChanged();
+                break;
+
+            case MedockLib.Services.VoiceCommand.VoiceCommandIntent.SetFilter:
+                await this.HandleVoiceFilter(command.FilterParams);
+                break;
+
+            case MedockLib.Services.VoiceCommand.VoiceCommandIntent.SearchAppointment:
+                if (command.Date.HasValue)
+                {
+                    this.State.CurrentDate = command.Date.Value;
+                }
+                await this.Orchestrator.RefreshCalendarDataAsync();
+                this.StateHasChanged();
+                break;
+
+            case MedockLib.Services.VoiceCommand.VoiceCommandIntent.CancelAppointment:
+                // 日付移動してカレンダーを更新（該当予約の特定はユーザーに委ねる）
+                if (command.Date.HasValue)
+                {
+                    this.State.CurrentDate = command.Date.Value;
+                }
+                await this.Orchestrator.RefreshCalendarDataAsync();
+                this.StateHasChanged();
+                break;
+        }
     }
 }

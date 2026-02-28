@@ -325,6 +325,11 @@ public class CalendarOrchestrator : ICalendarOrchestrator
         this._state.OpenModal(date, startMin);
     }
 
+    public void OpenNewAppointmentModal(DateOnly date, int startMin, string? patientName)
+    {
+        this._state.OpenModal(date, startMin, patientName: patientName);
+    }
+
     public void OpenCreateRequestModal(DateOnly date, int startMin)
     {
         this._state.OpenModal(date, startMin);

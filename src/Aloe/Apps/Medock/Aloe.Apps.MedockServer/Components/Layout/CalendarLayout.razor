@@ -1,20 +1,15 @@
 @* カレンダー専用フルスクリーンレイアウト *@
 @inherits LayoutComponentBase
 @using Aloe.Apps.MedockServer.Components.FAB
+@using Aloe.Apps.MedockServer.Components.Voice
 
 <div class="calendar-fullscreen calendar-container bg-base-200">
     <CascadingValue Value="this">
         @Body
     </CascadingValue>
 
-    <!-- ActionFab（右下固定） -->
-    <ActionFab CurrentView="@CurrentView"
-               OnNewAppointment="HandleNewAppointment"
-               OnToggleFilter="HandleToggleFilter"
-               OnGoToToday="HandleGoToToday"
-               OnPreviousPeriod="HandlePreviousPeriod"
-               OnNextPeriod="HandleNextPeriod"
-               OnViewChange="HandleViewChange" />
+    <!-- 音声コマンドボタン（右下固定） -->
+    <VoiceCommandButton OnCommandReady="HandleVoiceCommand" />
 
     <!-- ナビゲーションドロワー -->
     @if (IsDrawerOpen)

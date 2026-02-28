@@ -2,6 +2,7 @@ using Aloe.Apps.MedockLib.Constants;
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockLib.Services.VoiceCommand;
 using Aloe.Apps.MedockServer.Components.Pages;
 using Aloe.Apps.MedockServer.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -98,7 +99,9 @@ public static class ServiceCollectionExtensions
     /// <summary>
     /// アプリケーションサービスを DI コンテナに登録
     /// </summary>
-    public static IServiceCollection AddMedockServices(this IServiceCollection services)
+    public static IServiceCollection AddMedockServices(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddHttpContextAccessor();
         services.AddSingleton(PasswordHasher.Default);
@@ -112,6 +115,22 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICalendarDataService, CalendarDataService>();
         services.AddScoped<IAppointmentStatsNotificationService, AppointmentStatsNotificationService>();
         services.AddScoped<IAppointmentFormService, AppointmentFormService>();
+
+        services.Configure<AzureOpenAiSettings>(
+            configuration.GetSection(AzureOpenAiSettings.SectionName));
+        var azureSettings = configuration
+            .GetSection(AzureOpenAiSettings.SectionName)
+            .Get<AzureOpenAiSettings>() ?? new AzureOpenAiSettings();
+
+        if (azureSettings.IsConfigured)
+        {
+            services.AddSingleton<VoiceCommandParser>();
+            services.AddSingleton<IVoiceCommandParser, AzureOpenAiVoiceCommandParser>();
+        }
+        else
+        {
+            services.AddSingleton<IVoiceCommandParser, VoiceCommandParser>();
+        }
 
         return services;
     }

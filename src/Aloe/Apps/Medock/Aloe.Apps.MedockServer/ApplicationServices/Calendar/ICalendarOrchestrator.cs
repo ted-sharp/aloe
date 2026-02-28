@@ -96,6 +96,9 @@ public interface ICalendarOrchestrator
     /// <summary>新規予約モーダルを開く（日付・時刻指定）</summary>
     void OpenNewAppointmentModal(DateOnly date, int startMin);
 
+    /// <summary>新規予約モーダルを開く（日付・時刻・患者名指定、音声コマンド用）</summary>
+    void OpenNewAppointmentModal(DateOnly date, int startMin, string? patientName);
+
     /// <summary>予約作成リクエスト時にモーダルを開く</summary>
     void OpenCreateRequestModal(DateOnly date, int startMin);
 
