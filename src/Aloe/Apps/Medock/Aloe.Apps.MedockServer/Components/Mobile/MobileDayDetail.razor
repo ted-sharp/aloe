@@ -1,0 +1,45 @@
+@* 月間ビューの下部に表示される選択日詳細エリア *@
+@using Aloe.Apps.MedockLib.Data.Entities
+@using Aloe.Apps.MedockServer.ApplicationServices.Mobile
+
+@if (SelectedDate.HasValue)
+{
+    <div class="w-full bg-base-100 border-t border-base-300 flex flex-col">
+        <!-- 日詳細ヘッダー -->
+        <div class="flex items-center justify-between px-4 py-2 bg-base-200/60 border-b border-base-300">
+            <span class="font-semibold text-sm">
+                @SelectedDate.Value.ToString("M月d日（ddd）", new System.Globalization.CultureInfo("ja-JP"))
+            </span>
+            <button class="btn btn-sm btn-primary gap-1" @onclick="HandleCreateClick">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+                予約
+            </button>
+        </div>
+
+        <!-- 統計リスト -->
+        <div class="flex flex-col gap-1 p-2 overflow-y-auto max-h-40">
+            @if (DayStats == null || DayStats.Count == 0)
+            {
+                <div class="text-center text-base-content/50 py-4 text-sm">データなし</div>
+            }
+            else
+            {
+                @foreach (var stat in DayStats)
+                {
+                    var symbol = MobileSymbolHelper.GetSymbol(stat.ApptCap, stat.ApptCount);
+                    <div class="flex items-center gap-3 px-2 py-1 rounded hover:bg-base-200">
+                        <span class="text-lg @MobileSymbolHelper.ToColorClass(symbol)">
+                            @MobileSymbolHelper.ToChar(symbol)
+                        </span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-xs font-medium truncate">@(stat.AppointmentResource?.ApptResName ?? "リソース")</div>
+                        </div>
+                        <div class="text-xs text-base-content/60 flex-shrink-0">@stat.ApptCount/@stat.ApptCap</div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}

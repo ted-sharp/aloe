@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockServer.ApplicationServices.Mobile;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -50,7 +51,8 @@ public class AuthController : ControllerBase
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
-            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result);
+            var isMobile = MobileDetectionHelper.IsMobile(userAgent);
+            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result, isMobile);
 
             // KeepSessionフラグに基づいて認証プロパティを設定
             var authProperties = new AuthenticationProperties
@@ -77,7 +79,8 @@ public class AuthController : ControllerBase
                 FacilityId = result.FacilityId,
                 FacilityName = result.FacilityName ?? "",
                 IsSystemAdmin = result.IsSystemAdmin,
-                Roles = result.Roles!
+                Roles = result.Roles!,
+                IsMobile = isMobile
             });
         }
         catch (ArgumentException ex)
@@ -309,7 +312,7 @@ public class AuthController : ControllerBase
     /// <summary>
     /// AuthResultからクレームを作成します
     /// </summary>
-    private (ClaimsIdentity ClaimsIdentity, ClaimsPrincipal ClaimsPrincipal) CreateClaimsFromAuthResult(AuthResult result)
+    private (ClaimsIdentity ClaimsIdentity, ClaimsPrincipal ClaimsPrincipal) CreateClaimsFromAuthResult(AuthResult result, bool isMobile = false)
     {
         if (result.UserId == null)
         {
@@ -326,7 +329,8 @@ public class AuthController : ControllerBase
             new Claim(ClaimTypes.Email, result.Email ?? ""),
             new Claim("user_display_name", result.DisplayName ?? ""),
             new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
-            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower())
+            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower()),
+            new Claim("is_mobile", isMobile.ToString().ToLower())
         };
 
         if (result.SessionId.HasValue)
@@ -382,6 +386,7 @@ public record LoginResponse
     public required string FacilityName { get; init; }
     public required bool IsSystemAdmin { get; init; }
     public required string[] Roles { get; init; }
+    public bool IsMobile { get; init; }
 }
 
 public record RefreshResponse

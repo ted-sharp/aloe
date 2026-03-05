@@ -162,6 +162,14 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// モバイル向けサービスを DI コンテナに登録（将来拡張用）
+    /// </summary>
+    public static IServiceCollection AddMedockMobileServices(this IServiceCollection services)
+    {
+        return services;
+    }
+
+    /// <summary>
     /// HttpClient を Blazor Server コンポーネントから API 呼び出しするために設定
     /// </summary>
     public static IServiceCollection AddMedockHttpClient(this IServiceCollection services)

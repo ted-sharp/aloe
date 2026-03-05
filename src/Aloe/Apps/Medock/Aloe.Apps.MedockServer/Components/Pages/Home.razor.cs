@@ -36,13 +36,15 @@ public partial class Home : ComponentBase
                 {
                     // 施設数をチェック
                     var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(userId);
+                    var isMobile = authState.User.FindFirst("is_mobile")?.Value == "true";
+                    var calendarPath = isMobile ? "/m/calendar" : "/calendar";
                     if (facilities.Count > 1)
                     {
                         // 施設選択済みであれば、カレンダーへ移動
                         var facilityIdClaim = authState.User.FindFirst("facility_id")?.Value;
                         if (!String.IsNullOrEmpty(facilityIdClaim))
                         {
-                            this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+                            this.NavigationManager.NavigateTo(calendarPath, forceLoad: true);
                             return;
                         }
 
@@ -53,7 +55,7 @@ public partial class Home : ComponentBase
                     else
                     {
                         // 単一施設の場合は直接メイン画面へ
-                        this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+                        this.NavigationManager.NavigateTo(calendarPath, forceLoad: true);
                         return;
                     }
                 }

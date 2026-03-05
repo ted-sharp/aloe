@@ -1,0 +1,14 @@
+@* モバイルカレンダー専用レイアウト *@
+@inherits LayoutComponentBase
+@using Aloe.Apps.MedockServer.Components.Mobile
+@using Aloe.Apps.MedockLib.Services.VoiceCommand
+
+<div class="min-h-screen flex flex-col bg-base-100">
+    <CascadingValue Value="this">
+        @Body
+    </CascadingValue>
+
+    <MobileVoiceFab OnCommandReady="HandleVoiceCommand" />
+
+    <MobileDrawer IsOpen="_drawerOpen" OnClose="() => { _drawerOpen = false; StateHasChanged(); }" />
+</div>

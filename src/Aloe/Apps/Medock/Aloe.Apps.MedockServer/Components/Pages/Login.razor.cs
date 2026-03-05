@@ -128,6 +128,7 @@ public partial class Login : ComponentBase
                 // 遷移先を決定（複数施設なら施設選択へ）
                 // forceLoad: true でページをリロードし、新しいクッキーの認証情報を反映させる
                 var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(loginResponse.UserId);
+                var calendarPath = loginResponse.IsMobile ? "/m/calendar" : "/calendar";
                 if (facilities.Count > 1)
                 {
                     // 複数施設がある場合は施設選択画面へ
@@ -136,7 +137,7 @@ public partial class Login : ComponentBase
                 else
                 {
                     // 単一施設の場合は直接メイン画面へ
-                    this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
+                    this.NavigationManager.NavigateTo(calendarPath, forceLoad: true);
                 }
             }
             else
@@ -176,6 +177,7 @@ public partial class Login : ComponentBase
         public string FacilityName { get; set; } = String.Empty;
         public bool IsSystemAdmin { get; set; }
         public string[] Roles { get; set; } = Array.Empty<string>();
+        public bool IsMobile { get; set; }
     }
 }
 

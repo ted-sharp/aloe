@@ -1,0 +1,107 @@
+@page "/m/calendar"
+@layout MobileCalendarLayout
+@using Aloe.Apps.MedockServer.Components.Layout
+@using Aloe.Apps.MedockServer.Components.Mobile
+@using Aloe.Apps.MedockServer.ApplicationServices.Calendar
+@using Aloe.Apps.MedockServer.Components.Calendar
+@using Aloe.Apps.MedockLib.Services
+@using Microsoft.AspNetCore.Components.Authorization
+
+<PageTitle>カレンダー - Aloe Medock</PageTitle>
+
+<div class="flex flex-col h-screen overflow-hidden">
+    <!-- ヘッダーRow1: ハンバーガー / アバター群 / 自ユーザー -->
+    <div class="flex items-center justify-between px-3 py-2 bg-base-100 border-b border-base-300 flex-shrink-0">
+        <MobileHamburgerButton OnClick="HandleOpenDrawer" />
+        <div class="flex-1 flex justify-center">
+            <MobileAvatarGroup OnlineUsers="@(new List<string>())" />
+        </div>
+        <MobileSelfAvatar UserInitial="@State.UserInitial"
+                          UserDisplayName="@State.UserDisplayName"
+                          UserEmail="@State.UserEmail"
+                          FacilityName="@State.FacilityName" />
+    </div>
+
+    <!-- ヘッダーRow2: ビュー切替 / 日付ナビ / 今日 / フィルター -->
+    <div class="flex items-center gap-2 px-3 py-2 bg-base-100 border-b border-base-300 flex-shrink-0">
+        <!-- 月/日切替 -->
+        <div class="join">
+            <button class="btn btn-xs join-item @(_viewType == MobileViewType.Month ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetView(MobileViewType.Month)">月</button>
+            <button class="btn btn-xs join-item @(_viewType == MobileViewType.Day ? "btn-active btn-primary" : "")"
+                    @onclick="() => SetView(MobileViewType.Day)">日</button>
+        </div>
+
+        <!-- 日付ナビ -->
+        <button class="btn btn-ghost btn-xs btn-square" @onclick="PreviousPeriod">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </button>
+        <span class="font-semibold text-sm flex-1 text-center">@GetPeriodTitle()</span>
+        <button class="btn btn-ghost btn-xs btn-square" @onclick="NextPeriod">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+        </button>
+
+        <!-- 今日ボタン -->
+        <button class="btn btn-ghost btn-xs" @onclick="GoToToday">今</button>
+
+        <!-- フィルターボタン -->
+        <button class="btn btn-ghost btn-xs btn-square relative" @onclick="ToggleFilter">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            @if (State.ActiveFilterCount > 0)
+            {
+                <span class="badge badge-xs badge-secondary absolute -top-1 -right-1">@State.ActiveFilterCount</span>
+            }
+        </button>
+    </div>
+
+    <!-- カレンダー本体 -->
+    <div class="flex-1 overflow-y-auto flex flex-col">
+        @if (_viewType == MobileViewType.Month)
+        {
+            <MobileMonthCalendar CurrentDate="@State.CurrentDate"
+                                 SelectedDate="@_selectedDate"
+                                 MainStats="@State.MainStats"
+                                 OnDateSelected="HandleDateSelected"
+                                 OnLongPress="HandleLongPress" />
+
+            <!-- 選択日詳細（月間ビュー下部） -->
+            <MobileDayDetail SelectedDate="@_selectedDate"
+                             DayStats="@GetSelectedDayStats()"
+                             OnCreateRequested="HandleCreateFromDayDetail" />
+        }
+        else
+        {
+            <MobileDayCalendar CurrentDate="@State.CurrentDate"
+                               MainStats="@State.MainStats"
+                               OnCreateRequested="HandleCreateFromDay" />
+        }
+    </div>
+</div>
+
+<!-- フィルターシート -->
+<MobileFilterSheet IsOpen="@_filterOpen"
+                   AvailableFloors="@State.AvailableFloors"
+                   AvailableResources="@State.AvailableResources"
+                   AvailablePlans="@State.AvailablePlans"
+                   OnApply="HandleFilterApply"
+                   OnClose="() => { _filterOpen = false; StateHasChanged(); }" />
+
+<!-- 長押しメニュー -->
+<MobileLongPressMenu IsOpen="@_longPressMenuOpen"
+                     SelectedDate="@_longPressDate"
+                     OnCreateAppointment="HandleLongPressCreate"
+                     OnClose="() => { _longPressMenuOpen = false; StateHasChanged(); }" />
+
+<!-- 予約作成モーダル -->
+<MobileAppointmentModal IsOpen="@_appointmentModalOpen"
+                        SelectedDate="@_appointmentModalDate"
+                        SelectedStartMin="@_defaultStartMin"
+                        InitialStatus="@_appointmentInitialStatus"
+                        OnClose="() => { _appointmentModalOpen = false; StateHasChanged(); }"
+                        OnSave="HandleAppointmentSaved" />
