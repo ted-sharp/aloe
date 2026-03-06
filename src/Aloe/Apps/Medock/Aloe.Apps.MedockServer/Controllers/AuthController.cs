@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockServer.ApplicationServices.Mobile;
+using Aloe.Apps.MedockServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -26,76 +27,6 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// ログイン
-    /// </summary>
-    [HttpPost("login")]
-    [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] LoginRequest request)
-    {
-        try
-        {
-            var ipAddress = this.HttpContext.Connection.RemoteIpAddress?.ToString() ?? String.Empty;
-            var userAgent = this.Request.Headers.UserAgent.ToString();
-            var appName = "MedockServer";
-
-            var result = await this._authService.LoginAsync(
-                request.UserCode,
-                request.Password,
-                appName,
-                ipAddress,
-                userAgent);
-
-            if (!result.IsSuccess)
-            {
-                this._logger.LogWarning("Login failed for user code {UserCode}: {ErrorMessage}", request.UserCode, result.ErrorMessage);
-                return this.Unauthorized(new { message = result.ErrorMessage });
-            }
-
-            var isMobile = MobileDetectionHelper.IsMobile(userAgent);
-            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result, isMobile);
-
-            // KeepSessionフラグに基づいて認証プロパティを設定
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = request.KeepSession,
-                ExpiresUtc = request.KeepSession
-                    ? result.RefreshTokenExpiration?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(30)
-                    : null // KeepSessionがfalseの場合はセッションクッキー（ブラウザを閉じると無効）
-            };
-
-            await this.HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
-
-            this._logger.LogInformation("User logged in successfully: UserId={UserId}, UserCode={UserCode}", result.UserId, result.UserCode);
-
-            return this.Ok(new LoginResponse
-            {
-                SessionId = result.SessionId!.Value,
-                UserId = result.UserId!.Value,
-                UserCode = result.UserCode!,
-                Email = result.Email!,
-                DisplayName = result.DisplayName ?? "",
-                TenantId = result.TenantId,
-                TenantName = result.TenantName ?? "",
-                FacilityId = result.FacilityId,
-                FacilityName = result.FacilityName ?? "",
-                IsSystemAdmin = result.IsSystemAdmin,
-                Roles = result.Roles!,
-                IsMobile = isMobile
-            });
-        }
-        catch (ArgumentException ex)
-        {
-            this._logger.LogWarning(ex, "Invalid argument in Login: {Message}", ex.Message);
-            return this.BadRequest(new { message = "Invalid credentials provided" });
-        }
-        catch (Exception ex)
-        {
-            this._logger.LogError(ex, "Error during login");
-            return this.StatusCode(500, new { message = "An error occurred during login" });
-        }
-    }
-
-    /// <summary>
     /// トークン更新
     /// </summary>
     [HttpPost("refresh")]
@@ -112,7 +43,7 @@ public class AuthController : ControllerBase
                 return this.Unauthorized(new { message = result.ErrorMessage });
             }
 
-            var (claimsIdentity, claimsPrincipal) = this.CreateClaimsFromAuthResult(result);
+            var (_, claimsPrincipal) = ClaimsPrincipalFactory.Create(result);
 
             var authProperties = new AuthenticationProperties
             {
@@ -308,87 +239,14 @@ public class AuthController : ControllerBase
             return this.StatusCode(500, new { message = "An error occurred during logout" });
         }
     }
-
-    /// <summary>
-    /// AuthResultからクレームを作成します
-    /// </summary>
-    private (ClaimsIdentity ClaimsIdentity, ClaimsPrincipal ClaimsPrincipal) CreateClaimsFromAuthResult(AuthResult result, bool isMobile = false)
-    {
-        if (result.UserId == null)
-        {
-            throw new InvalidOperationException("Cannot create claims from AuthResult with null UserId");
-        }
-
-        var claims = new List<Claim>
-        {
-            new Claim("sub", result.UserId.Value.ToString()),
-            new Claim("user_code", result.UserCode ?? ""),
-            new Claim("email", result.Email ?? ""),
-            new Claim("preferred_username", result.UserCode ?? ""),
-            new Claim(ClaimTypes.Name, result.UserCode ?? ""),
-            new Claim(ClaimTypes.Email, result.Email ?? ""),
-            new Claim("user_display_name", result.DisplayName ?? ""),
-            new Claim("is_system_admin", result.IsSystemAdmin.ToString().ToLower()),
-            new Claim("is_facility_admin", result.IsFacilityAdmin.ToString().ToLower()),
-            new Claim("is_mobile", isMobile.ToString().ToLower())
-        };
-
-        if (result.SessionId.HasValue)
-        {
-            claims.Add(new Claim("session_id", result.SessionId.Value.ToString()));
-        }
-
-        if (result.TenantId.HasValue)
-        {
-            claims.Add(new Claim("tenant_id", result.TenantId.Value.ToString()));
-            claims.Add(new Claim("tenant_name", result.TenantName ?? ""));
-        }
-
-        if (result.FacilityId.HasValue)
-        {
-            claims.Add(new Claim("facility_id", result.FacilityId.Value.ToString()));
-            claims.Add(new Claim("facility_name", result.FacilityName ?? ""));
-        }
-
-        if (result.Roles != null)
-        {
-            foreach (var role in result.Roles)
-            {
-                claims.Add(new Claim("roles", role));
-                claims.Add(new Claim(ClaimTypes.Role, role));
-            }
-        }
-
-        var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-
-        return (claimsIdentity, claimsPrincipal);
-    }
 }
 
 // Request DTOs
-public record LoginRequest(string UserCode, string Password, bool KeepSession = false);
 public record RefreshRequest(Guid UserId, Guid? FacilityId = null);
 public record SwitchFacilityRequest(Guid FacilityId);
 public record LogoutRequest(Guid SessionId);
 
 // Response DTOs
-public record LoginResponse
-{
-    public required Guid SessionId { get; init; }
-    public required Guid UserId { get; init; }
-    public required string UserCode { get; init; }
-    public required string Email { get; init; }
-    public required string DisplayName { get; init; }
-    public Guid? TenantId { get; init; }
-    public required string TenantName { get; init; }
-    public Guid? FacilityId { get; init; }
-    public required string FacilityName { get; init; }
-    public required bool IsSystemAdmin { get; init; }
-    public required string[] Roles { get; init; }
-    public bool IsMobile { get; init; }
-}
-
 public record RefreshResponse
 {
     public required DateTime RefreshTokenExpiration { get; init; }
