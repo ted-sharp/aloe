@@ -1,59 +1,55 @@
 using Aloe.Apps.MedockLib.Data;
 using Aloe.Apps.MedockLib.Repositories;
 using Aloe.Apps.MedockLib.Services;
-using Aloe.Apps.MedockLib.Services.VoiceCommand;
+using Aloe.Apps.MedockMcp.Services;
+using Aloe.Apps.MedockMcp.Tools;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
+using Microsoft.Extensions.Logging.Abstractions;
 
-// DateTime は EFCore 6.0 以降は with timezone にマッピングされるので、それを without timezone にします。
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// MCP Server のログは stderr に出力（stdout は MCP プロトコル通信で使用）
-builder.Logging.AddConsole(options =>
-{
-    options.LogToStandardErrorThreshold = LogLevel.Trace;
-});
+// ログはstderrへ（stdoutはMCP JSON-RPCで使用）
+builder.Logging.ClearProviders();
+builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
+builder.Logging.SetMinimumLevel(LogLevel.Warning);
 
-// MCP Server 設定
-builder.Services
-    .AddMcpServer()
-    .WithStdioServerTransport()
-    .WithToolsFromAssembly();
-
-// DB接続
+// DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<MedockDbContext>(
+    o => o.UseNpgsql(connectionString).UseLoggerFactory(NullLoggerFactory.Instance),
+    ServiceLifetime.Scoped);
+builder.Services.AddDbContextFactory<MedockDbContext>(
+    o => o.UseNpgsql(connectionString).UseLoggerFactory(NullLoggerFactory.Instance),
+    ServiceLifetime.Scoped);
 
-builder.Services.AddDbContext<MedockDbContext>(options =>
-{
-    options.UseNpgsql(connectionString);
-}, ServiceLifetime.Scoped);
-
-builder.Services.AddDbContextFactory<MedockDbContext>(options =>
-{
-    options.UseNpgsql(connectionString);
-}, ServiceLifetime.Scoped);
-
-// MedockLib サービス登録
+// Services
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
-builder.Services.AddSingleton<IVoiceCommandParser, VoiceCommandParser>();
+builder.Services.AddSingleton<PasswordHasher>();
+builder.Services.Configure<CookieSettings>(builder.Configuration.GetSection("Cookie"));
+builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddSingleton<IUserContextService, McpUserContextService>();
 builder.Services.AddScoped<IAppointmentRepository, AppointmentRepository>();
 builder.Services.AddScoped<IAppointmentStatsRepository, AppointmentStatsRepository>();
 builder.Services.AddScoped<IHolidayRepository, HolidayRepository>();
-builder.Services.AddScoped<IAppointmentService, AppointmentService>();
-builder.Services.AddScoped<IAppointmentFormService, AppointmentFormService>();
 builder.Services.AddScoped<IAppointmentResourceAssignmentService, AppointmentResourceAssignmentService>();
 builder.Services.AddScoped<IAppointmentStatsUpdateService, AppointmentStatsUpdateService>();
-builder.Services.AddScoped<ICalendarDataService, CalendarDataService>();
-builder.Services.AddScoped<IUserContextService, UserContextService>();
+builder.Services.AddScoped<IAppointmentService, AppointmentService>();
+builder.Services.AddScoped<IFacilityService, FacilityService>();
+builder.Services.AddScoped<IAppointmentFormService, AppointmentFormService>();
 
-// MCP環境ではHTTPコンテキストが無いため、NullHttpContextAccessor を登録
-builder.Services.AddSingleton<Microsoft.AspNetCore.Http.IHttpContextAccessor>(
-    new Microsoft.AspNetCore.Http.HttpContextAccessor());
+// MCP
+builder.Services
+    .AddMcpServer()
+    .WithStdioServerTransport()
+    .WithTools<AppointmentQueryTools>()
+    .WithTools<AppointmentStatsTools>()
+    .WithTools<FacilityTools>()
+    .WithTools<SystemTools>();
 
 await builder.Build().RunAsync();

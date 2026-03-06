@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Aloe.Apps.MedockMcp": {
+      "commandName": "Project",
+      "commandLineArgs": "--mcp"
+    }
+  }
+}

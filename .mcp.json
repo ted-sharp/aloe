@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "medock-mcp": {
+      "command": "dotnet",
+      "args": [
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "src/Aloe/Apps/Medock/Aloe.Apps.MedockMcp"
+      ],
+      "env": {
+        "ConnectionStrings__DefaultConnection": "Host=localhost;Database=aloedb;Username=postgres;Password=postgres"
+      }
+    }
+  }
+}
