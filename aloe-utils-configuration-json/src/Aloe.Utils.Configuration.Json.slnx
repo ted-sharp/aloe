@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Aloe.Utils.Configuration.Json/Aloe.Utils.Configuration.Json.csproj" />
+  <Project Path="Aloe.Utils.Configuration.Json.Samples/Aloe.Utils.Configuration.Json.Samples.csproj" />
+  <Project Path="Aloe.Utils.Configuration.Json.Tests/Aloe.Utils.Configuration.Json.Tests.csproj" />
+</Solution>

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Aloe.Utils.Drawing.Wpf/Aloe.Utils.Drawing.Wpf.csproj" />
+  <Project Path="Aloe.Utils.Drawing.Wpf.Samples/Aloe.Utils.Drawing.Wpf.Samples.csproj" />
+</Solution>

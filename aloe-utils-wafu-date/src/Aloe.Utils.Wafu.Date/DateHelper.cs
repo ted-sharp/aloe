@@ -338,40 +338,6 @@ public static class DateHelper
         return false;
     }
 
-    // ---------------------- private nested types (should follow fields) ----------------------
-
-    /// <summary>
-    /// 指定された年月の初日（1日）を DateOnly 型で取得します。
-    /// </summary>
-    /// <param name="year">年</param>
-    /// <param name="month">月</param>
-    /// <returns>指定された年月の初日</returns>
-    public static DateOnly GetFirstDate(int year, int month) => new DateOnly(year, month, 1);
-
-    /// <summary>
-    /// 指定された年月の初日（1日）を DateTime 型で取得します。
-    /// </summary>
-    /// <param name="year">年</param>
-    /// <param name="month">月</param>
-    /// <returns>指定された年月の初日</returns>
-    public static DateTime GetFirstDateTime(int year, int month) => new DateTime(year, month, 1);
-
-    /// <summary>
-    /// 指定された日付の月末日を DateOnly 型で取得します。
-    /// </summary>
-    /// <param name="date">基準となる日付</param>
-    /// <returns>指定された日付の月末日</returns>
-    public static DateOnly GetEndDate(DateOnly date) =>
-        new DateOnly(date.Year, date.Month, 1).AddMonths(1).AddDays(-1);
-
-    /// <summary>
-    /// 指定された日付の月末日を DateTime 型で取得します。
-    /// </summary>
-    /// <param name="date">基準となる日付</param>
-    /// <returns>指定された日付の月末日</returns>
-    public static DateTime GetEndDateTime(DateTime date) =>
-        new DateTime(date.Year, date.Month, 1).AddMonths(1).AddDays(-1);
-
     /// <summary>
     /// 日付フォーマットの定数を保持する内部クラスです。
     /// </summary>

@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Aloe.Utils.Win32.ScCommand/Aloe.Utils.Win32.ScCommand.csproj" />
+  <Project Path="Aloe.Utils.Win32.ScCommand.DummyService/Aloe.Utils.Win32.ScCommand.DummyService.csproj" />
+  <Project Path="Aloe.Utils.Win32.ScCommand.Samples/Aloe.Utils.Win32.ScCommand.Samples.csproj" />
+</Solution>

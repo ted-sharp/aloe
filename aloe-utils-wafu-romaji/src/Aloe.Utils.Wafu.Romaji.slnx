@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Aloe.Utils.Wafu.Romaji/Aloe.Utils.Wafu.Romaji.csproj" />
+  <Project Path="Aloe.Utils.Wafu.Romaji.Tests/Aloe.Utils.Wafu.Romaji.Tests.csproj" />
+</Solution>
