@@ -37,6 +37,7 @@ public class CalendarState
     public DateOnly? ModalDate { get; set; }
     public int? ModalStartMin { get; set; }
     public Guid? SelectedAppointmentId { get; set; }
+    public string? ModalPatientName { get; set; }
 
     // 選択状態
     public DateOnly? SelectedDate { get; set; }
@@ -210,11 +211,12 @@ public class CalendarState
     /// <summary>
     /// モーダルを開く
     /// </summary>
-    public void OpenModal(DateOnly date, int startMin, Guid? appointmentId = null)
+    public void OpenModal(DateOnly date, int startMin, Guid? appointmentId = null, string? patientName = null)
     {
         this.SelectedAppointmentId = appointmentId;
         this.ModalDate = date;
         this.ModalStartMin = startMin;
+        this.ModalPatientName = patientName;
         this.IsModalOpen = true;
     }
 
@@ -227,6 +229,7 @@ public class CalendarState
         this.SelectedAppointmentId = null;
         this.ModalDate = null;
         this.ModalStartMin = null;
+        this.ModalPatientName = null;
     }
 
     /// <summary>

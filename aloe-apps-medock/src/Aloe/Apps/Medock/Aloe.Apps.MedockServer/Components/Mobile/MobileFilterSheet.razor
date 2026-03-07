@@ -1,0 +1,93 @@
+@* モバイルフィルターシート（modal-bottom） *@
+@using Aloe.Apps.MedockServer.Components.Calendar
+
+<div class="modal modal-bottom @(IsOpen ? "modal-open" : "")" role="dialog">
+    <div class="modal-box rounded-t-2xl rounded-b-none max-h-[80vh] overflow-y-auto p-0">
+        <!-- ヘッダー -->
+        <div class="sticky top-0 bg-base-100 flex items-center justify-between px-4 py-3 border-b border-base-300 z-10">
+            <span class="font-bold text-base">フィルター</span>
+            <div class="flex items-center gap-2">
+                <button class="btn btn-ghost btn-xs" @onclick="ClearFilters">クリア</button>
+                <button class="btn btn-ghost btn-sm btn-square" @onclick="HandleClose">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <div class="p-4 flex flex-col gap-4">
+            <!-- 曜日 -->
+            <div>
+                <div class="text-sm font-semibold mb-2">曜日</div>
+                <div class="flex gap-1 flex-wrap">
+                    @{
+                        var dayNames = new[] { "日", "月", "火", "水", "木", "金", "土" };
+                    }
+                    @for (int i = 0; i < 7; i++)
+                    {
+                        var dayIndex = i;
+                        var isSelected = _selectedDays.Contains(dayIndex);
+                        <button class="btn btn-xs @(isSelected ? "btn-primary" : "btn-outline")"
+                                @onclick="() => ToggleDay(dayIndex)">
+                            @dayNames[dayIndex]
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <!-- 必要空き枠数 -->
+            <div>
+                <div class="text-sm font-semibold mb-2">必要空き枠数: @_requiredCapacity</div>
+                <input type="range" class="range range-xs range-primary w-full"
+                       min="1" max="10"
+                       value="@_requiredCapacity"
+                       @onchange="HandleCapacityChange" />
+            </div>
+
+            <!-- フロア -->
+            @if (AvailableFloors?.Count > 0)
+            {
+                <div>
+                    <div class="text-sm font-semibold mb-2">フロア</div>
+                    <div class="flex gap-1 flex-wrap">
+                        @foreach (var floor in AvailableFloors)
+                        {
+                            var isSelected = _selectedFloorIds.Contains(floor.Id);
+                            <button class="btn btn-xs @(isSelected ? "btn-primary" : "btn-outline")"
+                                    @onclick="() => ToggleFloor(floor.Id)">
+                                @floor.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- リソース -->
+            @if (AvailableResources?.Count > 0)
+            {
+                <div>
+                    <div class="text-sm font-semibold mb-2">リソース</div>
+                    <div class="flex gap-1 flex-wrap">
+                        @foreach (var res in AvailableResources)
+                        {
+                            var isSelected = _selectedResourceIds.Contains(res.Id);
+                            <button class="btn btn-xs @(isSelected ? "btn-primary" : "btn-outline")"
+                                    @onclick="() => ToggleResource(res.Id)">
+                                @res.Name
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- 適用ボタン -->
+        <div class="sticky bottom-0 bg-base-100 p-4 border-t border-base-300">
+            <button class="btn btn-primary w-full" @onclick="ApplyFilters">
+                適用
+            </button>
+        </div>
+    </div>
+    <div class="modal-backdrop" @onclick="HandleClose"></div>
+</div>

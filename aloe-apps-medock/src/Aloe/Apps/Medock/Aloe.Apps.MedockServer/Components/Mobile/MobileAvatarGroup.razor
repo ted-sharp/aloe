@@ -1,0 +1,24 @@
+@* オンラインユーザーアバター群（最大3+N表示） *@
+
+<div class="avatar-group -space-x-3">
+    @{
+        var displayUsers = OnlineUsers.Take(3).ToList();
+        var remaining = OnlineUsers.Count - displayUsers.Count;
+    }
+    @foreach (var user in displayUsers)
+    {
+        <div class="avatar placeholder" title="@user">
+            <div class="bg-neutral text-neutral-content rounded-full w-8 h-8">
+                <span class="text-xs">@(user.Length > 0 ? user[0].ToString().ToUpper() : "?")</span>
+            </div>
+        </div>
+    }
+    @if (remaining > 0)
+    {
+        <div class="avatar placeholder">
+            <div class="bg-neutral text-neutral-content rounded-full w-8 h-8">
+                <span class="text-xs">+@remaining</span>
+            </div>
+        </div>
+    }
+</div>

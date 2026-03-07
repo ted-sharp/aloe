@@ -52,6 +52,12 @@
         }
     */
   "MultiProjectConfigurations": {
+    "McpServer": {
+      "Projects": {
+        "Aloe.Apps.MedockMcp": {
+        }
+      }
+    },
     "Server": {
       "Projects": {
         "Aloe.Apps.MedockServer": {}

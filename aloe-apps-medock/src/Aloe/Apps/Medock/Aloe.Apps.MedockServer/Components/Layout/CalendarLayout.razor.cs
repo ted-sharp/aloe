@@ -1,3 +1,4 @@
+using Aloe.Apps.MedockLib.Services.VoiceCommand;
 using Aloe.Apps.MedockServer.Components.FAB;
 using Microsoft.AspNetCore.Components;
 
@@ -30,6 +31,7 @@ public partial class CalendarLayout : LayoutComponentBase
     private Func<Task>? _onPreviousPeriod;
     private Func<Task>? _onNextPeriod;
     private Func<string, Task>? _onViewChange;
+    private Func<VoiceCommandResult, Task>? _onVoiceCommand;
 
     /// <summary>
     /// カレンダーページからアクションを登録する
@@ -41,7 +43,8 @@ public partial class CalendarLayout : LayoutComponentBase
         Func<Task>? onGoToToday = null,
         Func<Task>? onPreviousPeriod = null,
         Func<Task>? onNextPeriod = null,
-        Func<string, Task>? onViewChange = null)
+        Func<string, Task>? onViewChange = null,
+        Func<VoiceCommandResult, Task>? onVoiceCommand = null)
     {
         this.CurrentView = currentView;
         this._onNewAppointment = onNewAppointment;
@@ -50,6 +53,7 @@ public partial class CalendarLayout : LayoutComponentBase
         this._onPreviousPeriod = onPreviousPeriod;
         this._onNextPeriod = onNextPeriod;
         this._onViewChange = onViewChange;
+        this._onVoiceCommand = onVoiceCommand;
         this.StateHasChanged();
     }
 
@@ -112,6 +116,14 @@ public partial class CalendarLayout : LayoutComponentBase
         if (this._onViewChange != null)
         {
             await this._onViewChange(view);
+        }
+    }
+
+    private async Task HandleVoiceCommand(VoiceCommandResult command)
+    {
+        if (this._onVoiceCommand != null)
+        {
+            await this._onVoiceCommand(command);
         }
     }
 }

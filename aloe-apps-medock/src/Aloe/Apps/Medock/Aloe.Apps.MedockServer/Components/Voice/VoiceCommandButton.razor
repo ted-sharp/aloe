@@ -1,0 +1,117 @@
+@* 音声コマンド入力ボタン（フローティング） *@
+
+<div class="fab-bottom-right flex flex-col items-end gap-3">
+
+    @* 認識結果カード *@
+    @if (_showResultCard)
+    {
+        <div class="card bg-base-100 shadow-xl w-80 border border-base-300">
+            <div class="card-body p-4 gap-2">
+
+                @* 録音中: 蓄積テキスト表示 *@
+                @if (_isListening)
+                {
+                    <div class="flex items-center gap-2">
+                        <span class="loading loading-dots loading-sm text-error"></span>
+                        <span class="text-xs text-base-content/50">聞き取り中...</span>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(_currentFullText))
+                {
+                    <p class="text-sm text-base-content @(_isListening ? "italic text-base-content/70" : "")">
+                        @_currentFullText
+                    </p>
+                }
+
+                @* パース成功: サマリー表示 *@
+                @if (_parsedResult is not null)
+                {
+                    <div class="divider my-0"></div>
+                    <p class="font-semibold text-base-content text-sm">@_parsedResult.Summary</p>
+                }
+
+                @* エラー / Unknown: メッセージ *@
+                @if (!string.IsNullOrEmpty(_errorMessage))
+                {
+                    <p class="text-sm text-warning">@_errorMessage</p>
+                }
+
+                @* カウントダウンバー（自動確定まで残り時間） *@
+                @if (_isListening && _barState != BarState.Hidden)
+                {
+                    <div class="w-full h-1 bg-base-300 rounded-full overflow-hidden">
+                        @if (_barState == BarState.Initial30s)
+                        {
+                            <div class="h-full bg-base-content/30 rounded-full countdown-bar-30s"></div>
+                        }
+                        else
+                        {
+                            <div @key="_debounceKey"
+                                 class="h-full bg-error rounded-full countdown-bar-15s"></div>
+                        }
+                    </div>
+                }
+
+                @* 固定4ボタンバー *@
+                <div class="flex gap-1 justify-end mt-2">
+                    <button class="btn btn-sm btn-ghost"
+                            disabled="@(!CanReset)"
+                            @onclick="ResetAndRestart">
+                        リセット
+                    </button>
+                    <button class="btn btn-sm btn-accent"
+                            disabled="@(!CanFinalize)"
+                            @onclick="FinalizeManually">
+                        確定
+                    </button>
+                    <button class="btn btn-sm btn-primary"
+                            disabled="@(!CanExecute)"
+                            @onclick="ExecuteCommand">
+                        実行
+                    </button>
+                    <button class="btn btn-sm btn-ghost btn-square"
+                            @onclick="CancelResult">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* マイクボタン *@
+    <button class="btn btn-circle btn-lg shadow-lg @(_isListening ? "btn-error animate-pulse" : "btn-secondary")"
+            @onclick="ToggleListening"
+            disabled="@(!_isSupported)"
+            aria-label="@(_isListening ? "音声入力を停止" : "音声入力を開始")"
+            title="@(_isSupported ? (_isListening ? "音声入力を停止" : "音声入力を開始") : "このブラウザは音声入力に対応していません")">
+        @if (_isListening)
+        {
+            @* 停止アイコン *@
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="currentColor" viewBox="0 0 24 24">
+                <rect x="6" y="6" width="12" height="12" rx="1" />
+            </svg>
+        }
+        else
+        {
+            @* マイクアイコン *@
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4M12 15a3 3 0 003-3V5a3 3 0 00-6 0v7a3 3 0 003 3z" />
+            </svg>
+        }
+    </button>
+</div>
+
+<style>
+    @@keyframes countdown-shrink {
+        from { width: 100%; }
+        to   { width: 0%; }
+    }
+    .countdown-bar-30s {
+        animation: countdown-shrink 30s linear forwards;
+    }
+    .countdown-bar-15s {
+        animation: countdown-shrink 1.5s linear forwards;
+    }
+</style>

@@ -1,0 +1,29 @@
+@* モバイル日間リスト表示 *@
+@using Aloe.Apps.MedockLib.Data.Entities
+@using Aloe.Apps.MedockServer.ApplicationServices.Mobile
+
+<div class="w-full flex flex-col gap-2 p-2">
+    @if (_dayStats.Count == 0)
+    {
+        <div class="text-center text-base-content/50 py-8">予約データがありません</div>
+    }
+    else
+    {
+        @foreach (var slot in _dayStats)
+        {
+            var symbol = MobileSymbolHelper.GetSymbol(slot.ApptCap, slot.ApptCount);
+            <div class="card bg-base-100 shadow-sm border border-base-300 cursor-pointer hover:bg-base-200"
+                 @onclick="() => HandleSlotClick(slot)">
+                <div class="card-body p-3 flex-row items-center gap-3">
+                    <span class="text-2xl @MobileSymbolHelper.ToColorClass(symbol) opacity-70">
+                        @MobileSymbolHelper.ToChar(symbol)
+                    </span>
+                    <div class="flex-1">
+                        <div class="text-sm font-medium">@slot.ResourceName</div>
+                        <div class="text-xs text-base-content/60">@slot.ApptCount / @slot.ApptCap 件</div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>

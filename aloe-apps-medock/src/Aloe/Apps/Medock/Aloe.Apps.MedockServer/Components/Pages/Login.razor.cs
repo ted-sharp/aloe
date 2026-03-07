@@ -1,8 +1,11 @@
 using Aloe.Apps.MedockLib.Services;
+using Aloe.Apps.MedockServer.ApplicationServices.Mobile;
+using Aloe.Apps.MedockServer.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
-using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace Aloe.Apps.MedockServer.Components.Pages;
 
@@ -15,57 +18,35 @@ public partial class Login : ComponentBase
     private IAuthService AuthService { get; set; } = default!;
 
     [Inject]
-    private IJSRuntime JSRuntime { get; set; } = default!;
+    private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
 
     [Inject]
-    private ProtectedLocalStorage LocalStorage { get; set; } = default!;
-
-    [Inject]
-    private IUserContextService UserContextService { get; set; } = default!;
-
-    [Inject]
-    private AuthenticationStateProvider AuthenticationStateProvider { get; set; } = default!;
+    private IWebHostEnvironment Environment { get; set; } = default!;
 
     [SupplyParameterFromForm]
     private LoginModel loginModel { get; set; } = default!;
 
-    protected override async Task OnInitializedAsync()
-    {
-        this.loginModel ??= new LoginModel();
-
-
-    }
-
-    private bool IsLoading { get; set; } = false;
+    private bool IsLoading { get; set; }
     private string? ErrorMessage { get; set; }
     private string? DebugMessage { get; set; }
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // RememberMeが保存されていれば読み込む
-            try
-            {
-                var savedUserCode = await this.LocalStorage.GetAsync<string>("remember_user_code");
-                if (savedUserCode.Success && !String.IsNullOrEmpty(savedUserCode.Value))
-                {
-                    this.loginModel.UserCode = savedUserCode.Value;
-                    this.loginModel.RememberMe = true;
-                    this.StateHasChanged();
-                }
+    private const string RememberUserCodeCookieName = "remember_user_code";
+    private const string KeepSessionCookieName = "keep_session";
 
-                // KeepSession: UIに復元
-                var savedKeepSession = await this.LocalStorage.GetAsync<bool>("keep_session");
-                if (savedKeepSession.Success && savedKeepSession.Value)
-                {
-                    this.loginModel.KeepSession = true;
-                    this.StateHasChanged();
-                }
-            }
-            catch
+    protected override void OnInitialized()
+    {
+        this.loginModel ??= new LoginModel();
+        var httpContext = this.HttpContextAccessor.HttpContext;
+        if (httpContext?.Request.Cookies != null)
+        {
+            if (httpContext.Request.Cookies.TryGetValue(RememberUserCodeCookieName, out var savedUserCode) && !string.IsNullOrEmpty(savedUserCode))
             {
-                // ローカルストレージアクセス失敗は無視
+                this.loginModel.UserCode = savedUserCode;
+                this.loginModel.RememberMe = true;
+            }
+            if (httpContext.Request.Cookies.TryGetValue(KeepSessionCookieName, out var keepSession) && keepSession == "true")
+            {
+                this.loginModel.KeepSession = true;
             }
         }
     }
@@ -79,76 +60,94 @@ public partial class Login : ComponentBase
 
         try
         {
-            if (String.IsNullOrEmpty(this.loginModel.UserCode) || String.IsNullOrEmpty(this.loginModel.Password))
+            if (string.IsNullOrEmpty(this.loginModel.UserCode) || string.IsNullOrEmpty(this.loginModel.Password))
             {
                 this.ErrorMessage = "ユーザーIDとパスワードを入力してください。";
+                this.IsLoading = false;
+                this.StateHasChanged();
                 return;
             }
 
-            // RememberMe: ユーザーIDを保存
-            if (this.loginModel.RememberMe)
+            var httpContext = this.HttpContextAccessor.HttpContext;
+            if (httpContext == null)
             {
-                await this.LocalStorage.SetAsync("remember_user_code", this.loginModel.UserCode);
-            }
-            else
-            {
-                await this.LocalStorage.DeleteAsync("remember_user_code");
-            }
-
-            // KeepSession: UI状態を保存
-            if (this.loginModel.KeepSession)
-            {
-                await this.LocalStorage.SetAsync("keep_session", true);
-            }
-            else
-            {
-                await this.LocalStorage.DeleteAsync("keep_session");
+                this.ErrorMessage = "ログイン処理に失敗しました。";
+                this.IsLoading = false;
+                this.StateHasChanged();
+                return;
             }
 
-            // JavaScript interopを使ってクライアント側からAPIを呼び出す
-            // 重要な点: HttpOnlyクッキーは正しく設定されます
-            // - Set-Cookieヘッダーはサーバー（AuthController）から返される
-            // - ブラウザがSet-Cookieヘッダーを処理してクッキーを保存する
-            // - HttpOnly属性が含まれているため、JavaScriptからは読み取れない
-            // - これはJavaScript interopとは無関係で、サーバー側の設定（Program.cs）で制御される
-            var loginRequest = new
+            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+            var userAgent = httpContext.Request.Headers.UserAgent.ToString();
+            var appName = "MedockServer";
+
+            var result = await this.AuthService.LoginAsync(
+                this.loginModel.UserCode,
+                this.loginModel.Password,
+                appName,
+                ipAddress,
+                userAgent);
+
+            if (!result.IsSuccess)
             {
-                UserCode = this.loginModel.UserCode,
-                Password = this.loginModel.Password,
-                KeepSession = this.loginModel.KeepSession
+                this.ErrorMessage = result.ErrorMessage ?? "ログインに失敗しました。";
+                this.IsLoading = false;
+                this.StateHasChanged();
+                return;
+            }
+
+            var isMobile = MobileDetectionHelper.IsMobile(userAgent);
+            var (_, claimsPrincipal) = ClaimsPrincipalFactory.Create(result, isMobile);
+
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = this.loginModel.KeepSession,
+                ExpiresUtc = this.loginModel.KeepSession
+                    ? result.RefreshTokenExpiration?.ToUniversalTime() ?? DateTimeOffset.UtcNow.AddDays(30)
+                    : null
             };
 
-            var loginResponse = await this.JSRuntime.InvokeAsync<LoginResponse?>("loginApi.login", loginRequest);
+            await httpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal, authProperties);
 
-            if (loginResponse != null && loginResponse.SessionId != Guid.Empty)
+            // RememberMe: UserCode を Cookie で保存/削除
+            var cookieOptions = new CookieOptions
             {
-                // UserContextServiceにセッションIDを設定
-                this.UserContextService.SetSessionId(loginResponse.SessionId);
-
-                // 遷移先を決定（複数施設なら施設選択へ）
-                // forceLoad: true でページをリロードし、新しいクッキーの認証情報を反映させる
-                var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(loginResponse.UserId);
-                if (facilities.Count > 1)
-                {
-                    // 複数施設がある場合は施設選択画面へ
-                    this.NavigationManager.NavigateTo("/facility-select", forceLoad: true);
-                }
-                else
-                {
-                    // 単一施設の場合は直接メイン画面へ
-                    this.NavigationManager.NavigateTo("/calendar", forceLoad: true);
-                }
+                HttpOnly = true,
+                Secure = !this.Environment.IsDevelopment(),
+                SameSite = SameSiteMode.Lax,
+                Path = "/"
+            };
+            if (this.loginModel.RememberMe)
+            {
+                cookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(90);
+                httpContext.Response.Cookies.Append(RememberUserCodeCookieName, this.loginModel.UserCode, cookieOptions);
             }
             else
             {
-                this.ErrorMessage = "ログインに失敗しました。";
-                this.DebugMessage = "Login failed";
+                httpContext.Response.Cookies.Delete(RememberUserCodeCookieName, new CookieOptions { Path = "/" });
             }
+
+            // KeepSession: UI 復元用に Cookie で保存/削除
+            if (this.loginModel.KeepSession)
+            {
+                cookieOptions.Expires = DateTimeOffset.UtcNow.AddDays(90);
+                httpContext.Response.Cookies.Append(KeepSessionCookieName, "true", cookieOptions);
+            }
+            else
+            {
+                httpContext.Response.Cookies.Delete(KeepSessionCookieName, new CookieOptions { Path = "/" });
+            }
+
+            var facilities = await this.AuthService.GetAccessibleFacilitiesAsync(result.UserId!.Value);
+            var calendarPath = isMobile ? "/m/calendar" : "/calendar";
+            var redirectUrl = facilities.Count > 1 ? "/facility-select" : calendarPath;
+
+            this.NavigationManager.NavigateTo(redirectUrl, forceLoad: true);
         }
         catch (Exception ex)
         {
             this.ErrorMessage = "ログイン処理中にエラーが発生しました。";
-            this.DebugMessage = $"Exception: {ex.Message}";
+            this.DebugMessage = ex.Message;
             this.IsLoading = false;
             this.StateHasChanged();
         }
@@ -156,27 +155,9 @@ public partial class Login : ComponentBase
 
     public class LoginModel
     {
-        public string UserCode { get; set; } = String.Empty;
-        public string Password { get; set; } = String.Empty;
-        public bool RememberMe { get; set; } = false;
-        public bool KeepSession { get; set; } = false;
-    }
-
-    // JavaScript interop用のレスポンスクラス
-    private class LoginResponse
-    {
-        public Guid SessionId { get; set; }
-        public Guid UserId { get; set; }
-        public string UserCode { get; set; } = String.Empty;
-        public string Email { get; set; } = String.Empty;
-        public string DisplayName { get; set; } = String.Empty;
-        public Guid? TenantId { get; set; }
-        public string TenantName { get; set; } = String.Empty;
-        public Guid? FacilityId { get; set; }
-        public string FacilityName { get; set; } = String.Empty;
-        public bool IsSystemAdmin { get; set; }
-        public string[] Roles { get; set; } = Array.Empty<string>();
+        public string UserCode { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public bool RememberMe { get; set; }
+        public bool KeepSession { get; set; }
     }
 }
-
-

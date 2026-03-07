@@ -65,6 +65,12 @@ public partial class AppointmentModal : ComponentBase
     public int? SelectedStartMin { get; set; }
 
     /// <summary>
+    /// 事前入力する患者名（音声コマンド等から）
+    /// </summary>
+    [Parameter]
+    public string? PrefilledPatientName { get; set; }
+
+    /// <summary>
     /// 閉じる時のコールバック
     /// </summary>
     [Parameter]
@@ -123,7 +129,7 @@ public partial class AppointmentModal : ComponentBase
                 Date = this.SelectedDate ?? this.DateTimeProvider.TodayDateOnly,
                 StartTimeString = TimeConstants.MinutesToTimeString(startMin),
                 Status = 0,
-                PatientName = String.Empty,
+                PatientName = this.PrefilledPatientName ?? String.Empty,
                 OrganizationName = String.Empty
             };
         }

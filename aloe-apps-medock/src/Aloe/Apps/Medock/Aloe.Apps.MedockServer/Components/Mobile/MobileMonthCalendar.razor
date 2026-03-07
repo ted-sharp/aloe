@@ -1,0 +1,60 @@
+@* モバイル月間カレンダーグリッド（CSS grid-cols-7、DOMベース） *@
+@using Aloe.Apps.MedockServer.ApplicationServices.Mobile
+@using Aloe.Apps.MedockLib.Data.Entities
+@implements IDisposable
+
+<div class="w-full select-none">
+    <!-- 曜日ヘッダー -->
+    <div class="grid grid-cols-7 border-l border-t border-base-300">
+        @foreach (var dayName in new[] { "日", "月", "火", "水", "木", "金", "土" })
+        {
+            var color = dayName == "日" ? "text-red-500" : dayName == "土" ? "text-blue-500" : "text-base-content";
+            <div class="text-center text-xs py-1 border-r border-b border-base-300 @color font-medium">@dayName</div>
+        }
+    </div>
+
+    <!-- 日付グリッド -->
+    <div class="grid grid-cols-7 border-l border-t border-base-300">
+        @foreach (var cell in _cells)
+        {
+            var isSelected = cell.Date == SelectedDate;
+            var isToday = cell.Date == _today;
+            var isCurrentMonth = cell.Date.Month == CurrentDate.Month;
+            var symbol = MobileSymbolHelper.GetSymbol(cell.ApptCap, cell.ApptCount);
+
+            var cellClass = "relative h-[46px] border-r border-b border-base-300 cursor-pointer " +
+                (isSelected ? "bg-primary/10 ring-2 ring-inset ring-primary " : "hover:bg-base-200 ") +
+                (!isCurrentMonth ? "opacity-30 " : "");
+
+            <div class="@cellClass"
+                 @onclick="() => HandleCellClick(cell.Date)"
+                 @onpointerdown="(e) => HandlePointerDown(cell.Date, e)"
+                 @onpointerup="HandlePointerUp"
+                 @onpointercancel="HandlePointerUp">
+
+                <!-- 日付番号（左上） -->
+                <div class="absolute top-0.5 left-1 text-xs @(isToday ? "badge badge-primary badge-xs px-1" : "")">
+                    @cell.Date.Day
+                </div>
+
+                <!-- 記号 + 件数オーバーレイ（中央） -->
+                @if (isCurrentMonth)
+                {
+                    <div class="absolute inset-0 flex items-center justify-center mt-2">
+                        <div class="relative inline-flex items-center justify-center">
+                            <span class="text-2xl opacity-30 @MobileSymbolHelper.ToColorClass(symbol)">
+                                @MobileSymbolHelper.ToChar(symbol)
+                            </span>
+                            @if (cell.ApptCap > 0)
+                            {
+                                <span class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-base-content">
+                                    @cell.ApptCount/@cell.ApptCap
+                                </span>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

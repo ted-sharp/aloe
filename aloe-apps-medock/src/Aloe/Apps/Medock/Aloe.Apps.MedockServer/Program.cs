@@ -21,8 +21,9 @@ builder.Services.AddSignalR();
 builder.Services.AddMedockHttpClient();
 builder.Services.AddMedockDbContext(builder.Configuration, builder.Environment);
 builder.Services.AddMedockRepositories();
-builder.Services.AddMedockServices();
+builder.Services.AddMedockServices(builder.Configuration);
 builder.Services.AddMedockCalendarServices();
+builder.Services.AddMedockMobileServices();
 builder.Services.AddMedockAuthentication(builder.Configuration, builder.Environment);
 
 var app = builder.Build();

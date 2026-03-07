@@ -9,6 +9,38 @@ internal static class UserSeeder
 {
     public static async Task<bool> SeedAsync(MedockDbContext context, PasswordHasher passwordHasher, IDateTimeProvider dateTimeProvider, Guid facilityId, Guid floorId)
     {
+        // mcp-system ユーザーのシード（adminとは独立）
+        var existingMcpSystem = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "mcp-system");
+        if (existingMcpSystem == null)
+        {
+            Console.WriteLine("[INFO] Creating mcp-system user...");
+            var (mcpHash, mcpSalt) = passwordHasher.HashPassword("mcp-system-password");
+            var mcpSystemUser = new User
+            {
+                UserId = Guid.CreateVersion7(),
+                UserCode = "mcp-system",
+                Email = "mcp-system@example.com",
+                UserDisplayName = "MCPシステム",
+                PasswordHash = mcpHash,
+                PasswordSalt = mcpSalt,
+                IsSystemAdmin = true,
+                IsDeleted = false,
+                CreatedAt = dateTimeProvider.Now,
+                UpdatedAt = dateTimeProvider.Now,
+                CreatedUserId = Guid.Empty,
+                CreatedSessionId = Guid.Empty,
+                UpdatedUserId = Guid.Empty,
+                UpdatedSessionId = Guid.Empty
+            };
+            context.Users.Add(mcpSystemUser);
+            await context.SaveChangesAsync();
+            Console.WriteLine($"  [+] User: {mcpSystemUser.UserDisplayName} - {mcpSystemUser.UserCode}");
+        }
+        else
+        {
+            Console.WriteLine("[SKIP] mcp-system user already exists. Skipping.");
+        }
+
         var existingAdmin = await context.Users.FirstOrDefaultAsync(u => u.UserCode == "admin");
         var needsUserSeed = existingAdmin == null;
 

@@ -1,5 +1,6 @@
 @page "/calendar"
 @layout CalendarLayout
+@rendermode InteractiveServer
 @using Aloe.Apps.MedockLib.Services
 @using Aloe.Apps.MedockServer.Components.Layout
 @using Aloe.Apps.MedockServer.Components.FAB
@@ -348,6 +349,7 @@
     IsOpen="@IsModalOpen"
     SelectedDate="@ModalDate"
     SelectedStartMin="@ModalStartMin"
+    PrefilledPatientName="@ModalPatientName"
     AppointmentId="@SelectedAppointmentId"
     OnClose="@CloseModal"
     OnSave="@HandleSaveAppointment"
