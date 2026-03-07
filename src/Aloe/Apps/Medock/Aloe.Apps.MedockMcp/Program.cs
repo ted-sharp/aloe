@@ -4,20 +4,13 @@ using Aloe.Apps.MedockLib.Services;
 using Aloe.Apps.MedockMcp.Services;
 using Aloe.Apps.MedockMcp.Tools;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
-var builder = Host.CreateApplicationBuilder(args);
+var builder = WebApplication.CreateBuilder(args);
 
-// ログはstderrへ（stdoutはMCP JSON-RPCで使用）
-builder.Logging.ClearProviders();
-builder.Logging.AddConsole(o => o.LogToStandardErrorThreshold = LogLevel.Trace);
-builder.Logging.SetMinimumLevel(LogLevel.Warning);
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 // DB
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -30,7 +23,7 @@ builder.Services.AddDbContextFactory<MedockDbContext>(
 
 // Services
 builder.Services.AddSingleton<IDateTimeProvider, JstDateTimeProvider>();
-builder.Services.AddSingleton<PasswordHasher>();
+builder.Services.AddSingleton(_ => PasswordHasher.Default);
 builder.Services.Configure<CookieSettings>(builder.Configuration.GetSection("Cookie"));
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddSingleton<IUserContextService, McpUserContextService>();
@@ -46,10 +39,12 @@ builder.Services.AddScoped<IAppointmentFormService, AppointmentFormService>();
 // MCP
 builder.Services
     .AddMcpServer()
-    .WithStdioServerTransport()
+    .WithHttpTransport()
     .WithTools<AppointmentQueryTools>()
     .WithTools<AppointmentStatsTools>()
     .WithTools<FacilityTools>()
     .WithTools<SystemTools>();
 
-await builder.Build().RunAsync();
+var app = builder.Build();
+app.MapMcp();
+await app.RunAsync();
