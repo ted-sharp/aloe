@@ -3,13 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/main/VisualStudio.gitignore
 
-# Ignore claude code directory
-.claude/*
-
-# Ignore all local files
-*.local.mdc
-*.local.json
-
 # User-specific files
 *.rsuser
 *.suo
@@ -626,3 +619,12 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# =========================================
+# Aloe.ignore
+# https://github.com/ted-sharp/aloe
+# =========================================
+
+# Ignore all local files
+# including .local.mdc and .local.json
+*.local.*
