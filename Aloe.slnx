@@ -1,0 +1,97 @@
+<Solution>
+  <Folder Name="/Apps/" />
+  <Folder Name="/Apps/FileBridge/">
+    <Project Path="aloe-apps-filebridge/src/Aloe/Apps/FileBridge/Aloe.Apps.FileBridgeLib/Aloe.Apps.FileBridgeLib.csproj" />
+    <Project Path="aloe-apps-filebridge/src/Aloe/Apps/FileBridge/Aloe.Apps.FileBridge/Aloe.Apps.FileBridge.csproj" />
+    <Project Path="aloe-apps-filebridge/src/Aloe/Apps/FileBridge/Aloe.Apps.FileBridge.Dummy/Aloe.Apps.FileBridge.Dummy.csproj" />
+  </Folder>
+  <Folder Name="/Apps/Medock/">
+    <Project Path="aloe-apps-medock/src/Aloe/Apps/Medock/Aloe.Apps.MedockLib/Aloe.Apps.MedockLib.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Apps/Medock/Aloe.Apps.MedockServer/Aloe.Apps.MedockServer.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Apps/Medock/Aloe.Apps.MedockClient/Aloe.Apps.MedockClient.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Apps/Medock/Aloe.Apps.MedockSeed/Aloe.Apps.MedockSeed.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Apps/Medock/Aloe.Apps.MedockMcp/Aloe.Apps.MedockMcp.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" />
+    <Project Path="aloe-apps-medock/src/Aloe/Tests/Aloe.Apps.MedockServer.Tests/Aloe.Apps.MedockServer.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Apps/RazorReport/">
+    <Project Path="aloe-apps-rrd/src/Aloe/Apps/RazorReport/Aloe.Apps.RazorReportLib/Aloe.Apps.RazorReportLib.csproj" />
+    <Project Path="aloe-apps-rrd/src/Aloe/Apps/RazorReport/Aloe.Apps.RazorReportServer/Aloe.Apps.RazorReportServer.csproj" />
+    <Project Path="aloe-apps-rrd/src/Aloe/Apps/RazorReport/Aloe.Apps.RazorReportClient/Aloe.Apps.RazorReportClient.csproj" />
+    <Project Path="aloe-apps-rrd/src/Aloe/Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" />
+  </Folder>
+  <Folder Name="/Apps/ServiceMonitor/">
+    <Project Path="aloe-apps-servicemonitor/src/Aloe/Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorLib/Aloe.Apps.WindowsServiceMonitorLib.csproj" />
+    <Project Path="aloe-apps-servicemonitor/src/Aloe/Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorServer/Aloe.Apps.WindowsServiceMonitorServer.csproj" />
+    <Project Path="aloe-apps-servicemonitor/src/Aloe/Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorClient/Aloe.Apps.WindowsServiceMonitorClient.csproj" />
+    <Project Path="aloe-apps-servicemonitor/src/Aloe/Apps/WindowsServiceMonitor/Aloe.Apps.DummyService/Aloe.Apps.DummyService.csproj" />
+  </Folder>
+  <Folder Name="/Apps/SyncBridge/">
+    <Project Path="aloe-apps-syncbridge/src/Aloe/Apps/SyncBridge/Aloe.Apps.SyncBridgeLib/Aloe.Apps.SyncBridgeLib.csproj" Id="a73beae5-1d20-48eb-9c7b-15fb07de1624" />
+    <Project Path="aloe-apps-syncbridge/src/Aloe/Apps/SyncBridge/Aloe.Apps.SyncBridge/Aloe.Apps.SyncBridge.csproj" Id="3d4de615-439c-4138-9586-66291f8a8d89" />
+    <Project Path="aloe-apps-syncbridge/src/Aloe/Apps/SyncBridge/Aloe.Apps.DummyWpf/Aloe.Apps.DummyWpf.csproj" />
+  </Folder>
+  <Folder Name="/Utils/" />
+  <Folder Name="/Utils/CommandLine/">
+    <Project Path="aloe-utils-commandline/src/Aloe.Utils.CommandLine/Aloe.Utils.CommandLine.csproj" />
+    <Project Path="aloe-utils-commandline/src/Aloe.Utils.CommandLine.Tests/Aloe.Utils.CommandLine.Tests.csproj" />
+    <Project Path="aloe-utils-commandline/src/Aloe.Utils.CommandLine.Samples/Aloe.Utils.CommandLine.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Configuration.Default/">
+    <Project Path="aloe-utils-configuration-default/src/Aloe.Utils.Configuration.Default/Aloe.Utils.Configuration.Default.csproj" />
+    <Project Path="aloe-utils-configuration-default/src/Aloe.Utils.Configuration.Default.Tests/Aloe.Utils.Configuration.Default.Tests.csproj" />
+    <Project Path="aloe-utils-configuration-default/src/Aloe.Utils.Configuration.Default.Samples/Aloe.Utils.Configuration.Default.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Configuration.Json/">
+    <Project Path="aloe-utils-configuration-json/src/Aloe.Utils.Configuration.Json/Aloe.Utils.Configuration.Json.csproj" />
+    <Project Path="aloe-utils-configuration-json/src/Aloe.Utils.Configuration.Json.Tests/Aloe.Utils.Configuration.Json.Tests.csproj" />
+    <Project Path="aloe-utils-configuration-json/src/Aloe.Utils.Configuration.Json.Samples/Aloe.Utils.Configuration.Json.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Drawing/">
+    <Project Path="aloe-utils-drawing/src/Aloe.Utils.Drawing/Aloe.Utils.Drawing.csproj" />
+    <Project Path="aloe-utils-drawing/src/Aloe.Utils.Drawing.Tests/Aloe.Utils.Drawing.Tests.csproj" />
+    <Project Path="aloe-utils-drawing/src/Aloe.Utils.Drawing.Samples/Aloe.Utils.Drawing.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Drawing.Wpf/">
+    <Project Path="aloe-utils-drawing-wpf/src/Aloe.Utils.Drawing.Wpf/Aloe.Utils.Drawing.Wpf.csproj" />
+    <Project Path="aloe-utils-drawing-wpf/src/Aloe.Utils.Drawing.Wpf.Samples/Aloe.Utils.Drawing.Wpf.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Json/">
+    <Project Path="aloe-utils-json/src/Aloe.Utils.Json/Aloe.Utils.Json.csproj" />
+    <Project Path="aloe-utils-json/src/Aloe.Utils.Json.Tests/Aloe.Utils.Json.Tests.csproj" />
+    <Project Path="aloe-utils-json/src/Aloe.Utils.Json.Samples/Aloe.Utils.Json.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Logging.Dump/">
+    <Project Path="aloe-utils-logging-dump/src/Aloe.Utils.Logging.Dump/Aloe.Utils.Logging.Dump.csproj" />
+    <Project Path="aloe-utils-logging-dump/src/Aloe.Utils.Logging.Dump.Samples/Aloe.Utils.Logging.Dump.Samples.csproj" />
+  </Folder>
+  <Folder Name="/Utils/SafeIO/">
+    <Project Path="aloe-utils-safeio/src/Aloe.Utils.SafeIO/Aloe.Utils.SafeIO.csproj" />
+    <Project Path="aloe-utils-safeio/src/Aloe.Utils.SafeIO.Tests/Aloe.Utils.SafeIO.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Text/">
+    <Project Path="aloe-utils-text/src/Aloe.Utils.Text/Aloe.Utils.Text.csproj" />
+    <Project Path="aloe-utils-text/src/Aloe.Utils.Text.Tests/Aloe.Utils.Text.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Wafu.Date/">
+    <Project Path="aloe-utils-wafu-date/src/Aloe.Utils.Wafu.Date/Aloe.Utils.Wafu.Date.csproj" />
+    <Project Path="aloe-utils-wafu-date/src/Aloe.Utils.Wafu.Date.Tests/Aloe.Utils.Wafu.Date.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Wafu.JisCompat/">
+    <Project Path="aloe-utils-wafu-jiscompat/src/Aloe.Utils.Wafu.JisCompat/Aloe.Utils.Wafu.JisCompat.csproj" />
+    <Project Path="aloe-utils-wafu-jiscompat/src/Aloe.Utils.Wafu.JisCompat.Tests/Aloe.Utils.Wafu.JisCompat.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Wafu.Kansuji/">
+    <Project Path="aloe-utils-wafu-kansuji/src/Aloe.Utils.Wafu.Kansuji/Aloe.Utils.Wafu.Kansuji.csproj" />
+    <Project Path="aloe-utils-wafu-kansuji/src/Aloe.Utils.Wafu.Kansuji.Tests/Aloe.Utils.Wafu.Kansuji.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Wafu.Romaji/">
+    <Project Path="aloe-utils-wafu-romaji/src/Aloe.Utils.Wafu.Romaji/Aloe.Utils.Wafu.Romaji.csproj" />
+    <Project Path="aloe-utils-wafu-romaji/src/Aloe.Utils.Wafu.Romaji.Tests/Aloe.Utils.Wafu.Romaji.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Win32.ScCommand/">
+    <Project Path="aloe-utils-win32-sccommand/src/Aloe.Utils.Win32.ScCommand/Aloe.Utils.Win32.ScCommand.csproj" />
+    <Project Path="aloe-utils-win32-sccommand/src/Aloe.Utils.Win32.ScCommand.DummyService/Aloe.Utils.Win32.ScCommand.DummyService.csproj" />
+    <Project Path="aloe-utils-win32-sccommand/src/Aloe.Utils.Win32.ScCommand.Samples/Aloe.Utils.Win32.ScCommand.Samples.csproj" />
+  </Folder>
+</Solution>
