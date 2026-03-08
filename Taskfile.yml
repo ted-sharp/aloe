@@ -11,6 +11,11 @@ tasks:
     cmds:
       - powershell -File "{{.TASKFILE_DIR}}/scripts/pull-subtrees.ps1"
 
+  sync:
+    desc: Copy shared config files to all subtrees (run before treepush)
+    cmds:
+      - powershell -File "{{.TASKFILE_DIR}}/scripts/sync-config.ps1"
+
   treepush:
     desc: "Push local changes back to a subtree. Usage: task push PREFIX=aloe-utils"
     vars:
