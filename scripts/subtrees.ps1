@@ -1,5 +1,6 @@
 # Shared subtree definitions (dot-sourced by other scripts)
 $SUBTREES = @(
+    @{ Prefix = "aloe-apps-excelreport";            Url = "https://github.com/ted-sharp/aloe-apps-excelreport.git" }
     @{ Prefix = "aloe-apps-filebridge";             Url = "https://github.com/ted-sharp/aloe-apps-filebridge.git" }
     @{ Prefix = "aloe-apps-medock";                 Url = "https://github.com/ted-sharp/aloe-apps-medock.git" }
     @{ Prefix = "aloe-apps-rrd";                    Url = "https://github.com/ted-sharp/aloe-apps-rrd.git" }
