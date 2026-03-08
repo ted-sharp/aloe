@@ -1,0 +1,107 @@
+version: '3'
+
+vars:
+  SOLUTION: src/Aloe.slnx
+  NUGET_OUTPUT: artifacts/nuget
+  LOCAL_FEED: artifacts/local-feed
+  PUBLISH_DIR: artifacts/publish
+
+tasks:
+  build:
+    desc: ソリューション全体を Release ビルド
+    cmds:
+      - dotnet build "{{.SOLUTION}}" -c Release
+
+  test:
+    desc: 全テストを実行
+    cmds:
+      - dotnet test "{{.SOLUTION}}"
+
+  clean:
+    desc: ビルド成果物と artifacts/ を削除
+    cmds:
+      - dotnet clean "{{.SOLUTION}}"
+      - rm -rf artifacts/
+
+  pack:
+    desc: Utils ライブラリの NuGet パッケージを生成 (artifacts/nuget/)
+    cmds:
+      - mkdir -p "{{.NUGET_OUTPUT}}"
+      - |
+        for dir in src/Utils/Aloe.Utils.*/; do
+          name=$(basename "$dir")
+          case "$name" in *Tests* | *Samples*) continue ;; esac
+          dotnet pack "$dir" -c Release -o "{{.NUGET_OUTPUT}}"
+        done
+
+  push:local:
+    desc: ローカルフィード (artifacts/local-feed/) に NuGet パッケージを登録
+    deps: [pack]
+    cmds:
+      - mkdir -p "{{.LOCAL_FEED}}"
+      - |
+        for pkg in "{{.NUGET_OUTPUT}}"/*.nupkg; do
+          dotnet nuget push "$pkg" --source "$(pwd)/{{.LOCAL_FEED}}" --skip-duplicate
+        done
+
+  push:nuget:
+    desc: nuget.org に push（NUGET_API_KEY 環境変数が必要）
+    deps: [pack]
+    cmds:
+      - |
+        for pkg in "{{.NUGET_OUTPUT}}"/*.nupkg; do
+          dotnet nuget push "$pkg" \
+            --api-key "$NUGET_API_KEY" \
+            --source "https://api.nuget.org/v3/index.json" \
+            --skip-duplicate
+        done
+
+  release:
+    desc: pack → ローカルフィード → nuget.org の一括リリース
+    cmds:
+      - task: pack
+      - task: push:local
+      - task: push:nuget
+
+  publish:medock:
+    desc: MedockServer (Blazor Server) を win-x64 で publish
+    cmds:
+      - dotnet publish src/Apps/Medock/Aloe.Apps.MedockServer -c Release -r win-x64 --self-contained false -o "{{.PUBLISH_DIR}}/medock"
+
+  publish:mcp:
+    desc: MedockMcp (cross-platform Console) を全 RID で publish
+    cmds:
+      - |
+        for rid in win-x64 win-arm64 osx-arm64 linux-x64 linux-arm64 linux-musl-x64; do
+          dotnet publish src/Apps/Medock/Aloe.Apps.MedockMcp -c Release -r "$rid" --self-contained true -o "{{.PUBLISH_DIR}}/mcp/$rid"
+        done
+
+  publish:filebridge:
+    desc: FileBridge (Blazor Server) を win-x64 で publish
+    cmds:
+      - dotnet publish src/Apps/FileBridge/Aloe.Apps.FileBridge -c Release -r win-x64 --self-contained false -o "{{.PUBLISH_DIR}}/filebridge"
+
+  publish:razorreport:
+    desc: RazorReportServer (Blazor Server) を win-x64 で publish
+    cmds:
+      - dotnet publish src/Apps/RazorReport/Aloe.Apps.RazorReportServer -c Release -r win-x64 --self-contained false -o "{{.PUBLISH_DIR}}/razorreport"
+
+  publish:wsmonitor:
+    desc: WindowsServiceMonitorServer (Blazor Server) を win-x64 で publish
+    cmds:
+      - dotnet publish src/Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorServer -c Release -r win-x64 --self-contained false -o "{{.PUBLISH_DIR}}/wsmonitor"
+
+  publish:syncbridge:
+    desc: SyncBridge (.NET Framework 4.6.1 WinExe) を Release ビルド
+    cmds:
+      - dotnet build src/Apps/SyncBridge/Aloe.Apps.SyncBridge -c Release -o "{{.PUBLISH_DIR}}/syncbridge"
+
+  publish:all:
+    desc: 全アプリを publish
+    deps:
+      - publish:medock
+      - publish:mcp
+      - publish:filebridge
+      - publish:razorreport
+      - publish:wsmonitor
+      - publish:syncbridge
