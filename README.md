@@ -2,83 +2,67 @@
 
 ![.NET](https://img.shields.io/badge/.NET-10.0-512BD4?logo=dotnet) ![License](https://img.shields.io/badge/ライブラリ-MIT-green) ![Platform](https://img.shields.io/badge/platform-Windows-blue)
 
-Git Subtree で管理された .NET 10 アプリケーション＆ユーティリティライブラリ群のモノリポジトリです。
+.NET 10 アプリケーション＆ユーティリティライブラリ群のモノリポジトリです。
 
 ---
 
 ## リポジトリ構成
 
-### アプリケーション（5個）
+```
+aloe/
+├── docs/                              ドキュメント
+├── sql/                               DB スクリプト（medock）
+└── src/
+    ├── Aloe.slnx                      ルートソリューション
+    ├── Directory.Build.props           共通 MSBuild プロパティ（StyleCop）
+    ├── stylecop.json                   コードスタイル規約
+    ├── Apps/                           アプリケーション
+    │   ├── Medock/                     医薬品在庫管理
+    │   ├── FileBridge/                 ファイル転送
+    │   ├── RazorReport/               帳票エンジン
+    │   ├── WindowsServiceMonitor/     サービス監視
+    │   └── SyncBridge/                配布同期（.NET Framework 4.6.1）
+    ├── Libs/                           共有ライブラリ
+    │   └── Aloe.Libs.CoreLib/
+    └── Utils/                          ユーティリティ（NuGet 公開）
+```
+
+### アプリケーション
 
 | フォルダ | 説明 | 主な技術 |
 |---|---|---|
-| [aloe-apps-filebridge](./aloe-apps-filebridge/) | ファイル監視・自動処理 | Blazor Server, SignalR |
-| [aloe-apps-medock](./aloe-apps-medock/) | 医療予約管理 | Blazor Server, PostgreSQL, EF Core |
-| [aloe-apps-rrd](./aloe-apps-rrd/) | Razor レポート生成 | Blazor Server |
-| [aloe-apps-servicemonitor](./aloe-apps-servicemonitor/) | Windows サービス監視 | Blazor Server, WPF |
-| [aloe-apps-syncbridge](./aloe-apps-syncbridge/) | アプリ配布ブートストラッパー | .NET Framework 4.6.1 |
+| `Apps/FileBridge` | ファイル監視・自動処理 | Blazor Server, SignalR |
+| `Apps/Medock` | 医薬品在庫管理 | Blazor Server, PostgreSQL, EF Core |
+| `Apps/RazorReport` | Razor レポート生成 | Blazor Server |
+| `Apps/WindowsServiceMonitor` | Windows サービス監視 | Blazor Server |
+| `Apps/SyncBridge` | アプリ配布ブートストラッパー | .NET Framework 4.6.1 |
 
-### ユーティリティライブラリ（16個）
+### ユーティリティライブラリ（NuGet 公開 / 13本）
 
-**汎用**
-
-| フォルダ | 説明 |
+| パッケージ | 説明 |
 |---|---|
-| [aloe-utils](./aloe-utils/) | 共通ユーティリティ |
-| [aloe-utils-async](./aloe-utils-async/) | 非同期処理ヘルパー |
-| [aloe-utils-commandline](./aloe-utils-commandline/) | コマンドライン引数処理 |
-| [aloe-utils-json](./aloe-utils-json/) | JSON 処理 |
-| [aloe-utils-logging-dump](./aloe-utils-logging-dump/) | ログ・ダンプ出力 |
-| [aloe-utils-safeio](./aloe-utils-safeio/) | 安全なファイル I/O |
-| [aloe-utils-text](./aloe-utils-text/) | テキスト処理 |
-
-**設定**
-
-| フォルダ | 説明 |
-|---|---|
-| [aloe-utils-configuration-default](./aloe-utils-configuration-default/) | デフォルト設定プロバイダー |
-| [aloe-utils-configuration-json](./aloe-utils-configuration-json/) | JSON 設定プロバイダー |
-
-**描画**
-
-| フォルダ | 説明 |
-|---|---|
-| [aloe-utils-drawing](./aloe-utils-drawing/) | 描画ユーティリティ |
-| [aloe-utils-drawing-wpf](./aloe-utils-drawing-wpf/) | WPF 描画ユーティリティ |
-
-**日本語処理**
-
-| フォルダ | 説明 |
-|---|---|
-| [aloe-utils-wafu-date](./aloe-utils-wafu-date/) | 和暦・元号処理 |
-| [aloe-utils-wafu-jiscompat](./aloe-utils-wafu-jiscompat/) | JIS 互換文字処理 |
-| [aloe-utils-wafu-kansuji](./aloe-utils-wafu-kansuji/) | 漢数字変換 |
-| [aloe-utils-wafu-romaji](./aloe-utils-wafu-romaji/) | ローマ字変換 |
-
-**Windows**
-
-| フォルダ | 説明 |
-|---|---|
-| [aloe-utils-win32-sccommand](./aloe-utils-win32-sccommand/) | Win32 サービス制御コマンド |
-
-### ルートファイル
-
-| ファイル | 説明 |
-|---|---|
-| `Aloe.slnx` | 全プロジェクトを束ねるルートソリューション（Visual Studio 2022+ 形式） |
-| `Aloe.slnx.DotSettings` | ReSharper コードクリーンアップ設定 |
-| `Directory.Build.props` | 全プロジェクト共通の MSBuild プロパティ（StyleCop 設定参照） |
-| `stylecop.json` | StyleCop コードスタイル規約（会社名: `ted-sharp`） |
-| `Taskfile.yml` | サブツリー管理タスク（`setup` / `treepull` / `treepush`） |
-| `scripts/` | サブツリー操作 PowerShell スクリプト群 |
+| `Aloe.Utils.CommandLine` | コマンドライン引数処理 |
+| `Aloe.Utils.Configuration.Default` | デフォルト設定プロバイダー |
+| `Aloe.Utils.Configuration.Json` | JSON 設定プロバイダー |
+| `Aloe.Utils.Drawing` | 描画ユーティリティ |
+| `Aloe.Utils.Drawing.Wpf` | WPF 描画ユーティリティ |
+| `Aloe.Utils.Json` | JSON 処理 |
+| `Aloe.Utils.Logging.Dump` | ログ・ダンプ出力 |
+| `Aloe.Utils.SafeIO` | 安全なファイル I/O |
+| `Aloe.Utils.Text` | テキスト処理 |
+| `Aloe.Utils.Wafu.Date` | 和暦・元号処理 |
+| `Aloe.Utils.Wafu.JisCompat` | JIS 互換文字処理 |
+| `Aloe.Utils.Wafu.Kansuji` | 漢数字変換 |
+| `Aloe.Utils.Wafu.Romaji` | ローマ字変換 |
+| `Aloe.Utils.Win32.ScCommand` | Win32 サービス制御コマンド |
 
 ---
 
 ## 技術スタック
 
-- **.NET 10.0 / C# 14**
+- **.NET 10.0 / C# 14**、ソリューション形式は `.slnx`
 - **Blazor Server**（InteractiveServerRendering）
-- **PostgreSQL + EF Core 9 + Npgsql**
+- **PostgreSQL + EF Core 9 + Npgsql**（medock のみ）
 - **SignalR, Serilog, Tailwind CSS + daisyUI**
 
 ---
@@ -88,23 +72,121 @@ Git Subtree で管理された .NET 10 アプリケーション＆ユーティ�
 | ツール | 用途 |
 |---|---|
 | [.NET 10 SDK](https://dotnet.microsoft.com/download) | ビルド・実行 |
-| [Task](https://taskfile.dev) | タスクランナー |
+| [Task](https://taskfile.dev) | タスクランナー（`winget install Task.Task`） |
 | PostgreSQL 18+ | medock 使用時 |
-| PowerShell | スクリプト実行 |
 
 ---
 
-## セットアップ
+## ビルド・テスト
 
 ```bash
-# サブツリーリモートの登録と初回チェックアウト
-task setup
+# ソリューション全体を Release ビルド
+task build
 
-# すべてのサブツリーを最新に更新
-task treepull
+# 全テストを実行
+task test
 
-# 特定サブツリーへ変更を書き戻す
-task treepush PREFIX=aloe-utils
+# ビルド成果物を削除
+task clean
+```
+
+---
+
+## NuGet リリース
+
+### ローカルフィードへの登録
+
+```bash
+task push:local
+```
+
+- `artifacts/local-feed/` にパッケージを登録します。
+- 個別タスクとして実行した場合でも、事前に `pack` が自動実行されます。
+- ローカルフィードを参照するには `dotnet nuget add source` で登録してください。
+
+```bash
+dotnet nuget add source "$(pwd)/artifacts/local-feed" --name aloe-local
+```
+
+### nuget.org への公開
+
+**必須の環境変数**
+
+| 変数名 | 説明 |
+|---|---|
+| `NUGET_API_KEY` | nuget.org の API キー（[取得方法](https://www.nuget.org/account/apikeys)） |
+
+```bash
+export NUGET_API_KEY="your-api-key-here"
+task push:nuget
+```
+
+`NUGET_API_KEY` が未設定の場合はエラーで停止します（意図的）。
+
+### 一括リリース（pack → ローカル → nuget.org）
+
+```bash
+export NUGET_API_KEY="your-api-key-here"
+task release
+```
+
+`pack` → `push:local` → `push:nuget` の順に実行されます。
+
+### パッケージのみ生成
+
+```bash
+task pack
+# → artifacts/nuget/*.nupkg に 13本生成される
+```
+
+---
+
+## アプリ Publish
+
+成果物はすべて `artifacts/publish/` 以下に出力されます。
+
+```bash
+task publish:medock       # MedockServer → artifacts/publish/medock/
+task publish:mcp          # MedockMcp (全6RID) → artifacts/publish/mcp/{rid}/
+task publish:filebridge   # FileBridge → artifacts/publish/filebridge/
+task publish:razorreport  # RazorReportServer → artifacts/publish/razorreport/
+task publish:wsmonitor    # WindowsServiceMonitorServer → artifacts/publish/wsmonitor/
+task publish:syncbridge   # SyncBridge (dotnet build) → artifacts/publish/syncbridge/
+
+# 全アプリを並列 publish
+task publish:all
+```
+
+`publish:mcp` は以下の 6 RID すべてに対して自己完結型バイナリを生成します：
+
+```
+win-x64 / win-arm64 / osx-arm64 / linux-x64 / linux-arm64 / linux-musl-x64
+```
+
+> **注意**: SyncBridge は .NET Framework 4.6.1 のため `dotnet publish` 非対応です。
+> `dotnet build` によるビルドのみ行います。
+
+---
+
+## 成果物ディレクトリ
+
+```
+artifacts/
+├── nuget/          .nupkg / .snupkg
+├── local-feed/     ローカル NuGet フィード
+└── publish/
+    ├── medock/
+    ├── mcp/
+    │   ├── win-x64/
+    │   ├── win-arm64/
+    │   ├── osx-arm64/
+    │   ├── linux-x64/
+    │   ├── linux-arm64/
+    │   └── linux-musl-x64/
+    ├── filebridge/
+    ├── razorreport/
+    ├── wsmonitor/
+    └── syncbridge/
 ```
 
 ---
