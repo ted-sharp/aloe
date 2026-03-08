@@ -155,7 +155,7 @@ public static class JsonExtensions
         "JSON serialization and deserialization might require types that cannot be statically analyzed and might need runtime code generation.")]
     public static bool TryToObj<T>(this string json, [NotNullWhen(true)] out T? result)
     {
-        if (string.IsNullOrWhiteSpace(json))
+        if (String.IsNullOrWhiteSpace(json))
         {
             result = default;
             return false;
@@ -183,7 +183,7 @@ public static class JsonExtensions
     /// <returns>変換に成功した場合はtrue、それ以外はfalse。</returns>
     public static bool TryToObj<T>(this string json, JsonTypeInfo<T> jsonTypeInfo, [NotNullWhen(true)] out T? result)
     {
-        if (string.IsNullOrWhiteSpace(json) || jsonTypeInfo is null)
+        if (String.IsNullOrWhiteSpace(json) || jsonTypeInfo is null)
         {
             result = default;
             return false;

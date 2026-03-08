@@ -228,7 +228,7 @@ public partial class JsonExtensionsTests
     public void TryToObj_異常系_空文字列の場合はfalseを返すこと()
     {
         // Arrange
-        var emptyJson = string.Empty;
+        var emptyJson = String.Empty;
 
         // Act
         var result = emptyJson.TryToObj<SampleClass>(out var actual);

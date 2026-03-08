@@ -51,12 +51,12 @@ public partial class UserAvatarFab : ComponentBase
         // 現在のテーマを取得
         try
         {
-            SelectedTheme = await JSRuntime.InvokeAsync<string>(
+            this.SelectedTheme = await this.JSRuntime.InvokeAsync<string>(
                 "eval", "document.documentElement.getAttribute('data-theme') || 'light'") ?? "light";
         }
         catch
         {
-            SelectedTheme = "light";
+            this.SelectedTheme = "light";
         }
     }
 
@@ -81,10 +81,10 @@ public partial class UserAvatarFab : ComponentBase
         try
         {
             // テーマを適用（calendar-main.js の setTheme 関数を呼び出し）
-            await JSRuntime.InvokeVoidAsync(
+            await this.JSRuntime.InvokeVoidAsync(
                 "eval", $"(function(){{document.documentElement.setAttribute('data-theme', '{newTheme}');try{{localStorage.setItem('medock-theme', '{newTheme}');}}catch(e){{}}}})()");
 
-            SelectedTheme = newTheme;
+            this.SelectedTheme = newTheme;
         }
         catch (Exception ex)
         {

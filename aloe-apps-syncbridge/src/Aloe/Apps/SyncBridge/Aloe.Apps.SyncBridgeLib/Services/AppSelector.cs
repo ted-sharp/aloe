@@ -13,7 +13,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                 throw new InvalidOperationException("マニフェストにアプリケーションが定義されていません");
             }
 
-            if (!string.IsNullOrEmpty(appId))
+            if (!String.IsNullOrEmpty(appId))
             {
                 var app = manifest.Applications.FirstOrDefault(a =>
                     a.AppId.Equals(appId, StringComparison.OrdinalIgnoreCase));

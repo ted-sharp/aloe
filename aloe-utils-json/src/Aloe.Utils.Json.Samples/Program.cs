@@ -163,9 +163,9 @@ Console.WriteLine();
 /// </summary>
 public class Person
 {
-    public string Name { get; set; } = string.Empty;
+    public string Name { get; set; } = String.Empty;
     public int Age { get; set; }
-    public string Email { get; set; } = string.Empty;
+    public string Email { get; set; } = String.Empty;
 }
 
 /// <summary>

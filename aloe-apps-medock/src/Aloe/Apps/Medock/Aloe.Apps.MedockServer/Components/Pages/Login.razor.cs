@@ -39,7 +39,7 @@ public partial class Login : ComponentBase
         var httpContext = this.HttpContextAccessor.HttpContext;
         if (httpContext?.Request.Cookies != null)
         {
-            if (httpContext.Request.Cookies.TryGetValue(RememberUserCodeCookieName, out var savedUserCode) && !string.IsNullOrEmpty(savedUserCode))
+            if (httpContext.Request.Cookies.TryGetValue(RememberUserCodeCookieName, out var savedUserCode) && !String.IsNullOrEmpty(savedUserCode))
             {
                 this.loginModel.UserCode = savedUserCode;
                 this.loginModel.RememberMe = true;
@@ -60,7 +60,7 @@ public partial class Login : ComponentBase
 
         try
         {
-            if (string.IsNullOrEmpty(this.loginModel.UserCode) || string.IsNullOrEmpty(this.loginModel.Password))
+            if (String.IsNullOrEmpty(this.loginModel.UserCode) || String.IsNullOrEmpty(this.loginModel.Password))
             {
                 this.ErrorMessage = "ユーザーIDとパスワードを入力してください。";
                 this.IsLoading = false;
@@ -77,7 +77,7 @@ public partial class Login : ComponentBase
                 return;
             }
 
-            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
+            var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? String.Empty;
             var userAgent = httpContext.Request.Headers.UserAgent.ToString();
             var appName = "MedockServer";
 
@@ -155,8 +155,8 @@ public partial class Login : ComponentBase
 
     public class LoginModel
     {
-        public string UserCode { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string UserCode { get; set; } = String.Empty;
+        public string Password { get; set; } = String.Empty;
         public bool RememberMe { get; set; }
         public bool KeepSession { get; set; }
     }

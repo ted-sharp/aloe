@@ -27,7 +27,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             var startInfo = new ProcessStartInfo
             {
                 FileName = context.DotnetExePath,
-                Arguments = BuildArgumentsString(context.AppDllPath, context.Arguments),
+                Arguments = this.BuildArgumentsString(context.AppDllPath, context.Arguments),
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 WorkingDirectory = context.WorkingDirectory
@@ -55,7 +55,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             var sb = new StringBuilder();
 
             // DLLパスを追加（必ずクォートで囲む）
-            sb.Append(EscapeArgument(appDllPath));
+            sb.Append(this.EscapeArgument(appDllPath));
 
             // アプリケーション引数を追加
             if (appArguments != null)
@@ -63,7 +63,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                 foreach (var arg in appArguments)
                 {
                     sb.Append(" ");
-                    sb.Append(EscapeArgument(arg));
+                    sb.Append(this.EscapeArgument(arg));
                 }
             }
 
@@ -76,7 +76,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
         /// </summary>
         private string EscapeArgument(string argument)
         {
-            if (string.IsNullOrEmpty(argument))
+            if (String.IsNullOrEmpty(argument))
             {
                 return "\"\"";
             }

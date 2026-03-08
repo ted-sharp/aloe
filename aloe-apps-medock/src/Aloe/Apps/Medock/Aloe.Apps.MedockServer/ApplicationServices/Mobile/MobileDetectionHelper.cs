@@ -11,5 +11,5 @@ public static class MobileDetectionHelper
         new(@"iPhone|Android|Mobile", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
     public static bool IsMobile(string userAgent)
-        => !string.IsNullOrEmpty(userAgent) && Pattern.IsMatch(userAgent);
+        => !String.IsNullOrEmpty(userAgent) && Pattern.IsMatch(userAgent);
 }

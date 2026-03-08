@@ -23,7 +23,7 @@ public static class ImageIconExtensions
     public static Icon ToIcon(this Image image)
     {
         ArgumentNullException.ThrowIfNull(image);
-        
+
         try
         {
             var bmp = image as Bitmap ?? new Bitmap(image);

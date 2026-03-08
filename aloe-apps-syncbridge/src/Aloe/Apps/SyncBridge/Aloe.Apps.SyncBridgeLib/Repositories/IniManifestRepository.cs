@@ -30,7 +30,7 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
 
         public SyncManifest LoadManifest()
         {
-            string manifestPath = GetManifestPath();
+            string manifestPath = this.GetManifestPath();
 
             if (!File.Exists(manifestPath))
             {
@@ -39,12 +39,12 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
 
             var manifest = new SyncManifest
             {
-                Version = GetValue(manifestPath, "Manifest", "Version"),
-                SourceRootPath = Environment.ExpandEnvironmentVariables(GetValue(manifestPath, "Manifest", "SourceRootPath")),
-                LocalBasePath = Environment.ExpandEnvironmentVariables(GetValue(manifestPath, "Manifest", "LocalBasePath")),
-                Runtime = LoadRuntime(manifestPath),
-                SyncOptions = LoadSyncOptions(manifestPath),
-                Applications = LoadApplications(manifestPath)
+                Version = this.GetValue(manifestPath, "Manifest", "Version"),
+                SourceRootPath = Environment.ExpandEnvironmentVariables(this.GetValue(manifestPath, "Manifest", "SourceRootPath")),
+                LocalBasePath = Environment.ExpandEnvironmentVariables(this.GetValue(manifestPath, "Manifest", "LocalBasePath")),
+                Runtime = this.LoadRuntime(manifestPath),
+                SyncOptions = this.LoadSyncOptions(manifestPath),
+                Applications = this.LoadApplications(manifestPath)
             };
 
             return manifest;
@@ -54,8 +54,8 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
         {
             return new RuntimeConfig
             {
-                RelativePath = GetValue(manifestPath, "Runtime", "RelativePath"),
-                ZipFileName = GetValue(manifestPath, "Runtime", "ZipFileName", "")
+                RelativePath = this.GetValue(manifestPath, "Runtime", "RelativePath"),
+                ZipFileName = this.GetValue(manifestPath, "Runtime", "ZipFileName", "")
             };
         }
 
@@ -63,8 +63,8 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
         {
             var options = new SyncOptions();
 
-            string skipPatterns = GetValue(manifestPath, "SyncOptions", "SkipPatterns", "");
-            if (!string.IsNullOrEmpty(skipPatterns))
+            string skipPatterns = this.GetValue(manifestPath, "SyncOptions", "SkipPatterns", "");
+            if (!String.IsNullOrEmpty(skipPatterns))
             {
                 options.SkipPatterns = skipPatterns
                     .Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries)
@@ -78,7 +78,7 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
         private List<AppConfig> LoadApplications(string manifestPath)
         {
             var apps = new List<AppConfig>();
-            var sectionNames = GetAllSectionNames(manifestPath);
+            var sectionNames = this.GetAllSectionNames(manifestPath);
 
             foreach (var sectionName in sectionNames.Where(s => s.StartsWith("App.")))
             {
@@ -87,10 +87,10 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
                 var app = new AppConfig
                 {
                     AppId = appId,
-                    RelativePath = GetValue(manifestPath, sectionName, "RelativePath"),
-                    EntryDll = GetValue(manifestPath, sectionName, "EntryDll"),
-                    LaunchArgPattern = GetValue(manifestPath, sectionName, "LaunchArgPattern", ""),
-                    ZipFileName = GetValue(manifestPath, sectionName, "ZipFileName", "")
+                    RelativePath = this.GetValue(manifestPath, sectionName, "RelativePath"),
+                    EntryDll = this.GetValue(manifestPath, sectionName, "EntryDll"),
+                    LaunchArgPattern = this.GetValue(manifestPath, sectionName, "LaunchArgPattern", ""),
+                    ZipFileName = this.GetValue(manifestPath, sectionName, "ZipFileName", "")
                 };
 
                 apps.Add(app);
@@ -109,7 +109,7 @@ namespace Aloe.Apps.SyncBridgeLib.Repositories
                     return new List<string>();
 
                 string result = Marshal.PtrToStringUni(buffer, length - 1);
-                return result.Split('\0').Where(s => !string.IsNullOrEmpty(s)).ToList();
+                return result.Split('\0').Where(s => !String.IsNullOrEmpty(s)).ToList();
             }
             finally
             {

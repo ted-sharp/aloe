@@ -7,7 +7,7 @@ public class AzureOpenAiSettings
     public string? ApiKey { get; set; }
     public string? DeploymentName { get; set; }
     public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(this.Endpoint) &&
-        !string.IsNullOrWhiteSpace(this.ApiKey) &&
-        !string.IsNullOrWhiteSpace(this.DeploymentName);
+        !String.IsNullOrWhiteSpace(this.Endpoint) &&
+        !String.IsNullOrWhiteSpace(this.ApiKey) &&
+        !String.IsNullOrWhiteSpace(this.DeploymentName);
 }

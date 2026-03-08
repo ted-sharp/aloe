@@ -82,7 +82,7 @@ public partial class MobileMonthCalendar : ComponentBase, IDisposable
         this._longPressTimer = new System.Threading.Timer(
             async _ =>
             {
-                await InvokeAsync(async () =>
+                await this.InvokeAsync(async () =>
                 {
                     if (this._longPressDate.HasValue)
                     {

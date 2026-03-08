@@ -16,14 +16,14 @@ public class ImageIconExtensionsTests : IDisposable
     public ImageIconExtensionsTests()
     {
         // Create a simple 16x16 test bitmap
-        _testBitmap = new Bitmap(16, 16);
-        using var graphics = Graphics.FromImage(_testBitmap);
+        this._testBitmap = new Bitmap(16, 16);
+        using var graphics = Graphics.FromImage(this._testBitmap);
         graphics.Clear(Color.Red);
     }
 
     public void Dispose()
     {
-        _testBitmap?.Dispose();
+        this._testBitmap?.Dispose();
     }
 
     [Fact]
@@ -31,7 +31,7 @@ public class ImageIconExtensionsTests : IDisposable
     public void ToIcon_ValidBitmap_ReturnsIcon()
     {
         // Act
-        using var icon = _testBitmap.ToIcon();
+        using var icon = this._testBitmap.ToIcon();
 
         // Assert
         Assert.NotNull(icon);
@@ -69,8 +69,8 @@ public class ImageIconExtensionsTests : IDisposable
     public void ToIcon_MultipleCallsOnSameImage_ReturnsDistinctIcons()
     {
         // Act
-        using var icon1 = _testBitmap.ToIcon();
-        using var icon2 = _testBitmap.ToIcon();
+        using var icon1 = this._testBitmap.ToIcon();
+        using var icon2 = this._testBitmap.ToIcon();
 
         // Assert
         Assert.NotNull(icon1);

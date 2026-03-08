@@ -11,28 +11,28 @@ namespace Aloe.Apps.DummyWpf
     {
         public MainWindow()
         {
-            InitializeComponent();
-            LoadApplicationInfo();
+            this.InitializeComponent();
+            this.LoadApplicationInfo();
         }
 
         private void LoadApplicationInfo()
         {
             var assembly = Assembly.GetExecutingAssembly();
-            AssemblyNameText.Text = assembly.GetName().Name ?? "Unknown";
-            VersionText.Text = assembly.GetName().Version?.ToString() ?? "Unknown";
-            WorkingDirectoryText.Text = Environment.CurrentDirectory;
+            this.AssemblyNameText.Text = assembly.GetName().Name ?? "Unknown";
+            this.VersionText.Text = assembly.GetName().Version?.ToString() ?? "Unknown";
+            this.WorkingDirectoryText.Text = Environment.CurrentDirectory;
 
             var args = Environment.GetCommandLineArgs();
-            ArgsCountText.Text = $"Arguments Count: {args.Length}";
+            this.ArgsCountText.Text = $"Arguments Count: {args.Length}";
 
             var argsBuilder = new StringBuilder();
             for (int i = 0; i < args.Length; i++)
             {
                 argsBuilder.AppendLine($"[{i}] {args[i]}");
             }
-            ArgsTextBox.Text = argsBuilder.ToString();
+            this.ArgsTextBox.Text = argsBuilder.ToString();
 
-            LoadEnvironmentVariables();
+            this.LoadEnvironmentVariables();
         }
 
         private void LoadEnvironmentVariables()
@@ -43,7 +43,7 @@ namespace Aloe.Apps.DummyWpf
             var sortedKeys = new List<string>();
             foreach (var key in envVars.Keys)
             {
-                sortedKeys.Add(key.ToString() ?? string.Empty);
+                sortedKeys.Add(key.ToString() ?? String.Empty);
             }
             sortedKeys.Sort();
 
@@ -53,17 +53,17 @@ namespace Aloe.Apps.DummyWpf
                 envBuilder.AppendLine($"{key} = {value}");
             }
 
-            EnvironmentTextBox.Text = envBuilder.ToString();
+            this.EnvironmentTextBox.Text = envBuilder.ToString();
         }
 
         private void RefreshButton_Click(object sender, RoutedEventArgs e)
         {
-            LoadApplicationInfo();
+            this.LoadApplicationInfo();
         }
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
-            Close();
+            this.Close();
         }
     }
 }

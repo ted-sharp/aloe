@@ -64,7 +64,7 @@ public partial class MobileFilterSheet : ComponentBase
 
     private void HandleCapacityChange(Microsoft.AspNetCore.Components.ChangeEventArgs e)
     {
-        if (int.TryParse(e.Value?.ToString(), out var val))
+        if (Int32.TryParse(e.Value?.ToString(), out var val))
             this._requiredCapacity = val;
     }
 

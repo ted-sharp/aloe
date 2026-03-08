@@ -24,15 +24,15 @@ public class ImageLoaderTests : IDisposable
 
     public ImageLoaderTests()
     {
-        _testImagePath = Path.GetTempFileName() + ".png";
-        File.WriteAllBytes(_testImagePath, _validImageData);
+        this._testImagePath = Path.GetTempFileName() + ".png";
+        File.WriteAllBytes(this._testImagePath, this._validImageData);
     }
 
     public void Dispose()
     {
-        if (File.Exists(_testImagePath))
+        if (File.Exists(this._testImagePath))
         {
-            File.Delete(_testImagePath);
+            File.Delete(this._testImagePath);
         }
     }
 
@@ -41,7 +41,7 @@ public class ImageLoaderTests : IDisposable
     public void Load_ValidImageFile_ReturnsImage()
     {
         // Act
-        using var image = ImageLoader.Load(_testImagePath);
+        using var image = ImageLoader.Load(this._testImagePath);
 
         // Assert
         Assert.NotNull(image);
@@ -63,7 +63,7 @@ public class ImageLoaderTests : IDisposable
     public void Load_EmptyPath_ThrowsArgumentException()
     {
         // Act & Assert
-        var exception = Assert.Throws<ArgumentException>(() => ImageLoader.Load(string.Empty));
+        var exception = Assert.Throws<ArgumentException>(() => ImageLoader.Load(String.Empty));
         Assert.Contains("The value cannot be an empty string", exception.Message);
     }
 

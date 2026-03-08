@@ -135,13 +135,13 @@ public sealed class AzureOpenAiVoiceCommandParser(
         {
             var parts2 = new List<string>();
             if (filter?.SelectedDays is { Count: > 0 } days)
-                parts2.Add(string.Join("・", days.Select(d => "日月火水木金土"[d] + "曜")));
+                parts2.Add(String.Join("・", days.Select(d => "日月火水木金土"[d] + "曜")));
             if (filter?.TimeSlots is { Count: > 0 } ts)
                 parts2.Add(ts[0].StartsWith("09") ? "午前" : "午後");
             if (filter?.RequiredCapacity is not null)
                 parts2.Add($"空き{filter.RequiredCapacity}以上");
             parts2.Add("フィルター設定");
-            return string.Join(" ", parts2);
+            return String.Join(" ", parts2);
         }
 
         var parts = new List<string>();
@@ -156,6 +156,6 @@ public sealed class AzureOpenAiVoiceCommandParser(
             VoiceCommandIntent.SearchAppointment => "予約検索",
             _ => "不明なコマンド",
         });
-        return string.Join(" ", parts);
+        return String.Join(" ", parts);
     }
 }

@@ -12,58 +12,58 @@ public class PageConfigService
 
     public event Action? OnPageConfigChanged;
 
-    public string CurrentPaperName => _currentPaperName;
-    public Orientation CurrentOrientation => _currentOrientation;
-    public int GridDivision => _gridDivision;
+    public string CurrentPaperName => this._currentPaperName;
+    public Orientation CurrentOrientation => this._currentOrientation;
+    public int GridDivision => this._gridDivision;
 
     public PaperDefinition? CurrentPaper =>
-        _papersConfig.GetPaper(_currentPaperName);
+        this._papersConfig.GetPaper(this._currentPaperName);
 
     public GridConfig? CurrentGridConfig =>
-        CurrentPaper?.GetGridConfig(_currentOrientation);
+        this.CurrentPaper?.GetGridConfig(this._currentOrientation);
 
-    public int CurrentColumns => CurrentGridConfig?.Columns ?? 36;
-    public int CurrentRows => CurrentGridConfig?.Rows ?? 51;
+    public int CurrentColumns => this.CurrentGridConfig?.Columns ?? 36;
+    public int CurrentRows => this.CurrentGridConfig?.Rows ?? 51;
 
-    public double CurrentWidthPx => CurrentPaper?.GetWidthPx(_currentOrientation) ?? 793.7;
-    public double CurrentHeightPx => CurrentPaper?.GetHeightPx(_currentOrientation) ?? 1122.52;
+    public double CurrentWidthPx => this.CurrentPaper?.GetWidthPx(this._currentOrientation) ?? 793.7;
+    public double CurrentHeightPx => this.CurrentPaper?.GetHeightPx(this._currentOrientation) ?? 1122.52;
 
     public IEnumerable<string> AvailablePaperNames =>
-        _papersConfig.Papers.Select(p => p.Name);
+        this._papersConfig.Papers.Select(p => p.Name);
 
     public PageConfigService(IConfiguration configuration)
     {
-        _papersConfig = new PapersConfiguration();
-        configuration.GetSection("PapersConfiguration").Bind(_papersConfig);
+        this._papersConfig = new PapersConfiguration();
+        configuration.GetSection("PapersConfiguration").Bind(this._papersConfig);
 
-        _currentPaperName = _papersConfig.DefaultPaper;
-        _currentOrientation = _papersConfig.GetDefaultOrientation();
-        _gridDivision = 36;
+        this._currentPaperName = this._papersConfig.DefaultPaper;
+        this._currentOrientation = this._papersConfig.GetDefaultOrientation();
+        this._gridDivision = 36;
     }
 
     public void ChangePageSize(string paperName)
     {
-        if (_papersConfig.GetPaper(paperName) != null && _currentPaperName != paperName)
+        if (this._papersConfig.GetPaper(paperName) != null && this._currentPaperName != paperName)
         {
-            _currentPaperName = paperName;
-            NotifyConfigChanged();
+            this._currentPaperName = paperName;
+            this.NotifyConfigChanged();
         }
     }
 
     public void ToggleOrientation()
     {
-        _currentOrientation = _currentOrientation == Orientation.Portrait
+        this._currentOrientation = this._currentOrientation == Orientation.Portrait
             ? Orientation.Landscape
             : Orientation.Portrait;
-        NotifyConfigChanged();
+        this.NotifyConfigChanged();
     }
 
     public void SetGridDivision(int division)
     {
-        if (division != _gridDivision && (division == 36 || division == 30 || division == 24 || division == 18))
+        if (division != this._gridDivision && (division == 36 || division == 30 || division == 24 || division == 18))
         {
-            _gridDivision = division;
-            NotifyConfigChanged();
+            this._gridDivision = division;
+            this.NotifyConfigChanged();
         }
     }
 

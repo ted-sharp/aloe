@@ -26,7 +26,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
                 Directory.CreateDirectory(targetPath);
 
-                SyncDirectory(sourcePath, targetPath, skipPatterns, result);
+                this.SyncDirectory(sourcePath, targetPath, skipPatterns, result);
             }
             catch (Exception ex)
             {
@@ -44,7 +44,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
             foreach (var file in files)
             {
-                if (ShouldSkipFile(file.Name, skipPatterns))
+                if (this.ShouldSkipFile(file.Name, skipPatterns))
                 {
                     result.FilesSkipped++;
                     continue;
@@ -52,7 +52,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
                 string targetFilePath = Path.Combine(targetPath, file.Name);
 
-                if (ShouldCopyFile(file.FullName, targetFilePath))
+                if (this.ShouldCopyFile(file.FullName, targetFilePath))
                 {
                     File.Copy(file.FullName, targetFilePath, true);
                     File.SetLastWriteTimeUtc(targetFilePath, file.LastWriteTimeUtc);
@@ -69,7 +69,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             {
                 string targetSubDir = Path.Combine(targetPath, dir.Name);
                 Directory.CreateDirectory(targetSubDir);
-                SyncDirectory(dir.FullName, targetSubDir, skipPatterns, result);
+                this.SyncDirectory(dir.FullName, targetSubDir, skipPatterns, result);
             }
         }
 
@@ -82,7 +82,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
             foreach (var pattern in skipPatterns)
             {
-                if (MatchesPattern(fileName, pattern))
+                if (this.MatchesPattern(fileName, pattern))
                 {
                     return true;
                 }

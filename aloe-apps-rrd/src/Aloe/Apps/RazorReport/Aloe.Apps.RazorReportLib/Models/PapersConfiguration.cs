@@ -8,11 +8,11 @@ public class PapersConfiguration
 
     public PaperDefinition? GetPaper(string name)
     {
-        return Papers.FirstOrDefault(p => p.Name == name);
+        return this.Papers.FirstOrDefault(p => p.Name == name);
     }
 
     public Orientation GetDefaultOrientation()
     {
-        return Enum.Parse<Orientation>(DefaultOrientation);
+        return Enum.Parse<Orientation>(this.DefaultOrientation);
     }
 }

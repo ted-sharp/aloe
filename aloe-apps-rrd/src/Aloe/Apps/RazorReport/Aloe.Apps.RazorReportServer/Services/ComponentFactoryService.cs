@@ -12,7 +12,7 @@ public class ComponentFactoryService
 
     public ComponentFactoryService(IOptions<ComponentsConfiguration> componentsConfig)
     {
-        _componentsConfig = componentsConfig;
+        this._componentsConfig = componentsConfig;
     }
 
     /// <summary>
@@ -20,9 +20,9 @@ public class ComponentFactoryService
     /// </summary>
     public DesignElement CreateComponent(string componentType, GridPosition position)
     {
-        var element = CreateElementByType(componentType);
+        var element = this.CreateElementByType(componentType);
         element.Position = position;
-        ApplyDefaultProperties(element, componentType);
+        this.ApplyDefaultProperties(element, componentType);
         return element;
     }
 
@@ -31,12 +31,12 @@ public class ComponentFactoryService
     /// </summary>
     public DesignElement CreateComponentWithDefaultSize(string componentType, int column, int row)
     {
-        var defaultSize = _componentsConfig.Value.GetDefaultSize(componentType);
+        var defaultSize = this._componentsConfig.Value.GetDefaultSize(componentType);
         var columnSpan = defaultSize?.ColumnSpan ?? 6;
         var rowSpan = defaultSize?.RowSpan ?? 1;
 
         var position = new GridPosition(column, row, columnSpan, rowSpan);
-        return CreateComponent(componentType, position);
+        return this.CreateComponent(componentType, position);
     }
 
     /// <summary>
@@ -59,12 +59,12 @@ public class ComponentFactoryService
     /// </summary>
     private void ApplyDefaultProperties(DesignElement element, string componentType)
     {
-        var defaultSize = _componentsConfig.Value.GetDefaultSize(componentType);
+        var defaultSize = this._componentsConfig.Value.GetDefaultSize(componentType);
         if (defaultSize == null)
             return;
 
         // テキスト要素の場合
-        if (element is TextElement textElement && !string.IsNullOrEmpty(defaultSize.DefaultText))
+        if (element is TextElement textElement && !String.IsNullOrEmpty(defaultSize.DefaultText))
         {
             textElement.Text = defaultSize.DefaultText;
         }
@@ -85,7 +85,7 @@ public class ComponentFactoryService
                 var row = new List<string>();
                 for (int c = 0; c < columns; c++)
                 {
-                    row.Add(string.Empty);
+                    row.Add(String.Empty);
                 }
                 cells.Add(row);
             }

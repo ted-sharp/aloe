@@ -12,7 +12,7 @@ public static class SafePath
 {
     /// <summary>
     /// ファイルシステム用にセグメントを柔軟に結合します。
-    /// null/空/空白を無視し、<see cref="Path.Combine(string[])"/> で結合します。
+    /// null/空/空白を無視し、<see cref="Path.Combine(global::System.String[])"/> で結合します。
     /// </summary>
     /// <param name="segments">結合するセグメント</param>
     /// <returns>結合結果（相対/絶対は入力に依存）</returns>
@@ -21,7 +21,7 @@ public static class SafePath
     {
         ArgumentNullException.ThrowIfNull(segments);
         var usable = segments
-            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Where(s => !String.IsNullOrWhiteSpace(s))
             .Select(s => s!.Trim())
             .ToArray();
 
@@ -44,7 +44,7 @@ public static class SafePath
     {
         ArgumentNullException.ThrowIfNull(segments);
         var usable = segments
-            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .Where(s => !String.IsNullOrWhiteSpace(s))
             .Select(s => s!.Trim())
             .ToArray();
 
@@ -80,7 +80,7 @@ public static class SafePath
             }
 
             head = s;
-            return string.Empty;
+            return String.Empty;
         }
 
         static string NormalizePart(string part)
@@ -90,7 +90,7 @@ public static class SafePath
             return part.Trim('/');
         }
 
-        string prefix = string.Empty; // 例: https://example.com
+        string prefix = String.Empty; // 例: https://example.com
         var pathParts = new List<string>();
 
         // 先頭セグメントのスキーム/オーソリティ処理
@@ -109,7 +109,7 @@ public static class SafePath
                 var authority = rest.Substring(0, slashIdx);
                 var basePath = rest.Substring(slashIdx + 1);
                 prefix = baseWithoutTail.Substring(0, schemeIdx + 3) + authority;
-                if (!string.IsNullOrEmpty(basePath))
+                if (!String.IsNullOrEmpty(basePath))
                 {
                     pathParts.Add(NormalizePart(basePath));
                 }
@@ -124,7 +124,7 @@ public static class SafePath
         {
             // 先頭は相対。クエリ/フラグメントは除去
             _ = ExtractTail(first, out var head);
-            if (!string.IsNullOrEmpty(head))
+            if (!String.IsNullOrEmpty(head))
             {
                 pathParts.Add(NormalizePart(head));
             }
@@ -134,7 +134,7 @@ public static class SafePath
         for (var i = 1; i < usable.Length - 1; i++)
         {
             _ = ExtractTail(usable[i], out var head);
-            if (!string.IsNullOrEmpty(head))
+            if (!String.IsNullOrEmpty(head))
             {
                 pathParts.Add(NormalizePart(head));
             }
@@ -142,15 +142,15 @@ public static class SafePath
 
         // 末尾セグメント：パス + 最後のクエリ/フラグメント
         var lastTail = ExtractTail(usable[^1], out var lastHead);
-        if (!string.IsNullOrEmpty(lastHead))
+        if (!String.IsNullOrEmpty(lastHead))
         {
             pathParts.Add(NormalizePart(lastHead));
         }
 
-        var joinedPath = string.Join('/', pathParts.Where(p => !string.IsNullOrEmpty(p)));
-        var result = string.IsNullOrEmpty(prefix)
+        var joinedPath = String.Join('/', pathParts.Where(p => !String.IsNullOrEmpty(p)));
+        var result = String.IsNullOrEmpty(prefix)
             ? joinedPath
-            : (string.IsNullOrEmpty(joinedPath) ? prefix : prefix + "/" + joinedPath);
+            : (String.IsNullOrEmpty(joinedPath) ? prefix : prefix + "/" + joinedPath);
 
         return result + lastTail;
     }

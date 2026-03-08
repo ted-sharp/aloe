@@ -17,24 +17,24 @@ public static class MobileSymbolHelper
         return vacancyRatio switch
         {
             >= 0.3 => MobileSymbol.Full,
-            > 0    => MobileSymbol.Partial,
-            _      => MobileSymbol.Empty
+            > 0 => MobileSymbol.Partial,
+            _ => MobileSymbol.Empty
         };
     }
 
     public static string ToChar(MobileSymbol s) => s switch
     {
-        MobileSymbol.Full    => "●",
+        MobileSymbol.Full => "●",
         MobileSymbol.Partial => "▼",
-        MobileSymbol.Empty   => "×",
-        _                    => "-"
+        MobileSymbol.Empty => "×",
+        _ => "-"
     };
 
     public static string ToColorClass(MobileSymbol s) => s switch
     {
-        MobileSymbol.Full    => "text-emerald-500",
+        MobileSymbol.Full => "text-emerald-500",
         MobileSymbol.Partial => "text-yellow-500",
-        MobileSymbol.Empty   => "text-red-500",
-        _                    => "text-gray-400"
+        MobileSymbol.Empty => "text-red-500",
+        _ => "text-gray-400"
     };
 }

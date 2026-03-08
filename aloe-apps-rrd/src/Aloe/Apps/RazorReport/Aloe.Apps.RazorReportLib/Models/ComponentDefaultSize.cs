@@ -8,7 +8,7 @@ public class ComponentDefaultSize
     /// <summary>
     /// コンポーネントのタイプ（"Text", "Image", "Table", "Container"など）
     /// </summary>
-    public string ComponentType { get; set; } = string.Empty;
+    public string ComponentType { get; set; } = String.Empty;
 
     /// <summary>
     /// デフォルトの列スパン

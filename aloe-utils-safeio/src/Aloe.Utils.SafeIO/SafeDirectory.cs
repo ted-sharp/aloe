@@ -197,7 +197,7 @@ public static class SafeDirectory
 
     /// <summary>
     /// ディレクトリを再帰的に安全にコピーします（同期版）。ファイルは
-    /// <see cref="SafeFile.Copy(string, string, bool, System.TimeSpan, System.TimeSpan, Aloe.Utils.SafeIO.ISafeRetryPolicy?)"/>
+    /// <see cref="SafeFile.Copy(String, String, Boolean, System.TimeSpan, System.TimeSpan, Aloe.Utils.SafeIO.ISafeRetryPolicy?)"/>
     /// を用いて安全にコピーします。
     /// </summary>
     /// <param name="sourceDirectory">コピー元ディレクトリ</param>
@@ -236,7 +236,7 @@ public static class SafeDirectory
             var relative = Path.GetRelativePath(sourceDirectory, file);
             var destFile = Path.Combine(destinationDirectory, relative);
             var destDir = Path.GetDirectoryName(destFile);
-            if (!string.IsNullOrEmpty(destDir))
+            if (!String.IsNullOrEmpty(destDir))
             {
                 Directory.CreateDirectory(destDir);
             }
@@ -269,12 +269,13 @@ public static class SafeDirectory
         {
             throw new ArgumentOutOfRangeException(nameof(retryIntervalMs));
         }
+
         Copy(sourceDirectory, destinationDirectory, overwrite, TimeSpan.FromMilliseconds(timeoutMs), TimeSpan.FromMilliseconds(retryIntervalMs));
     }
 
     /// <summary>
     /// ディレクトリを再帰的に安全にコピーします（非同期版）。ファイルは
-    /// <see cref="SafeFile.CopyAsync(string, string, bool, System.TimeSpan, System.TimeSpan, System.Threading.CancellationToken, Aloe.Utils.SafeIO.ISafeRetryPolicy?)"/>
+    /// <see cref="SafeFile.CopyAsync(String, String, Boolean, System.TimeSpan, System.TimeSpan, System.Threading.CancellationToken, Aloe.Utils.SafeIO.ISafeRetryPolicy?)"/>
     /// を用います。
     /// </summary>
     /// <param name="sourceDirectory">コピー元ディレクトリ</param>
@@ -315,7 +316,7 @@ public static class SafeDirectory
             var relative = Path.GetRelativePath(sourceDirectory, file);
             var destFile = Path.Combine(destinationDirectory, relative);
             var destDir = Path.GetDirectoryName(destFile);
-            if (!string.IsNullOrEmpty(destDir))
+            if (!String.IsNullOrEmpty(destDir))
             {
                 Directory.CreateDirectory(destDir);
             }
@@ -351,6 +352,7 @@ public static class SafeDirectory
         {
             throw new ArgumentOutOfRangeException(nameof(retryIntervalMs));
         }
+
         return CopyAsync(sourceDirectory, destinationDirectory, overwrite, TimeSpan.FromMilliseconds(timeoutMs), TimeSpan.FromMilliseconds(retryIntervalMs), ct);
     }
 

@@ -14,7 +14,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
         public SyncResult()
         {
-            Success = true;
+            this.Success = true;
         }
     }
 }

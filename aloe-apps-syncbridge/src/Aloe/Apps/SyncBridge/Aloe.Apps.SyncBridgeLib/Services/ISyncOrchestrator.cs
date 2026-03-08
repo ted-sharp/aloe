@@ -16,7 +16,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
         public SyncOrchestratorResult()
         {
-            Success = true;
+            this.Success = true;
         }
     }
 }

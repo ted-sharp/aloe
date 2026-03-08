@@ -91,7 +91,7 @@ public static partial class JapaneseDateParser
         var pmMatch = PmTimeRegex().Match(text);
         if (pmMatch.Success)
         {
-            var hour = int.Parse(pmMatch.Groups["hour"].Value);
+            var hour = Int32.Parse(pmMatch.Groups["hour"].Value);
             if (hour < 12) hour += 12;
             var min = ParseMinutePart(pmMatch);
             return hour * 60 + min;
@@ -101,7 +101,7 @@ public static partial class JapaneseDateParser
         var amMatch = AmTimeRegex().Match(text);
         if (amMatch.Success)
         {
-            var hour = int.Parse(amMatch.Groups["hour"].Value);
+            var hour = Int32.Parse(amMatch.Groups["hour"].Value);
             var min = ParseMinutePart(amMatch);
             return hour * 60 + min;
         }
@@ -110,7 +110,7 @@ public static partial class JapaneseDateParser
         var timeMatch = TimeRegex().Match(text);
         if (timeMatch.Success)
         {
-            var hour = int.Parse(timeMatch.Groups["hour"].Value);
+            var hour = Int32.Parse(timeMatch.Groups["hour"].Value);
             var min = ParseMinutePart(timeMatch);
 
             // 午前/午後の指定なしで 1〜7時 → 業務時間外なので午後と推定
@@ -129,7 +129,7 @@ public static partial class JapaneseDateParser
             return 30;
 
         if (match.Groups["min"].Success)
-            return int.Parse(match.Groups["min"].Value);
+            return Int32.Parse(match.Groups["min"].Value);
 
         return 0;
     }
@@ -195,7 +195,7 @@ public static partial class JapaneseDateParser
             return null;
 
         var prefix = match.Groups["prefix"].Value;
-        var day = int.Parse(match.Groups["day"].Value);
+        var day = Int32.Parse(match.Groups["day"].Value);
 
         var monthOffset = prefix switch
         {
@@ -216,9 +216,9 @@ public static partial class JapaneseDateParser
         var fullMatch = FullDateRegex().Match(text);
         if (fullMatch.Success)
         {
-            var year = int.Parse(fullMatch.Groups["year"].Value);
-            var month = int.Parse(fullMatch.Groups["month"].Value);
-            var day = int.Parse(fullMatch.Groups["day"].Value);
+            var year = Int32.Parse(fullMatch.Groups["year"].Value);
+            var month = Int32.Parse(fullMatch.Groups["month"].Value);
+            var day = Int32.Parse(fullMatch.Groups["day"].Value);
             return new DateOnly(year, month, day);
         }
 
@@ -226,8 +226,8 @@ public static partial class JapaneseDateParser
         var shortMatch = ShortDateRegex().Match(text);
         if (shortMatch.Success)
         {
-            var month = int.Parse(shortMatch.Groups["month"].Value);
-            var day = int.Parse(shortMatch.Groups["day"].Value);
+            var month = Int32.Parse(shortMatch.Groups["month"].Value);
+            var day = Int32.Parse(shortMatch.Groups["day"].Value);
             var year = today.Year;
             // 過去の月なら来年と推定
             if (month < today.Month || (month == today.Month && day < today.Day))
@@ -239,7 +239,7 @@ public static partial class JapaneseDateParser
         var dayOnlyMatch = DayOnlyRegex().Match(text);
         if (dayOnlyMatch.Success)
         {
-            var day = int.Parse(dayOnlyMatch.Groups["day"].Value);
+            var day = Int32.Parse(dayOnlyMatch.Groups["day"].Value);
             if (day is < 1 or > 31) return null;
 
             // 今月の該当日が今日以降なら今月

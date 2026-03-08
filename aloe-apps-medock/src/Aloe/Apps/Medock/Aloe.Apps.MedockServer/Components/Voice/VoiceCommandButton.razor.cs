@@ -52,8 +52,8 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
 
     // 固定ボタンバーの有効/無効判定
     private bool CanReset => true;
-    private bool CanFinalize => _isListening && !string.IsNullOrEmpty(_currentFullText);
-    private bool CanExecute => _parsedResult is not null;
+    private bool CanFinalize => this._isListening && !String.IsNullOrEmpty(this._currentFullText);
+    private bool CanExecute => this._parsedResult is not null;
 
     // --- 音声コマンドトリガー定義 ---
     // 「コマンド○○」で対応するボタン操作をハンズフリー実行
@@ -73,33 +73,33 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
         if (!firstRender)
             return;
 
-        _dotNetRef = DotNetObjectReference.Create(this);
-        _jsModule = await JSRuntime.InvokeAsync<IJSObjectReference>(
+        this._dotNetRef = DotNetObjectReference.Create(this);
+        this._jsModule = await this.JSRuntime.InvokeAsync<IJSObjectReference>(
             "import", "./js/voice/speech-recognition.js");
-        _isSupported = await _jsModule.InvokeAsync<bool>("initialize", _dotNetRef);
-        StateHasChanged();
+        this._isSupported = await this._jsModule.InvokeAsync<bool>("initialize", this._dotNetRef);
+        this.StateHasChanged();
     }
 
     private async Task ToggleListening()
     {
-        if (_jsModule is null)
+        if (this._jsModule is null)
             return;
 
-        if (_isListening)
+        if (this._isListening)
         {
             // 停止 → 蓄積テキストで確定（JS側が finalize を呼ぶ）
-            await _jsModule.InvokeVoidAsync("stopListening");
+            await this._jsModule.InvokeVoidAsync("stopListening");
         }
         else
         {
             // 前回の結果をクリアして開始
-            _currentFullText = null;
-            _errorMessage = null;
-            _parsedResult = null;
-            _showResultCard = true;
+            this._currentFullText = null;
+            this._errorMessage = null;
+            this._parsedResult = null;
+            this._showResultCard = true;
 
-            await _jsModule.InvokeVoidAsync("startListening");
-            _isListening = true;
+            await this._jsModule.InvokeVoidAsync("startListening");
+            this._isListening = true;
         }
     }
 
@@ -109,8 +109,8 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnListeningStarted()
     {
-        _barState = BarState.Initial30s;
-        await InvokeAsync(StateHasChanged);
+        this._barState = BarState.Initial30s;
+        await this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -119,8 +119,8 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnSpeechActivity()
     {
-        _barState = BarState.Hidden;
-        await InvokeAsync(StateHasChanged);
+        this._barState = BarState.Hidden;
+        await this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -129,9 +129,9 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public async Task OnDebounceReset()
     {
-        _barState = BarState.Countdown15s;
-        _debounceKey++;
-        await InvokeAsync(StateHasChanged);
+        this._barState = BarState.Countdown15s;
+        this._debounceKey++;
+        await this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -140,11 +140,11 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public void OnTranscriptUpdated(string fullText, string latestInterim)
     {
-        if (_processingVoiceCommand)
+        if (this._processingVoiceCommand)
             return;
 
         // 空テキストは無視（resetFragments 後の残余イベント対策）
-        if (string.IsNullOrEmpty(fullText))
+        if (String.IsNullOrEmpty(fullText))
             return;
 
         // 音声コマンド検出（「コマンド確定」「コマンド実行」等）
@@ -154,28 +154,28 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
             var (strippedText, action) = detected.Value;
             // コマンド除去後のテキストが残る場合のみ_currentFullTextを更新
             // （空の場合は既存テキストとパース結果を保持）
-            if (!string.IsNullOrEmpty(strippedText))
+            if (!String.IsNullOrEmpty(strippedText))
             {
-                _currentFullText = strippedText;
-                _parsedResult = null;
-                _errorMessage = null;
+                this._currentFullText = strippedText;
+                this._parsedResult = null;
+                this._errorMessage = null;
             }
-            _processingVoiceCommand = true;
-            InvokeAsync(async () =>
+            this._processingVoiceCommand = true;
+            this.InvokeAsync(async () =>
             {
-                await HandleVoiceActionAsync(action);
-                _processingVoiceCommand = false;
-                StateHasChanged();
+                await this.HandleVoiceActionAsync(action);
+                this._processingVoiceCommand = false;
+                this.StateHasChanged();
             });
             return;
         }
 
         // 通常の更新（コマンドトリガーなし）
         // 録音中はパース結果をクリア（まだ話している可能性がある）
-        _currentFullText = fullText;
-        _parsedResult = null;
-        _errorMessage = null;
-        InvokeAsync(StateHasChanged);
+        this._currentFullText = fullText;
+        this._parsedResult = null;
+        this._errorMessage = null;
+        this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -185,13 +185,13 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     public void OnTranscriptFinalized(string fullText)
     {
         // 音声コマンド処理中なら無視（コマンド側で処理済み）
-        if (_processingVoiceCommand)
+        if (this._processingVoiceCommand)
             return;
 
-        _currentFullText = fullText;
-        _isListening = false;
-        ParseAndSetResult(fullText);
-        InvokeAsync(StateHasChanged);
+        this._currentFullText = fullText;
+        this._isListening = false;
+        this.ParseAndSetResult(fullText);
+        this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -200,15 +200,15 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public void OnSpeechError(string errorCode)
     {
-        _isListening = false;
-        _errorMessage = errorCode switch
+        this._isListening = false;
+        this._errorMessage = errorCode switch
         {
             "no-speech" => "音声が検出されませんでした。もう一度お試しください。",
             "audio-capture" => "マイクが見つかりません。マイクの接続を確認してください。",
             "not-allowed" => "マイクへのアクセスが許可されていません。ブラウザの設定を確認してください。",
             _ => $"音声認識エラー: {errorCode}",
         };
-        InvokeAsync(StateHasChanged);
+        this.InvokeAsync(this.StateHasChanged);
     }
 
     /// <summary>
@@ -217,21 +217,21 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     [JSInvokable]
     public void OnSpeechEnded()
     {
-        _isListening = false;
-        InvokeAsync(StateHasChanged);
+        this._isListening = false;
+        this.InvokeAsync(this.StateHasChanged);
     }
 
     private async Task ExecuteCommand()
     {
-        if (_parsedResult is null)
+        if (this._parsedResult is null)
             return;
 
-        await OnCommandReady.InvokeAsync(_parsedResult);
+        await this.OnCommandReady.InvokeAsync(this._parsedResult);
 
-        _showResultCard = false;
-        _parsedResult = null;
-        _currentFullText = null;
-        _errorMessage = null;
+        this._showResultCard = false;
+        this._parsedResult = null;
+        this._currentFullText = null;
+        this._errorMessage = null;
     }
 
     /// <summary>
@@ -240,26 +240,26 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task FinalizeManually()
     {
-        if (_jsModule is null)
+        if (this._jsModule is null)
             return;
 
         // JS側の finalize() → stopListening → OnTranscriptFinalized コールバックが発火する
-        await _jsModule.InvokeVoidAsync("stopListening");
+        await this._jsModule.InvokeVoidAsync("stopListening");
     }
 
     private async Task CancelResult()
     {
-        if (_isListening && _jsModule is not null)
+        if (this._isListening && this._jsModule is not null)
         {
             // 録音中はキャンセルと同時に停止（finalize は走るが結果は無視される）
-            await _jsModule.InvokeVoidAsync("stopListening");
-            _isListening = false;
+            await this._jsModule.InvokeVoidAsync("stopListening");
+            this._isListening = false;
         }
 
-        _showResultCard = false;
-        _parsedResult = null;
-        _currentFullText = null;
-        _errorMessage = null;
+        this._showResultCard = false;
+        this._parsedResult = null;
+        this._currentFullText = null;
+        this._errorMessage = null;
     }
 
     /// <summary>
@@ -268,19 +268,19 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     /// </summary>
     private async Task ResetAndRestart()
     {
-        if (_jsModule is null)
+        if (this._jsModule is null)
             return;
 
-        if (_isListening)
-            await _jsModule.InvokeVoidAsync("stopListening");
+        if (this._isListening)
+            await this._jsModule.InvokeVoidAsync("stopListening");
 
-        _errorMessage = null;
-        _parsedResult = null;
-        _currentFullText = null;
-        _isListening = false;
+        this._errorMessage = null;
+        this._parsedResult = null;
+        this._currentFullText = null;
+        this._isListening = false;
 
-        await _jsModule.InvokeVoidAsync("startListening");
-        _isListening = true;
+        await this._jsModule.InvokeVoidAsync("startListening");
+        this._isListening = true;
     }
 
     // --- 音声コマンド検出 ---
@@ -318,36 +318,36 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
         switch (action)
         {
             case VoiceAction.Reset:
-                _errorMessage = null;
-                _parsedResult = null;
-                _currentFullText = null;
+                this._errorMessage = null;
+                this._parsedResult = null;
+                this._currentFullText = null;
                 // JS側のフラグメントをクリアして録音継続
-                if (_jsModule is not null)
-                    await _jsModule.InvokeVoidAsync("resetFragments", "");
+                if (this._jsModule is not null)
+                    await this._jsModule.InvokeVoidAsync("resetFragments", "");
                 break;
 
             case VoiceAction.Finalize:
-                if (!string.IsNullOrEmpty(_currentFullText))
+                if (!String.IsNullOrEmpty(this._currentFullText))
                 {
-                    ParseAndSetResult(_currentFullText);
+                    this.ParseAndSetResult(this._currentFullText);
                     // JS側のフラグメントをクリアして録音継続（「コマンド実行」を待つ）
-                    if (_jsModule is not null)
-                        await _jsModule.InvokeVoidAsync("resetFragments", "");
+                    if (this._jsModule is not null)
+                        await this._jsModule.InvokeVoidAsync("resetFragments", "");
                 }
                 break;
 
             case VoiceAction.Execute:
-                if (_parsedResult is not null)
+                if (this._parsedResult is not null)
                 {
-                    await OnCommandReady.InvokeAsync(_parsedResult);
-                    _showResultCard = false;
-                    _parsedResult = null;
-                    _currentFullText = null;
-                    _errorMessage = null;
+                    await this.OnCommandReady.InvokeAsync(this._parsedResult);
+                    this._showResultCard = false;
+                    this._parsedResult = null;
+                    this._currentFullText = null;
+                    this._errorMessage = null;
                     // 実行完了 → 録音停止
-                    if (_jsModule is not null && _isListening)
-                        await _jsModule.InvokeVoidAsync("stopListening");
-                    _isListening = false;
+                    if (this._jsModule is not null && this._isListening)
+                        await this._jsModule.InvokeVoidAsync("stopListening");
+                    this._isListening = false;
                 }
                 break;
         }
@@ -358,35 +358,35 @@ public partial class VoiceCommandButton : ComponentBase, IAsyncDisposable
     /// </summary>
     private void ParseAndSetResult(string? text)
     {
-        if (string.IsNullOrWhiteSpace(text))
+        if (String.IsNullOrWhiteSpace(text))
         {
-            _errorMessage = "音声が検出されませんでした。もう一度お試しください。";
-            _parsedResult = null;
+            this._errorMessage = "音声が検出されませんでした。もう一度お試しください。";
+            this._parsedResult = null;
             return;
         }
 
-        var result = Parser.Parse(text);
+        var result = this.Parser.Parse(text);
         if (result.Intent == VoiceCommandIntent.Unknown)
         {
-            _errorMessage = "コマンドを認識できませんでした。「予約を入れて」「予約を確認して」のように話してください。";
-            _parsedResult = null;
+            this._errorMessage = "コマンドを認識できませんでした。「予約を入れて」「予約を確認して」のように話してください。";
+            this._parsedResult = null;
         }
         else
         {
-            _parsedResult = result;
-            _errorMessage = null;
+            this._parsedResult = result;
+            this._errorMessage = null;
         }
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (_jsModule is not null)
+        if (this._jsModule is not null)
         {
-            await _jsModule.InvokeVoidAsync("dispose");
-            await _jsModule.DisposeAsync();
+            await this._jsModule.InvokeVoidAsync("dispose");
+            await this._jsModule.DisposeAsync();
         }
 
-        _dotNetRef?.Dispose();
+        this._dotNetRef?.Dispose();
         GC.SuppressFinalize(this);
     }
 }

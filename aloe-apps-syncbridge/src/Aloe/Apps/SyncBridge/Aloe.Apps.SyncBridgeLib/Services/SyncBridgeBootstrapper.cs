@@ -18,10 +18,10 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             IAppSelector appSelector,
             IAppLauncher appLauncher)
         {
-            _manifestRepository = manifestRepository;
-            _syncOrchestrator = syncOrchestrator;
-            _appSelector = appSelector;
-            _appLauncher = appLauncher;
+            this._manifestRepository = manifestRepository;
+            this._syncOrchestrator = syncOrchestrator;
+            this._appSelector = appSelector;
+            this._appLauncher = appLauncher;
         }
 
         public void Execute(string[] args)
@@ -29,30 +29,30 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             var options = Helpers.CommandLineOptions.Parse(args);
 
             Console.WriteLine("[情報] マニフェスト読み込み");
-            var manifest = _manifestRepository.LoadManifest();
+            var manifest = this._manifestRepository.LoadManifest();
             Console.WriteLine("[情報] マニフェスト読み込み: OK");
 
-            var syncResult = _syncOrchestrator.SyncAll(manifest);
+            var syncResult = this._syncOrchestrator.SyncAll(manifest);
             if (!syncResult.Success)
             {
                 throw new InvalidOperationException($"同期エラー: {syncResult.ErrorMessage}");
             }
 
-            var targetApp = _appSelector.SelectApp(options.AppId, manifest);
+            var targetApp = this._appSelector.SelectApp(options.AppId, manifest);
 
-            var launchContext = BuildLaunchContext(manifest, targetApp, options.GetApplicationArguments());
+            var launchContext = this.BuildLaunchContext(manifest, targetApp, options.GetApplicationArguments());
 
-            _appLauncher.Launch(launchContext);
+            this._appLauncher.Launch(launchContext);
         }
 
         public void ExecuteSyncOnly(string[] args)
         {
             Console.WriteLine("[情報] 同期専用モード");
             Console.WriteLine("[情報] マニフェスト読み込み");
-            var manifest = _manifestRepository.LoadManifest();
+            var manifest = this._manifestRepository.LoadManifest();
             Console.WriteLine("[情報] マニフェスト読み込み: OK");
 
-            var syncResult = _syncOrchestrator.SyncAll(manifest);
+            var syncResult = this._syncOrchestrator.SyncAll(manifest);
             if (!syncResult.Success)
             {
                 throw new InvalidOperationException($"同期エラー: {syncResult.ErrorMessage}");

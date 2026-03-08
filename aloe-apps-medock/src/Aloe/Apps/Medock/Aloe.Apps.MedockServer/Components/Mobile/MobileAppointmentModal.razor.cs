@@ -90,7 +90,7 @@ public partial class MobileAppointmentModal : ComponentBase
             }
 
             Guid? patientId = null;
-            if (!string.IsNullOrWhiteSpace(this._patientName))
+            if (!String.IsNullOrWhiteSpace(this._patientName))
             {
                 patientId = await this.FormService.GetOrCreatePatientAsync(facilityId, this._patientName);
             }

@@ -8,7 +8,7 @@ public class AlignmentService
 
     public AlignmentService(GridCalculationService gridCalcService)
     {
-        _gridCalcService = gridCalcService;
+        this._gridCalcService = gridCalcService;
     }
 
     public void AlignTop(List<DesignElement> elements)
@@ -28,7 +28,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }
@@ -53,7 +53,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }
@@ -77,7 +77,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }
@@ -99,7 +99,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }
@@ -124,7 +124,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }
@@ -148,7 +148,7 @@ public class AlignmentService
                 element.Position.RowSpan
             );
 
-            if (_gridCalcService.ValidatePosition(newPosition))
+            if (this._gridCalcService.ValidatePosition(newPosition))
                 element.Position = newPosition;
         }
     }

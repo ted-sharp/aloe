@@ -12,8 +12,8 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
         public SyncOrchestrator(IFileSynchronizer fileSynchronizer, IZipExtractor zipExtractor)
         {
-            _fileSynchronizer = fileSynchronizer;
-            _zipExtractor = zipExtractor;
+            this._fileSynchronizer = fileSynchronizer;
+            this._zipExtractor = zipExtractor;
         }
 
         public SyncOrchestratorResult SyncAll(SyncManifest manifest)
@@ -26,7 +26,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
                 var skipPatterns = manifest.SyncOptions?.SkipPatterns?.ToArray();
 
-                var runtimeResult = SyncRuntime(manifest, skipPatterns);
+                var runtimeResult = this.SyncRuntime(manifest, skipPatterns);
                 if (!runtimeResult.Success)
                 {
                     result.Success = false;
@@ -44,7 +44,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
 
                 foreach (var app in manifest.Applications)
                 {
-                    var appResult = SyncApplication(manifest, app, skipPatterns);
+                    var appResult = this.SyncApplication(manifest, app, skipPatterns);
                     if (!appResult.Success)
                     {
                         result.Success = false;
@@ -76,9 +76,9 @@ namespace Aloe.Apps.SyncBridgeLib.Services
         {
             string runtimeZip = manifest.Runtime.ZipFileName;
 
-            if (!string.IsNullOrEmpty(runtimeZip))
+            if (!String.IsNullOrEmpty(runtimeZip))
             {
-                return SyncFromZip(
+                return this.SyncFromZip(
                     zipFileName: runtimeZip,
                     relativePath: manifest.Runtime.RelativePath,
                     sourceRoot: manifest.SourceRootPath,
@@ -90,7 +90,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             {
                 string sourcePath = Path.Combine(manifest.SourceRootPath, manifest.Runtime.RelativePath);
                 string targetPath = Path.Combine(manifest.LocalBasePath, manifest.Runtime.RelativePath);
-                return _fileSynchronizer.SyncFolder(sourcePath, targetPath, skipPatterns);
+                return this._fileSynchronizer.SyncFolder(sourcePath, targetPath, skipPatterns);
             }
         }
 
@@ -98,9 +98,9 @@ namespace Aloe.Apps.SyncBridgeLib.Services
         {
             string appZip = app.ZipFileName;
 
-            if (!string.IsNullOrEmpty(appZip))
+            if (!String.IsNullOrEmpty(appZip))
             {
-                return SyncFromZip(
+                return this.SyncFromZip(
                     zipFileName: appZip,
                     relativePath: app.RelativePath,
                     sourceRoot: manifest.SourceRootPath,
@@ -112,7 +112,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             {
                 string sourcePath = Path.Combine(manifest.SourceRootPath, app.RelativePath);
                 string targetPath = Path.Combine(manifest.LocalBasePath, app.RelativePath);
-                return _fileSynchronizer.SyncFolder(sourcePath, targetPath, skipPatterns);
+                return this._fileSynchronizer.SyncFolder(sourcePath, targetPath, skipPatterns);
             }
         }
 
@@ -133,14 +133,14 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                     return result;
                 }
 
-                var decision = _zipExtractor.DetermineSyncStrategy(zipFilePath, targetDirectory);
+                var decision = this._zipExtractor.DetermineSyncStrategy(zipFilePath, targetDirectory);
                 Console.WriteLine($"[情報] ZIP同期戦略: {decision.Strategy} - {decision.Reason}");
 
                 switch (decision.Strategy)
                 {
                     case ZipSyncStrategy.InitialExtraction:
                     case ZipSyncStrategy.ReExtraction:
-                        var extractionResult = _zipExtractor.ExtractIfNeeded(zipFilePath, targetDirectory, forceExtraction: true);
+                        var extractionResult = this._zipExtractor.ExtractIfNeeded(zipFilePath, targetDirectory, forceExtraction: true);
                         if (!extractionResult.Success)
                         {
                             result.Success = false;
@@ -155,7 +155,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                         string sourceFolderPath = Path.Combine(sourceRoot, relativePath);
                         if (Directory.Exists(sourceFolderPath))
                         {
-                            var syncResult = _fileSynchronizer.SyncFolder(sourceFolderPath, targetDirectory, skipPatterns);
+                            var syncResult = this._fileSynchronizer.SyncFolder(sourceFolderPath, targetDirectory, skipPatterns);
                             result.FilesUpdated = syncResult.FilesUpdated;
                             result.FilesSkipped = syncResult.FilesSkipped;
                             result.Success = syncResult.Success;

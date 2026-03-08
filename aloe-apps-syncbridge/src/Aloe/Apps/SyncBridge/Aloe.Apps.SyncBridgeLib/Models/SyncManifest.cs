@@ -13,8 +13,8 @@ namespace Aloe.Apps.SyncBridgeLib.Models
 
         public SyncManifest()
         {
-            Applications = new List<AppConfig>();
-            SyncOptions = new SyncOptions();
+            this.Applications = new List<AppConfig>();
+            this.SyncOptions = new SyncOptions();
         }
     }
 
@@ -39,7 +39,7 @@ namespace Aloe.Apps.SyncBridgeLib.Models
 
         public SyncOptions()
         {
-            SkipPatterns = new List<string>();
+            this.SkipPatterns = new List<string>();
         }
     }
 }

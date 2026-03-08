@@ -36,7 +36,7 @@ public static class SafeFile
 
         var sw = Stopwatch.StartNew();
         var destDir = Path.GetDirectoryName(Path.GetFullPath(destination));
-        if (!string.IsNullOrEmpty(destDir))
+        if (!String.IsNullOrEmpty(destDir))
         {
             Directory.CreateDirectory(destDir);
         }
@@ -98,57 +98,57 @@ public static class SafeFile
 
         while (true)
         {
+            try
+            {
+                // 前回の残骸を掃除
                 try
                 {
-                    // 前回の残骸を掃除
-                    try
-                    {
-                        File.Delete(tmp);
-                    }
-                    catch
-                    {
-                    }
-
-                    // .tmp へコピー（常に上書き）
-                    File.Copy(source, tmp, overwrite: true);
-
-                    // CD 等からの読み取りで ReadOnly が付与されるケースを想定し解除
-                    SafeFileHelpers.RemoveReadOnlyIfPresent(tmp);
-
-                    // 宛先に ReadOnly が付いていれば解除
-                    SafeFileHelpers.RemoveReadOnlyIfPresent(destination);
-
-                    // 同一ボリュームなら原子的置換、異なるなら Move(overwrite)
-                    if (SafeFileHelpers.IsSameVolume(tmp, destination) && File.Exists(destination))
-                    {
-                        // ignoreMetadataErrors: true で付帯メタデータ差異を無視
-                        File.Replace(tmp, destination, destinationBackupFileName: null, ignoreMetadataErrors: true);
-                    }
-                    else
-                    {
-                        File.Move(tmp, destination, overwrite: overwrite);
-                    }
-
-                    return;
+                    File.Delete(tmp);
                 }
-                catch (IOException)
+                catch
                 {
-                    // 再試行
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    // 再試行
                 }
 
-                if (sw.Elapsed >= timeout)
+                // .tmp へコピー（常に上書き）
+                File.Copy(source, tmp, overwrite: true);
+
+                // CD 等からの読み取りで ReadOnly が付与されるケースを想定し解除
+                SafeFileHelpers.RemoveReadOnlyIfPresent(tmp);
+
+                // 宛先に ReadOnly が付いていれば解除
+                SafeFileHelpers.RemoveReadOnlyIfPresent(destination);
+
+                // 同一ボリュームなら原子的置換、異なるなら Move(overwrite)
+                if (SafeFileHelpers.IsSameVolume(tmp, destination) && File.Exists(destination))
                 {
-                    throw new TimeoutException(
-                        $"[SafeFile] ファイルコピー 「{source}」→「{destination}」がタイムアウトしました（{timeout}）。");
+                    // ignoreMetadataErrors: true で付帯メタデータ差異を無視
+                    File.Replace(tmp, destination, destinationBackupFileName: null, ignoreMetadataErrors: true);
+                }
+                else
+                {
+                    File.Move(tmp, destination, overwrite: overwrite);
                 }
 
-                Thread.Sleep(retryInterval);
+                return;
             }
+            catch (IOException)
+            {
+                // 再試行
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // 再試行
+            }
+
+            if (sw.Elapsed >= timeout)
+            {
+                throw new TimeoutException(
+                    $"[SafeFile] ファイルコピー 「{source}」→「{destination}」がタイムアウトしました（{timeout}）。");
+            }
+
+            Thread.Sleep(retryInterval);
         }
+    }
 
     /// <summary>
     /// ファイルを安全にコピーします（ミリ秒指定・同期版）。
@@ -169,6 +169,7 @@ public static class SafeFile
         {
             throw new ArgumentOutOfRangeException(nameof(retryIntervalMs));
         }
+
         var timeout = TimeSpan.FromMilliseconds(timeoutMs);
         var retry = TimeSpan.FromMilliseconds(retryIntervalMs);
         Copy(source, destination, overwrite, timeout, retry);
@@ -198,7 +199,7 @@ public static class SafeFile
 
         var sw = Stopwatch.StartNew();
         var destDir = Path.GetDirectoryName(Path.GetFullPath(destination));
-        if (!string.IsNullOrEmpty(destDir))
+        if (!String.IsNullOrEmpty(destDir))
         {
             Directory.CreateDirectory(destDir);
         }
@@ -220,49 +221,49 @@ public static class SafeFile
 
                     try
                     {
-                    try
-                    {
-                        File.Delete(tmp);
-                    }
-                    catch
-                    {
-                    }
+                        try
+                        {
+                            File.Delete(tmp);
+                        }
+                        catch
+                        {
+                        }
 
-                    await using (var src = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read))
-                    await using (var dst = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        await src.CopyToAsync(dst, ctk);
-                    }
+                        await using (var src = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        await using (var dst = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
+                        {
+                            await src.CopyToAsync(dst, ctk);
+                        }
 
-                    SafeFileHelpers.RemoveReadOnlyIfPresent(tmp);
-                    SafeFileHelpers.RemoveReadOnlyIfPresent(destination);
+                        SafeFileHelpers.RemoveReadOnlyIfPresent(tmp);
+                        SafeFileHelpers.RemoveReadOnlyIfPresent(destination);
 
-                    if (SafeFileHelpers.IsSameVolume(tmp, destination) && File.Exists(destination))
-                    {
-                        File.Replace(
-                            tmp,
-                            destination,
-                            destinationBackupFileName: null,
-                            ignoreMetadataErrors: true);
-                    }
-                    else
-                    {
-                        File.Move(
-                            tmp,
-                            destination,
-                            overwrite: overwrite);
-                    }
+                        if (SafeFileHelpers.IsSameVolume(tmp, destination) && File.Exists(destination))
+                        {
+                            File.Replace(
+                                tmp,
+                                destination,
+                                destinationBackupFileName: null,
+                                ignoreMetadataErrors: true);
+                        }
+                        else
+                        {
+                            File.Move(
+                                tmp,
+                                destination,
+                                overwrite: overwrite);
+                        }
 
-                    return true;
-                }
-                catch (IOException)
-                {
-                    return false;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return false;
-                }
+                        return true;
+                    }
+                    catch (IOException)
+                    {
+                        return false;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return false;
+                    }
                 },
                 ct);
 
@@ -355,10 +356,12 @@ public static class SafeFile
         {
             throw new ArgumentOutOfRangeException(nameof(timeoutMs));
         }
+
         if (retryIntervalMs < 0)
         {
             throw new ArgumentOutOfRangeException(nameof(retryIntervalMs));
         }
+
         var timeout = TimeSpan.FromMilliseconds(timeoutMs);
         var retry = TimeSpan.FromMilliseconds(retryIntervalMs);
         return CopyAsync(source, destination, overwrite, timeout, retry, ct);
@@ -487,33 +490,33 @@ public static class SafeFile
             var ok = policy.Execute(
                 () =>
                 {
-                try
-                {
-                    File.Delete(path);
-
-                    // 完全に消えたか排他オープンで確認
                     try
                     {
-                        using var probeStream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-                        return false; // まだ存在
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        return true; // 完全に消滅
+                        File.Delete(path);
+
+                        // 完全に消えたか排他オープンで確認
+                        try
+                        {
+                            using var probeStream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                            return false; // まだ存在
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            return true; // 完全に消滅
+                        }
+                        catch (IOException)
+                        {
+                            return false; // ロック中等
+                        }
                     }
                     catch (IOException)
                     {
-                        return false; // ロック中等
+                        return false;
                     }
-                }
-                catch (IOException)
-                {
-                    return false;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return false;
-                }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return false;
+                    }
                 });
 
             if (!ok)
@@ -721,33 +724,33 @@ public static class SafeFile
             var ok = await policy.ExecuteAsync(
                 async ctk =>
                 {
-                ctk.ThrowIfCancellationRequested();
-                try
-                {
-                    File.Delete(path);
-
+                    ctk.ThrowIfCancellationRequested();
                     try
                     {
-                        await using var probeStream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
-                        return false;
-                    }
-                    catch (FileNotFoundException)
-                    {
-                        return true;
+                        File.Delete(path);
+
+                        try
+                        {
+                            await using var probeStream = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+                            return false;
+                        }
+                        catch (FileNotFoundException)
+                        {
+                            return true;
+                        }
+                        catch (IOException)
+                        {
+                            return false;
+                        }
                     }
                     catch (IOException)
                     {
                         return false;
                     }
-                }
-                catch (IOException)
-                {
-                    return false;
-                }
-                catch (UnauthorizedAccessException)
-                {
-                    return false;
-                }
+                    catch (UnauthorizedAccessException)
+                    {
+                        return false;
+                    }
                 },
                 ct);
 

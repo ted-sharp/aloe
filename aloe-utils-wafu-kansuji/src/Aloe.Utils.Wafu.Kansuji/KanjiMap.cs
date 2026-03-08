@@ -147,7 +147,6 @@ internal static class KanjiMap
         ['拾'] = 10,
         ['佰'] = 100,
         ['阡'] = 1000,
-
     };
 
     /// <summary>
@@ -166,11 +165,11 @@ internal static class KanjiMap
     /// 漢数字と単位の連続部分を検出するための正規表現
     /// </summary>
     internal static readonly Regex KanjiNumberRegex = new(
+
         // 小字・大字・旧字・俗字・単位・半角全角数字をまとめた文字クラス
         "[零〇一二三四五六七八九壱壹弌弐貳貮弍参參弎肆亖伍陸漆柒捌玖" +
         "十拾百佰千阡万萬億兆京０-９]+",
-        RegexOptions.Compiled
-    );
+        RegexOptions.Compiled);
 
     /// <summary>
     /// 漢数字（大字・通常）からアラビア数字の文字列への変換マップ

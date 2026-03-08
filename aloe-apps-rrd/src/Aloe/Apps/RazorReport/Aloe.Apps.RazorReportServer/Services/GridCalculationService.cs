@@ -11,23 +11,23 @@ public class GridCalculationService
 
     public GridCalculationService(PageConfigService pageConfigService)
     {
-        _pageConfigService = pageConfigService;
+        this._pageConfigService = pageConfigService;
     }
 
-    private int Columns => _pageConfigService.CurrentColumns;
-    private int Rows => _pageConfigService.CurrentRows;
-    private double WidthPx => _pageConfigService.CurrentWidthPx;
-    private double HeightPx => _pageConfigService.CurrentHeightPx;
+    private int Columns => this._pageConfigService.CurrentColumns;
+    private int Rows => this._pageConfigService.CurrentRows;
+    private double WidthPx => this._pageConfigService.CurrentWidthPx;
+    private double HeightPx => this._pageConfigService.CurrentHeightPx;
 
     /// <summary>
     /// セルの幅（ピクセル）
     /// </summary>
-    public double CellWidthPx => WidthPx / Columns;
+    public double CellWidthPx => this.WidthPx / this.Columns;
 
     /// <summary>
     /// セルの高さ（ピクセル）
     /// </summary>
-    public double CellHeightPx => HeightPx / Rows;
+    public double CellHeightPx => this.HeightPx / this.Rows;
 
     /// <summary>
     /// マウス座標をグリッドセルに変換する
@@ -38,8 +38,8 @@ public class GridCalculationService
         int row = (int)Math.Floor(y / this.CellHeightPx);
 
         return (
-            Math.Max(0, Math.Min(column, Columns - 1)),
-            Math.Max(0, Math.Min(row, Rows - 1))
+            Math.Max(0, Math.Min(column, this.Columns - 1)),
+            Math.Max(0, Math.Min(row, this.Rows - 1))
         );
     }
 
@@ -67,8 +67,8 @@ public class GridCalculationService
     {
         return position.Column >= 0 &&
                position.Row >= 0 &&
-               position.Column + position.ColumnSpan <= Columns &&
-               position.Row + position.RowSpan <= Rows;
+               position.Column + position.ColumnSpan <= this.Columns &&
+               position.Row + position.RowSpan <= this.Rows;
     }
 
     /// <summary>
@@ -149,8 +149,8 @@ public class GridCalculationService
 
         // 有効な範囲内にクランプ
         return (
-            Math.Max(0, Math.Min(column, Columns - 1)),
-            Math.Max(0, Math.Min(row, Rows - 1))
+            Math.Max(0, Math.Min(column, this.Columns - 1)),
+            Math.Max(0, Math.Min(row, this.Rows - 1))
         );
     }
 

@@ -23,7 +23,7 @@ public static class LoggerDumpExtensions
     {
         ArgumentNullException.ThrowIfNull(logger);
         ArgumentNullException.ThrowIfNull(bytes);
-        
+
         if (!logger.IsEnabled(LogLevel.Debug) || bytes.Length == 0)
         {
             return;

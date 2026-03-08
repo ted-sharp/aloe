@@ -49,6 +49,6 @@ internal static class SafeFileHelpers
     {
         var rootA = Path.GetPathRoot(Path.GetFullPath(pathA));
         var rootB = Path.GetPathRoot(Path.GetFullPath(pathB));
-        return string.Equals(rootA, rootB, StringComparison.OrdinalIgnoreCase);
+        return String.Equals(rootA, rootB, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -70,7 +70,7 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
                 }
 
                 var query = activationUri.Query.TrimStart('?');
-                if (string.IsNullOrEmpty(query))
+                if (String.IsNullOrEmpty(query))
                 {
                     return result;
                 }
@@ -78,7 +78,7 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
                 var pairs = query.Split('&');
                 foreach (var pair in pairs)
                 {
-                    if (string.IsNullOrEmpty(pair)) continue;
+                    if (String.IsNullOrEmpty(pair)) continue;
 
                     var keyValue = pair.Split(new[] { '=' }, 2);
                     var key = Uri.UnescapeDataString(keyValue[0]);
@@ -130,7 +130,7 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
         /// </summary>
         private static string ExtractKey(string arg)
         {
-            if (string.IsNullOrEmpty(arg) || !arg.StartsWith("--"))
+            if (String.IsNullOrEmpty(arg) || !arg.StartsWith("--"))
             {
                 return arg;
             }

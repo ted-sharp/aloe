@@ -25,12 +25,12 @@ public static class ImageLoader
     public static Image Load(string filePath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(filePath);
-        
+
         if (!File.Exists(filePath))
         {
             throw new FileNotFoundException($"Image file not found: {filePath}");
         }
-        
+
         try
         {
             var imageData = File.ReadAllBytes(filePath);
@@ -43,7 +43,7 @@ public static class ImageLoader
             {
                 OutOfMemoryException => $"Image file is corrupted or unsupported format: {filePath}",
                 ArgumentException => $"Invalid image data or unsupported format: {filePath}",
-                _ => $"Failed to load image from {filePath}"
+                _ => $"Failed to load image from {filePath}",
             };
             throw new InvalidOperationException(errorMessage, ex);
         }

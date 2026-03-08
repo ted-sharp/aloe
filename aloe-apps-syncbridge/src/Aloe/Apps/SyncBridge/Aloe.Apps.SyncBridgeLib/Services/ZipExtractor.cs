@@ -32,9 +32,9 @@ namespace Aloe.Apps.SyncBridgeLib.Services
             }
 
             var zipTimestamp = File.GetLastWriteTimeUtc(zipFilePath);
-            var markerInfo = ReadMarkerFile(markerPath);
+            var markerInfo = this.ReadMarkerFile(markerPath);
 
-            if (markerInfo == null || string.IsNullOrEmpty(markerInfo.ZipTimestamp))
+            if (markerInfo == null || String.IsNullOrEmpty(markerInfo.ZipTimestamp))
             {
                 return new ZipSyncDecision
                 {
@@ -96,7 +96,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                     return result;
                 }
 
-                if (Directory.Exists(targetDirectory) && (forceExtraction || IsReExtractionNeeded(zipFilePath, targetDirectory)))
+                if (Directory.Exists(targetDirectory) && (forceExtraction || this.IsReExtractionNeeded(zipFilePath, targetDirectory)))
                 {
                     Console.WriteLine($"[情報] 既存のディレクトリを削除します: {targetDirectory}");
                     Directory.Delete(targetDirectory, true);
@@ -139,7 +139,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                     }
                 }
 
-                WriteMarkerFile(targetDirectory, Path.GetFileName(zipFilePath), File.GetLastWriteTimeUtc(zipFilePath));
+                this.WriteMarkerFile(targetDirectory, Path.GetFileName(zipFilePath), File.GetLastWriteTimeUtc(zipFilePath));
 
                 Console.WriteLine($"[情報] {result.FilesExtracted} 個のファイルを展開しました");
 
@@ -176,7 +176,7 @@ namespace Aloe.Apps.SyncBridgeLib.Services
                 return false;
             }
 
-            var decision = DetermineSyncStrategy(zipFilePath, targetDirectory);
+            var decision = this.DetermineSyncStrategy(zipFilePath, targetDirectory);
             return decision.Strategy == ZipSyncStrategy.ReExtraction;
         }
 

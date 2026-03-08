@@ -10,37 +10,37 @@ public class ClipboardService
 
     public event Action? OnClipboardChanged;
 
-    public bool HasData => _clipboardData.Count > 0;
-    public int DataCount => _clipboardData.Count;
+    public bool HasData => this._clipboardData.Count > 0;
+    public int DataCount => this._clipboardData.Count;
 
     public ClipboardService(DocumentService documentService)
     {
-        _documentService = documentService;
+        this._documentService = documentService;
     }
 
     public void Copy(List<DesignElement> elements)
     {
         try
         {
-            _clipboardData = DeepCloneElements(elements);
-            NotifyClipboardChanged();
+            this._clipboardData = this.DeepCloneElements(elements);
+            this.NotifyClipboardChanged();
         }
         catch { }
     }
 
     public void Cut(List<DesignElement> elements)
     {
-        Copy(elements);
+        this.Copy(elements);
     }
 
     public List<DesignElement> Paste()
     {
-        if (!HasData)
+        if (!this.HasData)
             return new();
 
         try
         {
-            var pasted = DeepCloneElements(_clipboardData);
+            var pasted = this.DeepCloneElements(this._clipboardData);
 
             // Assign new IDs and offset positions
             foreach (var element in pasted)
@@ -66,15 +66,15 @@ public class ClipboardService
 
     public void Clear()
     {
-        _clipboardData.Clear();
-        NotifyClipboardChanged();
+        this._clipboardData.Clear();
+        this.NotifyClipboardChanged();
     }
 
     private List<DesignElement> DeepCloneElements(List<DesignElement> elements)
     {
         try
         {
-            var options = _documentService.GetSerializerOptions();
+            var options = this._documentService.GetSerializerOptions();
             var json = JsonSerializer.Serialize(elements, options);
             var cloned = JsonSerializer.Deserialize<List<DesignElement>>(json, options);
             return cloned ?? new();

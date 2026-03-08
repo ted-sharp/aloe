@@ -160,6 +160,7 @@ public static class KanjiNumerals
     /// <summary>
     /// 文字列中の漢数字・単位連続部分を位取り漢数字に変換します。
     /// </summary>
+    /// <returns></returns>
     public static string ConvertToPositionalNotation(string input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -255,10 +256,10 @@ public static class KanjiNumerals
         var digits = sbNum.ToString();
 
         var sb = new StringBuilder();
-        var L = digits.Length;
-        for (var idx = 0; idx < L; idx++)
+        var l = digits.Length;
+        for (var idx = 0; idx < l; idx++)
         {
-            var pos = L - idx;
+            var pos = l - idx;
             var d = digits[idx] - '0';
             if (pos > 1)
             {
@@ -272,7 +273,7 @@ public static class KanjiNumerals
             }
             else
             {
-                if (d > 0 || L == 1)
+                if (d > 0 || l == 1)
                 {
                     sb.Append(DigitToKanji(digits[idx]));
                 }

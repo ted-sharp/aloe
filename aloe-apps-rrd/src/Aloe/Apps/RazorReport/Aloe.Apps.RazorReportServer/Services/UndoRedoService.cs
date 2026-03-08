@@ -12,59 +12,59 @@ public class UndoRedoService
 
     public event Action? OnHistoryChanged;
 
-    public bool CanUndo => _undoStack.Count > 0;
-    public bool CanRedo => _redoStack.Count > 0;
+    public bool CanUndo => this._undoStack.Count > 0;
+    public bool CanRedo => this._redoStack.Count > 0;
 
     public UndoRedoService(DocumentService documentService)
     {
-        _documentService = documentService;
+        this._documentService = documentService;
     }
 
     public void SaveState(ReportDocument document)
     {
         try
         {
-            var json = _documentService.SerializeDocument(document);
+            var json = this._documentService.SerializeDocument(document);
             var memento = new DocumentMemento(json);
 
-            _undoStack.Push(memento);
+            this._undoStack.Push(memento);
 
             // Clear redo stack when new action is performed
-            _redoStack.Clear();
+            this._redoStack.Clear();
 
             // Limit history size
-            if (_undoStack.Count > MaxHistorySize)
+            if (this._undoStack.Count > MaxHistorySize)
             {
-                var temp = new Stack<DocumentMemento>(_undoStack.Count - 1);
-                for (int i = 0; i < _undoStack.Count - 1; i++)
+                var temp = new Stack<DocumentMemento>(this._undoStack.Count - 1);
+                for (int i = 0; i < this._undoStack.Count - 1; i++)
                 {
-                    temp.Push(_undoStack.Pop());
+                    temp.Push(this._undoStack.Pop());
                 }
-                _undoStack.Clear();
+                this._undoStack.Clear();
                 foreach (var item in temp)
                 {
-                    _undoStack.Push(item);
+                    this._undoStack.Push(item);
                 }
             }
 
-            NotifyHistoryChanged();
+            this.NotifyHistoryChanged();
         }
         catch { }
     }
 
     public ReportDocument? Undo(ReportDocument currentDocument)
     {
-        if (!CanUndo)
+        if (!this.CanUndo)
             return null;
 
         try
         {
-            var memento = _undoStack.Pop();
-            var currentJson = _documentService.SerializeDocument(currentDocument);
-            _redoStack.Push(new DocumentMemento(currentJson));
+            var memento = this._undoStack.Pop();
+            var currentJson = this._documentService.SerializeDocument(currentDocument);
+            this._redoStack.Push(new DocumentMemento(currentJson));
 
-            var document = _documentService.DeserializeDocument(memento.SerializedDocument);
-            NotifyHistoryChanged();
+            var document = this._documentService.DeserializeDocument(memento.SerializedDocument);
+            this.NotifyHistoryChanged();
             return document;
         }
         catch
@@ -75,17 +75,17 @@ public class UndoRedoService
 
     public ReportDocument? Redo(ReportDocument currentDocument)
     {
-        if (!CanRedo)
+        if (!this.CanRedo)
             return null;
 
         try
         {
-            var memento = _redoStack.Pop();
-            var currentJson = _documentService.SerializeDocument(currentDocument);
-            _undoStack.Push(new DocumentMemento(currentJson));
+            var memento = this._redoStack.Pop();
+            var currentJson = this._documentService.SerializeDocument(currentDocument);
+            this._undoStack.Push(new DocumentMemento(currentJson));
 
-            var document = _documentService.DeserializeDocument(memento.SerializedDocument);
-            NotifyHistoryChanged();
+            var document = this._documentService.DeserializeDocument(memento.SerializedDocument);
+            this.NotifyHistoryChanged();
             return document;
         }
         catch
@@ -96,9 +96,9 @@ public class UndoRedoService
 
     public void Clear()
     {
-        _undoStack.Clear();
-        _redoStack.Clear();
-        NotifyHistoryChanged();
+        this._undoStack.Clear();
+        this._redoStack.Clear();
+        this.NotifyHistoryChanged();
     }
 
     private void NotifyHistoryChanged()

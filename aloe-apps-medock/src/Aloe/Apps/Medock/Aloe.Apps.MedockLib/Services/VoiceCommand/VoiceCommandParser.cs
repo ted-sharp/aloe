@@ -10,7 +10,7 @@ public partial class VoiceCommandParser(IDateTimeProvider dateTimeProvider) : IV
 {
     public VoiceCommandResult Parse(string transcript)
     {
-        if (string.IsNullOrWhiteSpace(transcript))
+        if (String.IsNullOrWhiteSpace(transcript))
         {
             return new VoiceCommandResult(
                 VoiceCommandIntent.Unknown, null, null, null, null, transcript,
@@ -218,8 +218,16 @@ public partial class VoiceCommandParser(IDateTimeProvider dateTimeProvider) : IV
 
     private static int KanjiToDigit(string kanji) => kanji switch
     {
-        "〇" or "零" => 0, "一" => 1, "二" => 2, "三" => 3, "四" => 4,
-        "五" => 5, "六" => 6, "七" => 7, "八" => 8, "九" => 9,
+        "〇" or "零" => 0,
+        "一" => 1,
+        "二" => 2,
+        "三" => 3,
+        "四" => 4,
+        "五" => 5,
+        "六" => 6,
+        "七" => 7,
+        "八" => 8,
+        "九" => 9,
         _ => 0,
     };
 
@@ -262,7 +270,7 @@ public partial class VoiceCommandParser(IDateTimeProvider dateTimeProvider) : IV
 
         parts.Add(intentLabel);
 
-        return string.Join(" ", parts);
+        return String.Join(" ", parts);
     }
 
     private static VoiceCommandFilterParams ParseFilterParams(string text)
@@ -273,8 +281,14 @@ public partial class VoiceCommandParser(IDateTimeProvider dateTimeProvider) : IV
         var days = DayOfWeekFilterRegex().Matches(text)
             .Select(m => m.Groups["day"].Value switch
             {
-                "日" => 0, "月" => 1, "火" => 2, "水" => 3,
-                "木" => 4, "金" => 5, "土" => 6, _ => -1
+                "日" => 0,
+                "月" => 1,
+                "火" => 2,
+                "水" => 3,
+                "木" => 4,
+                "金" => 5,
+                "土" => 6,
+                _ => -1
             })
             .Where(d => d >= 0)
             .Distinct().ToList();
@@ -287,7 +301,7 @@ public partial class VoiceCommandParser(IDateTimeProvider dateTimeProvider) : IV
 
         int? capacity = null;
         var capMatch = RequiredCapacityRegex().Match(text);
-        if (capMatch.Success) capacity = int.Parse(capMatch.Groups["n"].Value);
+        if (capMatch.Success) capacity = Int32.Parse(capMatch.Groups["n"].Value);
 
         return new VoiceCommandFilterParams(
             days.Count > 0 ? days : null,

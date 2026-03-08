@@ -47,7 +47,7 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
 
             foreach (var arg in args)
             {
-                if (string.IsNullOrWhiteSpace(arg))
+                if (String.IsNullOrWhiteSpace(arg))
                 {
                     continue;
                 }
@@ -66,7 +66,7 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
                 {
                     var valueStr = trimmedArg.Substring("--random-delay=".Length);
                     int delaySeconds;
-                    if (int.TryParse(valueStr, out delaySeconds) && delaySeconds >= 0)
+                    if (Int32.TryParse(valueStr, out delaySeconds) && delaySeconds >= 0)
                     {
                         options.RandomDelaySeconds = delaySeconds;
                     }
@@ -92,9 +92,9 @@ namespace Aloe.Apps.SyncBridgeLib.Helpers
         {
             var result = new System.Collections.Generic.List<string>();
 
-            foreach (var arg in _rawArgs)
+            foreach (var arg in this._rawArgs)
             {
-                if (string.IsNullOrWhiteSpace(arg))
+                if (String.IsNullOrWhiteSpace(arg))
                 {
                     continue;
                 }

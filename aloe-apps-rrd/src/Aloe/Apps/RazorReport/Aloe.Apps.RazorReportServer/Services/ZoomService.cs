@@ -6,42 +6,42 @@ public class ZoomService
 
     public event Action? OnZoomChanged;
 
-    public double ZoomLevel => _zoomLevel;
+    public double ZoomLevel => this._zoomLevel;
 
     public double[] PredefinedZoomLevels => new[] { 0.5, 0.75, 1.0, 1.25, 1.5, 2.0 };
 
-    public int ZoomPercentage => (int)(_zoomLevel * 100);
+    public int ZoomPercentage => (int)(this._zoomLevel * 100);
 
     public void ZoomIn()
     {
-        var nextLevel = PredefinedZoomLevels.FirstOrDefault(z => z > _zoomLevel);
+        var nextLevel = this.PredefinedZoomLevels.FirstOrDefault(z => z > this._zoomLevel);
         if (nextLevel > 0)
         {
-            SetZoom(nextLevel);
+            this.SetZoom(nextLevel);
         }
     }
 
     public void ZoomOut()
     {
-        var prevLevel = PredefinedZoomLevels.LastOrDefault(z => z < _zoomLevel);
+        var prevLevel = this.PredefinedZoomLevels.LastOrDefault(z => z < this._zoomLevel);
         if (prevLevel > 0)
         {
-            SetZoom(prevLevel);
+            this.SetZoom(prevLevel);
         }
     }
 
     public void SetZoom(double zoomLevel)
     {
-        if (zoomLevel > 0 && zoomLevel != _zoomLevel)
+        if (zoomLevel > 0 && zoomLevel != this._zoomLevel)
         {
-            _zoomLevel = zoomLevel;
-            NotifyZoomChanged();
+            this._zoomLevel = zoomLevel;
+            this.NotifyZoomChanged();
         }
     }
 
     public void ResetZoom()
     {
-        SetZoom(1.0);
+        this.SetZoom(1.0);
     }
 
     public void FitToPage(double viewportWidth, double viewportHeight, double contentWidth, double contentHeight)
@@ -54,11 +54,11 @@ public class ZoomService
         double fitZoom = Math.Min(zoomX, zoomY);
 
         // Round to nearest predefined level or use calculated value
-        var closestPredefined = PredefinedZoomLevels
+        var closestPredefined = this.PredefinedZoomLevels
             .OrderBy(z => Math.Abs(z - fitZoom))
             .First();
 
-        SetZoom(closestPredefined);
+        this.SetZoom(closestPredefined);
     }
 
     private void NotifyZoomChanged()
