@@ -27,3 +27,10 @@ tasks:
     desc: Push local changes back to all subtrees
     cmds:
       - powershell -File "{{.TASKFILE_DIR}}/scripts/push-subtrees.ps1"
+
+  push-sync:
+    desc: "Push a subtree using worktree copy (fallback if push gets stuck). Usage: task push-sync PREFIX=aloe-utils"
+    vars:
+      PREFIX: '{{.PREFIX | default ""}}'
+    cmds:
+      - powershell -File "{{.TASKFILE_DIR}}/scripts/push-subtree-sync.ps1" -PREFIX "{{.PREFIX}}"
