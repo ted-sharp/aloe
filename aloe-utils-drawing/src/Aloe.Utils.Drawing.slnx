@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="Aloe.Utils.Drawing/Aloe.Utils.Drawing.csproj" />
-  <Project Path="Aloe.Utils.Drawing.Samples/Aloe.Utils.Drawing.Samples.csproj" />
-  <Project Path="Aloe.Utils.Drawing.Tests/Aloe.Utils.Drawing.Tests.csproj" />
-</Solution>
