@@ -1,0 +1,268 @@
+@page "/otel/metrics"
+@rendermode InteractiveServer
+@using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models
+@using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage
+@using Microsoft.JSInterop
+@inject IOtelStore OtelStore
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>OTel メトリクス</PageTitle>
+
+<main class="container">
+    <nav>
+        <hgroup>
+            <h1>OTel メトリクス</h1>
+            <p>OpenTelemetry メトリクスデータを表示します</p>
+        </hgroup>
+        <button class="icon-button" @onclick="NavigateToHome" title="閉じる">
+            <i data-lucide="x"></i>
+        </button>
+    </nav>
+
+    <article>
+        <form @onsubmit="ApplyFilters">
+            <div class="grid">
+                <label>
+                    サービス名
+                    <select @bind="selectedService">
+                        <option value="">すべて</option>
+                        @foreach (var name in serviceNames)
+                        {
+                            <option value="@name">@name</option>
+                        }
+                    </select>
+                </label>
+
+                <label>
+                    メトリクス名
+                    <select @bind="selectedMetric">
+                        <option value="">すべて</option>
+                        @foreach (var name in metricNames)
+                        {
+                            <option value="@name">@name</option>
+                        }
+                    </select>
+                </label>
+
+                <div>
+                    <button type="submit"><i data-lucide="filter"></i>フィルター適用</button>
+                </div>
+            </div>
+        </form>
+    </article>
+
+    @if (metricGroups.Count == 0)
+    {
+        <article>
+            <p>メトリクスデータがありません</p>
+        </article>
+    }
+    else
+    {
+        @foreach (var group in metricGroups)
+        {
+            <article>
+                <header>
+                    <hgroup>
+                        <h3>@group.MetricName</h3>
+                        <p>
+                            <small>
+                                @group.ServiceName
+                                @if (!string.IsNullOrEmpty(group.Description))
+                                {
+                                    @:— @group.Description
+                                }
+                                @if (!string.IsNullOrEmpty(group.Unit))
+                                {
+                                    @:(@group.Unit)
+                                }
+                                ｜ @group.Type
+                            </small>
+                        </p>
+                    </hgroup>
+                </header>
+
+                <div style="display: flex; gap: 2rem; align-items: center; flex-wrap: wrap;">
+                    <div>
+                        <p>
+                            <strong>最新値:</strong> @group.LatestValue.ToString("F2")
+                            @if (!string.IsNullOrEmpty(group.Unit))
+                            {
+                                <small>@group.Unit</small>
+                            }
+                        </p>
+                        <p><small>最終更新: @group.LatestTimestamp.ToLocalTime().ToString("HH:mm:ss.fff")</small></p>
+                        <p><small>データポイント数: @group.Points.Count</small></p>
+                    </div>
+
+                    @if (group.Points.Count >= 2)
+                    {
+                        <div style="flex: 1; min-width: 200px;">
+                            @((MarkupString)RenderSparkline(group.Points))
+                        </div>
+                    }
+                </div>
+
+                @if (group.Points.Count > 0)
+                {
+                    <details>
+                        <summary>データポイント一覧</summary>
+                        <div class="table-overflow">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>タイムスタンプ</th>
+                                        <th>値</th>
+                                        <th>属性</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var point in group.Points.TakeLast(20))
+                                    {
+                                        <tr>
+                                            <td>@point.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")</td>
+                                            <td>@point.Value.ToString("F2")</td>
+                                            <td><small>@string.Join(", ", point.Attributes.Select(a => $"{a.Key}={a.Value}"))</small></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </details>
+                }
+            </article>
+        }
+
+        @if (totalPages > 1)
+        {
+            <nav aria-label="ページネーション">
+                <div role="group" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                    @if (currentPage > 1)
+                    {
+                        <button @onclick="() => ChangePage(currentPage - 1)"><i data-lucide="chevron-left"></i>前へ</button>
+                    }
+                    <span>ページ @currentPage / @totalPages</span>
+                    @if (currentPage < totalPages)
+                    {
+                        <button @onclick="() => ChangePage(currentPage + 1)">次へ<i data-lucide="chevron-right"></i></button>
+                    }
+                </div>
+            </nav>
+        }
+    }
+</main>
+
+@code {
+    private List<string> serviceNames = new();
+    private List<string> metricNames = new();
+    private string selectedService = "";
+    private string selectedMetric = "";
+    private int currentPage = 1;
+    private int pageSize = 10;
+    private int totalPages = 0;
+    private List<MetricGroupViewModel> metricGroups = new();
+
+    protected override void OnInitialized()
+    {
+        serviceNames = OtelStore.GetServiceNames().ToList();
+        metricNames = OtelStore.GetMetricNames(null).ToList();
+        LoadMetrics();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try { await JS.InvokeVoidAsync("lucide.createIcons"); } catch { }
+    }
+
+    private void NavigateToHome() => NavigationManager.NavigateTo("/");
+
+    private void LoadMetrics()
+    {
+        var service = string.IsNullOrEmpty(selectedService) ? null : selectedService;
+        var metric = string.IsNullOrEmpty(selectedMetric) ? null : selectedMetric;
+
+        var allPoints = OtelStore.QueryMetrics(service, metric, null, null, 0, 50000);
+
+        var groups = allPoints
+            .GroupBy(p => new { p.ServiceName, p.MetricName })
+            .Select(g =>
+            {
+                var ordered = g.OrderBy(p => p.Timestamp).ToList();
+                var latest = ordered.Last();
+                return new MetricGroupViewModel
+                {
+                    ServiceName = g.Key.ServiceName,
+                    MetricName = g.Key.MetricName,
+                    Description = latest.Description,
+                    Unit = latest.Unit,
+                    Type = latest.MetricType,
+                    LatestValue = latest.Value,
+                    LatestTimestamp = latest.Timestamp,
+                    Points = ordered,
+                };
+            })
+            .OrderBy(g => g.ServiceName)
+            .ThenBy(g => g.MetricName)
+            .ToList();
+
+        var totalCount = groups.Count;
+        totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        var skip = (currentPage - 1) * pageSize;
+        metricGroups = groups.Skip(skip).Take(pageSize).ToList();
+
+        metricNames = OtelStore.GetMetricNames(service).ToList();
+    }
+
+    private void ApplyFilters()
+    {
+        currentPage = 1;
+        LoadMetrics();
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+        LoadMetrics();
+    }
+
+    private static string RenderSparkline(List<OtelMetricPoint> points)
+    {
+        const int width = 300;
+        const int height = 50;
+        const int padding = 2;
+
+        if (points.Count < 2) return "";
+
+        var values = points.Select(p => p.Value).ToList();
+        var min = values.Min();
+        var max = values.Max();
+        var range = max - min;
+        if (range == 0) range = 1;
+
+        var stepX = (double)(width - padding * 2) / (values.Count - 1);
+        var pathParts = new List<string>();
+
+        for (int i = 0; i < values.Count; i++)
+        {
+            var x = padding + i * stepX;
+            var y = height - padding - (values[i] - min) / range * (height - padding * 2);
+            pathParts.Add($"{(i == 0 ? "M" : "L")}{x:F1},{y:F1}");
+        }
+
+        var path = string.Join(" ", pathParts);
+        return $"""<svg viewBox="0 0 {width} {height}" style="width: 100%; height: {height}px;" preserveAspectRatio="none"><path d="{path}" fill="none" stroke="var(--pico-primary, #1095c1)" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>""";
+    }
+
+    private sealed class MetricGroupViewModel
+    {
+        public string ServiceName { get; set; } = "";
+        public string MetricName { get; set; } = "";
+        public string? Description { get; set; }
+        public string? Unit { get; set; }
+        public OtelMetricType Type { get; set; }
+        public double LatestValue { get; set; }
+        public DateTimeOffset LatestTimestamp { get; set; }
+        public List<OtelMetricPoint> Points { get; set; } = new();
+    }
+}

@@ -1,6 +1,9 @@
 using Aloe.Apps.WindowsServiceMonitorLib.Infrastructure;
 using Aloe.Apps.WindowsServiceMonitorLib.Interfaces;
 using Aloe.Apps.WindowsServiceMonitorLib.Models;
+using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Services;
+using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage;
 using Aloe.Apps.WindowsServiceMonitorServer.Models;
 using Aloe.Apps.WindowsServiceMonitorServer.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -90,6 +93,22 @@ internal static class ServiceCollectionExtensions
     {
         services.AddSignalR();
         services.AddHostedService<BackgroundWindowsServiceMonitor>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// OTel ビューアー関連サービスを登録
+    /// </summary>
+    public static IServiceCollection AddOtelViewer(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.Configure<OtelViewerOptions>(
+            configuration.GetSection(OtelViewerOptions.SectionName));
+
+        services.AddSingleton<IOtelStore, InMemoryOtelStore>();
+        services.AddSingleton<IOtelIngestionService, OtelIngestionService>();
 
         return services;
     }

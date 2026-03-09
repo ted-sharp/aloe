@@ -35,6 +35,7 @@ builder.Services.AddMonitorAuthentication(builder.Configuration);
 builder.Services.AddMonitorAppLog(builder.Configuration);
 builder.Services.AddMonitorServices(builder.Configuration);
 builder.Services.AddMonitorHostedServices();
+builder.Services.AddOtelViewer(builder.Configuration);
 
 var app = builder.Build();
 

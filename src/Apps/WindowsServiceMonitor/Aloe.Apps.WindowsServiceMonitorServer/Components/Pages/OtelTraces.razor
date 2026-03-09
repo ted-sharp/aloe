@@ -1,0 +1,419 @@
+@page "/otel/traces"
+@page "/otel/traces/{TraceIdParam}"
+@rendermode InteractiveServer
+@using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models
+@using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage
+@using Microsoft.JSInterop
+@inject IOtelStore OtelStore
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>OTel トレース</PageTitle>
+
+<main class="container">
+    <nav>
+        <hgroup>
+            <h1>OTel トレース</h1>
+            <p>OpenTelemetry トレース / スパンを表示します</p>
+        </hgroup>
+        <button class="icon-button" @onclick="NavigateToHome" title="閉じる">
+            <i data-lucide="x"></i>
+        </button>
+    </nav>
+
+    @if (selectedTrace != null)
+    {
+        @* トレース詳細（ウォーターフォール）表示 *@
+        <article>
+            <header>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <hgroup>
+                        <h3>トレース詳細</h3>
+                        <p>TraceID: <code>@selectedTrace.First().TraceId</code></p>
+                    </hgroup>
+                    <button class="outline" @onclick="ClearSelection"><i data-lucide="arrow-left"></i>一覧に戻る</button>
+                </div>
+            </header>
+
+            @{
+                var traceStart = selectedTrace.Min(s => s.StartTime);
+                var traceEnd = selectedTrace.Max(s => s.EndTime);
+                var traceDuration = traceEnd - traceStart;
+                var totalMs = traceDuration.TotalMilliseconds;
+            }
+
+            <p>
+                <small>
+                    期間: @FormatDuration(traceDuration) ｜
+                    スパン数: @selectedTrace.Count ｜
+                    サービス: @string.Join(", ", selectedTrace.Select(s => s.ServiceName).Distinct())
+                </small>
+            </p>
+
+            <div class="table-overflow">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 30%;">スパン名</th>
+                            <th style="width: 10%;">サービス</th>
+                            <th style="width: 8%;">期間</th>
+                            <th style="width: 52%;">タイムライン</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var span in BuildSpanTree(selectedTrace))
+                        {
+                            var offsetPct = totalMs > 0 ? (span.Span.StartTime - traceStart).TotalMilliseconds / totalMs * 100 : 0;
+                            var widthPct = totalMs > 0 ? Math.Max(span.Span.Duration.TotalMilliseconds / totalMs * 100, 0.5) : 100;
+                            <tr @onclick="() => ToggleSpanDetail(span.Span)" style="cursor: pointer;">
+                                <td>
+                                    <span style="padding-left: @(span.Depth * 16)px;">
+                                        @if (span.Span.StatusCode == OtelStatusCode.Error)
+                                        {
+                                            <i data-lucide="alert-circle" style="color: var(--pico-color-red-500); width: 14px; height: 14px;"></i>
+                                        }
+                                        <small>@span.Span.Name</small>
+                                    </span>
+                                </td>
+                                <td><small>@span.Span.ServiceName</small></td>
+                                <td><small>@FormatDuration(span.Span.Duration)</small></td>
+                                <td>
+                                    <div style="position: relative; height: 20px; background: var(--pico-secondary-background); border-radius: 4px;">
+                                        <div style="position: absolute; left: @(offsetPct.ToString("F2"))%; width: @(widthPct.ToString("F2"))%; height: 100%; background: @GetSpanColor(span.Span); border-radius: 4px; min-width: 2px;"
+                                             title="@span.Span.Name (@FormatDuration(span.Span.Duration))">
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @if (expandedSpan == span.Span)
+                            {
+                                <tr>
+                                    <td colspan="4">
+                                        <details open>
+                                            <summary>スパン詳細</summary>
+                                            <div class="grid">
+                                                <div>
+                                                    <p><strong>SpanID:</strong> <code>@span.Span.SpanId</code></p>
+                                                    <p><strong>親SpanID:</strong> <code>@(span.Span.ParentSpanId ?? "なし（ルート）")</code></p>
+                                                    <p><strong>種別:</strong> @span.Span.Kind</p>
+                                                    <p><strong>ステータス:</strong> @span.Span.StatusCode @span.Span.StatusMessage</p>
+                                                    <p><strong>開始:</strong> @span.Span.StartTime.ToLocalTime().ToString("HH:mm:ss.fff")</p>
+                                                    <p><strong>終了:</strong> @span.Span.EndTime.ToLocalTime().ToString("HH:mm:ss.fff")</p>
+                                                </div>
+                                                <div>
+                                                    @if (span.Span.Attributes.Count > 0)
+                                                    {
+                                                        <h6>属性</h6>
+                                                        <table>
+                                                            @foreach (var attr in span.Span.Attributes)
+                                                            {
+                                                                <tr>
+                                                                    <td><strong>@attr.Key</strong></td>
+                                                                    <td>@attr.Value</td>
+                                                                </tr>
+                                                            }
+                                                        </table>
+                                                    }
+                                                </div>
+                                            </div>
+                                            @if (span.Span.Events.Count > 0)
+                                            {
+                                                <h6>イベント</h6>
+                                                <table>
+                                                    <thead>
+                                                        <tr><th>時刻</th><th>名前</th><th>属性</th></tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        @foreach (var evt in span.Span.Events)
+                                                        {
+                                                            <tr>
+                                                                <td>@evt.Timestamp.ToLocalTime().ToString("HH:mm:ss.fff")</td>
+                                                                <td>@evt.Name</td>
+                                                                <td>@string.Join(", ", evt.Attributes.Select(a => $"{a.Key}={a.Value}"))</td>
+                                                            </tr>
+                                                        }
+                                                    </tbody>
+                                                </table>
+                                            }
+                                        </details>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    }
+    else
+    {
+        @* トレース一覧 *@
+        <article>
+            <form @onsubmit="ApplyFilters">
+                <div class="grid">
+                    <label>
+                        サービス名
+                        <select @bind="selectedService">
+                            <option value="">すべて</option>
+                            @foreach (var name in serviceNames)
+                            {
+                                <option value="@name">@name</option>
+                            }
+                        </select>
+                    </label>
+
+                    <label>
+                        TraceID
+                        <input type="text" @bind="filterTraceId" placeholder="トレースIDで検索" />
+                    </label>
+
+                    <div>
+                        <button type="submit"><i data-lucide="filter"></i>フィルター適用</button>
+                    </div>
+                </div>
+            </form>
+        </article>
+
+        @if (traceGroups.Count == 0)
+        {
+            <article>
+                <p>トレースがありません</p>
+            </article>
+        }
+        else
+        {
+            <article>
+                <div class="table-overflow">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>TraceID</th>
+                                <th>ルートスパン</th>
+                                <th>サービス</th>
+                                <th>スパン数</th>
+                                <th>期間</th>
+                                <th>開始時刻</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var trace in traceGroups)
+                            {
+                                <tr @onclick="() => SelectTrace(trace.TraceId)" style="cursor: pointer;">
+                                    <td><code><small>@trace.TraceId[..Math.Min(16, trace.TraceId.Length)]…</small></code></td>
+                                    <td>@trace.RootSpanName</td>
+                                    <td><small>@trace.ServiceName</small></td>
+                                    <td>@trace.SpanCount</td>
+                                    <td>@FormatDuration(trace.Duration)</td>
+                                    <td>@trace.StartTime.ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss.fff")</td>
+                                    <td>
+                                        <span class="status-badge @(trace.HasError ? "status-badge-stopped" : "status-badge-running")">
+                                            @(trace.HasError ? "Error" : "OK")
+                                        </span>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav aria-label="ページネーション">
+                        <div role="group" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                            @if (currentPage > 1)
+                            {
+                                <button @onclick="() => ChangePage(currentPage - 1)"><i data-lucide="chevron-left"></i>前へ</button>
+                            }
+                            <span>ページ @currentPage / @totalPages</span>
+                            @if (currentPage < totalPages)
+                            {
+                                <button @onclick="() => ChangePage(currentPage + 1)">次へ<i data-lucide="chevron-right"></i></button>
+                            }
+                        </div>
+                    </nav>
+                }
+            </article>
+        }
+    }
+</main>
+
+@code {
+    [Parameter]
+    public string? TraceIdParam { get; set; }
+
+    private List<string> serviceNames = new();
+    private string selectedService = "";
+    private string filterTraceId = "";
+    private int currentPage = 1;
+    private int pageSize = 30;
+    private int totalPages = 0;
+
+    private List<TraceGroupViewModel> traceGroups = new();
+    private List<OtelSpan>? selectedTrace;
+    private OtelSpan? expandedSpan;
+
+    protected override void OnInitialized()
+    {
+        serviceNames = OtelStore.GetServiceNames().ToList();
+
+        if (!string.IsNullOrEmpty(TraceIdParam))
+        {
+            SelectTrace(TraceIdParam);
+        }
+        else
+        {
+            LoadTraces();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try { await JS.InvokeVoidAsync("lucide.createIcons"); } catch { }
+    }
+
+    private void NavigateToHome() => NavigationManager.NavigateTo("/");
+
+    private void LoadTraces()
+    {
+        var service = string.IsNullOrEmpty(selectedService) ? null : selectedService;
+        var traceId = string.IsNullOrEmpty(filterTraceId) ? null : filterTraceId;
+
+        // Get all root spans (no parent) for the trace list
+        var allSpans = OtelStore.QuerySpans(service, traceId, null, null, 0, 10000);
+
+        // Group by TraceId
+        var groups = allSpans
+            .GroupBy(s => s.TraceId)
+            .Select(g =>
+            {
+                var root = g.FirstOrDefault(s => s.ParentSpanId == null) ?? g.First();
+                var start = g.Min(s => s.StartTime);
+                var end = g.Max(s => s.EndTime);
+                return new TraceGroupViewModel
+                {
+                    TraceId = g.Key,
+                    RootSpanName = root.Name,
+                    ServiceName = root.ServiceName,
+                    SpanCount = g.Count(),
+                    Duration = end - start,
+                    StartTime = start,
+                    HasError = g.Any(s => s.StatusCode == OtelStatusCode.Error),
+                };
+            })
+            .OrderByDescending(t => t.StartTime)
+            .ToList();
+
+        var totalCount = groups.Count;
+        totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        var skip = (currentPage - 1) * pageSize;
+        traceGroups = groups.Skip(skip).Take(pageSize).ToList();
+    }
+
+    private void SelectTrace(string traceId)
+    {
+        var spans = OtelStore.QuerySpans(null, traceId, null, null, 0, 10000);
+        if (spans.Count > 0)
+        {
+            selectedTrace = spans.ToList();
+            expandedSpan = null;
+        }
+    }
+
+    private void ClearSelection()
+    {
+        selectedTrace = null;
+        expandedSpan = null;
+        if (!string.IsNullOrEmpty(TraceIdParam))
+        {
+            NavigationManager.NavigateTo("/otel/traces");
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        currentPage = 1;
+        LoadTraces();
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+        LoadTraces();
+    }
+
+    private void ToggleSpanDetail(OtelSpan span)
+    {
+        expandedSpan = expandedSpan == span ? null : span;
+    }
+
+    private static List<SpanTreeNode> BuildSpanTree(List<OtelSpan> spans)
+    {
+        var result = new List<SpanTreeNode>();
+        var byId = spans.ToDictionary(s => s.SpanId);
+        var children = spans.GroupBy(s => s.ParentSpanId ?? "").ToDictionary(g => g.Key, g => g.OrderBy(s => s.StartTime).ToList());
+
+        void AddChildren(string parentId, int depth)
+        {
+            if (children.TryGetValue(parentId, out var kids))
+            {
+                foreach (var child in kids)
+                {
+                    result.Add(new SpanTreeNode { Span = child, Depth = depth });
+                    AddChildren(child.SpanId, depth + 1);
+                }
+            }
+        }
+
+        // Start with root spans (no parent or parent not in this trace)
+        var roots = spans.Where(s => s.ParentSpanId == null || !byId.ContainsKey(s.ParentSpanId)).OrderBy(s => s.StartTime);
+        foreach (var root in roots)
+        {
+            result.Add(new SpanTreeNode { Span = root, Depth = 0 });
+            AddChildren(root.SpanId, 1);
+        }
+
+        return result;
+    }
+
+    private static string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMilliseconds < 1)
+            return $"{duration.TotalMicroseconds:F0}µs";
+        if (duration.TotalSeconds < 1)
+            return $"{duration.TotalMilliseconds:F1}ms";
+        if (duration.TotalMinutes < 1)
+            return $"{duration.TotalSeconds:F2}s";
+        return $"{duration.TotalMinutes:F1}m";
+    }
+
+    private static string GetSpanColor(OtelSpan span) => span.StatusCode switch
+    {
+        OtelStatusCode.Error => "var(--pico-color-red-500, #e53935)",
+        _ => span.Kind switch
+        {
+            OtelSpanKind.Server => "var(--pico-color-blue-500, #1e88e5)",
+            OtelSpanKind.Client => "var(--pico-color-green-500, #43a047)",
+            OtelSpanKind.Producer => "var(--pico-color-orange-500, #fb8c00)",
+            OtelSpanKind.Consumer => "var(--pico-color-purple-500, #8e24aa)",
+            _ => "var(--pico-primary, #1095c1)",
+        },
+    };
+
+    private sealed class TraceGroupViewModel
+    {
+        public string TraceId { get; set; } = "";
+        public string RootSpanName { get; set; } = "";
+        public string ServiceName { get; set; } = "";
+        public int SpanCount { get; set; }
+        public TimeSpan Duration { get; set; }
+        public DateTimeOffset StartTime { get; set; }
+        public bool HasError { get; set; }
+    }
+
+    private sealed class SpanTreeNode
+    {
+        public OtelSpan Span { get; set; } = default!;
+        public int Depth { get; set; }
+    }
+}
