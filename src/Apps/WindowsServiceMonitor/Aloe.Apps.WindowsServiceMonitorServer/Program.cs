@@ -1,13 +1,10 @@
-using Aloe.Apps.WindowsServiceMonitorServer.Components;
-using Aloe.Apps.WindowsServiceMonitorServer.Models;
-using Aloe.Apps.WindowsServiceMonitorLib.Models;
 using Aloe.Apps.WindowsServiceMonitorLib.Interfaces;
-using Aloe.Apps.WindowsServiceMonitorLib.Infrastructure;
-using Microsoft.Extensions.Options;
+using Aloe.Apps.WindowsServiceMonitorLib.Models;
+using Aloe.Apps.WindowsServiceMonitorServer.Components;
+using Aloe.Apps.WindowsServiceMonitorServer.Extensions;
 using Aloe.Apps.WindowsServiceMonitorServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Components.Authorization;
 using Serilog;
 using Serilog.Formatting.Compact;
 
@@ -32,61 +29,12 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-// Add API controllers
 builder.Services.AddControllers();
 
-// Authentication設定
-builder.Services.Configure<AuthOptions>(
-    builder.Configuration.GetSection(AuthOptions.SectionName));
-var authOptions = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/login";
-        options.LogoutPath = "/logout";
-        options.AccessDeniedPath = "/access-denied";
-        options.ExpireTimeSpan = TimeSpan.FromMinutes(authOptions.CookieSettings.ExpireTimeMinutes);
-        options.SlidingExpiration = authOptions.CookieSettings.SlidingExpiration;
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-        options.Cookie.Name = "WindowsServiceMonitor.Auth";
-    });
-builder.Services.AddAuthorizationBuilder();
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddCascadingAuthenticationState();
-builder.Services.AddScoped<LoginService>();
-builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
-
-// AppLogs設定
-builder.Services.Configure<List<AppLogConfig>>(builder.Configuration.GetSection("AppLogs"));
-builder.Services.AddScoped<IAppLogService, AppLogService>();
-
-// WindowsServiceMonitor設定
-builder.Services.Configure<WindowsServiceMonitorOptions>(
-    builder.Configuration.GetSection(WindowsServiceMonitorOptions.SectionName));
-
-// Monitored Services Repository
-var monitoredServicesPath = Path.Combine(AppContext.BaseDirectory, "appsettings.services.json");
-builder.Services.AddScoped<IMonitoredServiceRepository>(
-    sp => new JsonMonitoredServiceRepository(sp.GetRequiredService<ILogger<JsonMonitoredServiceRepository>>(), monitoredServicesPath));
-
-// Log Repository
-var logsDir = Path.Combine(AppContext.BaseDirectory, "logs");
-builder.Services.AddSingleton<ILogRepository>(
-    sp => new JsonLogRepository(logsDir, sp.GetRequiredService<ILogger<JsonLogRepository>>()));
-
-// Operation Tracker (Singleton to share state between scopes)
-builder.Services.AddSingleton<IOperationTracker, OperationTracker>();
-
-builder.Services.AddScoped<IWin32ServiceApi, Win32ServiceApi>();
-builder.Services.AddScoped<IServiceManager, ServiceManager>();
-builder.Services.AddScoped<IServiceRegistrar, ServiceRegistrar>();
-
-// SignalR
-builder.Services.AddSignalR();
-builder.Services.AddHostedService<BackgroundWindowsServiceMonitor>();
+builder.Services.AddMonitorAuthentication(builder.Configuration);
+builder.Services.AddMonitorAppLog(builder.Configuration);
+builder.Services.AddMonitorServices(builder.Configuration);
+builder.Services.AddMonitorHostedServices();
 
 var app = builder.Build();
 

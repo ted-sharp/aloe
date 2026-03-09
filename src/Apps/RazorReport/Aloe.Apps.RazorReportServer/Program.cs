@@ -1,5 +1,5 @@
 using Aloe.Apps.RazorReportServer.Components;
-using Aloe.Apps.RazorReportServer.Services;
+using Aloe.Apps.RazorReportServer.Extensions;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,22 +13,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddMudServices();
-builder.Services.AddScoped<PageConfigService>();
-builder.Services.AddScoped<ZoomService>();
-builder.Services.AddScoped<DocumentService>();
-builder.Services.AddScoped<UndoRedoService>();
-builder.Services.AddScoped<ClipboardService>();
-builder.Services.AddSingleton<ReportStateService>();
-builder.Services.AddSingleton<SelectionService>();
-builder.Services.AddScoped<GridCalculationService>();
-builder.Services.AddScoped<AlignmentService>();
-builder.Services.AddScoped<FileInteropService>();
-builder.Services.AddScoped<PlacementModeService>();
-builder.Services.AddScoped<ComponentFactoryService>();
-
-// Configure ComponentsConfiguration
-builder.Services.Configure<Aloe.Apps.RazorReportLib.Models.ComponentsConfiguration>(
-    builder.Configuration.GetSection("ComponentsConfiguration"));
+builder.Services.AddRazorReportServices(builder.Configuration);
 
 var app = builder.Build();
 
