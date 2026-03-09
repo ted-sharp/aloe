@@ -1,37 +1,25 @@
-using Aloe.Apps.FileBridge.Components;
-using Aloe.Apps.FileBridge.Components.Hubs;
+using Aloe.Apps.FileBridge;
 using Aloe.Apps.FileBridgeLib.Models;
 using Aloe.Apps.FileBridgeLib.Services;
-using Microsoft.AspNetCore.SignalR;
 using Serilog;
+
+// WindowsサービスはSCM起動時に作業ディレクトリがSystem32になるため、
+// 実行ファイルのディレクトリに明示的に変更する
+Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 try
 {
-    // カレントディレクトリをアプリのベースディレクトリ（exe/DLLの位置）に変更
-    var appBaseDir = Path.GetFullPath(AppContext.BaseDirectory);
-    if (!String.IsNullOrEmpty(appBaseDir) && Directory.Exists(appBaseDir))
-    {
-        Environment.CurrentDirectory = appBaseDir;
-    }
-
-    var builder = WebApplication.CreateBuilder(args);
+    var builder = Host.CreateApplicationBuilder(args);
 
     // Serilogの設定
     Log.Logger = new LoggerConfiguration()
         .ReadFrom.Configuration(builder.Configuration)
         .CreateLogger();
 
-    // Serilogをロギングプロバイダーとして追加
-    builder.Host.UseSerilog();
+    builder.Services.AddSerilog();
 
-    Log.Information("アプリケーションを起動しています...");
-
-    // Add services to the container.
-    builder.Services.AddRazorComponents()
-        .AddInteractiveServerComponents();
-
-    // SignalRの追加
-    builder.Services.AddSignalR();
+    // Windows Serviceとして動作するための設定
+    builder.Services.AddWindowsService(options => { options.ServiceName = "FileBridge"; });
 
     // FileBridge設定の読み込み
     var fileBridgeOptions = builder.Configuration.GetSection("FileBridge").Get<FileBridgeOptions>() ?? new FileBridgeOptions();
@@ -58,60 +46,13 @@ try
         return new FileWatcherService(fileBridgeOptions, logService, processLauncher, logger);
     });
 
-    var app = builder.Build();
+    // Workerの登録
+    builder.Services.AddHostedService<Worker>();
 
-    // Configure the HTTP request pipeline.
-    if (!app.Environment.IsDevelopment())
-    {
-        app.UseExceptionHandler("/Error", createScopeForErrors: true);
-        // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-        app.UseHsts();
-    }
-    app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-    app.UseHttpsRedirection();
+    Log.Information("アプリケーションを起動しています...");
 
-    app.UseAntiforgery();
-
-    app.MapStaticAssets();
-    app.MapRazorComponents<App>()
-        .AddInteractiveServerRenderMode();
-
-    // SignalR Hubのマッピング
-    app.MapHub<OperationLogHub>("/operationLogHub");
-
-    // サービスの初期化と開始
-    var logService = app.Services.GetRequiredService<OperationLogService>();
-
-    // OperationLogServiceにSignalRコールバックを設定
-    var hubContext = app.Services.GetRequiredService<IHubContext<OperationLogHub>>();
-    logService.SetOnLogAddedCallback(async (entry) =>
-    {
-        try
-        {
-            await hubContext.Clients.All.SendAsync("LogAdded", entry);
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "SignalRへのログ送信でエラーが発生しました");
-        }
-    });
-
-    var fileWatcherService = app.Services.GetRequiredService<FileWatcherService>();
-    var processLauncherService = app.Services.GetRequiredService<ProcessLauncherService>();
-    fileWatcherService.Start();
-    Log.Information("ファイル監視を開始しました");
-
-    // アプリケーション終了時のクリーンアップ
-    app.Lifetime.ApplicationStopping.Register(() =>
-    {
-        fileWatcherService.Stop();
-        processLauncherService.Dispose();
-        logService.Dispose();
-    });
-
-    Log.Information("アプリケーションの起動が完了しました");
-
-    app.Run();
+    var host = builder.Build();
+    host.Run();
 }
 catch (Exception ex)
 {
