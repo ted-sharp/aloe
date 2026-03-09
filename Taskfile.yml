@@ -96,6 +96,11 @@ tasks:
     cmds:
       - dotnet build src/Apps/SyncBridge/Aloe.Apps.SyncBridge -c Release -o "{{.PUBLISH_DIR}}/syncbridge"
 
+  publish:envchecker:
+    desc: EnvChecker (Console) を win-x64 で self-contained publish
+    cmds:
+      - dotnet publish src/Apps/EnvChecker/Aloe.Apps.EnvChecker -c Release -r win-x64 --self-contained true -o "{{.PUBLISH_DIR}}/envchecker"
+
   publish:all:
     desc: 全アプリを publish
     deps:
@@ -105,3 +110,4 @@ tasks:
       - publish:razorreport
       - publish:wsmonitor
       - publish:syncbridge
+      - publish:envchecker
