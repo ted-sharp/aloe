@@ -90,7 +90,20 @@ internal sealed class CheckProfile
                 HideIfNotSet = true,
             },
             Firewall = new() { Enabled = true },
-            Service = new() { Enabled = true, Services = ["postgresql-x64-16", "W3SVC", "wuauserv", "W32Time"] },
+            Service = new()
+            {
+                Enabled = true,
+                Services =
+                [
+                    "MSSQLSERVER", "MSSQL$*",
+                    "postgresql-x64-*",
+                    "OracleService*",
+                    "MySQL*",
+                    "W3SVC", "nginx",
+                    "wuauserv", "W32Time",
+                ],
+                HideIfNotInstalled = true,
+            },
             Software = new() { Enabled = true, Commands = ["dotnet", "git", "node", "npm", "psql", "docker", "python"] },
             EventLog = new() { Enabled = true, LogNames = ["Application", "System"], Hours = 24, MaxEntries = 5 },
             Cert = new() { Enabled = true, WarningDays = 30 },
@@ -177,7 +190,17 @@ internal sealed class EnvSection : SectionToggle
 
 internal sealed class ServiceSection : SectionToggle
 {
-    public List<string> Services { get; set; } = ["postgresql-x64-16", "W3SVC", "wuauserv", "W32Time"];
+    public List<string> Services { get; set; } =
+    [
+        "MSSQLSERVER", "MSSQL$*",
+        "postgresql-x64-*",
+        "OracleService*",
+        "MySQL*",
+        "W3SVC", "nginx",
+        "wuauserv", "W32Time",
+    ];
+
+    public bool HideIfNotInstalled { get; set; } = true;
 }
 
 internal sealed class SoftwareSection : SectionToggle
