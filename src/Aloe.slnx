@@ -13,6 +13,10 @@
     <Project Path="Apps/Medock/Aloe.Apps.MedockMcp/Aloe.Apps.MedockMcp.csproj" />
     <Project Path="Apps/Medock/Aloe.Apps.MedockServer.Tests/Aloe.Apps.MedockServer.Tests.csproj" />
   </Folder>
+  <Folder Name="/Apps/ExcelReport/">
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib/Aloe.Apps.ExcelReportLib.csproj" />
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReport/Aloe.Apps.ExcelReport.csproj" />
+  </Folder>
   <Folder Name="/Apps/RazorReport/">
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportLib/Aloe.Apps.RazorReportLib.csproj" />
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportServer/Aloe.Apps.RazorReportServer.csproj" />
