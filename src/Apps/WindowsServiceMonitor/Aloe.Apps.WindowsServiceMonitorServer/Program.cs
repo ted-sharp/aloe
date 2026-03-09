@@ -3,6 +3,7 @@ using Aloe.Apps.WindowsServiceMonitorServer.Models;
 using Aloe.Apps.WindowsServiceMonitorLib.Models;
 using Aloe.Apps.WindowsServiceMonitorLib.Interfaces;
 using Aloe.Apps.WindowsServiceMonitorLib.Infrastructure;
+using Microsoft.Extensions.Options;
 using Aloe.Apps.WindowsServiceMonitorServer.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -57,6 +58,10 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<LoginService>();
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
+
+// AppLogs設定
+builder.Services.Configure<List<AppLogConfig>>(builder.Configuration.GetSection("AppLogs"));
+builder.Services.AddScoped<IAppLogService, AppLogService>();
 
 // WindowsServiceMonitor設定
 builder.Services.Configure<WindowsServiceMonitorOptions>(

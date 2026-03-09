@@ -1,0 +1,226 @@
+@page "/app-logs"
+@rendermode InteractiveServer
+@using Aloe.Apps.WindowsServiceMonitorLib.Interfaces
+@using Aloe.Apps.WindowsServiceMonitorLib.Models
+@using Microsoft.JSInterop
+@inject IAppLogService AppLogService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+
+<PageTitle>アプリログ</PageTitle>
+
+<main class="container">
+    <nav>
+        <hgroup>
+            <h1>アプリログ</h1>
+            <p>外部アプリケーションのログファイルを閲覧します</p>
+        </hgroup>
+        <button class="icon-button" @onclick="NavigateToHome" title="閉じる">
+            <i data-lucide="x"></i>
+        </button>
+    </nav>
+
+    <article>
+        <div class="grid">
+            <label>
+                アプリケーション
+                <select @bind="SelectedApp" @bind:after="OnAppChanged">
+                    <option value="">選択してください</option>
+                    @foreach (var config in appConfigs)
+                    {
+                        <option value="@config.Name">@config.Name</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                ログファイル
+                <select @bind="SelectedFile" @bind:after="OnFileChanged">
+                    <option value="">選択してください</option>
+                    @foreach (var file in logFiles)
+                    {
+                        <option value="@file">@file</option>
+                    }
+                </select>
+            </label>
+
+            <label>
+                自動更新
+                <fieldset>
+                    <label>
+                        <input type="checkbox" role="switch" @bind="AutoRefresh" @bind:after="OnAutoRefreshChanged" />
+                        @(AutoRefresh ? "ON（5秒間隔）" : "OFF")
+                    </label>
+                </fieldset>
+            </label>
+        </div>
+    </article>
+
+    @if (loading)
+    {
+        <article aria-busy="true">読み込み中...</article>
+    }
+    else if (!string.IsNullOrEmpty(SelectedApp) && !string.IsNullOrEmpty(SelectedFile))
+    {
+        <article>
+            <header>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <small>@SelectedFile — @totalLineCount 行（最新行が先頭）</small>
+                    <small>ページ @(currentPage + 1) / @totalPages</small>
+                </div>
+            </header>
+            <pre style="max-height: 70vh; overflow: auto; font-size: 0.85rem; white-space: pre-wrap; word-break: break-all;">@string.Join("\n", logLines)</pre>
+
+            @if (totalPages > 1)
+            {
+                <footer>
+                    <nav aria-label="ページネーション">
+                        <div role="group" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem;">
+                            @if (currentPage > 0)
+                            {
+                                <button @onclick="() => ChangePage(currentPage - 1)"><i data-lucide="chevron-left"></i>前へ</button>
+                            }
+                            <span>ページ @(currentPage + 1) / @totalPages</span>
+                            @if (currentPage < totalPages - 1)
+                            {
+                                <button @onclick="() => ChangePage(currentPage + 1)">次へ<i data-lucide="chevron-right"></i></button>
+                            }
+                        </div>
+                    </nav>
+                </footer>
+            }
+        </article>
+    }
+    else if (!string.IsNullOrEmpty(SelectedApp) && logFiles.Count == 0)
+    {
+        <article>
+            <p>ログファイルが見つかりません</p>
+        </article>
+    }
+</main>
+
+@code {
+    private List<AppLogConfig> appConfigs = new();
+    private List<string> logFiles = new();
+    private List<string> logLines = new();
+    private bool loading;
+    private int currentPage;
+    private int pageSize = 100;
+    private int totalLineCount;
+    private int totalPages;
+    private CancellationTokenSource? autoRefreshCts;
+
+    private string SelectedApp { get; set; } = "";
+    private string SelectedFile { get; set; } = "";
+    private bool AutoRefresh { get; set; }
+
+    protected override void OnInitialized()
+    {
+        appConfigs = AppLogService.GetAppConfigs();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        try
+        {
+            await JS.InvokeVoidAsync("lucide.createIcons");
+        }
+        catch { }
+    }
+
+    private void NavigateToHome()
+    {
+        NavigationManager.NavigateTo("/");
+    }
+
+    private void OnAppChanged()
+    {
+        SelectedFile = "";
+        logLines = new();
+        totalLineCount = 0;
+        totalPages = 0;
+        currentPage = 0;
+
+        if (!string.IsNullOrEmpty(SelectedApp))
+        {
+            logFiles = AppLogService.GetLogFiles(SelectedApp);
+        }
+        else
+        {
+            logFiles = new();
+        }
+    }
+
+    private void OnFileChanged()
+    {
+        currentPage = 0;
+        LoadLogContent();
+    }
+
+    private void LoadLogContent()
+    {
+        if (string.IsNullOrEmpty(SelectedApp) || string.IsNullOrEmpty(SelectedFile))
+        {
+            logLines = new();
+            totalLineCount = 0;
+            totalPages = 0;
+            return;
+        }
+
+        loading = true;
+        try
+        {
+            var result = AppLogService.ReadLogFile(SelectedApp, SelectedFile, currentPage, pageSize);
+            logLines = result.Lines;
+            totalLineCount = result.TotalLineCount;
+            totalPages = totalLineCount > 0 ? (int)Math.Ceiling((double)totalLineCount / pageSize) : 0;
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private void ChangePage(int page)
+    {
+        currentPage = page;
+        LoadLogContent();
+    }
+
+    private async void OnAutoRefreshChanged()
+    {
+        StopAutoRefresh();
+
+        if (AutoRefresh)
+        {
+            autoRefreshCts = new CancellationTokenSource();
+            var token = autoRefreshCts.Token;
+
+            try
+            {
+                using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+                while (await timer.WaitForNextTickAsync(token))
+                {
+                    LoadLogContent();
+                    await InvokeAsync(StateHasChanged);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // 自動更新停止時の正常キャンセル
+            }
+        }
+    }
+
+    private void StopAutoRefresh()
+    {
+        autoRefreshCts?.Cancel();
+        autoRefreshCts?.Dispose();
+        autoRefreshCts = null;
+    }
+
+    public void Dispose()
+    {
+        StopAutoRefresh();
+    }
+}
