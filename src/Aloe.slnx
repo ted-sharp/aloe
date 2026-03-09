@@ -1,5 +1,8 @@
 <Solution>
   <Folder Name="/Apps/" />
+  <Folder Name="/Apps/EnvChecker/">
+    <Project Path="Apps/EnvChecker/Aloe.Apps.EnvChecker/Aloe.Apps.EnvChecker.csproj" />
+  </Folder>
   <Folder Name="/Apps/FileBridge/">
     <Project Path="Apps/FileBridge/Aloe.Apps.FileBridgeLib/Aloe.Apps.FileBridgeLib.csproj" />
     <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge/Aloe.Apps.FileBridge.csproj" />
