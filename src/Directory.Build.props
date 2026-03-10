@@ -2,4 +2,7 @@
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="README_*.md" />
+  </ItemGroup>
 </Project>
