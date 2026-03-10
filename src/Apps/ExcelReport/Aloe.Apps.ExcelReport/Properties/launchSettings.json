@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Aloe.Apps.ExcelReport": {
+      "commandName": "Project",
+      "commandLineArgs": "ExcelReportTemplate.xlsx output.pdf --var-file sample-vars.json"
+    }
+  }
+}

@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.CommandLine;
+using System.Text.Json;
 using Aloe.Apps.ExcelReportLib.Extensions;
 using Aloe.Apps.ExcelReportLib.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -28,6 +29,11 @@ Option<string[]> varOption = new("--var", "-v")
     AllowMultipleArgumentsPerToken = true,
 };
 
+Option<FileInfo?> varFileOption = new("--var-file", "-f")
+{
+    Description = "置換変数を定義したJSONファイルのパス",
+};
+
 Option<string> excelReaderOption = new("--excel-reader")
 {
     Description = "Excel読み取りライブラリ(npoi / closedxml)",
@@ -46,6 +52,7 @@ RootCommand rootCommand = new("Excel方眼紙テンプレートからPDFを生�
     outputArg,
     sheetOption,
     varOption,
+    varFileOption,
     excelReaderOption,
     pdfRendererOption,
 };
@@ -89,10 +96,32 @@ rootCommand.SetAction(parseResult =>
     using var provider = services.BuildServiceProvider();
     var service = provider.GetRequiredService<ExcelReportService>();
 
-    Dictionary<string, string>? variables = null;
+    Dictionary<string, string> variables = [];
+
+    // 1. ファイルから読み込み
+    var varFile = parseResult.GetValue(varFileOption);
+    if (varFile is not null)
+    {
+        if (!varFile.Exists)
+        {
+            Console.Error.WriteLine($"変数ファイルが見つかりません: {varFile.FullName}");
+            return 1;
+        }
+
+        var json = File.ReadAllText(varFile.FullName);
+        var fileVars = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+        if (fileVars is not null)
+        {
+            foreach (var kvp in fileVars)
+            {
+                variables[kvp.Key] = kvp.Value;
+            }
+        }
+    }
+
+    // 2. --var で上書き
     if (vars is { Length: > 0 })
     {
-        variables = [];
         foreach (var v in vars)
         {
             int eqIndex = v.IndexOf('=', StringComparison.Ordinal);
@@ -109,7 +138,7 @@ rootCommand.SetAction(parseResult =>
         ? new Aloe.Apps.ExcelReportLib.Models.ReportOptions { SheetIndex = sheet.Value }
         : null;
 
-    service.GeneratePdf(input.FullName, output.FullName, variables, options);
+    service.GeneratePdf(input.FullName, output.FullName, variables.Count > 0 ? variables : null, options);
 
     Console.WriteLine($"PDF生成完了: {output.FullName}");
     return 0;

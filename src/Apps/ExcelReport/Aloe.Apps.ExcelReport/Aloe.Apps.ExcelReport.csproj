@@ -9,6 +9,22 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="sample-vars.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="sample-vars.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ExcelReportTemplate.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.ExcelReportLib\Aloe.Apps.ExcelReportLib.csproj" />
   </ItemGroup>
 

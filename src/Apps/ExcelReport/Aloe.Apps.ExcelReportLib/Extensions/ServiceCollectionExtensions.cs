@@ -8,6 +8,7 @@ using Aloe.Apps.ExcelReportLib.Readers;
 using Aloe.Apps.ExcelReportLib.Services;
 using Aloe.Apps.ExcelReportLib.Writers;
 using Microsoft.Extensions.DependencyInjection;
+using PdfSharp.Fonts;
 
 namespace Aloe.Apps.ExcelReportLib.Extensions;
 
@@ -67,6 +68,11 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static IServiceCollection AddExcelReportWithPdfSharp(this IServiceCollection services)
     {
+        if (GlobalFontSettings.FontResolver is not SystemFontResolver)
+        {
+            GlobalFontSettings.FontResolver = new SystemFontResolver();
+        }
+
         services.AddSingleton<IPdfRenderer, PdfSharpWriter>();
         return services;
     }
