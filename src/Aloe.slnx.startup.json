@@ -52,6 +52,18 @@
         }
     */
   "MultiProjectConfigurations": {
+    "EnvChecker": {
+      "Projects": {
+        "Aloe.Apps.EnvChecker": {}
+      }
+    },
+    "EnvChecker(--show-all)": {
+      "Projects": {
+        "Aloe.Apps.EnvChecker": {
+          "CommandLineArguments": "--show-all"
+        }
+      }
+    },
     "ExcelReport(Sample)": {
       "Projects": {
         "Aloe.Apps.ExcelReport": {

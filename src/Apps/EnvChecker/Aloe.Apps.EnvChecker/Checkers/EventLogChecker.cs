@@ -21,7 +21,9 @@ internal sealed class EventLogChecker : IChecker
             {
                 using var log = new System.Diagnostics.EventLog(logName);
                 var errorEntries = log.Entries.Cast<EventLogEntry>()
-                    .Where(e => e.TimeGenerated >= since && e.EntryType == EventLogEntryType.Error)
+                    .Where(e => e.TimeGenerated >= since
+                             && e.EntryType == EventLogEntryType.Error
+                             && !config.IgnoreSources.Contains(e.Source, StringComparer.OrdinalIgnoreCase))
                     .OrderByDescending(e => e.TimeGenerated)
                     .ToList();
 

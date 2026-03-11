@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
+using Microsoft.Win32;
 
 namespace Aloe.Apps.EnvChecker.Checkers;
 
@@ -18,6 +19,12 @@ internal sealed class NetworkChecker : IChecker
         writer.WriteLine();
         await WriteDnsTest(writer, networkConfig.DnsTestHost);
         await WritePingTest(writer, networkConfig.PingTestHost);
+
+        if (networkConfig.ShowStaticRoutes)
+        {
+            writer.WriteLine();
+            WriteStaticRoutes(writer);
+        }
     }
 
     private static void WriteAdapters(TextWriter writer)
@@ -102,6 +109,50 @@ internal sealed class NetworkChecker : IChecker
         catch (Exception ex)
         {
             writer.WriteLine($"    Result     : FAILED ({ex.Message})");
+        }
+    }
+
+    private static void WriteStaticRoutes(TextWriter writer)
+    {
+        writer.WriteLine("  Static Routes:");
+
+        const string registryPath = @"SYSTEM\CurrentControlSet\Services\Tcpip\Parameters\PersistentRoutes";
+        List<(string dest, string mask, string gateway, string metric)> routes = [];
+
+        try
+        {
+            using var key = Registry.LocalMachine.OpenSubKey(registryPath);
+            if (key is not null)
+            {
+                foreach (var valueName in key.GetValueNames())
+                {
+                    if (string.IsNullOrEmpty(valueName))
+                    {
+                        continue;
+                    }
+
+                    var parts = valueName.Split(',');
+                    if (parts.Length >= 4)
+                    {
+                        routes.Add((parts[0].Trim(), parts[1].Trim(), parts[2].Trim(), parts[3].Trim()));
+                    }
+                }
+            }
+        }
+        catch
+        {
+            // Cannot read registry
+        }
+
+        if (routes.Count == 0)
+        {
+            writer.WriteLine("    (No static routes configured)");
+            return;
+        }
+
+        foreach (var (dest, mask, gateway, metric) in routes)
+        {
+            writer.WriteLine($"    {dest,-17} {mask,-17} {gateway,-17} metric={metric}");
         }
     }
 

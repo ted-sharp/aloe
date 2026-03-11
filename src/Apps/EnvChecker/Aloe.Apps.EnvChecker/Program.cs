@@ -18,6 +18,11 @@ Option<string?> excludeOption = new("--exclude")
     Description = "Comma-separated section keys to exclude (e.g. eventlog,cert)",
 };
 
+Option<bool> showAllOption = new("--show-all")
+{
+    Description = "Show all items including missing/not found (default: hide missing)",
+};
+
 Option<bool> initOption = new("--init")
 {
     Description = "Generate a sample profile JSON to stdout",
@@ -28,6 +33,7 @@ RootCommand rootCommand = new("Aloe Environment Checker - diagnose system enviro
     profileOption,
     onlyOption,
     excludeOption,
+    showAllOption,
     initOption,
 };
 
@@ -36,6 +42,7 @@ rootCommand.SetAction(async parseResult =>
     var profileFile = parseResult.GetValue(profileOption);
     var only = parseResult.GetValue(onlyOption);
     var exclude = parseResult.GetValue(excludeOption);
+    var showAll = parseResult.GetValue(showAllOption);
     var init = parseResult.GetValue(initOption);
 
     if (init)
@@ -69,6 +76,11 @@ rootCommand.SetAction(async parseResult =>
     {
         var sections = exclude.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         profile.Exclude(sections);
+    }
+
+    if (showAll)
+    {
+        profile.ShowAll();
     }
 
     var checkers = CreateCheckers();
@@ -114,12 +126,16 @@ static IChecker[] CreateCheckers() =>
     new HardwareChecker(),
     new MemoryChecker(),
     new DiskChecker(),
+    new DiskHealthChecker(),
     new DotNetRuntimeChecker(),
     new VcRuntimeChecker(),
     new NetworkChecker(),
     new PortChecker(),
     new EnvironmentVariableChecker(),
     new FirewallChecker(),
+    new FirewallRuleChecker(),
+    new RegistryChecker(),
+    new DefenderExclusionChecker(),
     new WindowsServiceChecker(),
     new InstalledSoftwareChecker(),
     new EventLogChecker(),
