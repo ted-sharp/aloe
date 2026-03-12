@@ -2,8 +2,10 @@
 // Copyright (c) ted-sharp. All rights reserved.
 // </copyright>
 
+using System.Reflection;
 using Aloe.Apps.ExcelReportLib.Abstractions;
 using Aloe.Apps.ExcelReportLib.Models;
+using NPOI.OpenXmlFormats.Dml;
 using NPOI.SS.UserModel;
 using NPOI.SS.Util;
 using NPOI.XSSF.UserModel;
@@ -39,7 +41,7 @@ public class NpoiExcelReader : IExcelReader
         ReadRowHeights(sheet, model);
         ReadMergedRanges(sheet, model);
         ReadCells(sheet, workbook, model);
-        ReadDrawings(sheet, model);
+        ReadDrawings(sheet, model, workbook);
 
         return model;
     }
@@ -443,7 +445,7 @@ public class NpoiExcelReader : IExcelReader
         }
     }
 
-    private static void ReadDrawings(ISheet sheet, SheetModel model)
+    private static void ReadDrawings(ISheet sheet, SheetModel model, XSSFWorkbook workbook)
     {
         if (sheet is not XSSFSheet xssfSheet)
         {
@@ -464,7 +466,7 @@ public class NpoiExcelReader : IExcelReader
             }
             else if (shape is XSSFSimpleShape simpleShape)
             {
-                ReadShape(simpleShape, model);
+                ReadShape(simpleShape, model, workbook);
             }
         }
     }
@@ -492,7 +494,10 @@ public class NpoiExcelReader : IExcelReader
         });
     }
 
-    private static void ReadShape(XSSFSimpleShape shape, SheetModel model)
+    private static readonly FieldInfo? SchemeClrItemsValueField =
+        typeof(CT_SchemeColor).GetField("itemsValueField", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private static void ReadShape(XSSFSimpleShape shape, SheetModel model, XSSFWorkbook workbook)
     {
         var anchor = shape.GetAnchor();
         if (anchor is not IClientAnchor clientAnchor)
@@ -511,14 +516,198 @@ public class NpoiExcelReader : IExcelReader
         if (!shape.IsNoFill)
         {
             var ctShape = shape.GetCTShape();
-            var srgbClr = ctShape?.spPr?.solidFill?.srgbClr;
+            var solidFill = ctShape?.spPr?.solidFill;
+            var srgbClr = solidFill?.srgbClr;
+
             if (srgbClr?.val != null && srgbClr.val.Length >= 3)
             {
                 shapeData.FillColor = $"#FF{srgbClr.val[0]:X2}{srgbClr.val[1]:X2}{srgbClr.val[2]:X2}";
             }
+            else if (solidFill?.schemeClr != null)
+            {
+                shapeData.FillColor = ResolveSchemeColor(solidFill.schemeClr, workbook);
+            }
+            else if (ctShape?.spPr?.noFill == null)
+            {
+                // spPr に solidFill も noFill もない場合 → style.fillRef から取得
+                var fillRef = ctShape?.style?.fillRef;
+                if (fillRef != null && fillRef.idx > 0)
+                {
+                    shapeData.FillColor = ResolveFillRefColor(fillRef, workbook);
+                }
+            }
         }
 
         model.Shapes.Add(shapeData);
+    }
+
+    private static string? ResolveFillRefColor(CT_StyleMatrixReference fillRef, XSSFWorkbook workbook)
+    {
+        if (fillRef.srgbClr?.val != null && fillRef.srgbClr.val.Length >= 3)
+        {
+            var v = fillRef.srgbClr.val;
+            return $"#FF{v[0]:X2}{v[1]:X2}{v[2]:X2}";
+        }
+
+        if (fillRef.schemeClr != null)
+        {
+            return ResolveSchemeColor(fillRef.schemeClr, workbook);
+        }
+
+        if (fillRef.sysClr?.lastClr != null && fillRef.sysClr.lastClr.Length >= 3)
+        {
+            var v = fillRef.sysClr.lastClr;
+            return $"#FF{v[0]:X2}{v[1]:X2}{v[2]:X2}";
+        }
+
+        return null;
+    }
+
+    private static string? ResolveSchemeColor(CT_SchemeColor schemeClr, XSSFWorkbook workbook)
+    {
+        int themeIdx = schemeClr.val switch
+        {
+            ST_SchemeColorVal.dk1 or ST_SchemeColorVal.tx1 => 0,
+            ST_SchemeColorVal.lt1 or ST_SchemeColorVal.bg1 => 1,
+            ST_SchemeColorVal.dk2 or ST_SchemeColorVal.tx2 => 2,
+            ST_SchemeColorVal.lt2 or ST_SchemeColorVal.bg2 => 3,
+            ST_SchemeColorVal.accent1 => 4,
+            ST_SchemeColorVal.accent2 => 5,
+            ST_SchemeColorVal.accent3 => 6,
+            ST_SchemeColorVal.accent4 => 7,
+            ST_SchemeColorVal.accent5 => 8,
+            ST_SchemeColorVal.accent6 => 9,
+            _ => -1,
+        };
+
+        if (themeIdx < 0)
+        {
+            return null;
+        }
+
+        var rgb = workbook.GetTheme()?.GetThemeColor(themeIdx)?.RGB;
+        if (rgb == null || rgb.Length < 3)
+        {
+            return null;
+        }
+
+        var itemTypes = schemeClr.ItemsElementName;
+        var itemValues = SchemeClrItemsValueField?.GetValue(schemeClr) as List<string> ?? [];
+
+        int lumMod = 100000;
+        int lumOff = 0;
+        for (int i = 0; i < itemTypes.Count; i++)
+        {
+            var strVal = i < itemValues.Count ? itemValues[i] : null;
+            if (strVal == null || !int.TryParse(strVal, out int intVal))
+            {
+                continue;
+            }
+
+            if (itemTypes[i] == EG_ColorTransform.lumMod)
+            {
+                lumMod = intVal;
+            }
+            else if (itemTypes[i] == EG_ColorTransform.lumOff)
+            {
+                lumOff = intVal;
+            }
+        }
+
+        byte r = rgb[0];
+        byte g = rgb[1];
+        byte b = rgb[2];
+
+        if (lumMod != 100000 || lumOff != 0)
+        {
+            (r, g, b) = ApplyLuminance(r, g, b, lumMod, lumOff);
+        }
+
+        return $"#FF{r:X2}{g:X2}{b:X2}";
+    }
+
+    private static (byte R, byte G, byte B) ApplyLuminance(byte r, byte g, byte b, int lumMod, int lumOff)
+    {
+        RgbToHls(r, g, b, out double h, out double l, out double s);
+        double newL = (l * (lumMod / 100000.0)) + (lumOff / 100000.0);
+        newL = Math.Clamp(newL, 0.0, 1.0);
+        HlsToRgb(h, newL, s, out byte nr, out byte ng, out byte nb);
+        return (nr, ng, nb);
+    }
+
+    private static void RgbToHls(byte r, byte g, byte b, out double h, out double l, out double s)
+    {
+        double rf = r / 255.0;
+        double gf = g / 255.0;
+        double bf = b / 255.0;
+
+        double max = Math.Max(rf, Math.Max(gf, bf));
+        double min = Math.Min(rf, Math.Min(gf, bf));
+        double delta = max - min;
+
+        l = (max + min) / 2.0;
+
+        if (delta == 0.0)
+        {
+            h = 0.0;
+            s = 0.0;
+            return;
+        }
+
+        s = l < 0.5 ? delta / (max + min) : delta / (2.0 - max - min);
+
+        if (max == rf)
+        {
+            h = ((gf - bf) / delta) % 6.0;
+        }
+        else if (max == gf)
+        {
+            h = ((bf - rf) / delta) + 2.0;
+        }
+        else
+        {
+            h = ((rf - gf) / delta) + 4.0;
+        }
+
+        h = (h * 60.0 + 360.0) % 360.0;
+    }
+
+    private static void HlsToRgb(double h, double l, double s, out byte r, out byte g, out byte b)
+    {
+        if (s == 0.0)
+        {
+            byte gray = (byte)Math.Round(l * 255.0);
+            r = g = b = gray;
+            return;
+        }
+
+        double q = l < 0.5 ? l * (1.0 + s) : (l + s) - (l * s);
+        double p = (2.0 * l) - q;
+
+        r = (byte)Math.Round(HueToChannel(p, q, h + 120.0) * 255.0);
+        g = (byte)Math.Round(HueToChannel(p, q, h) * 255.0);
+        b = (byte)Math.Round(HueToChannel(p, q, h - 120.0) * 255.0);
+    }
+
+    private static double HueToChannel(double p, double q, double t)
+    {
+        t = (t + 360.0) % 360.0;
+        if (t < 60.0)
+        {
+            return p + ((q - p) * t / 60.0);
+        }
+
+        if (t < 180.0)
+        {
+            return q;
+        }
+
+        if (t < 240.0)
+        {
+            return p + ((q - p) * (240.0 - t) / 60.0);
+        }
+
+        return p;
     }
 
     private static CellAnchor CreateCellAnchorFrom(IClientAnchor anchor)
