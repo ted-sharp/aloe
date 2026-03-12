@@ -64,9 +64,9 @@
         }
       }
     },
-    "ExcelReport(Sample)": {
+    "ExcelReportCli(Sample)": {
       "Projects": {
-        "Aloe.Apps.ExcelReport": {
+        "Aloe.Apps.ExcelReportCli": {
           "CommandLineArguments": "ExcelReportTemplate.xlsx output.pdf --var-file sample-vars.json"
         }
       }

@@ -11,11 +11,31 @@ namespace Aloe.Apps.ExcelReportLib.Writers;
 /// Windows のシステムフォントフォルダからフォントを解決する <see cref="IFontResolver"/> 実装。
 /// PDFsharp 6.x Core ビルドではデフォルトのフォントリゾルバが日本語フォントに対応しないため、
 /// このクラスでフォントファミリー名からフォントファイルへのマッピングを行う。
+/// カスタムフォントディレクトリ（デフォルト: 実行ファイル横の fonts/）を優先検索する。
 /// </summary>
 public class SystemFontResolver : IFontResolver
 {
     private static readonly string FontDir =
         Environment.GetFolderPath(Environment.SpecialFolder.Fonts);
+
+    private readonly string _customFontDir;
+
+    /// <summary>
+    /// デフォルトコンストラクタ。カスタムフォントディレクトリは AppContext.BaseDirectory/fonts/ を使用する。
+    /// </summary>
+    public SystemFontResolver()
+        : this(Path.Combine(AppContext.BaseDirectory, "fonts"))
+    {
+    }
+
+    /// <summary>
+    /// カスタムフォントディレクトリを指定してインスタンスを作成する。
+    /// </summary>
+    /// <param name="customFontDir">TTF ファイルを配置するカスタムフォントディレクトリのパス。</param>
+    public SystemFontResolver(string customFontDir)
+    {
+        _customFontDir = customFontDir;
+    }
 
     /// <summary>
     /// フォント名とスタイルから対応するフォントファイルの情報を返す。
@@ -59,7 +79,19 @@ public class SystemFontResolver : IFontResolver
         return familyName + suffix;
     }
 
-    private static string? ResolveFontPath(string faceName)
+    /// <summary>
+    /// フォント名とスタイルに対応するフォントファイルのパスを返す。見つからない場合は null。
+    /// </summary>
+    /// <param name="fontName">フォントファミリー名。</param>
+    /// <param name="bold">太字かどうか。</param>
+    /// <returns>フォントファイルのフルパス。見つからない場合は null。</returns>
+    public string? GetFontFilePath(string fontName, bool bold)
+    {
+        string faceName = bold ? fontName + "|b" : fontName;
+        return ResolveFontPath(faceName);
+    }
+
+    private string? ResolveFontPath(string faceName)
     {
         int sep = faceName.IndexOf('|', StringComparison.Ordinal);
         string family = sep >= 0 ? faceName[..sep] : faceName;
@@ -124,20 +156,39 @@ public class SystemFontResolver : IFontResolver
         return TryFontByPattern(family);
     }
 
-    private static string? TryFont(string fileName)
+    private string? TryFont(string fileName)
     {
-        string path = Path.Combine(FontDir, fileName);
-        return File.Exists(path) ? path : null;
+        string customPath = Path.Combine(_customFontDir, fileName);
+        if (File.Exists(customPath))
+        {
+            return customPath;
+        }
+
+        string systemPath = Path.Combine(FontDir, fileName);
+        return File.Exists(systemPath) ? systemPath : null;
     }
 
-    private static string? TryFontByPattern(string familyName)
+    private string? TryFontByPattern(string familyName)
     {
+        string pattern = familyName.Replace(" ", string.Empty, StringComparison.Ordinal);
+
+        if (Directory.Exists(_customFontDir))
+        {
+            foreach (string file in Directory.EnumerateFiles(_customFontDir, "*.ttf"))
+            {
+                string name = Path.GetFileNameWithoutExtension(file);
+                if (name.Contains(pattern, StringComparison.OrdinalIgnoreCase))
+                {
+                    return file;
+                }
+            }
+        }
+
         if (!Directory.Exists(FontDir))
         {
             return null;
         }
 
-        string pattern = familyName.Replace(" ", string.Empty, StringComparison.Ordinal);
         foreach (string file in Directory.EnumerateFiles(FontDir, "*.ttf"))
         {
             string name = Path.GetFileNameWithoutExtension(file);

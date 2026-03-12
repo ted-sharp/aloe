@@ -24,6 +24,9 @@ public class FontData
     /// <summary>下線かどうか。</summary>
     public bool Underline { get; set; }
 
+    /// <summary>二重下線かどうか。</summary>
+    public bool DoubleUnderline { get; set; }
+
     /// <summary>取り消し線かどうか。</summary>
     public bool Strikethrough { get; set; }
 

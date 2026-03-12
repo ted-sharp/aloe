@@ -2,6 +2,7 @@
 // Copyright (c) ted-sharp. All rights reserved.
 // </copyright>
 
+using System.Text.RegularExpressions;
 using Aloe.Apps.ExcelReportLib.Abstractions;
 using Aloe.Apps.ExcelReportLib.Models;
 using Microsoft.Extensions.Options;
@@ -63,6 +64,30 @@ public class TemplateEngine : ITemplateEngine
             }
 
             shape.Text = ReplaceVariables(shape.Text, variables);
+        }
+
+        return model;
+    }
+
+    /// <inheritdoc />
+    public SheetModel ClearKeywords(SheetModel model)
+    {
+        ArgumentNullException.ThrowIfNull(model);
+
+        foreach (var cell in model.Cells)
+        {
+            if (!string.IsNullOrEmpty(cell.Value))
+            {
+                cell.Value = Regex.Replace(cell.Value, @"\$\{[^}]*\}", string.Empty);
+            }
+        }
+
+        foreach (var shape in model.Shapes)
+        {
+            if (!string.IsNullOrEmpty(shape.Text))
+            {
+                shape.Text = Regex.Replace(shape.Text, @"\$\{[^}]*\}", string.Empty);
+            }
         }
 
         return model;
