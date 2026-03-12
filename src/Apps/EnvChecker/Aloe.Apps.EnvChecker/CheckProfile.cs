@@ -7,6 +7,7 @@ internal sealed class CheckProfile
 {
     public SectionToggle System { get; set; } = new() { Enabled = true };
     public SectionToggle Cpu { get; set; } = new() { Enabled = true };
+    public SectionToggle Gpu { get; set; } = new() { Enabled = true };
     public SectionToggle Memory { get; set; } = new() { Enabled = true };
     public DiskSection Disk { get; set; } = new();
     public DiskHealthSection DiskHealth { get; set; } = new();
@@ -15,6 +16,7 @@ internal sealed class CheckProfile
     public NetworkSection Network { get; set; } = new();
     public PortSection Port { get; set; } = new();
     public EnvSection Env { get; set; } = new();
+    public SectionToggle Storage { get; set; } = new() { Enabled = true };
     public SectionToggle Firewall { get; set; } = new() { Enabled = true };
     public FirewallRuleSection FirewallRule { get; set; } = new();
     public RegistrySection Registry { get; set; } = new();
@@ -28,9 +30,11 @@ internal sealed class CheckProfile
     {
         "system" => System.Enabled,
         "cpu" => Cpu.Enabled,
+        "gpu" => Gpu.Enabled,
         "memory" => Memory.Enabled,
         "disk" => Disk.Enabled,
         "diskhealth" => DiskHealth.Enabled,
+        "storage" => Storage.Enabled,
         "dotnet" => Dotnet.Enabled,
         "vcruntime" => Vcruntime.Enabled,
         "network" => Network.Enabled,
@@ -98,9 +102,11 @@ internal sealed class CheckProfile
         {
             System = new() { Enabled = true },
             Cpu = new() { Enabled = true },
+            Gpu = new() { Enabled = true },
             Memory = new() { Enabled = true },
             Disk = new() { Enabled = true, WarningThresholdPercent = 90 },
             DiskHealth = new() { Enabled = true, EventLogHours = 168, MaxEventEntries = 5 },
+            Storage = new() { Enabled = true },
             Dotnet = new() { Enabled = true },
             Vcruntime = new() { Enabled = true },
             Network = new() { Enabled = true, DnsTestHost = "www.google.com", PingTestHost = "8.8.8.8", ShowStaticRoutes = true },
@@ -208,9 +214,11 @@ internal sealed class CheckProfile
     {
         System.Enabled = false;
         Cpu.Enabled = false;
+        Gpu.Enabled = false;
         Memory.Enabled = false;
         Disk.Enabled = false;
         DiskHealth.Enabled = false;
+        Storage.Enabled = false;
         Dotnet.Enabled = false;
         Vcruntime.Enabled = false;
         Network.Enabled = false;
@@ -232,9 +240,11 @@ internal sealed class CheckProfile
         {
             case "system": System.Enabled = enabled; break;
             case "cpu": Cpu.Enabled = enabled; break;
+            case "gpu": Gpu.Enabled = enabled; break;
             case "memory": Memory.Enabled = enabled; break;
             case "disk": Disk.Enabled = enabled; break;
             case "diskhealth": DiskHealth.Enabled = enabled; break;
+            case "storage": Storage.Enabled = enabled; break;
             case "dotnet": Dotnet.Enabled = enabled; break;
             case "vcruntime": Vcruntime.Enabled = enabled; break;
             case "network": Network.Enabled = enabled; break;

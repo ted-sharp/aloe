@@ -124,9 +124,11 @@ static IChecker[] CreateCheckers() =>
 [
     new SystemInfoChecker(),
     new HardwareChecker(),
+    new GpuChecker(),
     new MemoryChecker(),
     new DiskChecker(),
     new DiskHealthChecker(),
+    new StorageChecker(),
     new DotNetRuntimeChecker(),
     new VcRuntimeChecker(),
     new NetworkChecker(),
