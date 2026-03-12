@@ -19,4 +19,11 @@ public interface ITemplateEngine
     /// <param name="variables">キーワードと置換値の辞書。</param>
     /// <returns>置換処理済みのシートモデル。</returns>
     SheetModel Process(SheetModel model, IReadOnlyDictionary<string, string> variables);
+
+    /// <summary>
+    /// シートモデル内の全セル値から <c>${...}</c> 形式のプレースホルダを空文字列に消去する。
+    /// </summary>
+    /// <param name="model">元のシートモデル。</param>
+    /// <returns>プレースホルダ消去済みのシートモデル。</returns>
+    SheetModel ClearKeywords(SheetModel model);
 }

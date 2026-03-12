@@ -1,23 +1,34 @@
+using Aloe.Apps.ExcelReportApi.Options;
+using Aloe.Apps.ExcelReportApi.Services;
+using Aloe.Apps.ExcelReportLib.Extensions;
+
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+builder.WebHost.ConfigureKestrel((ctx, kestrel) =>
+    kestrel.Configure(ctx.Configuration.GetSection("Kestrel")));
 
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddMagicOnion();
+
+builder.Services.Configure<ExcelReportApiOptions>(
+    builder.Configuration.GetSection("ExcelReport"));
+
+builder.Services.AddExcelReport();
+
+builder.Services.AddSingleton<JobStore>();
+builder.Services.AddSingleton<ReportJobQueue>();
+builder.Services.AddHostedService<ReportWorkerService>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
+app.MapMagicOnionService();
 
 app.Run();

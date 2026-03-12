@@ -37,11 +37,13 @@ public class ExcelReportService
     /// <param name="pdfOutput">PDF出力先のストリーム。</param>
     /// <param name="variables">テンプレート置換用の変数辞書。null の場合は置換なし。</param>
     /// <param name="options">レポート生成オプション。null の場合はデフォルト。</param>
+    /// <param name="clearKeywords">true の場合、残存する <c>${...}</c> プレースホルダを空文字列に消去する。</param>
     public void GeneratePdf(
         Stream excelInput,
         Stream pdfOutput,
         IReadOnlyDictionary<string, string>? variables = null,
-        ReportOptions? options = null)
+        ReportOptions? options = null,
+        bool clearKeywords = false)
     {
         ArgumentNullException.ThrowIfNull(excelInput);
         ArgumentNullException.ThrowIfNull(pdfOutput);
@@ -57,6 +59,11 @@ public class ExcelReportService
         if (variables != null && variables.Count > 0)
         {
             model = _templateEngine.Process(model, variables);
+        }
+
+        if (clearKeywords)
+        {
+            model = _templateEngine.ClearKeywords(model);
         }
 
         _renderer.Render(model, pdfOutput, options?.PdfOptions);

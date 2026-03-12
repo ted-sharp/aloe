@@ -19,6 +19,7 @@
   <Folder Name="/Apps/ExcelReport/">
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportCli/Aloe.Apps.ExcelReportCli.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportApi/Aloe.Apps.ExcelReportApi.csproj" Id="290e72c7-5686-4057-9e8f-33c0ab60f9b8" />
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib.Contracts/Aloe.Apps.ExcelReportLib.Contracts.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib/Aloe.Apps.ExcelReportLib.csproj" />
   </Folder>
   <Folder Name="/Apps/RazorReport/">
