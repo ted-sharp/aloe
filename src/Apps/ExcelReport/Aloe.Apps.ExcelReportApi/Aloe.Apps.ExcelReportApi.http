@@ -1,0 +1,6 @@
+@Aloe.Apps.ExcelReportApi_HostAddress = http://localhost:5074
+
+GET {{Aloe.Apps.ExcelReportApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

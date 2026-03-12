@@ -17,8 +17,9 @@
     <Project Path="Apps/Medock/Aloe.Apps.MedockServer.Tests/Aloe.Apps.MedockServer.Tests.csproj" />
   </Folder>
   <Folder Name="/Apps/ExcelReport/">
-    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib/Aloe.Apps.ExcelReportLib.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReport/Aloe.Apps.ExcelReport.csproj" />
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportApi/Aloe.Apps.ExcelReportApi.csproj" Id="290e72c7-5686-4057-9e8f-33c0ab60f9b8" />
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib/Aloe.Apps.ExcelReportLib.csproj" />
   </Folder>
   <Folder Name="/Apps/RazorReport/">
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportLib/Aloe.Apps.RazorReportLib.csproj" />
