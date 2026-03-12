@@ -122,31 +122,113 @@ public class PdfSharpWriter : IPdfRenderer
             var font = new XFont(cell.Font.Name, cell.Font.SizeInPoints, fontStyle);
             var brush = new XSolidBrush(ParseColor(cell.Font.Color));
 
-            var format = new XStringFormat();
-            format.Alignment = cell.Alignment.Horizontal switch
-            {
-                HorizontalAlign.Left => XStringAlignment.Near,
-                HorizontalAlign.Center => XStringAlignment.Center,
-                HorizontalAlign.Right => XStringAlignment.Far,
-                _ => XStringAlignment.Near,
-            };
-
-            format.LineAlignment = cell.Alignment.Vertical switch
-            {
-                VerticalAlign.Top => XLineAlignment.Near,
-                VerticalAlign.Center => XLineAlignment.Center,
-                VerticalAlign.Bottom => XLineAlignment.Far,
-                _ => XLineAlignment.Far,
-            };
-
             const double padding = 2.0;
-            var textRect = new XRect(
-                rect.X + padding,
-                rect.Y + padding,
-                Math.Max(rect.Width - (padding * 2), 0),
-                Math.Max(rect.Height - (padding * 2), 0));
+            double maxWidth = rect.Width - (padding * 2);
+            double lineHeight = font.GetHeight();
 
-            gfx.DrawString(cell.Value, font, brush, textRect, format);
+            var lines = WrapLines(cell.Value, maxWidth, s => gfx.MeasureString(s, font).Width, cell.Alignment.WrapText);
+            double totalHeight = lines.Count * lineHeight;
+
+            double topY = cell.Alignment.Vertical switch
+            {
+                VerticalAlign.Top => rect.Y + padding,
+                VerticalAlign.Center => rect.Y + ((rect.Height - totalHeight) / 2),
+                _ => rect.Y + rect.Height - padding - totalHeight,
+            };
+
+            var hFormat = new XStringFormat
+            {
+                Alignment = cell.Alignment.Horizontal switch
+                {
+                    HorizontalAlign.Left => XStringAlignment.Near,
+                    HorizontalAlign.Center => XStringAlignment.Center,
+                    HorizontalAlign.Right => XStringAlignment.Far,
+                    _ => XStringAlignment.Near,
+                },
+                LineAlignment = XLineAlignment.Near,
+            };
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                string line = lines[i];
+                double lineTopY = topY + (i * lineHeight);
+                var lineRect = new XRect(rect.X + padding, lineTopY, Math.Max(maxWidth, 0), lineHeight);
+                gfx.DrawString(line, font, brush, lineRect, hFormat);
+
+                double textWidth = gfx.MeasureString(line, font).Width;
+                double baseline = lineTopY + (lineHeight * 0.8);
+                double decoStartX = cell.Alignment.Horizontal switch
+                {
+                    HorizontalAlign.Center => rect.X + padding + ((maxWidth - textWidth) / 2),
+                    HorizontalAlign.Right => rect.X + padding + maxWidth - textWidth,
+                    _ => rect.X + padding,
+                };
+
+                DrawTextDecorations(gfx, cell.Font, decoStartX, baseline, textWidth);
+            }
+        }
+    }
+
+    private static List<string> WrapLines(string text, double maxWidth, Func<string, double> measureFn, bool wrapText)
+    {
+        var result = new List<string>();
+        foreach (var hardLine in text.Split('\n'))
+        {
+            if (!wrapText || maxWidth <= 0 || measureFn(hardLine) <= maxWidth)
+            {
+                result.Add(hardLine);
+                continue;
+            }
+
+            var current = new System.Text.StringBuilder();
+            foreach (char c in hardLine)
+            {
+                current.Append(c);
+                if (current.Length > 1 && measureFn(current.ToString()) > maxWidth)
+                {
+                    result.Add(current.ToString()[..^1]);
+                    current.Clear();
+                    current.Append(c);
+                }
+            }
+
+            if (current.Length > 0)
+            {
+                result.Add(current.ToString());
+            }
+        }
+
+        return result;
+    }
+
+    private static void DrawTextDecorations(XGraphics gfx, FontData fontData, double startX, double baseline, double textWidth)
+    {
+        if (!fontData.Underline && !fontData.DoubleUnderline && !fontData.Strikethrough)
+        {
+            return;
+        }
+
+        double fontSize = fontData.SizeInPoints;
+        var pen = new XPen(ParseColor(fontData.Color), 0.5);
+
+        if (fontData.Underline)
+        {
+            double y = baseline + (fontSize * 0.12);
+            gfx.DrawLine(pen, startX, y, startX + textWidth, y);
+        }
+
+        if (fontData.DoubleUnderline)
+        {
+            double y1 = baseline + (fontSize * 0.12);
+            double y2 = baseline + (fontSize * 0.28);
+            gfx.DrawLine(pen, startX, y1, startX + textWidth, y1);
+            gfx.DrawLine(pen, startX, y2, startX + textWidth, y2);
+        }
+
+        if (fontData.Strikethrough)
+        {
+            double y = baseline - (fontSize * 0.3);
+            gfx.DrawLine(pen, startX, y, startX + textWidth, y);
         }
     }
 

@@ -275,13 +275,17 @@ public class NpoiExcelReader : IExcelReader
             return;
         }
 
+        bool isDoubleUnderline = font.Underline == FontUnderlineType.Double
+            || font.Underline == FontUnderlineType.DoubleAccounting;
+
         cellData.Font = new FontData
         {
             Name = font.FontName ?? "Yu Gothic",
             SizeInPoints = font.FontHeightInPoints,
             Bold = font.IsBold,
             Italic = font.IsItalic,
-            Underline = font.Underline != FontUnderlineType.None,
+            Underline = font.Underline != FontUnderlineType.None && !isDoubleUnderline,
+            DoubleUnderline = isDoubleUnderline,
             Strikethrough = font.IsStrikeout,
             Color = GetFontColor(font, workbook),
         };
@@ -504,9 +508,14 @@ public class NpoiExcelReader : IExcelReader
             Text = shape.Text,
         };
 
-        if (shape.IsNoFill)
+        if (!shape.IsNoFill)
         {
-            shapeData.FillColor = null;
+            var ctShape = shape.GetCTShape();
+            var srgbClr = ctShape?.spPr?.solidFill?.srgbClr;
+            if (srgbClr?.val != null && srgbClr.val.Length >= 3)
+            {
+                shapeData.FillColor = $"#FF{srgbClr.val[0]:X2}{srgbClr.val[1]:X2}{srgbClr.val[2]:X2}";
+            }
         }
 
         model.Shapes.Add(shapeData);

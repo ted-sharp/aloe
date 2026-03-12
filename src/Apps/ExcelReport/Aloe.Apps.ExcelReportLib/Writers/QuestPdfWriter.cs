@@ -5,6 +5,8 @@
 using Aloe.Apps.ExcelReportLib.Abstractions;
 using Aloe.Apps.ExcelReportLib.Models;
 using Aloe.Apps.ExcelReportLib.Services;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
@@ -19,6 +21,17 @@ namespace Aloe.Apps.ExcelReportLib.Writers;
 public class QuestPdfWriter : IPdfRenderer
 {
     private readonly PositionCalculator _calc = new();
+    private readonly SystemFontResolver _fontResolver = new();
+    private readonly ILogger<QuestPdfWriter> _logger;
+
+    /// <summary>
+    /// <see cref="QuestPdfWriter"/> クラスの新しいインスタンスを初期化する。
+    /// </summary>
+    /// <param name="logger">ロガー。省略時は NullLogger を使用する。</param>
+    public QuestPdfWriter(ILogger<QuestPdfWriter>? logger = null)
+    {
+        _logger = logger ?? NullLogger<QuestPdfWriter>.Instance;
+    }
 
     /// <inheritdoc />
     public void Render(SheetModel model, Stream output, PdfRenderOptions? options = null)
@@ -128,11 +141,7 @@ public class QuestPdfWriter : IPdfRenderer
             var merged = FindMergedRange(model, cell.Row, cell.Column);
             var rect = _calc.GetCellRect(model, cell.Row, cell.Column, merged);
 
-            var typeface = SKTypeface.FromFamilyName(
-                cell.Font.Name,
-                cell.Font.Bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
-                SKFontStyleWidth.Normal,
-                cell.Font.Italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright);
+            using var typeface = ResolveTypeface(cell.Font.Name, cell.Font.Bold, cell.Font.Italic);
 
             using var font = new SKFont(typeface, (float)cell.Font.SizeInPoints);
             using var paint = new SKPaint
@@ -142,32 +151,123 @@ public class QuestPdfWriter : IPdfRenderer
             };
 
             const float padding = 2.0f;
-            float textWidth = font.MeasureText(cell.Value);
+            float maxWidth = (float)rect.Width - (padding * 2);
             var metrics = font.Metrics;
-            float textHeight = metrics.Descent - metrics.Ascent;
+            float lineHeight = metrics.Descent - metrics.Ascent;
 
-            float x = cell.Alignment.Horizontal switch
-            {
-                HorizontalAlign.Center => (float)(rect.X + (rect.Width / 2) - (textWidth / 2)),
-                HorizontalAlign.Right => (float)(rect.X + rect.Width - padding) - textWidth,
-                _ => (float)rect.X + padding,
-            };
+            var lines = WrapLines(cell.Value, maxWidth, s => font.MeasureText(s), cell.Alignment.WrapText);
+            float totalTextHeight = lines.Count * lineHeight;
 
-            float y = cell.Alignment.Vertical switch
+            float firstBaselineY = cell.Alignment.Vertical switch
             {
                 VerticalAlign.Top => (float)rect.Y + padding - metrics.Ascent,
-                VerticalAlign.Center => (float)(rect.Y + (rect.Height / 2) - (textHeight / 2)) - metrics.Ascent,
-                _ => (float)(rect.Y + rect.Height - padding) - metrics.Descent,
+                VerticalAlign.Center => (float)(rect.Y + (rect.Height / 2) - (totalTextHeight / 2)) - metrics.Ascent,
+                _ => (float)(rect.Y + rect.Height - padding - metrics.Descent) - ((lines.Count - 1) * lineHeight),
             };
 
-            var textAlign = cell.Alignment.Horizontal switch
+            for (int i = 0; i < lines.Count; i++)
             {
-                HorizontalAlign.Center => SKTextAlign.Center,
-                HorizontalAlign.Right => SKTextAlign.Right,
-                _ => SKTextAlign.Left,
-            };
+                string line = lines[i];
+                float lineY = firstBaselineY + (i * lineHeight);
+                float lineTextWidth = font.MeasureText(line);
 
-            canvas.DrawText(cell.Value, x, y, textAlign, font, paint);
+                float x = cell.Alignment.Horizontal switch
+                {
+                    HorizontalAlign.Center => (float)(rect.X + (rect.Width / 2)),
+                    HorizontalAlign.Right => (float)(rect.X + rect.Width - padding),
+                    _ => (float)rect.X + padding,
+                };
+
+                var textAlign = cell.Alignment.Horizontal switch
+                {
+                    HorizontalAlign.Center => SKTextAlign.Center,
+                    HorizontalAlign.Right => SKTextAlign.Right,
+                    _ => SKTextAlign.Left,
+                };
+
+                canvas.DrawText(line, x, lineY, textAlign, font, paint);
+
+                float decoStartX = cell.Alignment.Horizontal switch
+                {
+                    HorizontalAlign.Center => x - (lineTextWidth / 2),
+                    HorizontalAlign.Right => x - lineTextWidth,
+                    _ => x,
+                };
+
+                DrawTextDecorations(canvas, cell.Font, decoStartX, lineY, lineTextWidth, metrics, paint);
+            }
+        }
+    }
+
+    private static List<string> WrapLines(string text, float maxWidth, Func<string, float> measureFn, bool wrapText)
+    {
+        var result = new List<string>();
+        foreach (var hardLine in text.Split('\n'))
+        {
+            if (!wrapText || maxWidth <= 0 || measureFn(hardLine) <= maxWidth)
+            {
+                result.Add(hardLine);
+                continue;
+            }
+
+            var current = new System.Text.StringBuilder();
+            foreach (char c in hardLine)
+            {
+                current.Append(c);
+                if (current.Length > 1 && measureFn(current.ToString()) > maxWidth)
+                {
+                    result.Add(current.ToString()[..^1]);
+                    current.Clear();
+                    current.Append(c);
+                }
+            }
+
+            if (current.Length > 0)
+            {
+                result.Add(current.ToString());
+            }
+        }
+
+        return result;
+    }
+
+    private static void DrawTextDecorations(SKCanvas canvas, FontData fontData, float startX, float baselineY, float textWidth, SKFontMetrics metrics, SKPaint basePaint)
+    {
+        if (!fontData.Underline && !fontData.DoubleUnderline && !fontData.Strikethrough)
+        {
+            return;
+        }
+
+        float fontSize = (float)fontData.SizeInPoints;
+        using var pen = new SKPaint
+        {
+            Color = basePaint.Color,
+            Style = SKPaintStyle.Stroke,
+            IsAntialias = true,
+        };
+
+        float underlinePos = metrics.UnderlinePosition.GetValueOrDefault(fontSize * 0.12f);
+        float underlineThick = metrics.UnderlineThickness.GetValueOrDefault(1f);
+        float strikePos = metrics.StrikeoutPosition.GetValueOrDefault(-(fontSize * 0.3f));
+        float strikeThick = metrics.StrikeoutThickness.GetValueOrDefault(1f);
+
+        if (fontData.Underline)
+        {
+            pen.StrokeWidth = underlineThick;
+            canvas.DrawLine(startX, baselineY + underlinePos, startX + textWidth, baselineY + underlinePos, pen);
+        }
+
+        if (fontData.DoubleUnderline)
+        {
+            pen.StrokeWidth = underlineThick;
+            canvas.DrawLine(startX, baselineY + underlinePos, startX + textWidth, baselineY + underlinePos, pen);
+            canvas.DrawLine(startX, baselineY + underlinePos + (underlineThick * 2.5f), startX + textWidth, baselineY + underlinePos + (underlineThick * 2.5f), pen);
+        }
+
+        if (fontData.Strikethrough)
+        {
+            pen.StrokeWidth = strikeThick;
+            canvas.DrawLine(startX, baselineY + strikePos, startX + textWidth, baselineY + strikePos, pen);
         }
     }
 
@@ -230,11 +330,44 @@ public class QuestPdfWriter : IPdfRenderer
         }
     }
 
-    private static void DrawShapeText(SKCanvas canvas, ShapeData shape, RectD rect)
+    private SKTypeface ResolveTypeface(string name, bool bold, bool italic)
+    {
+        string? path = _fontResolver.GetFontFilePath(name, bold);
+        if (path != null)
+        {
+            var tf = SKTypeface.FromFile(path);
+            if (tf != null)
+            {
+                return tf;
+            }
+
+            _logger.LogWarning("フォントファイルのロードに失敗しました: {Path} (font={Name}, bold={Bold})", path, name, bold);
+        }
+        else
+        {
+            _logger.LogWarning("フォントが解決できませんでした: {Name} (bold={Bold}) — SKTypeface.FromFamilyName にフォールバックします", name, bold);
+        }
+
+        var typeface = SKTypeface.FromFamilyName(
+            name,
+            bold ? SKFontStyleWeight.Bold : SKFontStyleWeight.Normal,
+            SKFontStyleWidth.Normal,
+            italic ? SKFontStyleSlant.Italic : SKFontStyleSlant.Upright);
+
+        if (typeface == null)
+        {
+            _logger.LogWarning("SKTypeface.FromFamilyName も null を返しました: {Name} — デフォルトフォントを使用します", name);
+            return SKTypeface.Default;
+        }
+
+        return typeface;
+    }
+
+    private void DrawShapeText(SKCanvas canvas, ShapeData shape, RectD rect)
     {
         var fontData = shape.TextFont ?? new FontData();
 
-        using var typeface = SKTypeface.FromFamilyName(fontData.Name);
+        using var typeface = ResolveTypeface(fontData.Name, fontData.Bold, fontData.Italic);
         using var font = new SKFont(typeface, (float)fontData.SizeInPoints);
         using var paint = new SKPaint
         {
