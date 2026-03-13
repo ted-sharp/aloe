@@ -5,6 +5,7 @@
 using Aloe.Apps.ExcelReportApi.Models;
 using Aloe.Apps.ExcelReportApi.Options;
 using Aloe.Apps.ExcelReportApi.Services;
+using Aloe.Apps.ExcelReportLib.Abstractions;
 using Aloe.Apps.ExcelReportLib.Contracts.Services;
 using Grpc.Core;
 using MagicOnion;
@@ -20,6 +21,9 @@ public class GrpcReportService : ServiceBase<IReportService>, IReportService
 {
     private readonly ReportJobQueue _queue;
     private readonly JobStore _store;
+    private readonly PrintJobQueue _printQueue;
+    private readonly PrintJobStore _printStore;
+    private readonly ISheetPrinter _printer;
     private readonly ExcelReportApiOptions _options;
 
     /// <summary>
@@ -28,10 +32,16 @@ public class GrpcReportService : ServiceBase<IReportService>, IReportService
     public GrpcReportService(
         ReportJobQueue queue,
         JobStore store,
+        PrintJobQueue printQueue,
+        PrintJobStore printStore,
+        ISheetPrinter printer,
         IOptions<ExcelReportApiOptions> options)
     {
         this._queue = queue;
         this._store = store;
+        this._printQueue = printQueue;
+        this._printStore = printStore;
+        this._printer = printer;
         this._options = options.Value;
     }
 
@@ -115,5 +125,44 @@ public class GrpcReportService : ServiceBase<IReportService>, IReportService
         }
 
         return UnaryResult.FromResult(new ListTemplatesResponse { FileNames = fileNames });
+    }
+
+    /// <inheritdoc/>
+    public UnaryResult<ListPrintersResponse> ListPrintersAsync()
+    {
+        var printers = this._printer.GetInstalledPrinters();
+        return UnaryResult.FromResult(new ListPrintersResponse { PrinterNames = [.. printers] });
+    }
+
+    /// <inheritdoc/>
+    public UnaryResult<SubmitPrintJobResponse> SubmitPrintJobAsync(SubmitPrintJobRequest request)
+    {
+        var jobId = Guid.NewGuid();
+        this._printStore.Add(jobId);
+        this._printQueue.Enqueue(new PrintJobRequest(
+            jobId,
+            request.ExcelBytes,
+            request.Variables,
+            request.SheetIndex,
+            request.PrinterName,
+            request.Copies));
+        return UnaryResult.FromResult(new SubmitPrintJobResponse { JobId = jobId });
+    }
+
+    /// <inheritdoc/>
+    public UnaryResult<JobStatusResponse> GetPrintJobStatusAsync(GetPrintJobStatusRequest request)
+    {
+        var info = this._printStore.Get(request.JobId);
+        if (info == null)
+        {
+            throw new ReturnStatusException(StatusCode.NotFound, $"印刷ジョブ '{request.JobId}' が見つかりません。");
+        }
+
+        return UnaryResult.FromResult(new JobStatusResponse
+        {
+            JobId = info.JobId,
+            Status = info.Status.ToString(),
+            ErrorMessage = info.ErrorMessage,
+        });
     }
 }

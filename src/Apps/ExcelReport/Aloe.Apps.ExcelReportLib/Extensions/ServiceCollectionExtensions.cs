@@ -4,6 +4,7 @@
 
 using Aloe.Apps.ExcelReportLib.Abstractions;
 using Aloe.Apps.ExcelReportLib.Models;
+using Aloe.Apps.ExcelReportLib.Printers;
 using Aloe.Apps.ExcelReportLib.Readers;
 using Aloe.Apps.ExcelReportLib.Services;
 using Aloe.Apps.ExcelReportLib.Writers;
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddExcelReportCore(this IServiceCollection services)
     {
         services.AddSingleton<PositionCalculator>();
+        services.AddSingleton<SkiaSheetRenderer>();
         services.AddSingleton<ITemplateEngine, TemplateEngine>();
         services.AddSingleton<ExcelReportService>();
 
@@ -83,6 +85,26 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddExcelReportWithQuestPdf(this IServiceCollection services)
     {
         services.AddSingleton<IPdfRenderer, QuestPdfWriter>();
+        return services;
+    }
+
+    /// <summary>
+    /// Windows プリンター対応の構成(NPOI + QuestPDF + WindowsSheetPrinter + ExcelPrintService)を登録する。
+    /// </summary>
+    public static IServiceCollection AddExcelReportWithWindowsPrinter(this IServiceCollection services)
+    {
+        services
+            .AddExcelReportCore()
+            .AddExcelReportWithNpoi()
+            .AddExcelReportWithQuestPdf();
+
+        if (OperatingSystem.IsWindows())
+        {
+            services.AddSingleton<ISheetPrinter, WindowsSheetPrinter>();
+        }
+
+        services.AddSingleton<ExcelPrintService>();
+
         return services;
     }
 }

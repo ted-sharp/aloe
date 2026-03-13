@@ -125,6 +125,58 @@ public class ListTemplatesResponse
     public List<string> FileNames { get; set; } = [];
 }
 
+/// <summary>インストール済みプリンター一覧レスポンス。</summary>
+[MessagePackObject]
+public class ListPrintersResponse
+{
+    /// <summary>プリンター名一覧。</summary>
+    [Key(0)]
+    public List<string> PrinterNames { get; set; } = [];
+}
+
+/// <summary>印刷ジョブ投入リクエスト。</summary>
+[MessagePackObject]
+public class SubmitPrintJobRequest
+{
+    /// <summary>Excelテンプレートのバイト列。</summary>
+    [Key(0)]
+    public byte[] ExcelBytes { get; set; } = [];
+
+    /// <summary>変数辞書（省略可）。</summary>
+    [Key(1)]
+    public Dictionary<string, string>? Variables { get; set; }
+
+    /// <summary>シートインデックス。</summary>
+    [Key(2)]
+    public int SheetIndex { get; set; }
+
+    /// <summary>送信先プリンター名。</summary>
+    [Key(3)]
+    public string PrinterName { get; set; } = string.Empty;
+
+    /// <summary>印刷部数。</summary>
+    [Key(4)]
+    public int Copies { get; set; } = 1;
+}
+
+/// <summary>印刷ジョブ投入レスポンス。</summary>
+[MessagePackObject]
+public class SubmitPrintJobResponse
+{
+    /// <summary>ジョブID。</summary>
+    [Key(0)]
+    public Guid JobId { get; set; }
+}
+
+/// <summary>印刷ジョブ状態取得リクエスト。</summary>
+[MessagePackObject]
+public class GetPrintJobStatusRequest
+{
+    /// <summary>ジョブID。</summary>
+    [Key(0)]
+    public Guid JobId { get; set; }
+}
+
 /// <summary>
 /// Excel帳票サービスの gRPC インターフェース。
 /// </summary>
@@ -144,4 +196,13 @@ public interface IReportService : IService<IReportService>
 
     /// <summary>テンプレート一覧を取得する。</summary>
     UnaryResult<ListTemplatesResponse> ListTemplatesAsync();
+
+    /// <summary>インストール済みプリンター一覧を取得する。</summary>
+    UnaryResult<ListPrintersResponse> ListPrintersAsync();
+
+    /// <summary>印刷ジョブを投入する。</summary>
+    UnaryResult<SubmitPrintJobResponse> SubmitPrintJobAsync(SubmitPrintJobRequest request);
+
+    /// <summary>印刷ジョブの状態を取得する。</summary>
+    UnaryResult<JobStatusResponse> GetPrintJobStatusAsync(GetPrintJobStatusRequest request);
 }
