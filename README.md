@@ -21,7 +21,7 @@ aloe/
     │   ├── FileBridge/                 ファイル転送
     │   ├── RazorReport/               帳票エンジン
     │   ├── WindowsServiceMonitor/     サービス監視
-    │   └── SyncBridge/                配布同期（.NET Framework 4.6.1）
+    │   └── SyncBootBridge/            配布同期（.NET Framework 4.6.1）
     ├── Libs/                           共有ライブラリ
     │   └── Aloe.Libs.CoreLib/
     └── Utils/                          ユーティリティ（NuGet 公開）
@@ -35,7 +35,7 @@ aloe/
 | `Apps/Medock` | 医薬品在庫管理 | Blazor Server, PostgreSQL, EF Core |
 | `Apps/RazorReport` | Razor レポート生成 | Blazor Server |
 | `Apps/WindowsServiceMonitor` | Windows サービス監視 | Blazor Server |
-| `Apps/SyncBridge` | アプリ配布ブートストラッパー | .NET Framework 4.6.1 |
+| `Apps/SyncBootBridge` | アプリ配布ブートストラッパー | .NET Framework 4.6.1 |
 
 ### ユーティリティライブラリ（NuGet 公開 / 13本）
 
@@ -151,7 +151,7 @@ task publish:mcp          # MedockMcp (全6RID) → artifacts/publish/mcp/{rid}/
 task publish:filebridge   # FileBridge → artifacts/publish/filebridge/
 task publish:razorreport  # RazorReportServer → artifacts/publish/razorreport/
 task publish:wsmonitor    # WindowsServiceMonitorServer → artifacts/publish/wsmonitor/
-task publish:syncbridge   # SyncBridge (dotnet build) → artifacts/publish/syncbridge/
+task publish:syncbootbridge   # SyncBootBridge (dotnet build) → artifacts/publish/syncbootbridge/
 
 # 全アプリを並列 publish
 task publish:all
@@ -163,7 +163,7 @@ task publish:all
 win-x64 / win-arm64 / osx-arm64 / linux-x64 / linux-arm64 / linux-musl-x64
 ```
 
-> **注意**: SyncBridge は .NET Framework 4.6.1 のため `dotnet publish` 非対応です。
+> **注意**: SyncBootBridge は .NET Framework 4.6.1 のため `dotnet publish` 非対応です。
 > `dotnet build` によるビルドのみ行います。
 
 ---
@@ -186,7 +186,7 @@ artifacts/
     ├── filebridge/
     ├── razorreport/
     ├── wsmonitor/
-    └── syncbridge/
+    └── syncbootbridge/
 ```
 
 ---

@@ -91,10 +91,10 @@ tasks:
     cmds:
       - dotnet publish src/Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorServer -c Release -r win-x64 --self-contained false -o "{{.PUBLISH_DIR}}/wsmonitor"
 
-  publish:syncbridge:
-    desc: SyncBridge (.NET Framework 4.6.1 WinExe) を Release ビルド
+  publish:syncbootbridge:
+    desc: SyncBootBridge (.NET Framework 4.6.1 WinExe) を Release ビルド
     cmds:
-      - dotnet build src/Apps/SyncBridge/Aloe.Apps.SyncBridge -c Release -o "{{.PUBLISH_DIR}}/syncbridge"
+      - dotnet build src/Apps/SyncBootBridge/Aloe.Apps.SyncBootBridge -c Release -o "{{.PUBLISH_DIR}}/syncbootbridge"
 
   publish:envchecker:
     desc: EnvChecker (Console) を win-x64 で self-contained publish
@@ -109,5 +109,5 @@ tasks:
       - publish:filebridge
       - publish:razorreport
       - publish:wsmonitor
-      - publish:syncbridge
+      - publish:syncbootbridge
       - publish:envchecker

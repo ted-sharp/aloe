@@ -33,10 +33,10 @@
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorClient/Aloe.Apps.WindowsServiceMonitorClient.csproj" />
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.DummyService/Aloe.Apps.DummyService.csproj" />
   </Folder>
-  <Folder Name="/Apps/SyncBridge/">
-    <Project Path="Apps/SyncBridge/Aloe.Apps.SyncBridgeLib/Aloe.Apps.SyncBridgeLib.csproj" Id="a73beae5-1d20-48eb-9c7b-15fb07de1624" />
-    <Project Path="Apps/SyncBridge/Aloe.Apps.SyncBridge/Aloe.Apps.SyncBridge.csproj" Id="3d4de615-439c-4138-9586-66291f8a8d89" />
-    <Project Path="Apps/SyncBridge/Aloe.Apps.DummyWpf/Aloe.Apps.DummyWpf.csproj" />
+  <Folder Name="/Apps/SyncBootBridge/">
+    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridgeLib/Aloe.Apps.SyncBootBridgeLib.csproj" Id="a73beae5-1d20-48eb-9c7b-15fb07de1624" />
+    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridge/Aloe.Apps.SyncBootBridge.csproj" Id="3d4de615-439c-4138-9586-66291f8a8d89" />
+    <Project Path="Apps/SyncBootBridge/Aloe.Apps.DummyWpf/Aloe.Apps.DummyWpf.csproj" />
   </Folder>
   <Folder Name="/Libs/">
     <Project Path="Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" />

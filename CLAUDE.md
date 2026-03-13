@@ -36,7 +36,7 @@ src/
 │   ├── FileBridge/          ディレクトリ監視・外部exe起動
 │   ├── RazorReport/         Razor帳票エンジン
 │   ├── WindowsServiceMonitor/ Windowsサービス監視（Blazor Server + WPF）
-│   ├── SyncBridge/          ネットワーク同期ブートストラッパー（.NET Framework 4.6.1）
+│   ├── SyncBootBridge/      ネットワーク同期ブートストラッパー（.NET Framework 4.6.1）
 │   └── EnvChecker/          環境情報収集CLIツール
 ├── Libs/
 │   └── Aloe.Libs.CoreLib/   共有ライブラリ
@@ -79,7 +79,7 @@ DI登録: `AddExcelReport()`（NPOI+PDFsharp）、`AddExcelReportWithWindowsPrin
 
 Blazor Server（Web UI）と WPF（タスクトレイ常駐クライアント）を SignalR で繋ぐ構成。WPF クライアントは WebView2 で Server UI を埋め込み、SignalR + HTTP ポーリングでフォールバック付きリアルタイム更新を実現する。
 
-**SyncBridge**
+**SyncBootBridge**
 
 .NET Framework 4.6.1 で動作するブートストラッパー（ClickOnce配布）。Win32 API（`GetPrivateProfileString`）でINI設定を読み、ネットワーク共有からアプリを同期して起動する。NuGetパッケージ不使用。
 
