@@ -14,11 +14,15 @@ builder.Services.AddMagicOnion();
 builder.Services.Configure<ExcelReportApiOptions>(
     builder.Configuration.GetSection("ExcelReport"));
 
-builder.Services.AddExcelReport();
+builder.Services.AddExcelReportWithWindowsPrinter();
 
 builder.Services.AddSingleton<JobStore>();
 builder.Services.AddSingleton<ReportJobQueue>();
 builder.Services.AddHostedService<ReportWorkerService>();
+
+builder.Services.AddSingleton<PrintJobStore>();
+builder.Services.AddSingleton<PrintJobQueue>();
+builder.Services.AddHostedService<PrintWorkerService>();
 
 var app = builder.Build();
 

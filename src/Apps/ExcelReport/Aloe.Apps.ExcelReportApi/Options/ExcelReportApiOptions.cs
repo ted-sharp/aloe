@@ -14,4 +14,10 @@ public class ExcelReportApiOptions
 
     /// <summary>完了済みジョブを保持する最大時間（分）。</summary>
     public int MaxJobAgeMins { get; set; } = 60;
+
+    /// <summary>印刷済みPDFを保存するフォルダパス（絶対または相対）。</summary>
+    public string PrintOutputPath { get; set; } = "printjobs";
+
+    /// <summary>印刷済みPDFの最大保持件数。超過分は古い順に削除される。</summary>
+    public int MaxPrintedPdfCount { get; set; } = 100;
 }
