@@ -21,6 +21,28 @@ public sealed class PostalCodeImportHandler : IImportHandler
     private const string DeltaDelUrlTemplate = "https://www.post.japanpost.jp/zipcode/dl/utf/zip/utf_del_{0}.zip";
     private const string StagingTable = "ext.postal_codes_staged";
 
+    private const string SqlFull = """
+        TRUNCATE ext.postal_codes;
+        DROP INDEX IF EXISTS ext.postal_codes_ix1;
+
+        INSERT INTO ext.postal_codes (postal_code, prefecture_katakana, city_katakana, town_katakana, prefecture, city, town)
+        SELECT postal_code7, prefecture_katakana, city_katakana, town_katakana, prefecture, city, town
+        FROM ext.postal_codes_staged;
+
+        CREATE INDEX postal_codes_ix1 ON ext.postal_codes (postal_code7);
+        """;
+
+    private const string SqlDeltaAdd = """
+        INSERT INTO ext.postal_codes (postal_code, prefecture_katakana, city_katakana, town_katakana, prefecture, city, town)
+        SELECT postal_code7, prefecture_katakana, city_katakana, town_katakana, prefecture, city, town
+        FROM ext.postal_codes_staged;
+        """;
+
+    private const string SqlDeltaDel = """
+        DELETE FROM ext.postal_codes
+        WHERE postal_code IN (SELECT postal_code7 FROM ext.postal_codes_staged);
+        """;
+
     private readonly ISourceFetcher _fetcher;
     private readonly ICsvBulkLoader _loader;
     private readonly ImportRunRepository _repository;
@@ -45,12 +67,12 @@ public sealed class PostalCodeImportHandler : IImportHandler
     public string HandlerKey => "postal-code";
 
     /// <inheritdoc />
-    public async Task<ImportResult> RunAsync(ImportOptions options, CancellationToken cancellationToken = default)
+    public async Task<ImportResult> RunAsync(
+        ImportOptions options,
+        IProgress<ImportProgress>? progress = null,
+        CancellationToken cancellationToken = default)
     {
         var startedAt = DateTimeOffset.UtcNow;
-
-        await _repository.EnsureTablesAsync(cancellationToken);
-        await EnsurePostalCodeTablesAsync(cancellationToken);
 
         var mode = options.Mode == ImportMode.Auto ? ImportMode.Full : options.Mode;
         var runId = await _repository.BeginRunAsync(HandlerKey, mode.ToString().ToLowerInvariant(), cancellationToken);
@@ -58,8 +80,12 @@ public sealed class PostalCodeImportHandler : IImportHandler
         try
         {
             long rowsLoaded = mode == ImportMode.Full
-                ? await RunFullAsync(cancellationToken)
-                : await RunDeltaAsync(options.Yymm ?? throw new ArgumentException("Delta モードでは --yymm が必要です。"), cancellationToken);
+                ? await RunFullAsync(options.WorkDir, progress, cancellationToken)
+                : await RunDeltaAsync(
+                    options.Yymm ?? throw new ArgumentException("Delta モードでは --yymm が必要です。"),
+                    options.WorkDir,
+                    progress,
+                    cancellationToken);
 
             await _repository.CompleteRunAsync(runId, rowsLoaded, cancellationToken);
             return new ImportResult(true, rowsLoaded, startedAt, DateTimeOffset.UtcNow);
@@ -71,46 +97,48 @@ public sealed class PostalCodeImportHandler : IImportHandler
         }
     }
 
-    private async Task<long> RunFullAsync(CancellationToken cancellationToken)
+    private async Task<long> RunFullAsync(string? workDir, IProgress<ImportProgress>? progress, CancellationToken cancellationToken)
     {
         await TruncateStagingAsync(cancellationToken);
 
-        using var csvStream = await _fetcher.FetchAsync(FullUrl, "*.csv", cancellationToken);
+        var downloadProgress = progress is null ? null : new Progress<int>(pct =>
+            progress.Report(new ImportProgress(ImportProgressStage.Downloading, pct)));
+
+        using var csvStream = await _fetcher.FetchAsync(FullUrl, "*.csv", downloadProgress, workDir, cancellationToken);
+
+        progress?.Report(new ImportProgress(ImportProgressStage.Importing));
         var rowsLoaded = await _loader.LoadAsync(_connectionString, StagingTable, csvStream, Encoding.UTF8, cancellationToken);
 
-        await ExecuteSqlSectionAsync("MergeToProduction.sql", "-- [FULL]", "-- [DELTA_ADD]", cancellationToken);
+        await ExecuteSqlAsync(SqlFull, cancellationToken);
         await TruncateStagingAsync(cancellationToken);
 
         return rowsLoaded;
     }
 
-    private async Task<long> RunDeltaAsync(string yymm, CancellationToken cancellationToken)
+    private async Task<long> RunDeltaAsync(string yymm, string? workDir, IProgress<ImportProgress>? progress, CancellationToken cancellationToken)
     {
         // 追加・更新
         await TruncateStagingAsync(cancellationToken);
         var addUrl = string.Format(CultureInfo.InvariantCulture, DeltaAddUrlTemplate, yymm);
-        using var addStream = await _fetcher.FetchAsync(addUrl, "*.csv", cancellationToken);
+
+        var downloadProgress = progress is null ? null : new Progress<int>(pct =>
+            progress.Report(new ImportProgress(ImportProgressStage.Downloading, pct)));
+
+        using var addStream = await _fetcher.FetchAsync(addUrl, "*.csv", downloadProgress, workDir, cancellationToken);
+
+        progress?.Report(new ImportProgress(ImportProgressStage.Importing));
         var rowsAdded = await _loader.LoadAsync(_connectionString, StagingTable, addStream, Encoding.UTF8, cancellationToken);
-        await ExecuteSqlSectionAsync("MergeToProduction.sql", "-- [DELTA_ADD]", "-- [DELTA_DEL]", cancellationToken);
+        await ExecuteSqlAsync(SqlDeltaAdd, cancellationToken);
         await TruncateStagingAsync(cancellationToken);
 
         // 削除
         var delUrl = string.Format(CultureInfo.InvariantCulture, DeltaDelUrlTemplate, yymm);
-        using var delStream = await _fetcher.FetchAsync(delUrl, "*.csv", cancellationToken);
+        using var delStream = await _fetcher.FetchAsync(delUrl, "*.csv", cancellationToken: cancellationToken);
         await _loader.LoadAsync(_connectionString, StagingTable, delStream, Encoding.UTF8, cancellationToken);
-        await ExecuteSqlSectionAsync("MergeToProduction.sql", "-- [DELTA_DEL]", null, cancellationToken);
+        await ExecuteSqlAsync(SqlDeltaDel, cancellationToken);
         await TruncateStagingAsync(cancellationToken);
 
         return rowsAdded;
-    }
-
-    private async Task EnsurePostalCodeTablesAsync(CancellationToken cancellationToken)
-    {
-        var sql = ReadEmbeddedSql("CreateTables.sql");
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
     private async Task TruncateStagingAsync(CancellationToken cancellationToken)
@@ -121,47 +149,11 @@ public sealed class PostalCodeImportHandler : IImportHandler
         await cmd.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    private async Task ExecuteSqlSectionAsync(string fileName, string startMarker, string? endMarker, CancellationToken cancellationToken)
+    private async Task ExecuteSqlAsync(string sql, CancellationToken cancellationToken)
     {
-        var fullSql = ReadEmbeddedSql(fileName);
-        var sql = ExtractSection(fullSql, startMarker, endMarker);
         await using var conn = new NpgsqlConnection(_connectionString);
         await conn.OpenAsync(cancellationToken);
         await using var cmd = new NpgsqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static string ExtractSection(string sql, string startMarker, string? endMarker)
-    {
-        var start = sql.IndexOf(startMarker, StringComparison.Ordinal);
-        if (start < 0)
-        {
-            return sql;
-        }
-
-        start += startMarker.Length;
-
-        if (endMarker is not null)
-        {
-            var end = sql.IndexOf(endMarker, start, StringComparison.Ordinal);
-            if (end >= 0)
-            {
-                return sql[start..end].Trim();
-            }
-        }
-
-        return sql[start..].Trim();
-    }
-
-    private static string ReadEmbeddedSql(string fileName)
-    {
-        var assembly = typeof(PostalCodeImportHandler).Assembly;
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(fileName, StringComparison.OrdinalIgnoreCase))
-            ?? throw new InvalidOperationException($"埋め込みリソース '{fileName}' が見つかりません。");
-
-        using var stream = assembly.GetManifestResourceStream(resourceName)!;
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
     }
 }

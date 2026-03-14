@@ -19,5 +19,11 @@ public interface IImportHandler
     /// <summary>
     /// インポート処理を実行する。
     /// </summary>
-    Task<ImportResult> RunAsync(ImportOptions options, CancellationToken cancellationToken = default);
+    /// <param name="options">インポートオプション。</param>
+    /// <param name="progress">進捗レポーター。null の場合は進捗を報告しない。</param>
+    /// <param name="cancellationToken">キャンセルトークン。</param>
+    Task<ImportResult> RunAsync(
+        ImportOptions options,
+        IProgress<ImportProgress>? progress = null,
+        CancellationToken cancellationToken = default);
 }

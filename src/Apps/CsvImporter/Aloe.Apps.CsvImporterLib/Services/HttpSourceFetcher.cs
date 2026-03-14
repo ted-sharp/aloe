@@ -23,18 +23,20 @@ public sealed class HttpSourceFetcher : ISourceFetcher
     }
 
     /// <inheritdoc />
-    public async Task<Stream> FetchAsync(string url, string? zipEntryPattern, CancellationToken cancellationToken = default)
+    public async Task<Stream> FetchAsync(
+        string url,
+        string? zipEntryPattern,
+        IProgress<int>? downloadProgress = null,
+        string? workDir = null,
+        CancellationToken cancellationToken = default)
     {
-        var response = await _httpClient.GetAsync(url, cancellationToken);
-        response.EnsureSuccessStatusCode();
+        var zipBytes = await GetZipBytesAsync(url, downloadProgress, workDir, cancellationToken);
 
         if (zipEntryPattern is null)
         {
-            return await response.Content.ReadAsStreamAsync(cancellationToken);
+            return new MemoryStream(zipBytes);
         }
 
-        // ZIP として展開し、パターンに一致するエントリを返す
-        var zipBytes = await response.Content.ReadAsByteArrayAsync(cancellationToken);
         using var zipArchive = new ZipArchive(new MemoryStream(zipBytes), ZipArchiveMode.Read);
 
         var entry = FindEntry(zipArchive, zipEntryPattern)
@@ -45,6 +47,70 @@ public sealed class HttpSourceFetcher : ISourceFetcher
         await entryStream.CopyToAsync(resultStream, cancellationToken);
         resultStream.Position = 0;
         return resultStream;
+    }
+
+    private async Task<byte[]> GetZipBytesAsync(
+        string url,
+        IProgress<int>? downloadProgress,
+        string? workDir,
+        CancellationToken cancellationToken)
+    {
+        if (workDir is not null)
+        {
+            var cachedPath = GetCachedFilePath(workDir, url);
+            if (File.Exists(cachedPath))
+            {
+                return await File.ReadAllBytesAsync(cachedPath, cancellationToken);
+            }
+
+            var bytes = await DownloadWithProgressAsync(url, downloadProgress, cancellationToken);
+            Directory.CreateDirectory(workDir);
+            await File.WriteAllBytesAsync(cachedPath, bytes, cancellationToken);
+            return bytes;
+        }
+
+        return await DownloadWithProgressAsync(url, downloadProgress, cancellationToken);
+    }
+
+    private async Task<byte[]> DownloadWithProgressAsync(
+        string url,
+        IProgress<int>? downloadProgress,
+        CancellationToken cancellationToken)
+    {
+        using var response = await _httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+        response.EnsureSuccessStatusCode();
+
+        var totalBytes = response.Content.Headers.ContentLength;
+
+        await using var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        var buffer = new MemoryStream();
+
+        if (totalBytes is null || downloadProgress is null)
+        {
+            await contentStream.CopyToAsync(buffer, cancellationToken);
+        }
+        else
+        {
+            var chunk = new byte[8192];
+            long downloaded = 0;
+            int read;
+
+            while ((read = await contentStream.ReadAsync(chunk, cancellationToken)) > 0)
+            {
+                await buffer.WriteAsync(chunk.AsMemory(0, read), cancellationToken);
+                downloaded += read;
+                var percent = (int)(downloaded * 100 / totalBytes.Value);
+                downloadProgress.Report(percent);
+            }
+        }
+
+        return buffer.ToArray();
+    }
+
+    private static string GetCachedFilePath(string workDir, string url)
+    {
+        var fileName = Path.GetFileName(new Uri(url).LocalPath);
+        return Path.Combine(workDir, fileName);
     }
 
     private static ZipArchiveEntry? FindEntry(ZipArchive archive, string pattern)

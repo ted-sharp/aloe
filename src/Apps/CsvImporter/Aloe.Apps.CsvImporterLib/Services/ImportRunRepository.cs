@@ -23,18 +23,6 @@ public sealed class ImportRunRepository
     }
 
     /// <summary>
-    /// メタデータテーブルが存在しない場合に作成する。
-    /// </summary>
-    public async Task EnsureTablesAsync(CancellationToken cancellationToken = default)
-    {
-        var sql = ReadEmbeddedSql("CreateMetadataTables.sql");
-        await using var conn = new NpgsqlConnection(_connectionString);
-        await conn.OpenAsync(cancellationToken);
-        await using var cmd = new NpgsqlCommand(sql, conn);
-        await cmd.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    /// <summary>
     /// 新しいインポート実行を開始し、run_id を返す。
     /// </summary>
     public async Task<long> BeginRunAsync(string sourceSystem, string mode, CancellationToken cancellationToken = default)
@@ -78,17 +66,5 @@ public sealed class ImportRunRepository
         cmd.Parameters.AddWithValue("e", errJson);
         cmd.Parameters.AddWithValue("id", runId);
         await cmd.ExecuteNonQueryAsync(cancellationToken);
-    }
-
-    private static string ReadEmbeddedSql(string fileName)
-    {
-        var assembly = typeof(ImportRunRepository).Assembly;
-        var resourceName = assembly.GetManifestResourceNames()
-            .FirstOrDefault(n => n.EndsWith(fileName, StringComparison.OrdinalIgnoreCase))
-            ?? throw new InvalidOperationException($"埋め込みリソース '{fileName}' が見つかりません。");
-
-        using var stream = assembly.GetManifestResourceStream(resourceName)!;
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
     }
 }

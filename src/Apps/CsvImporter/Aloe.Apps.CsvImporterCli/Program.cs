@@ -4,6 +4,7 @@
 
 using System.CommandLine;
 using Aloe.Apps.CsvImporterLib.Extensions;
+using Aloe.Apps.CsvImporterLib.HoujinNumber.Extensions;
 using Aloe.Apps.CsvImporterLib.Models;
 using Aloe.Apps.CsvImporterLib.PostalCode.Extensions;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,6 +15,11 @@ Option<string> connectionOption = new("--connection")
 {
     Description = "PostgreSQL 接続文字列",
     Required = true,
+};
+
+Option<string?> workDirOption = new("--work-dir")
+{
+    Description = "ダウンロードZIPを保存/キャッシュするディレクトリ",
 };
 
 // ─── postal-code サブコマンド ─────────────────────────────────────
@@ -39,6 +45,7 @@ postalCodeCommand.SetAction(async (parseResult, cancellationToken) =>
     var connectionString = parseResult.GetValue(connectionOption)!;
     var full = parseResult.GetValue(fullOption);
     var yymm = parseResult.GetValue(yymmOption);
+    var workDir = parseResult.GetValue(workDirOption);
 
     ImportMode mode;
     if (full)
@@ -62,10 +69,71 @@ postalCodeCommand.SetAction(async (parseResult, cancellationToken) =>
     var handler = provider.GetServices<Aloe.Apps.CsvImporterLib.Abstractions.IImportHandler>()
         .First(h => h.HandlerKey == "postal-code");
 
-    var options = new ImportOptions(mode, yymm, connectionString);
+    var options = new ImportOptions(mode, yymm, connectionString, WorkDir: workDir);
+
+    var progress = new Progress<ImportProgress>(p =>
+    {
+        if (p.Stage == ImportProgressStage.Downloading)
+        {
+            var pct = p.Percent.HasValue ? $"{p.Percent}%" : "...";
+            Console.Write($"\rダウンロード中... {pct}   ");
+        }
+        else
+        {
+            Console.Write("\rインポート中...      ");
+        }
+    });
 
     Console.WriteLine($"郵便番号インポート開始 (モード: {mode})");
-    var result = await handler.RunAsync(options, cancellationToken);
+    var result = await handler.RunAsync(options, progress, cancellationToken);
+    Console.WriteLine();
+
+    if (result.Success)
+    {
+        Console.WriteLine($"完了: {result.RowsLoaded:N0} 件, 所要時間: {(result.FinishedAt - result.StartedAt).TotalSeconds:F1}s");
+        return 0;
+    }
+
+    Console.Error.WriteLine($"エラー: {result.ErrorMessage}");
+    return 1;
+});
+
+// ─── houjin-number サブコマンド ──────────────────────────────────
+
+Option<string> sourceOption = new("--source")
+{
+    Description = "ローカルZIPファイルパス（国税庁サイトからダウンロード済みのもの）",
+    Required = true,
+};
+
+Command houjinNumberCommand = new("houjin-number", "国税庁の法人番号データを取り込む")
+{
+    sourceOption,
+};
+
+houjinNumberCommand.SetAction(async (parseResult, cancellationToken) =>
+{
+    var connectionString = parseResult.GetValue(connectionOption)!;
+    var source = parseResult.GetValue(sourceOption)!;
+
+    var services = new ServiceCollection();
+    services.AddCsvImporterCore(connectionString);
+    services.AddHoujinNumberImport(connectionString);
+
+    await using var provider = services.BuildServiceProvider();
+    var handler = provider.GetServices<Aloe.Apps.CsvImporterLib.Abstractions.IImportHandler>()
+        .First(h => h.HandlerKey == "houjin-number");
+
+    var options = new ImportOptions(ImportMode.Full, null, connectionString, source);
+
+    var progress = new Progress<ImportProgress>(p =>
+    {
+        Console.Write("\rインポート中...      ");
+    });
+
+    Console.WriteLine("法人番号インポート開始 (モード: Full)");
+    var result = await handler.RunAsync(options, progress, cancellationToken);
+    Console.WriteLine();
 
     if (result.Success)
     {
@@ -82,7 +150,9 @@ postalCodeCommand.SetAction(async (parseResult, cancellationToken) =>
 RootCommand rootCommand = new("各種CSVデータをPostgreSQLへインポートする")
 {
     connectionOption,
+    workDirOption,
     postalCodeCommand,
+    houjinNumberCommand,
 };
 
 return await rootCommand.Parse(args).InvokeAsync();

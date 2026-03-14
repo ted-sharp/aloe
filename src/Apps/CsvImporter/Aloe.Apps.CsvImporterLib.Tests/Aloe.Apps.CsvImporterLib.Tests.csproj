@@ -22,6 +22,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.CsvImporterLib\Aloe.Apps.CsvImporterLib.csproj" />
     <ProjectReference Include="..\Aloe.Apps.CsvImporterLib.PostalCode\Aloe.Apps.CsvImporterLib.PostalCode.csproj" />
+    <ProjectReference Include="..\Aloe.Apps.CsvImporterLib.HoujinNumber\Aloe.Apps.CsvImporterLib.HoujinNumber.csproj" />
   </ItemGroup>
 
   <ItemGroup>
