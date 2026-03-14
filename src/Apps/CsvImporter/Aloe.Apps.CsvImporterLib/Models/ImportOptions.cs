@@ -12,9 +12,11 @@ namespace Aloe.Apps.CsvImporterLib.Models;
 /// <param name="ConnectionString">PostgreSQL 接続文字列。</param>
 /// <param name="SourcePath">ローカルファイルパス（ハンドラー固有）。</param>
 /// <param name="WorkDir">ダウンロードZIPを保存・キャッシュするディレクトリ。</param>
+/// <param name="SourcePaths">ローカルファイルパスの複数指定（複数ソースを受け付けるハンドラー用）。</param>
 public sealed record ImportOptions(
     ImportMode Mode,
     string? Yymm,
     string ConnectionString,
     string? SourcePath = null,
-    string? WorkDir = null);
+    string? WorkDir = null,
+    string[]? SourcePaths = null);
