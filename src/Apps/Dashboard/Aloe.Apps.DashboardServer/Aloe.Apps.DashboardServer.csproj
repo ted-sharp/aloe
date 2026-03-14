@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Aloe.Apps.DashboardLib/Aloe.Apps.DashboardLib.csproj" />
+    <ProjectReference Include="../../../Libs/Aloe.Libs.PicoBlazor/Aloe.Libs.PicoBlazor.csproj" />
   </ItemGroup>
 
   <ItemGroup>

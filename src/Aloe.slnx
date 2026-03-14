@@ -44,6 +44,7 @@
   </Folder>
   <Folder Name="/Libs/">
     <Project Path="Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" />
+    <Project Path="Libs/Aloe.Libs.PicoBlazor/Aloe.Libs.PicoBlazor.csproj" />
   </Folder>
   <Folder Name="/Utils/" />
   <Folder Name="/Utils/CommandLine/">

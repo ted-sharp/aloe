@@ -5,16 +5,17 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <base href="/" />
-    <link rel="stylesheet" href="lib/pico-css/css/pico.min.css" />
-    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="_content/Aloe.Libs.PicoBlazor/lib/pico-css/css/pico.min.css" />
+    <link rel="stylesheet" href="_content/Aloe.Libs.PicoBlazor/pico-blazor.css" />
     <link rel="stylesheet" href="@Assets["DashboardServer.styles.css"]" />
-    <script src="lib/lucide/lucide.min.js"></script>
+    <script src="_content/Aloe.Libs.PicoBlazor/lib/lucide/lucide.min.js"></script>
     <ImportMap />
     <HeadOutlet />
 </head>
 
 <body>
     <Routes />
+    <ReconnectModal />
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => lucide.createIcons());
