@@ -1,6 +1,6 @@
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+using Aloe.Apps.DashboardLib.OtelViewer.Models;
 
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Storage;
 
 public interface IOtelStore
 {

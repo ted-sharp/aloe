@@ -1,6 +1,6 @@
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+using Aloe.Apps.DashboardLib.OtelViewer.Models;
 
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Services;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Services;
 
 public interface IOtelIngestionService
 {

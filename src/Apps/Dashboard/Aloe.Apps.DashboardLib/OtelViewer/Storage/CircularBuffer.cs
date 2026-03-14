@@ -1,4 +1,4 @@
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Storage;
 
 public sealed class CircularBuffer<T>
 {

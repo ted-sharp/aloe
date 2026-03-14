@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Aloe.Apps.WindowsServiceMonitorLib/Aloe.Apps.WindowsServiceMonitorLib.csproj" />
+    <ProjectReference Include="../../../Libs/Aloe.Libs.PicoBlazor/Aloe.Libs.PicoBlazor.csproj" />
     <ProjectReference Include="..\Aloe.Apps.DummyService\Aloe.Apps.DummyService.csproj">
       <PrivateAssets>all</PrivateAssets>
       <ExcludeAssets>contentFiles</ExcludeAssets>
