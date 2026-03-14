@@ -1,5 +1,11 @@
 <Solution>
   <Folder Name="/Apps/" />
+  <Folder Name="/Apps/CsvImporter/">
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib/Aloe.Apps.CsvImporterLib.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.PostalCode/Aloe.Apps.CsvImporterLib.PostalCode.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterCli/Aloe.Apps.CsvImporterCli.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.Tests/Aloe.Apps.CsvImporterLib.Tests.csproj" />
+  </Folder>
   <Folder Name="/Apps/EnvChecker/">
     <Project Path="Apps/EnvChecker/Aloe.Apps.EnvChecker/Aloe.Apps.EnvChecker.csproj" />
   </Folder>
