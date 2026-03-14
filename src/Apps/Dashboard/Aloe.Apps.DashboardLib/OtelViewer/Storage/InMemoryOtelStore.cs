@@ -1,7 +1,7 @@
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+using Aloe.Apps.DashboardLib.OtelViewer.Models;
 using Microsoft.Extensions.Options;
 
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Storage;
 
 public sealed class InMemoryOtelStore : IOtelStore
 {

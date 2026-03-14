@@ -1,8 +1,8 @@
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Storage;
+using Aloe.Apps.DashboardLib.OtelViewer.Models;
+using Aloe.Apps.DashboardLib.OtelViewer.Storage;
 using Microsoft.Extensions.Logging;
 
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Services;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Services;
 
 public sealed class OtelIngestionService : IOtelIngestionService
 {

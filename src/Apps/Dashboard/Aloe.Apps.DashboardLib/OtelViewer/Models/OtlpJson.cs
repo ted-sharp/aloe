@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Models;
 
 // OTLP JSON DTOs (https://opentelemetry.io/docs/specs/otlp/#json-protobuf-encoding)
 

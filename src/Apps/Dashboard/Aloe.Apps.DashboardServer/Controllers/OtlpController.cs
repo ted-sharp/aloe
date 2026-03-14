@@ -1,8 +1,8 @@
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
-using Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Services;
+using Aloe.Apps.DashboardLib.OtelViewer.Models;
+using Aloe.Apps.DashboardLib.OtelViewer.Services;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Aloe.Apps.WindowsServiceMonitorServer.Controllers;
+namespace Aloe.Apps.DashboardServer.Controllers;
 
 [ApiController]
 public class OtlpController : ControllerBase

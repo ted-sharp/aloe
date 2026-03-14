@@ -1,4 +1,4 @@
-namespace Aloe.Apps.WindowsServiceMonitorLib.OtelViewer.Models;
+namespace Aloe.Apps.DashboardLib.OtelViewer.Models;
 
 public sealed class OtelMetricPoint
 {
