@@ -126,6 +126,16 @@
     <Project Path="Utils/Aloe.Utils.Wafu.Romaji.Tests/Aloe.Utils.Wafu.Romaji.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.Wafu.Romaji/Aloe.Utils.Wafu.Romaji.csproj" />
   </Folder>
+  <Folder Name="/Utils/Hosting.Serilog/">
+    <Project Path="Utils/Aloe.Utils.Hosting.Serilog.Samples/Aloe.Utils.Hosting.Serilog.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Hosting.Serilog.Tests/Aloe.Utils.Hosting.Serilog.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Hosting.Serilog/Aloe.Utils.Hosting.Serilog.csproj" />
+  </Folder>
+  <Folder Name="/Utils/Hosting.Npgsql/">
+    <Project Path="Utils/Aloe.Utils.Hosting.Npgsql.Samples/Aloe.Utils.Hosting.Npgsql.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Hosting.Npgsql.Tests/Aloe.Utils.Hosting.Npgsql.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Hosting.Npgsql/Aloe.Utils.Hosting.Npgsql.csproj" />
+  </Folder>
   <Folder Name="/Utils/Win32.ScCommand/">
     <Project Path="Utils/Aloe.Utils.Win32.ScCommand.DummyService/Aloe.Utils.Win32.ScCommand.DummyService.csproj" />
     <Project Path="Utils/Aloe.Utils.Win32.ScCommand.Samples/Aloe.Utils.Win32.ScCommand.Samples.csproj" />
