@@ -1,0 +1,6 @@
+@Aloe.Apps.Medock.MdXadesApi_HostAddress = http://localhost:5080
+
+GET {{Aloe.Apps.Medock.MdXadesApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

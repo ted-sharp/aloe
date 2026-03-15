@@ -1,52 +1,63 @@
 <Solution>
   <Folder Name="/Apps/" />
   <Folder Name="/Apps/CsvImporter/">
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib/Aloe.Apps.CsvImporterLib.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.PostalCode/Aloe.Apps.CsvImporterLib.PostalCode.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.HoujinNumber/Aloe.Apps.CsvImporterLib.HoujinNumber.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.MedisCodes/Aloe.Apps.CsvImporterLib.MedisCodes.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.JisCompatMap/Aloe.Apps.CsvImporterLib.JisCompatMap.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.MhlwItems/Aloe.Apps.CsvImporterLib.MhlwItems.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.HealthFacility/Aloe.Apps.CsvImporterLib.HealthFacility.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.FhirCodes/Aloe.Apps.CsvImporterLib.FhirCodes.csproj" />
-    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.JfagyCodes/Aloe.Apps.CsvImporterLib.JfagyCodes.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterCli/Aloe.Apps.CsvImporterCli.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.FhirCodes/Aloe.Apps.CsvImporterLib.FhirCodes.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.HealthFacility/Aloe.Apps.CsvImporterLib.HealthFacility.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.HoujinNumber/Aloe.Apps.CsvImporterLib.HoujinNumber.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.JfagyCodes/Aloe.Apps.CsvImporterLib.JfagyCodes.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.JisCompatMap/Aloe.Apps.CsvImporterLib.JisCompatMap.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.MedisCodes/Aloe.Apps.CsvImporterLib.MedisCodes.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.MhlwItems/Aloe.Apps.CsvImporterLib.MhlwItems.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.PostalCode/Aloe.Apps.CsvImporterLib.PostalCode.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.Tests/Aloe.Apps.CsvImporterLib.Tests.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib/Aloe.Apps.CsvImporterLib.csproj" />
   </Folder>
   <Folder Name="/Apps/EnvChecker/">
     <Project Path="Apps/EnvChecker/Aloe.Apps.EnvChecker/Aloe.Apps.EnvChecker.csproj" />
   </Folder>
   <Folder Name="/Apps/FileBridge/">
-    <Project Path="Apps/FileBridge/Aloe.Apps.FileBridgeLib/Aloe.Apps.FileBridgeLib.csproj" />
-    <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge/Aloe.Apps.FileBridge.csproj" />
     <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge.Dummy/Aloe.Apps.FileBridge.Dummy.csproj" />
+    <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge/Aloe.Apps.FileBridge.csproj" />
+    <Project Path="Apps/FileBridge/Aloe.Apps.FileBridgeLib/Aloe.Apps.FileBridgeLib.csproj" />
   </Folder>
   <Folder Name="/Apps/Medock/" />
   <Folder Name="/Apps/ExcelReport/">
-    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportCli/Aloe.Apps.ExcelReportCli.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportApi/Aloe.Apps.ExcelReportApi.csproj" Id="290e72c7-5686-4057-9e8f-33c0ab60f9b8" />
+    <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportCli/Aloe.Apps.ExcelReportCli.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib.Contracts/Aloe.Apps.ExcelReportLib.Contracts.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportLib/Aloe.Apps.ExcelReportLib.csproj" />
   </Folder>
+  <Folder Name="/Apps/Medock/MdAdes/">
+    <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesApi/Aloe.Apps.Medock.MdXadesApi.csproj" Id="b0f3567d-e95f-47eb-9174-b64042226369" />
+    <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesCli/Aloe.Apps.Medock.MdXadesCli.csproj" Id="9f10d4ec-30a1-41b3-b470-9a993704aa04" />
+    <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesLib/Aloe.Apps.Medock.MdXadesLib.csproj" Id="56c2e2ea-2ec6-4388-91c4-809ae0d03150" />
+  </Folder>
+  <Folder Name="/Apps/Medock/MdPatient/">
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientEditor/Aloe.Apps.Medock.MdPatientEditor.csproj" Id="216626b5-71b9-4af3-a93e-912a2a967012" />
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientFinder/Aloe.Apps.Medock.MdPatientFinder.csproj" Id="9b6ee54d-8feb-4760-8393-1cb5526641eb" />
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientLib/Aloe.Apps.Medock.MdPatientLib.csproj" Id="9f219b87-4659-485a-98c5-42aa87c87ef5" />
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientViewer/Aloe.Apps.Medock.MdPatientViewer.csproj" Id="1d01dc8c-fa6d-4257-9f12-6fe8f33096e0" />
+  </Folder>
   <Folder Name="/Apps/RazorReport/">
+    <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportClient/Aloe.Apps.RazorReportClient.csproj" />
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportLib/Aloe.Apps.RazorReportLib.csproj" />
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportServer/Aloe.Apps.RazorReportServer.csproj" />
-    <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportClient/Aloe.Apps.RazorReportClient.csproj" />
   </Folder>
   <Folder Name="/Apps/WindowsServiceMonitor/">
+    <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.DummyService/Aloe.Apps.DummyService.csproj" />
+    <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorClient/Aloe.Apps.WindowsServiceMonitorClient.csproj" />
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorLib/Aloe.Apps.WindowsServiceMonitorLib.csproj" />
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorServer/Aloe.Apps.WindowsServiceMonitorServer.csproj" />
-    <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorClient/Aloe.Apps.WindowsServiceMonitorClient.csproj" />
-    <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.DummyService/Aloe.Apps.DummyService.csproj" />
   </Folder>
   <Folder Name="/Apps/Dashboard/">
     <Project Path="Apps/Dashboard/Aloe.Apps.DashboardLib/Aloe.Apps.DashboardLib.csproj" />
     <Project Path="Apps/Dashboard/Aloe.Apps.DashboardServer/Aloe.Apps.DashboardServer.csproj" />
   </Folder>
   <Folder Name="/Apps/SyncBootBridge/">
-    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridgeLib/Aloe.Apps.SyncBootBridgeLib.csproj" Id="a73beae5-1d20-48eb-9c7b-15fb07de1624" />
-    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridge/Aloe.Apps.SyncBootBridge.csproj" Id="3d4de615-439c-4138-9586-66291f8a8d89" />
     <Project Path="Apps/SyncBootBridge/Aloe.Apps.DummyWpf/Aloe.Apps.DummyWpf.csproj" />
+    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridge/Aloe.Apps.SyncBootBridge.csproj" Id="3d4de615-439c-4138-9586-66291f8a8d89" />
+    <Project Path="Apps/SyncBootBridge/Aloe.Apps.SyncBootBridgeLib/Aloe.Apps.SyncBootBridgeLib.csproj" Id="a73beae5-1d20-48eb-9c7b-15fb07de1624" />
   </Folder>
   <Folder Name="/Libs/">
     <Project Path="Libs/Aloe.Libs.CoreLib/Aloe.Libs.CoreLib.csproj" />
@@ -54,65 +65,65 @@
   </Folder>
   <Folder Name="/Utils/" />
   <Folder Name="/Utils/CommandLine/">
-    <Project Path="Utils/Aloe.Utils.CommandLine/Aloe.Utils.CommandLine.csproj" />
-    <Project Path="Utils/Aloe.Utils.CommandLine.Tests/Aloe.Utils.CommandLine.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.CommandLine.Samples/Aloe.Utils.CommandLine.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.CommandLine.Tests/Aloe.Utils.CommandLine.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.CommandLine/Aloe.Utils.CommandLine.csproj" />
   </Folder>
   <Folder Name="/Utils/Configuration.Default/">
-    <Project Path="Utils/Aloe.Utils.Configuration.Default/Aloe.Utils.Configuration.Default.csproj" />
-    <Project Path="Utils/Aloe.Utils.Configuration.Default.Tests/Aloe.Utils.Configuration.Default.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.Configuration.Default.Samples/Aloe.Utils.Configuration.Default.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Configuration.Default.Tests/Aloe.Utils.Configuration.Default.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Configuration.Default/Aloe.Utils.Configuration.Default.csproj" />
   </Folder>
   <Folder Name="/Utils/Configuration.Json/">
-    <Project Path="Utils/Aloe.Utils.Configuration.Json/Aloe.Utils.Configuration.Json.csproj" />
-    <Project Path="Utils/Aloe.Utils.Configuration.Json.Tests/Aloe.Utils.Configuration.Json.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.Configuration.Json.Samples/Aloe.Utils.Configuration.Json.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Configuration.Json.Tests/Aloe.Utils.Configuration.Json.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Configuration.Json/Aloe.Utils.Configuration.Json.csproj" />
   </Folder>
   <Folder Name="/Utils/Drawing/">
-    <Project Path="Utils/Aloe.Utils.Drawing/Aloe.Utils.Drawing.csproj" />
-    <Project Path="Utils/Aloe.Utils.Drawing.Tests/Aloe.Utils.Drawing.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.Drawing.Samples/Aloe.Utils.Drawing.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Drawing.Tests/Aloe.Utils.Drawing.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Drawing/Aloe.Utils.Drawing.csproj" />
   </Folder>
   <Folder Name="/Utils/Drawing.Wpf/">
-    <Project Path="Utils/Aloe.Utils.Drawing.Wpf/Aloe.Utils.Drawing.Wpf.csproj" />
     <Project Path="Utils/Aloe.Utils.Drawing.Wpf.Samples/Aloe.Utils.Drawing.Wpf.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Drawing.Wpf/Aloe.Utils.Drawing.Wpf.csproj" />
   </Folder>
   <Folder Name="/Utils/Json/">
-    <Project Path="Utils/Aloe.Utils.Json/Aloe.Utils.Json.csproj" />
-    <Project Path="Utils/Aloe.Utils.Json.Tests/Aloe.Utils.Json.Tests.csproj" />
     <Project Path="Utils/Aloe.Utils.Json.Samples/Aloe.Utils.Json.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Json.Tests/Aloe.Utils.Json.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Json/Aloe.Utils.Json.csproj" />
   </Folder>
   <Folder Name="/Utils/Logging.Dump/">
-    <Project Path="Utils/Aloe.Utils.Logging.Dump/Aloe.Utils.Logging.Dump.csproj" />
     <Project Path="Utils/Aloe.Utils.Logging.Dump.Samples/Aloe.Utils.Logging.Dump.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Logging.Dump/Aloe.Utils.Logging.Dump.csproj" />
   </Folder>
   <Folder Name="/Utils/SafeIO/">
-    <Project Path="Utils/Aloe.Utils.SafeIO/Aloe.Utils.SafeIO.csproj" />
     <Project Path="Utils/Aloe.Utils.SafeIO.Tests/Aloe.Utils.SafeIO.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.SafeIO/Aloe.Utils.SafeIO.csproj" />
   </Folder>
   <Folder Name="/Utils/Text/">
-    <Project Path="Utils/Aloe.Utils.Text/Aloe.Utils.Text.csproj" />
     <Project Path="Utils/Aloe.Utils.Text.Tests/Aloe.Utils.Text.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Text/Aloe.Utils.Text.csproj" />
   </Folder>
   <Folder Name="/Utils/Wafu.Date/">
-    <Project Path="Utils/Aloe.Utils.Wafu.Date/Aloe.Utils.Wafu.Date.csproj" />
     <Project Path="Utils/Aloe.Utils.Wafu.Date.Tests/Aloe.Utils.Wafu.Date.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Wafu.Date/Aloe.Utils.Wafu.Date.csproj" />
   </Folder>
   <Folder Name="/Utils/Wafu.JisCompat/">
-    <Project Path="Utils/Aloe.Utils.Wafu.JisCompat/Aloe.Utils.Wafu.JisCompat.csproj" />
     <Project Path="Utils/Aloe.Utils.Wafu.JisCompat.Tests/Aloe.Utils.Wafu.JisCompat.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Wafu.JisCompat/Aloe.Utils.Wafu.JisCompat.csproj" />
   </Folder>
   <Folder Name="/Utils/Wafu.Kansuji/">
-    <Project Path="Utils/Aloe.Utils.Wafu.Kansuji/Aloe.Utils.Wafu.Kansuji.csproj" />
     <Project Path="Utils/Aloe.Utils.Wafu.Kansuji.Tests/Aloe.Utils.Wafu.Kansuji.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Wafu.Kansuji/Aloe.Utils.Wafu.Kansuji.csproj" />
   </Folder>
   <Folder Name="/Utils/Wafu.Romaji/">
-    <Project Path="Utils/Aloe.Utils.Wafu.Romaji/Aloe.Utils.Wafu.Romaji.csproj" />
     <Project Path="Utils/Aloe.Utils.Wafu.Romaji.Tests/Aloe.Utils.Wafu.Romaji.Tests.csproj" />
+    <Project Path="Utils/Aloe.Utils.Wafu.Romaji/Aloe.Utils.Wafu.Romaji.csproj" />
   </Folder>
   <Folder Name="/Utils/Win32.ScCommand/">
-    <Project Path="Utils/Aloe.Utils.Win32.ScCommand/Aloe.Utils.Win32.ScCommand.csproj" />
     <Project Path="Utils/Aloe.Utils.Win32.ScCommand.DummyService/Aloe.Utils.Win32.ScCommand.DummyService.csproj" />
     <Project Path="Utils/Aloe.Utils.Win32.ScCommand.Samples/Aloe.Utils.Win32.ScCommand.Samples.csproj" />
+    <Project Path="Utils/Aloe.Utils.Win32.ScCommand/Aloe.Utils.Win32.ScCommand.csproj" />
   </Folder>
 </Solution>
