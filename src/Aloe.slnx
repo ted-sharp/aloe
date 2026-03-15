@@ -21,14 +21,7 @@
     <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge/Aloe.Apps.FileBridge.csproj" />
     <Project Path="Apps/FileBridge/Aloe.Apps.FileBridge.Dummy/Aloe.Apps.FileBridge.Dummy.csproj" />
   </Folder>
-  <Folder Name="/Apps/Medock/">
-    <Project Path="Apps/Medock/Aloe.Apps.MedockLib/Aloe.Apps.MedockLib.csproj" />
-    <Project Path="Apps/Medock/Aloe.Apps.MedockServer/Aloe.Apps.MedockServer.csproj" />
-    <Project Path="Apps/Medock/Aloe.Apps.MedockClient/Aloe.Apps.MedockClient.csproj" />
-    <Project Path="Apps/Medock/Aloe.Apps.MedockSeed/Aloe.Apps.MedockSeed.csproj" />
-    <Project Path="Apps/Medock/Aloe.Apps.MedockMcp/Aloe.Apps.MedockMcp.csproj" />
-    <Project Path="Apps/Medock/Aloe.Apps.MedockServer.Tests/Aloe.Apps.MedockServer.Tests.csproj" />
-  </Folder>
+  <Folder Name="/Apps/Medock/" />
   <Folder Name="/Apps/ExcelReport/">
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportCli/Aloe.Apps.ExcelReportCli.csproj" />
     <Project Path="Apps/ExcelReport/Aloe.Apps.ExcelReportApi/Aloe.Apps.ExcelReportApi.csproj" Id="290e72c7-5686-4057-9e8f-33c0ab60f9b8" />
@@ -40,7 +33,7 @@
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportServer/Aloe.Apps.RazorReportServer.csproj" />
     <Project Path="Apps/RazorReport/Aloe.Apps.RazorReportClient/Aloe.Apps.RazorReportClient.csproj" />
   </Folder>
-  <Folder Name="/Apps/ServiceMonitor/">
+  <Folder Name="/Apps/WindowsServiceMonitor/">
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorLib/Aloe.Apps.WindowsServiceMonitorLib.csproj" />
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorServer/Aloe.Apps.WindowsServiceMonitorServer.csproj" />
     <Project Path="Apps/WindowsServiceMonitor/Aloe.Apps.WindowsServiceMonitorClient/Aloe.Apps.WindowsServiceMonitorClient.csproj" />
