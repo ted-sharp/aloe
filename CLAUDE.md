@@ -4,22 +4,33 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## ビルド・テスト・タスク
 
+[Task](https://taskfile.dev) ランナー（`Taskfile.yml`）が主要なインターフェース。
+
+```bash
+# ソリューション全体を Release ビルド
+task build
+
+# 全テスト実行
+task test
+
+# ビルド成果物と artifacts/ を削除
+task clean
+
+# 全アプリを publish
+task publish:all
+```
+
+`dotnet` コマンドでの直接実行も可能:
+
 ```bash
 # ソリューション全体をビルド
 dotnet build src/Aloe.slnx
 
-# テスト実行（全体）
-dotnet test src/Aloe.slnx
-
 # テスト実行（プロジェクト指定）
 dotnet test src/Apps/Medock/Aloe.Apps.MedockServer.Tests/
-dotnet test src/Utils/Aloe.Utils.CommandLine.Tests/
 
 # 特定テストを名前フィルタで実行
 dotnet test --filter "FullyQualifiedName~<TestClassName>.<MethodName>"
-
-# EnvChecker を self-contained でパブリッシュ
-dotnet publish src/Apps/EnvChecker/Aloe.Apps.EnvChecker -c Release -r win-x64 --self-contained true
 ```
 
 ## アーキテクチャ概要
@@ -37,7 +48,8 @@ src/
 │   ├── RazorReport/         Razor帳票エンジン
 │   ├── WindowsServiceMonitor/ Windowsサービス監視（Blazor Server + WPF）
 │   ├── SyncBootBridge/      ネットワーク同期ブートストラッパー（.NET Framework 4.6.1）
-│   └── EnvChecker/          環境情報収集CLIツール
+│   ├── EnvChecker/          環境情報収集CLIツール
+│   └── Medock/MdAdes/       XAdES電子署名（REST/gRPC API）
 ├── Libs/
 │   └── Aloe.Libs.CoreLib/   共有ライブラリ
 └── Utils/                   NuGet公開ユーティリティ群
@@ -99,6 +111,13 @@ src/Utils/
 - `src/Directory.Build.props` — StyleCop の共有設定（`stylecop.json` を参照、会社名: `ted-sharp`）
 - テストフレームワーク: xUnit 2.9.3 + Moq + FluentAssertions + coverlet.collector
 - 各アプリの詳細は `README_<appname>.md`（`Lib` プロジェクト内）を参照
+
+### コーディング規約（`.editorconfig`）
+
+- `this.` 修飾を必須とする（フィールド・プロパティ・メソッド・イベント、severity: error）
+- private フィールドは `_camelCase`、private static フィールドは `s_camelCase`
+- `var` を積極的に使用
+- 組み込み型はキーワード（`int`, `string`）を使用、メンバーアクセスは CLR 型名（`Int32.MaxValue`）を使用
 
 ### 技術スタック
 
