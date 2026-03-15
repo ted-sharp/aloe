@@ -36,9 +36,12 @@
     <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesLib.Tests/Aloe.Apps.Medock.MdXadesLib.Tests.csproj" />
   </Folder>
   <Folder Name="/Apps/Medock/MdPatient/">
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientApi/Aloe.Apps.Medock.MdPatientApi.csproj" Id="ed83d66b-0728-433b-9fb4-5e8db10c3757" />
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientEditor/Aloe.Apps.Medock.MdPatientEditor.csproj" Id="216626b5-71b9-4af3-a93e-912a2a967012" />
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientFinder/Aloe.Apps.Medock.MdPatientFinder.csproj" Id="9b6ee54d-8feb-4760-8393-1cb5526641eb" />
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientLib/Aloe.Apps.Medock.MdPatientLib.csproj" Id="9f219b87-4659-485a-98c5-42aa87c87ef5" />
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientLib.Contracts/Aloe.Apps.Medock.MdPatientLib.Contracts.csproj" />
+    <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientLib.Tests/Aloe.Apps.Medock.MdPatientLib.Tests.csproj" />
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientViewer/Aloe.Apps.Medock.MdPatientViewer.csproj" Id="1d01dc8c-fa6d-4257-9f12-6fe8f33096e0" />
   </Folder>
   <Folder Name="/Apps/RazorReport/">

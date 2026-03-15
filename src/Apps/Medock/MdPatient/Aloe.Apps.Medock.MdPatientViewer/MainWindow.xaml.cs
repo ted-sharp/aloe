@@ -1,24 +1,23 @@
-﻿using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+// <copyright file="MainWindow.xaml.cs" company="ted-sharp">
+// Copyright (c) ted-sharp. All rights reserved.
+// </copyright>
 
-namespace Aloe.Apps.Medock.MdPatientViewer
+using System.Windows;
+using Aloe.Apps.Medock.MdPatientViewer.ViewModels;
+
+namespace Aloe.Apps.Medock.MdPatientViewer;
+
+/// <summary>
+/// 患者閲覧画面。
+/// </summary>
+public partial class MainWindow : Window
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    /// <see cref="MainWindow"/> クラスの新しいインスタンスを初期化する。
     /// </summary>
-    public partial class MainWindow : Window
+    public MainWindow(MainViewModel viewModel)
     {
-        public MainWindow()
-        {
-            InitializeComponent();
-        }
+        this.InitializeComponent();
+        this.DataContext = viewModel;
     }
 }
