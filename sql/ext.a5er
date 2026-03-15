@@ -51,8 +51,8 @@ ShowCommonAttributes=0
 BugFixEntityWidth=0
 
 [Entity]
-PName=ext.raw_zip_codes
-LName=ext.raw_zip_codes
+PName=ext.raw_postal_codes
+LName=ext.raw_postal_codes
 Comment=
 TableInnerOption=
 TableOption=
@@ -60,8 +60,8 @@ Page=EXT_住所_JIS
 Left=100
 Top=100
 Field="全国地方公共団体コード","local_government_code","TEXT","NOT NULL",,"","JIS X0401、X0402",$FFFFFFFF,""
-Field="旧郵便番号(5桁)","old_zip_code5","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="郵便番号(7桁)","zip_code7","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="旧郵便番号(5桁)","old_postal_code5","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="郵便番号(7桁)","postal_code7","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="都道府県名(カナ)","prefecture_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="市区町村(カナ)","city_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="町域名(カナ)","town_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -115,15 +115,15 @@ Position="EXT_住所_JIS",100,1300,1060,206
 ZOrder=192
 
 [Entity]
-PName=ext.zip_codes
-LName=ext.zip_codes
+PName=ext.postal_codes
+LName=ext.postal_codes
 Comment=
 TableInnerOption=
 TableOption=
 Page=EXT_住所_JIS
 Left=2500
 Top=100
-Field="zip_code","zip_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
+Field="postal_code","postal_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="prefecture_katakana","prefecture_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="city_katakana","city_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="town_katakana","town_katakana","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -195,7 +195,7 @@ Left=2500
 Top=700
 Field="8. corporate_number","corporate_number","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="13. name","name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="22. zip_code","zip_code","TEXT",,,"","",$FFFFFFFF,""
+Field="22. postal_code","postal_code","TEXT",,,"","",$FFFFFFFF,""
 Field="16. prefecture_name","prefecture_name","TEXT",,,"","",$FFFFFFFF,""
 Field="17. city_name","city_name","TEXT",,,"","",$FFFFFFFF,""
 Field="18. street_number","street_number","TEXT",,,"","",$FFFFFFFF,""
@@ -528,7 +528,7 @@ Left=2000
 Top=100
 Field="facility_code","facility_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="facility_name","facility_name","TEXT","NOT NULL",,"\q\q","",$000099FF,""
-Field="zip_code","zip_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
+Field="postal_code","postal_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="address","address","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="phone","phone","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="website","website","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -548,11 +548,11 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=700
+Top=600
 Field="番号","no","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="代行機関番号","agency_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="機関名","agency_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="郵便番号","zip_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="郵便番号","postal_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="電話番号","phone","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="所在地","address","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="ホームページ","website","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -562,7 +562,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250516173431
-Position="EXT_健診",100,700
+Position="EXT_健診",100,600
 ZOrder=242
 
 [Entity]
@@ -573,7 +573,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=2000
-Top=700
+Top=600
 Field="agency_code","agency_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="agency_name","agency_name","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="run_id","run_id","BIGINT","NOT NULL",,"0","",$000099FF,""
@@ -581,7 +581,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251118223812
-Position="EXT_健診",2000,700
+Position="EXT_健診",2000,600
 ZOrder=243
 
 [Entity]
@@ -592,7 +592,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=1500
+Top=1200
 Field="区分番号","category_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="区分名称","category_name","TEXT",,,"","",$FFFFFFFF,""
 Field="順番合","sort_no","TEXT",,,"","",$FFFFFFFF,""
@@ -616,7 +616,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250331182051
-Position="EXT_健診",100,1500
+Position="EXT_健診",100,1200,1054,300
 ZOrder=238
 
 [Entity]
@@ -627,7 +627,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=2600
+Top=1700
 Field="JLAC10コード","concept_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="システム","jurisdiction_coding_system","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="表示名","concept_display","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -635,7 +635,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250401104540
-Position="EXT_健診",100,2600
+Position="EXT_健診",100,1700
 ZOrder=239
 
 [Entity]
@@ -650,7 +650,7 @@ Top=100
 Field="医療機関コード","facility_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="医療機関種別","facility_type","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="医療機関名","facility_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
-Field="郵便番号","zip_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
+Field="郵便番号","postal_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="電話番号","phone","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="所在地","address","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="ホームページ","website","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -759,6 +759,27 @@ ModifiedDateTime=20250827150808
 Position="EXT_取込",100,100,923,1900
 ZOrder=247
 
+[Entity]
+PName=ext.raw_jfagy_allergen_codes
+LName=ext.raw_jfagy_allergen_codes
+Comment=
+TableInnerOption=
+TableOption=
+Page=EXT_健診
+Left=100
+Top=2000
+Field="コーディングシステム","coding_system","TEXT",,,"","",$FFFFFFFF,""
+Field="コード","code","TEXT","NOT NULL",,"","",$FFFFFFFF,""
+Field="表示名","display","TEXT",,,"","",$FFFFFFFF,""
+Field="親コード","parent_code","TEXT",,,"","",$FFFFFFFF,""
+Field="別名","designation","TEXT",,,"","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20260315000000
+Position="EXT_健診",100,2000
+ZOrder=260
+
 [Relation]
 Entity1=ext.ingestion_runs
 Entity2=ext.ingestion_files
@@ -784,7 +805,7 @@ ZOrder=249
 
 [Relation]
 Entity1=ext.ingestion_runs
-Entity2=ext.zip_codes
+Entity2=ext.postal_codes
 RelationType1=2
 RelationType2=3
 Fields1=run_id
