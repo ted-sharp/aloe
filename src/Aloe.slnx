@@ -32,6 +32,8 @@
     <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesApi/Aloe.Apps.Medock.MdXadesApi.csproj" Id="b0f3567d-e95f-47eb-9174-b64042226369" />
     <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesCli/Aloe.Apps.Medock.MdXadesCli.csproj" Id="9f10d4ec-30a1-41b3-b470-9a993704aa04" />
     <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesLib/Aloe.Apps.Medock.MdXadesLib.csproj" Id="56c2e2ea-2ec6-4388-91c4-809ae0d03150" />
+    <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesLib.Contracts/Aloe.Apps.Medock.MdXadesLib.Contracts.csproj" />
+    <Project Path="Apps/Medock/MdAdes/Aloe.Apps.Medock.MdXadesLib.Tests/Aloe.Apps.Medock.MdXadesLib.Tests.csproj" />
   </Folder>
   <Folder Name="/Apps/Medock/MdPatient/">
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientEditor/Aloe.Apps.Medock.MdPatientEditor.csproj" Id="216626b5-71b9-4af3-a93e-912a2a967012" />
