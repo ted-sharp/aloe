@@ -5,6 +5,7 @@
 using System.CommandLine;
 using Aloe.Apps.CsvImporterLib.Extensions;
 using Aloe.Apps.CsvImporterLib.FhirCodes.Extensions;
+using Aloe.Apps.CsvImporterLib.JfagyCodes.Extensions;
 using Aloe.Apps.CsvImporterLib.HealthFacility.Extensions;
 using Aloe.Apps.CsvImporterLib.HoujinNumber.Extensions;
 using Aloe.Apps.CsvImporterLib.JisCompatMap.Extensions;
@@ -424,6 +425,44 @@ fhirCodesCommand.SetAction(async (parseResult, cancellationToken) =>
     return 1;
 });
 
+// ─── jfagy-codes サブコマンド ────────────────────────────────────
+
+Command jfagyCodesCommand = new("jfagy-codes", "J-FAGYアレルゲンコードを取り込む（ローカルJSONファイル）")
+{
+    sourcePathsOption,
+};
+
+jfagyCodesCommand.SetAction(async (parseResult, cancellationToken) =>
+{
+    var connectionString = parseResult.GetValue(connectionOption)!;
+    var sources = parseResult.GetValue(sourcePathsOption)!;
+
+    var services = new ServiceCollection();
+    services.AddCsvImporterCore(connectionString);
+    services.AddJfagyCodesImport(connectionString);
+
+    await using var provider = services.BuildServiceProvider();
+    var handler = provider.GetServices<Aloe.Apps.CsvImporterLib.Abstractions.IImportHandler>()
+        .First(h => h.HandlerKey == "jfagy-codes");
+
+    var options = new ImportOptions(ImportMode.Full, null, connectionString, SourcePaths: sources);
+
+    var progress = new Progress<ImportProgress>(_ => Console.Write("\rインポート中...      "));
+
+    Console.WriteLine($"J-FAGY アレルゲンコード インポート開始 (ファイル数: {sources.Length})");
+    var result = await handler.RunAsync(options, progress, cancellationToken);
+    Console.WriteLine();
+
+    if (result.Success)
+    {
+        Console.WriteLine($"完了: {result.RowsLoaded:N0} 件, 所要時間: {(result.FinishedAt - result.StartedAt).TotalSeconds:F1}s");
+        return 0;
+    }
+
+    Console.Error.WriteLine($"エラー: {result.ErrorMessage}");
+    return 1;
+});
+
 // ─── ルートコマンド ───────────────────────────────────────────────
 
 RootCommand rootCommand = new("各種CSVデータをPostgreSQLへインポートする")
@@ -439,6 +478,7 @@ RootCommand rootCommand = new("各種CSVデータをPostgreSQLへインポート
     mhlwItemsCommand,
     healthFacilityCommand,
     fhirCodesCommand,
+    jfagyCodesCommand,
 };
 
 return await rootCommand.Parse(args).InvokeAsync();

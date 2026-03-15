@@ -548,7 +548,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=700
+Top=600
 Field="番号","no","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="代行機関番号","agency_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="機関名","agency_name","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -562,7 +562,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250516173431
-Position="EXT_健診",100,700
+Position="EXT_健診",100,600
 ZOrder=242
 
 [Entity]
@@ -573,7 +573,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=2000
-Top=700
+Top=600
 Field="agency_code","agency_code","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="agency_name","agency_name","TEXT","NOT NULL",,"\q\q","",$000099FF,""
 Field="run_id","run_id","BIGINT","NOT NULL",,"0","",$000099FF,""
@@ -581,7 +581,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20251118223812
-Position="EXT_健診",2000,700
+Position="EXT_健診",2000,600
 ZOrder=243
 
 [Entity]
@@ -592,7 +592,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=1500
+Top=1200
 Field="区分番号","category_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="区分名称","category_name","TEXT",,,"","",$FFFFFFFF,""
 Field="順番合","sort_no","TEXT",,,"","",$FFFFFFFF,""
@@ -616,7 +616,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250331182051
-Position="EXT_健診",100,1500
+Position="EXT_健診",100,1200,1054,300
 ZOrder=238
 
 [Entity]
@@ -627,7 +627,7 @@ TableInnerOption=
 TableOption=
 Page=EXT_健診
 Left=100
-Top=2600
+Top=1700
 Field="JLAC10コード","concept_code","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="システム","jurisdiction_coding_system","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
 Field="表示名","concept_display","TEXT","NOT NULL",,"\q\q","",$FFFFFFFF,""
@@ -635,7 +635,7 @@ EffectMode=Gradation
 Color=$000000
 BkColor=$D1D1FF
 ModifiedDateTime=20250401104540
-Position="EXT_健診",100,2600
+Position="EXT_健診",100,1700
 ZOrder=239
 
 [Entity]
@@ -758,6 +758,27 @@ BkColor=$FFFFFF
 ModifiedDateTime=20250827150808
 Position="EXT_取込",100,100,923,1900
 ZOrder=247
+
+[Entity]
+PName=ext.raw_jfagy_allergen_codes
+LName=ext.raw_jfagy_allergen_codes
+Comment=
+TableInnerOption=
+TableOption=
+Page=EXT_健診
+Left=100
+Top=2000
+Field="コーディングシステム","coding_system","TEXT",,,"","",$FFFFFFFF,""
+Field="コード","code","TEXT","NOT NULL",,"","",$FFFFFFFF,""
+Field="表示名","display","TEXT",,,"","",$FFFFFFFF,""
+Field="親コード","parent_code","TEXT",,,"","",$FFFFFFFF,""
+Field="別名","designation","TEXT",,,"","",$FFFFFFFF,""
+EffectMode=Gradation
+Color=$000000
+BkColor=$D1D1FF
+ModifiedDateTime=20260315000000
+Position="EXT_健診",100,2000
+ZOrder=260
 
 [Relation]
 Entity1=ext.ingestion_runs

@@ -9,6 +9,7 @@
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.MhlwItems/Aloe.Apps.CsvImporterLib.MhlwItems.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.HealthFacility/Aloe.Apps.CsvImporterLib.HealthFacility.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.FhirCodes/Aloe.Apps.CsvImporterLib.FhirCodes.csproj" />
+    <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.JfagyCodes/Aloe.Apps.CsvImporterLib.JfagyCodes.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterCli/Aloe.Apps.CsvImporterCli.csproj" />
     <Project Path="Apps/CsvImporter/Aloe.Apps.CsvImporterLib.Tests/Aloe.Apps.CsvImporterLib.Tests.csproj" />
   </Folder>

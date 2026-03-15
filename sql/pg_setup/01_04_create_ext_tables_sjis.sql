@@ -1,5 +1,5 @@
 -- Project Name : apoch_yoyaku
--- Date/Time    : 2026/03/14 19:07:51
+-- Date/Time    : 2026/03/15 13:57:21
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -11,6 +11,19 @@
   この機能は一時的に $$TableName のような一時テーブルを作成します。
   この機能は A5:SQL Mk-2でのみ有効であることに注意してください。
 */
+
+-- ext.raw_jfagy_allergen_codes
+-- * BackupToTempTable
+DROP TABLE if exists ext.raw_jfagy_allergen_codes CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE ext.raw_jfagy_allergen_codes (
+  coding_system TEXT
+  , code TEXT NOT NULL
+  , display TEXT
+  , parent_code TEXT
+  , designation TEXT
+) ;
 
 -- ext.ingestion_files
 -- * BackupToTempTable
@@ -524,6 +537,13 @@ CREATE TABLE ext.raw_postal_codes (
   , update_status TEXT DEFAULT '' NOT NULL
   , update_reason TEXT DEFAULT '' NOT NULL
 ) ;
+
+COMMENT ON TABLE ext.raw_jfagy_allergen_codes IS 'ext.raw_jfagy_allergen_codes';
+COMMENT ON COLUMN ext.raw_jfagy_allergen_codes.coding_system IS 'コーディングシステム';
+COMMENT ON COLUMN ext.raw_jfagy_allergen_codes.code IS 'コード';
+COMMENT ON COLUMN ext.raw_jfagy_allergen_codes.display IS '表示名';
+COMMENT ON COLUMN ext.raw_jfagy_allergen_codes.parent_code IS '親コード';
+COMMENT ON COLUMN ext.raw_jfagy_allergen_codes.designation IS '別名';
 
 COMMENT ON TABLE ext.ingestion_files IS 'ext.ingestion_files';
 COMMENT ON COLUMN ext.ingestion_files.file_id IS '取込ファイルID';
