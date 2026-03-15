@@ -1,0 +1,5 @@
+services:
+  tsa:
+    image: trivisonno/rfc3161-timestamping-server
+    ports:
+      - "8318:80"
