@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.Medock.MdXadesLib.Contracts\Aloe.Apps.Medock.MdXadesLib.Contracts.csproj" />
     <ProjectReference Include="..\Aloe.Apps.Medock.MdXadesLib\Aloe.Apps.Medock.MdXadesLib.csproj" />
+    <ProjectReference Include="..\..\..\..\Utils\Aloe.Utils.Hosting.Serilog\Aloe.Utils.Hosting.Serilog.csproj" />
   </ItemGroup>
 
 </Project>

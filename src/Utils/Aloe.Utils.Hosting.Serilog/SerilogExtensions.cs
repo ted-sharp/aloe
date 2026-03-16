@@ -3,6 +3,7 @@
 // </copyright>
 
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
@@ -39,6 +40,33 @@ public static class SerilogExtensions
         });
 
         return hostBuilder;
+    }
+
+    /// <summary>
+    /// <see cref="HostApplicationBuilder"/> に対して、Serilog の標準設定を追加します。
+    /// Worker / CLI / Blazor 共通で使用できます。
+    /// </summary>
+    /// <param name="builder">ホストアプリケーションビルダーインスタンス。</param>
+    /// <param name="configure">
+    /// アプリ固有のカスタマイズ用コールバック。
+    /// <see cref="LoggerConfiguration"/> に対して追加の設定を行えます。null の場合は無視されます。
+    /// </param>
+    /// <returns>チェーン呼び出し可能なホストアプリケーションビルダー。</returns>
+    /// <exception cref="ArgumentNullException">
+    /// <paramref name="builder"/> が null の場合にスローされます。
+    /// </exception>
+    public static HostApplicationBuilder AddSerilogDefaults(
+        this HostApplicationBuilder builder,
+        Action<LoggerConfiguration>? configure = null)
+    {
+        ArgumentNullException.ThrowIfNull(builder);
+
+        builder.Services.AddSerilog((services, loggerConfiguration) =>
+        {
+            ConfigureFromSettings(loggerConfiguration, builder.Configuration, configure);
+        });
+
+        return builder;
     }
 
     /// <summary>

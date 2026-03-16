@@ -1,8 +1,11 @@
 using Aloe.Apps.RazorReportServer.Components;
 using Aloe.Apps.RazorReportServer.Extensions;
+using Aloe.Utils.Hosting.Serilog;
 using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.AddSerilogDefaults();
 
 // Add configuration for papers and components
 builder.Configuration.AddJsonFile("appsettings.papers.json", optional: false, reloadOnChange: true);

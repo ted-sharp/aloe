@@ -134,6 +134,57 @@ public class SerilogExtensionsTests : IDisposable
         Assert.True(callbackInvoked);
     }
 
+    [Fact(DisplayName = "AddSerilogDefaults (HostApplicationBuilder): Serilog が設定されること")]
+    public void AddSerilogDefaults_HostApplicationBuilder_ConfiguresSerilog()
+    {
+        // Arrange
+        var builder = Host.CreateApplicationBuilder();
+        builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
+        {
+            ["Serilog:MinimumLevel:Default"] = "Information",
+        });
+
+        // Act
+        var result = builder.AddSerilogDefaults();
+
+        // Assert
+        Assert.Same(builder, result);
+
+        // Host をビルドして Serilog が設定されていることを確認
+        using var host = builder.Build();
+        Assert.NotNull(Log.Logger);
+        Assert.NotEqual(global::Serilog.Core.Logger.None, Log.Logger);
+    }
+
+    [Fact(DisplayName = "AddSerilogDefaults (HostApplicationBuilder): configure コールバックが実行されること")]
+    public void AddSerilogDefaults_HostApplicationBuilder_InvokesConfigureCallback()
+    {
+        // Arrange
+        var callbackInvoked = false;
+        var builder = Host.CreateApplicationBuilder();
+
+        // Act
+        builder.AddSerilogDefaults(lc =>
+        {
+            callbackInvoked = true;
+        });
+
+        using var host = builder.Build();
+
+        // Assert
+        Assert.True(callbackInvoked);
+    }
+
+    [Fact(DisplayName = "AddSerilogDefaults (HostApplicationBuilder): builder が null の場合に ArgumentNullException をスロー")]
+    public void AddSerilogDefaults_NullHostApplicationBuilder_ThrowsArgumentNullException()
+    {
+        // Arrange
+        HostApplicationBuilder? builder = null;
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() => builder!.AddSerilogDefaults());
+    }
+
     [Fact(DisplayName = "ConfigureSerilogFromSettings: Log.Logger が設定されること")]
     public void ConfigureSerilogFromSettings_SetsLogLogger()
     {

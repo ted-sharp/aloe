@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.RazorReportLib\Aloe.Apps.RazorReportLib.csproj" />
+    <ProjectReference Include="..\..\..\Utils\Aloe.Utils.Hosting.Serilog\Aloe.Utils.Hosting.Serilog.csproj" />
   </ItemGroup>
 
 </Project>
