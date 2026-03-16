@@ -101,6 +101,122 @@ public class ConfigurationExtensionsTests
         }
     }
 
+    [Fact(DisplayName = "AddDefault: appsettings.*.json グロブファイルが読み込まれること")]
+    public void AddDefault_LoadsGlobJsonFiles()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            // appsettings.Serilog.json を配置
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.Serilog.json"),
+                """{"GlobTest": {"Key1": "Value1"}}""");
+
+            // appsettings.json も配置
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.json"),
+                """{"AppTest": {"Key2": "Value2"}}""");
+
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(tempDir);
+            var args = Array.Empty<string>();
+
+            // Act
+            builder.AddDefault<ConfigurationExtensionsTests>(args, reloadOnChange: false);
+            var config = builder.Build();
+
+            // Assert — グロブファイルの値が読み込まれている
+            Assert.Equal("Value1", config["GlobTest:Key1"]);
+            Assert.Equal("Value2", config["AppTest:Key2"]);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact(DisplayName = "AddDefault: appsettings.json が appsettings.*.json より優先されること")]
+    public void AddDefault_AppSettingsOverridesGlob()
+    {
+        // Arrange
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            // appsettings.Serilog.json に設定
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.Serilog.json"),
+                """{"Shared": {"Level": "FromGlob"}}""");
+
+            // appsettings.json で同じキーを上書き
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.json"),
+                """{"Shared": {"Level": "FromApp"}}""");
+
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(tempDir);
+            var args = Array.Empty<string>();
+
+            // Act
+            builder.AddDefault<ConfigurationExtensionsTests>(args, reloadOnChange: false);
+            var config = builder.Build();
+
+            // Assert — appsettings.json の値が優先される（後勝ち）
+            Assert.Equal("FromApp", config["Shared:Level"]);
+        }
+        finally
+        {
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
+    [Fact(DisplayName = "AddDefault: 環境固有の appsettings.{env}.json がグロブから除外されること")]
+    public void AddDefault_GlobExcludesEnvironmentFile()
+    {
+        // Arrange
+        var originalDotnetEnv = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
+        var tempDir = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", "Staging");
+
+            // appsettings.Staging.json — 環境固有ファイル（グロブで二重読み込みされないこと）
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.Staging.json"),
+                """{"EnvSpecific": "StagingValue"}""");
+
+            // appsettings.json
+            File.WriteAllText(
+                Path.Combine(tempDir, "appsettings.json"),
+                """{}""");
+
+            var builder = new ConfigurationBuilder()
+                .SetBasePath(tempDir);
+            var args = Array.Empty<string>();
+
+            // Act
+            builder.AddDefault<ConfigurationExtensionsTests>(args, reloadOnChange: false);
+            var config = builder.Build();
+
+            // Assert — 環境固有ファイルは個別に読み込まれるため、値は取得できる
+            Assert.Equal("StagingValue", config["EnvSpecific"]);
+
+            // JsonConfigurationSource の数を確認 — appsettings.Staging.json はグロブではなく環境固有として1回だけ読み込まれる
+            var jsonSources = builder.Sources.OfType<JsonConfigurationSource>()
+                .Where(s => s.Path != null && s.Path.Contains("Staging"))
+                .ToList();
+            Assert.Single(jsonSources);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("DOTNET_ENVIRONMENT", originalDotnetEnv);
+            Directory.Delete(tempDir, recursive: true);
+        }
+    }
+
     [Fact(DisplayName = "AddDefault: builder が null の場合に ArgumentNullException をスロー")]
     public void AddDefault_NullBuilder_ThrowsArgumentNullException()
     {

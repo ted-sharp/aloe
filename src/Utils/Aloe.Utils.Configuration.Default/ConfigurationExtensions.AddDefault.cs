@@ -95,6 +95,14 @@ public static class ConfigurationExtensions
         // DOTNET_ENVIRONMENT を優先し、なければ ASPNETCORE_ENVIRONMENT を参照
         var env = GetEnvironmentName();
 
+        // appsettings.*.json をグロブ読み込み（共有設定 — 最低優先度）
+        // appsettings.json と appsettings.{env}.json は後で個別に追加するため除外
+        // provider 指定時はグロブ読み込みをスキップ（カスタムプロバイダーはグロブ非対応）
+        if (provider == null)
+        {
+            AddGlobJsonFiles(builder, env, reloadOnChange);
+        }
+
         // appsettings.json を追加（ベース設定ファイル）
         if (provider != null)
         {
@@ -131,6 +139,62 @@ public static class ConfigurationExtensions
         _ = builder.AddCommandLine(args ?? Array.Empty<string>());
 
         return builder;
+    }
+
+    /// <summary>
+    /// appsettings.*.json のグロブパターンに一致するファイルを読み込みます。
+    /// appsettings.json と appsettings.{env}.json は個別に追加するため除外します。
+    /// </summary>
+    /// <param name="builder">構成ビルダーインスタンス</param>
+    /// <param name="env">実行環境名（null の場合は環境固有ファイルの除外なし）</param>
+    /// <param name="reloadOnChange">設定ファイルの変更時に自動で再読み込みを行うかどうか</param>
+    private static void AddGlobJsonFiles(
+        IConfigurationBuilder builder,
+        string? env,
+        bool reloadOnChange)
+    {
+        // IFileProvider からベースパスを取得
+        string basePath;
+        var fileProvider = builder.GetFileProvider();
+        if (fileProvider is PhysicalFileProvider physical)
+        {
+            basePath = physical.Root;
+        }
+        else
+        {
+            basePath = Directory.GetCurrentDirectory();
+        }
+
+        if (!Directory.Exists(basePath))
+        {
+            return;
+        }
+
+        // appsettings.*.json を検索
+        var files = Directory.EnumerateFiles(basePath, "appsettings.*.json", SearchOption.TopDirectoryOnly)
+            .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var fullPath in files)
+        {
+            var fileName = Path.GetFileName(fullPath);
+
+            // appsettings.json は後で個別に追加するため除外（念のため）
+            if (String.Equals(fileName, "appsettings.json", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            // appsettings.{env}.json は後で個別に追加するため除外
+            if (!String.IsNullOrWhiteSpace(env) &&
+                String.Equals(fileName, $"appsettings.{env}.json", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var relativePath = Path.GetRelativePath(basePath, fullPath);
+            _ = builder.AddJsonFile(relativePath, optional: true, reloadOnChange);
+        }
     }
 
     /// <summary>

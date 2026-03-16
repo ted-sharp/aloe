@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.ExcelReportLib.Contracts\Aloe.Apps.ExcelReportLib.Contracts.csproj" />
     <ProjectReference Include="..\Aloe.Apps.ExcelReportLib\Aloe.Apps.ExcelReportLib.csproj" />
+    <ProjectReference Include="..\..\..\Utils\Aloe.Utils.Hosting.Serilog\Aloe.Utils.Hosting.Serilog.csproj" />
   </ItemGroup>
 
 </Project>

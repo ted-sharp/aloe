@@ -1,8 +1,11 @@
 using Aloe.Apps.ExcelReportApi.Options;
 using Aloe.Apps.ExcelReportApi.Services;
 using Aloe.Apps.ExcelReportLib.Extensions;
+using Aloe.Utils.Hosting.Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.AddSerilogDefaults();
 
 builder.WebHost.ConfigureKestrel((ctx, kestrel) =>
     kestrel.Configure(ctx.Configuration.GetSection("Kestrel")));

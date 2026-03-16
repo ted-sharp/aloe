@@ -3,10 +3,9 @@ using Aloe.Apps.WindowsServiceMonitorLib.Models;
 using Aloe.Apps.WindowsServiceMonitorServer.Components;
 using Aloe.Apps.WindowsServiceMonitorServer.Extensions;
 using Aloe.Apps.WindowsServiceMonitorServer.Services;
+using Aloe.Utils.Hosting.Serilog;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Serilog;
-using Serilog.Formatting.Compact;
 
 // WindowsサービスはSCM起動時に作業ディレクトリがSystem32になるため、
 // 実行ファイルのディレクトリに明示的に変更する
@@ -14,17 +13,7 @@ Directory.SetCurrentDirectory(AppContext.BaseDirectory);
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Serilog設定
-var logsDirectory = Path.Combine(AppContext.BaseDirectory, "logs");
-Directory.CreateDirectory(logsDirectory);
-
-builder.Host.UseSerilog((context, services, configuration) => configuration
-    .WriteTo.File(
-        new CompactJsonFormatter(),
-        Path.Combine(logsDirectory, "servicemonitor_.json"),
-        rollingInterval: RollingInterval.Day,
-        retainedFileCountLimit: 7,
-        encoding: System.Text.Encoding.UTF8));
+builder.Host.AddSerilogDefaults();
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -37,9 +26,6 @@ builder.Services.AddMonitorServices(builder.Configuration);
 builder.Services.AddMonitorHostedServices();
 
 var app = builder.Build();
-
-// ログディレクトリのパスをコンソールに出力
-Console.WriteLine($"ログディレクトリ: {logsDirectory}");
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
