@@ -5,6 +5,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
+using Serilog.Events;
 
 namespace Aloe.Utils.Hosting.Serilog;
 
@@ -82,6 +83,18 @@ public static class SerilogExtensions
         Action<LoggerConfiguration>? configure)
     {
         loggerConfiguration.ReadFrom.Configuration(configuration);
+
+        // MinimumLevel:Override が未設定の場合のみデフォルトを追加
+        var overrideSection = configuration.GetSection("Serilog:MinimumLevel:Override");
+        if (!overrideSection.GetChildren().Any())
+        {
+            loggerConfiguration
+                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+                .MinimumLevel.Override("Microsoft.EntityFrameworkCore", LogEventLevel.Warning)
+                .MinimumLevel.Override("Npgsql", LogEventLevel.Warning)
+                .MinimumLevel.Override("System.Net.Http.HttpClient", LogEventLevel.Warning);
+        }
 
         // WriteTo セクションが未設定の場合のみデフォルトシンクを追加
         var writeToSection = configuration.GetSection("Serilog:WriteTo");

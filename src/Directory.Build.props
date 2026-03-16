@@ -1,8 +1,20 @@
 <Project>
+  <!--
+    Directory.Build.props: ビルド前にインポートされる共通設定ファイル。
+    プロパティ（PropertyGroup）やパッケージ参照（PackageReference）など、
+    ビルドの「入力」に関する共通設定を定義する。
+    例: TargetFramework、LangVersion、共通の NuGet パッケージ、StyleCop 設定など。
+  -->
   <ItemGroup>
     <AdditionalFiles Include="$(MSBuildThisFileDirectory)stylecop.json" />
   </ItemGroup>
   <ItemGroup>
     <None Include="README_*.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="$(MSBuildThisFileDirectory)shared-config\appsettings.*.json"
+             CopyToOutputDirectory="PreserveNewest"
+             Link="%(Filename)%(Extension)"
+             Pack="false" />
   </ItemGroup>
 </Project>

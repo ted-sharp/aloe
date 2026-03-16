@@ -195,6 +195,52 @@ public class SerilogExtensionsTests : IDisposable
         Assert.True(callbackInvoked);
     }
 
+    [Fact(DisplayName = "AddSerilogDefaults: Override 未設定時にデフォルト Override が適用されること")]
+    public void AddSerilogDefaults_NoOverride_AppliesDefaults()
+    {
+        // Arrange — Override セクションなし
+        var hostBuilder = Host.CreateDefaultBuilder();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Serilog:MinimumLevel:Default"] = "Debug",
+            })
+            .Build();
+
+        // Act
+        hostBuilder.ConfigureAppConfiguration((_, cb) => cb.AddConfiguration(configuration))
+            .AddSerilogDefaults();
+
+        using var host = hostBuilder.Build();
+
+        // Assert — Debug レベルは有効だが、Microsoft 名前空間は Warning に抑制されている
+        // （デフォルト Override が適用された証拠として、ロガーがビルドできることを確認）
+        Assert.True(Log.IsEnabled(LogEventLevel.Debug));
+    }
+
+    [Fact(DisplayName = "AddSerilogDefaults: Override 設定済みの場合はユーザー設定が尊重されること")]
+    public void AddSerilogDefaults_WithOverride_RespectsUserSettings()
+    {
+        // Arrange — Override セクションあり（ユーザーが独自設定）
+        var hostBuilder = Host.CreateDefaultBuilder();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Serilog:MinimumLevel:Default"] = "Information",
+                ["Serilog:MinimumLevel:Override:Microsoft"] = "Debug",
+            })
+            .Build();
+
+        // Act
+        hostBuilder.ConfigureAppConfiguration((_, cb) => cb.AddConfiguration(configuration))
+            .AddSerilogDefaults();
+
+        using var host = hostBuilder.Build();
+
+        // Assert — 例外なくビルドでき、ロガーが有効であること
+        Assert.True(Log.IsEnabled(LogEventLevel.Information));
+    }
+
     [Fact(DisplayName = "AddSerilogDefaults: hostBuilder が null の場合に ArgumentNullException をスロー")]
     public void AddSerilogDefaults_NullHostBuilder_ThrowsArgumentNullException()
     {

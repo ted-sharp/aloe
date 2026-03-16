@@ -20,5 +20,4 @@
   <ItemGroup>
     <ProjectReference Include="..\Aloe.Apps.Medock.MdPatientLib.Contracts\Aloe.Apps.Medock.MdPatientLib.Contracts.csproj" />
   </ItemGroup>
-
 </Project>
