@@ -23,6 +23,7 @@ public static class ServiceCollectionExtensions
             options.UseNpgsql(connectionString));
 
         services.AddScoped<ILauncherMenuService, LauncherMenuService>();
+        services.AddScoped<ILoginUserService, LoginUserService>();
 
         return services;
     }

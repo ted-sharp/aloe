@@ -23,6 +23,16 @@ public class UserEntity
     [MaxLength(100)]
     public string UserCode { get; set; } = string.Empty;
 
+    /// <summary>パスワードハッシュ（Base64）。</summary>
+    [Column("password_hash")]
+    [MaxLength(128)]
+    public string PasswordHash { get; set; } = string.Empty;
+
+    /// <summary>パスワードソルト（Base64）。</summary>
+    [Column("password_salt")]
+    [MaxLength(44)]
+    public string PasswordSalt { get; set; } = string.Empty;
+
     /// <summary>削除フラグ。</summary>
     [Column("is_deleted")]
     public bool IsDeleted { get; set; }

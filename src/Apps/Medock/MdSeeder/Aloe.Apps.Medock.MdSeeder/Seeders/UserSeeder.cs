@@ -4,6 +4,7 @@
 
 using Aloe.Apps.Medock.MdLauncherLib.Data;
 using Aloe.Apps.Medock.MdLauncherLib.Data.Entities;
+using Aloe.Apps.Medock.MdLauncherLib.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace Aloe.Apps.Medock.MdSeeder.Seeders;
@@ -23,10 +24,13 @@ internal static class UserSeeder
         {
             if (!existing.ContainsKey(code))
             {
+                var (hash, salt) = PasswordHasher.Default.HashPassword("password");
                 var entity = new UserEntity
                 {
                     UserId = Guid.CreateVersion7(),
                     UserCode = code,
+                    PasswordHash = hash,
+                    PasswordSalt = salt,
                 };
                 toInsert.Add(entity);
                 existing[code] = entity.UserId;
