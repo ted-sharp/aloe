@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "categories": [
+    {
+      "id": "medock",
+      "name": "Medock",
+      "sortOrder": 1,
+      "apps": [
+        {
+          "id": "md-patient-finder",
+          "name": "患者検索",
+          "description": "患者マスター検索",
+          "exePath": "C:/Apps/MdPatientFinder/Aloe.Apps.Medock.MdPatientFinder.exe",
+          "arguments": "",
+          "workingDirectory": "",
+          "iconPath": "",
+          "pipeName": "MdLauncher_MdPatientFinder",
+          "sortOrder": 1,
+          "enabled": true
+        }
+      ]
+    }
+  ]
+}
