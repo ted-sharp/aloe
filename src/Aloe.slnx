@@ -42,6 +42,9 @@
     <Project Path="Apps/Medock/MdLauncher/Aloe.Apps.Medock.MdLauncherLib.Contracts/Aloe.Apps.Medock.MdLauncherLib.Contracts.csproj" />
     <Project Path="Apps/Medock/MdLauncher/Aloe.Apps.Medock.MdLauncherLib.Tests/Aloe.Apps.Medock.MdLauncherLib.Tests.csproj" />
   </Folder>
+  <Folder Name="/Apps/Medock/MdSeeder/">
+    <Project Path="Apps/Medock/MdSeeder/Aloe.Apps.Medock.MdSeeder/Aloe.Apps.Medock.MdSeeder.csproj" />
+  </Folder>
   <Folder Name="/Apps/Medock/MdPatient/">
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientApi/Aloe.Apps.Medock.MdPatientApi.csproj" Id="ed83d66b-0728-433b-9fb4-5e8db10c3757" />
     <Project Path="Apps/Medock/MdPatient/Aloe.Apps.Medock.MdPatientEditor/Aloe.Apps.Medock.MdPatientEditor.csproj" Id="216626b5-71b9-4af3-a93e-912a2a967012" />
