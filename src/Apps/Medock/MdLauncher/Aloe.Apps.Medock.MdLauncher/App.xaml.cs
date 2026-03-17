@@ -60,6 +60,7 @@ public partial class App : Application
 
         _mainWindow = _serviceProvider.GetRequiredService<MainWindow>();
         var viewModel = _serviceProvider.GetRequiredService<MainViewModel>();
+        viewModel.UserCode = options.UserCode;
 
         // トレイアイコン
         _trayIcon = new TrayIconManager();

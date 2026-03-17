@@ -12,6 +12,9 @@ public class MdLauncherClientOptions
     /// <summary>サーバーアドレス。</summary>
     public string ServerAddress { get; set; } = "http://localhost:5119";
 
+    /// <summary>ユーザーコード。</summary>
+    public string UserCode { get; set; } = string.Empty;
+
     /// <summary>ホットキー設定。</summary>
     public HotkeyOptions Hotkey { get; set; } = new();
 

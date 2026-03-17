@@ -86,11 +86,23 @@ public class LauncherAppItem
     public bool Enabled { get; set; }
 }
 
+/// <summary>ユーザーコード指定メニュー取得リクエスト。</summary>
+[MessagePackObject]
+public class GetMenusByUserRequest
+{
+    /// <summary>ユーザーコード。</summary>
+    [Key(0)]
+    public string UserCode { get; set; } = string.Empty;
+}
+
 /// <summary>
 /// ナビゲーションサービスの gRPC インターフェース。
 /// </summary>
 public interface ILauncherService : IService<ILauncherService>
 {
-    /// <summary>ナビゲーション設定を取得する。</summary>
+    /// <summary>ナビゲーション設定を取得する（後方互換）。</summary>
     UnaryResult<GetLauncherConfigResponse> GetConfigAsync();
+
+    /// <summary>ユーザーコードに基づくメニューを取得する。</summary>
+    UnaryResult<GetLauncherConfigResponse> GetMenusByUserAsync(GetMenusByUserRequest request);
 }

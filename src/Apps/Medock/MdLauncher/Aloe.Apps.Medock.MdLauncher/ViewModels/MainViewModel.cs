@@ -27,6 +27,10 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _searchFilter = string.Empty;
 
+    /// <summary>ユーザーコード。</summary>
+    [ObservableProperty]
+    private string _userCode = string.Empty;
+
     /// <summary>オーバーレイの表示状態。</summary>
     [ObservableProperty]
     private bool _isVisible;
@@ -76,7 +80,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task RefreshConfigAsync()
     {
-        var config = await _grpcClient.GetConfigAsync();
+        var config = await _grpcClient.GetMenusByUserAsync(this.UserCode);
         _allCategories = config.Categories;
         ApplyFilter();
     }

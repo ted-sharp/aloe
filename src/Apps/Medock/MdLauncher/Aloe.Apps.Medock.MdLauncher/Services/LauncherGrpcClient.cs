@@ -40,4 +40,21 @@ public class LauncherGrpcClient
             return _cachedConfig;
         }
     }
+
+    /// <summary>
+    /// ユーザーコードに基づくメニューをサーバーから取得する。接続エラー時はキャッシュを返す。
+    /// </summary>
+    public async Task<GetLauncherConfigResponse> GetMenusByUserAsync(string userCode)
+    {
+        try
+        {
+            var config = await _naviService.GetMenusByUserAsync(new GetMenusByUserRequest { UserCode = userCode });
+            _cachedConfig = config;
+            return config;
+        }
+        catch (Exception) when (_cachedConfig != null)
+        {
+            return _cachedConfig;
+        }
+    }
 }

@@ -1,5 +1,5 @@
 -- Project Name : aloe
--- Date/Time    : 2026/01/07 20:29:59
+-- Date/Time    : 2026/03/17 21:29:05
 -- Author       : ted
 -- RDBMS Type   : PostgreSQL
 -- Application  : A5:SQL Mk-2
@@ -748,6 +748,33 @@ CREATE UNIQUE INDEX "policies_PKI"
 ALTER TABLE "policies"
   ADD CONSTRAINT "policies_PKC" PRIMARY KEY ("policy_code");
 
+-- role_menus
+-- * BackupToTempTable
+DROP TABLE if exists "role_menus" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "role_menus" (
+  "role_menu_id" UUID DEFAULT uuidv7() NOT NULL
+  , "role_code" character varying(10) NOT NULL
+  , "menu_code" character varying(10) NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE INDEX "role_menus_IX1"
+  ON "role_menus"("role_code") WHERE is_deleted = FALSE;
+
+CREATE UNIQUE INDEX "role_menus_PKI"
+  ON "role_menus"("role_menu_id");
+
+ALTER TABLE "role_menus"
+  ADD CONSTRAINT "role_menus_PKC" PRIMARY KEY ("role_menu_id");
+
 -- role_permissions
 -- * BackupToTempTable
 DROP TABLE if exists "role_permissions" CASCADE;
@@ -980,6 +1007,33 @@ CREATE UNIQUE INDEX "appointment_schedules_PKI"
 ALTER TABLE "appointment_schedules"
   ADD CONSTRAINT "appointment_schedules_PKC" PRIMARY KEY ("appt_schedule_id");
 
+-- menus
+-- * BackupToTempTable
+DROP TABLE if exists "menus" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "menus" (
+  "menu_code" character varying(10) DEFAULT '' NOT NULL
+  , "menu_name" character varying(100) DEFAULT '' NOT NULL
+  , "menu_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "menu_seq" integer DEFAULT 0 NOT NULL
+  , "app_code" character varying(10) DEFAULT '' NOT NULL
+  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "menus_PKI"
+  ON "menus"("menu_code");
+
+ALTER TABLE "menus"
+  ADD CONSTRAINT "menus_PKC" PRIMARY KEY ("menu_code");
+
 -- permissions
 -- * BackupToTempTable
 DROP TABLE if exists "permissions" CASCADE;
@@ -1064,6 +1118,38 @@ CREATE UNIQUE INDEX "appointment_resources_PKI"
 
 ALTER TABLE "appointment_resources"
   ADD CONSTRAINT "appointment_resources_PKC" PRIMARY KEY ("appt_res_id");
+
+-- apps
+-- * BackupToTempTable
+DROP TABLE if exists "apps" CASCADE;
+
+-- * RestoreFromTempTable
+CREATE TABLE "apps" (
+  "app_code" character varying(10) DEFAULT '' NOT NULL
+  , "app_name" character varying(100) DEFAULT '' NOT NULL
+  , "app_ver" character varying(10) DEFAULT '' NOT NULL
+  , "app_desc" character varying(1000) DEFAULT '' NOT NULL
+  , "app_seq" integer DEFAULT 0 NOT NULL
+  , "app_path" character varying(1000) DEFAULT '' NOT NULL
+  , "app_args" character varying(1000) DEFAULT '' NOT NULL
+  , "app_dir" character varying(1000) DEFAULT '' NOT NULL
+  , "app_icon" character varying(1000) DEFAULT '' NOT NULL
+  , "pipe_name" character varying(1000) DEFAULT '' NOT NULL
+  , "is_active" BOOLEAN DEFAULT FALSE NOT NULL
+  , "is_deleted" BOOLEAN DEFAULT FALSE NOT NULL
+  , "created_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "created_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "created_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP NOT NULL
+  , "updated_user_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+  , "updated_session_id" UUID DEFAULT '00000000-0000-0000-0000-000000000000' NOT NULL
+) ;
+
+CREATE UNIQUE INDEX "apps_PKI"
+  ON "apps"("app_code");
+
+ALTER TABLE "apps"
+  ADD CONSTRAINT "apps_PKC" PRIMARY KEY ("app_code");
 
 -- features
 -- * BackupToTempTable
@@ -1331,6 +1417,11 @@ ALTER TABLE "floors"
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
+ALTER TABLE "menus"
+  ADD CONSTRAINT "menus_FK1" FOREIGN KEY ("app_code") REFERENCES "apps"("app_code")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
 ALTER TABLE "organization_members"
   ADD CONSTRAINT "organization_members_FK1" FOREIGN KEY ("org_id") REFERENCES "organizations"("org_id")
   ON DELETE CASCADE
@@ -1388,6 +1479,16 @@ ALTER TABLE "plan_resource_requirements"
 
 ALTER TABLE "plan_resource_requirements"
   ADD CONSTRAINT "plan_resource_requirements_FK2" FOREIGN KEY ("appt_res_id") REFERENCES "appointment_resources"("appt_res_id")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "role_menus"
+  ADD CONSTRAINT "role_menus_FK1" FOREIGN KEY ("menu_code") REFERENCES "menus"("menu_code")
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+
+ALTER TABLE "role_menus"
+  ADD CONSTRAINT "role_menus_FK2" FOREIGN KEY ("role_code") REFERENCES "roles"("role_code")
   ON DELETE CASCADE
   ON UPDATE CASCADE;
 
@@ -1767,6 +1868,18 @@ COMMENT ON COLUMN "policies"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "policies"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "policies"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "role_menus" IS 'role_menus';
+COMMENT ON COLUMN "role_menus"."role_menu_id" IS 'role_menu_id';
+COMMENT ON COLUMN "role_menus"."role_code" IS 'role_code';
+COMMENT ON COLUMN "role_menus"."menu_code" IS 'menu_code';
+COMMENT ON COLUMN "role_menus"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "role_menus"."created_at" IS 'created_at';
+COMMENT ON COLUMN "role_menus"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "role_menus"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "role_menus"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "role_menus"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "role_menus"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "role_permissions" IS 'role_permissions';
 COMMENT ON COLUMN "role_permissions"."role_permission_code" IS 'role_permission_code';
 COMMENT ON COLUMN "role_permissions"."role_code" IS 'role_code';
@@ -1879,6 +1992,21 @@ COMMENT ON COLUMN "appointment_schedules"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointment_schedules"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_schedules"."updated_session_id" IS 'updated_session_id';
 
+COMMENT ON TABLE "menus" IS 'menus';
+COMMENT ON COLUMN "menus"."menu_code" IS 'menu_code';
+COMMENT ON COLUMN "menus"."menu_name" IS 'menu_name';
+COMMENT ON COLUMN "menus"."menu_desc" IS 'menu_desc';
+COMMENT ON COLUMN "menus"."menu_seq" IS 'menu_seq';
+COMMENT ON COLUMN "menus"."app_code" IS 'app_code';
+COMMENT ON COLUMN "menus"."is_active" IS 'is_active';
+COMMENT ON COLUMN "menus"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "menus"."created_at" IS 'created_at';
+COMMENT ON COLUMN "menus"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "menus"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "menus"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "menus"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "menus"."updated_session_id" IS 'updated_session_id';
+
 COMMENT ON TABLE "permissions" IS 'permissions';
 COMMENT ON COLUMN "permissions"."permission_code" IS 'permission_code';
 COMMENT ON COLUMN "permissions"."feature_code" IS 'feature_code';
@@ -1921,6 +2049,26 @@ COMMENT ON COLUMN "appointment_resources"."created_session_id" IS 'created_sessi
 COMMENT ON COLUMN "appointment_resources"."updated_at" IS 'updated_at';
 COMMENT ON COLUMN "appointment_resources"."updated_user_id" IS 'updated_user_id';
 COMMENT ON COLUMN "appointment_resources"."updated_session_id" IS 'updated_session_id';
+
+COMMENT ON TABLE "apps" IS 'apps';
+COMMENT ON COLUMN "apps"."app_code" IS 'app_code';
+COMMENT ON COLUMN "apps"."app_name" IS 'app_name';
+COMMENT ON COLUMN "apps"."app_ver" IS 'app_ver';
+COMMENT ON COLUMN "apps"."app_desc" IS 'app_desc';
+COMMENT ON COLUMN "apps"."app_seq" IS 'app_seq';
+COMMENT ON COLUMN "apps"."app_path" IS 'app_path:exe ‚ÌƒpƒX';
+COMMENT ON COLUMN "apps"."app_args" IS 'app_args:{$1} {$pt_id} ‚È‚Ç';
+COMMENT ON COLUMN "apps"."app_dir" IS 'app_dir';
+COMMENT ON COLUMN "apps"."app_icon" IS 'app_icon';
+COMMENT ON COLUMN "apps"."pipe_name" IS 'pipe_name';
+COMMENT ON COLUMN "apps"."is_active" IS 'is_active';
+COMMENT ON COLUMN "apps"."is_deleted" IS 'is_deleted';
+COMMENT ON COLUMN "apps"."created_at" IS 'created_at';
+COMMENT ON COLUMN "apps"."created_user_id" IS 'created_user_id';
+COMMENT ON COLUMN "apps"."created_session_id" IS 'created_session_id';
+COMMENT ON COLUMN "apps"."updated_at" IS 'updated_at';
+COMMENT ON COLUMN "apps"."updated_user_id" IS 'updated_user_id';
+COMMENT ON COLUMN "apps"."updated_session_id" IS 'updated_session_id';
 
 COMMENT ON TABLE "features" IS 'features';
 COMMENT ON COLUMN "features"."feature_code" IS 'feature_code';

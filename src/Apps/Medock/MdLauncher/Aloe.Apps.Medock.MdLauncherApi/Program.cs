@@ -11,8 +11,9 @@ builder.WebHost.ConfigureKestrel((ctx, kestrel) =>
 builder.Services.AddOpenApi();
 builder.Services.AddMagicOnion();
 
-var configFilePath = Path.Combine(AppContext.BaseDirectory, "launcher-config.json");
-builder.Services.AddMdLauncher(configFilePath);
+var connectionString = builder.Configuration.GetConnectionString("MdLauncher")
+    ?? throw new InvalidOperationException("ConnectionStrings:MdLauncher が設定されていません。");
+builder.Services.AddMdLauncher(connectionString);
 
 var app = builder.Build();
 

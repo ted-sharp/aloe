@@ -23,15 +23,33 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- ヘッダー: 検索 + 閉じるボタン -->
+            <!-- ヘッダー: ユーザーコード + 検索 + 閉じるボタン -->
             <Grid Grid.Row="0" Margin="0,20,0,20">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Margin="0,0,10,0">
+                    <TextBlock Text="ユーザー"
+                               FontSize="14"
+                               Foreground="#AAAAAA"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0"/>
+                    <TextBox Text="{Binding UserCode, UpdateSourceTrigger=PropertyChanged}"
+                             FontSize="16"
+                             Width="150"
+                             Padding="8,8"
+                             Background="#333333"
+                             Foreground="White"
+                             BorderBrush="#555555"
+                             BorderThickness="1"
+                             CaretBrush="White"/>
+                </StackPanel>
+
                 <TextBox x:Name="SearchBox"
-                         Grid.Column="0"
+                         Grid.Column="1"
                          Text="{Binding SearchFilter, UpdateSourceTrigger=PropertyChanged}"
                          FontSize="20"
                          Padding="12,8"
@@ -41,7 +59,7 @@
                          BorderThickness="1"
                          CaretBrush="White"/>
 
-                <Button Grid.Column="1"
+                <Button Grid.Column="2"
                         Content="✕"
                         FontSize="20"
                         Width="50" Height="50"

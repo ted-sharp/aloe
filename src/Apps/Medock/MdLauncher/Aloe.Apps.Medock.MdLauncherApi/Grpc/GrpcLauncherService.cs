@@ -14,52 +14,56 @@ namespace Aloe.Apps.Medock.MdLauncherApi.Grpc;
 /// </summary>
 public class GrpcLauncherService : ServiceBase<ILauncherService>, ILauncherService
 {
-    private readonly ILauncherConfigService _configService;
+    private readonly ILauncherMenuService _menuService;
 
     /// <summary>
     /// <see cref="GrpcLauncherService"/> クラスの新しいインスタンスを初期化する。
     /// </summary>
-    public GrpcLauncherService(ILauncherConfigService configService)
+    public GrpcLauncherService(ILauncherMenuService menuService)
     {
-        _configService = configService;
+        _menuService = menuService;
     }
 
     /// <inheritdoc/>
-    public UnaryResult<GetLauncherConfigResponse> GetConfigAsync()
+    public async UnaryResult<GetLauncherConfigResponse> GetConfigAsync()
     {
-        var config = _configService.GetConfig();
+        return await this.GetMenusByUserAsync(new GetMenusByUserRequest { UserCode = string.Empty });
+    }
+
+    /// <inheritdoc/>
+    public async UnaryResult<GetLauncherConfigResponse> GetMenusByUserAsync(GetMenusByUserRequest request)
+    {
+        var menus = await _menuService.GetMenusByUserCodeAsync(request.UserCode);
 
         var response = new GetLauncherConfigResponse
         {
-            Version = config.Version,
-            Categories = config.Categories
-                .Select(c => new LauncherCategoryItem
+            Version = 1,
+            Categories =
+            [
+                new LauncherCategoryItem
                 {
-                    Id = c.Id,
-                    Name = c.Name,
-                    SortOrder = c.SortOrder,
-                    Apps = c.Apps
-                        .Where(a => a.Enabled)
-                        .Select(a => new LauncherAppItem
+                    Id = "menu",
+                    Name = "メニュー",
+                    SortOrder = 1,
+                    Apps = menus
+                        .Select(m => new LauncherAppItem
                         {
-                            Id = a.Id,
-                            Name = a.Name,
-                            Description = a.Description,
-                            ExePath = a.ExePath,
-                            Arguments = a.Arguments,
-                            WorkingDirectory = a.WorkingDirectory,
-                            IconPath = a.IconPath,
-                            PipeName = a.PipeName,
-                            SortOrder = a.SortOrder,
-                            Enabled = a.Enabled,
+                            Id = m.MenuCode,
+                            Name = m.MenuName,
+                            Description = m.MenuDesc,
+                            ExePath = m.AppPath,
+                            Arguments = m.AppArgs,
+                            WorkingDirectory = m.AppDir,
+                            IconPath = m.AppIcon,
+                            PipeName = m.PipeName,
+                            SortOrder = m.MenuSeq,
+                            Enabled = true,
                         })
-                        .OrderBy(a => a.SortOrder)
                         .ToList(),
-                })
-                .OrderBy(c => c.SortOrder)
-                .ToList(),
+                },
+            ],
         };
 
-        return UnaryResult.FromResult(response);
+        return response;
     }
 }
